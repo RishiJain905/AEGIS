@@ -5,7 +5,9 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY apps/api/pyproject.toml apps/api/
 COPY packages/contracts-python/pyproject.toml packages/contracts-python/
+COPY packages/persistence/pyproject.toml packages/persistence/
 COPY packages/contracts-python/src packages/contracts-python/src
+COPY packages/persistence/src packages/persistence/src
 RUN uv sync --frozen --no-dev --package aegis-api
 
 FROM python:3.12.10-slim-bookworm AS runner
@@ -14,6 +16,7 @@ RUN groupadd -r aegis && useradd -r -g aegis aegis
 COPY --from=builder /app/.venv /app/.venv
 COPY apps/api/src apps/api/src
 COPY packages/contracts-python/src packages/contracts-python/src
+COPY packages/persistence/src packages/persistence/src
 ENV PATH="/app/.venv/bin:$PATH"
 USER aegis
 EXPOSE 8000

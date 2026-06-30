@@ -1,10 +1,7 @@
 import { z } from 'zod';
 
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
-import {
-  idempotencyRecordSchema,
-  objectMetadataReferenceSchema,
-} from './persistence';
+import { idempotencyRecordSchema, objectMetadataReferenceSchema } from './persistence';
 import {
   actionProposalSchema,
   agentSessionSchema,
