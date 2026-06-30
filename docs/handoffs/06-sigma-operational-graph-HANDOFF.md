@@ -21,31 +21,31 @@ Phase 06 deliverables per `docs/AEGIS-v1.0-Agent-Specs/graph-platform/06-sigma-o
 
 ## Files added
 
-| Area | Key paths |
-| --- | --- |
-| Operational graph | `apps/web/features/operational-graph/**` |
-| Inspector | `apps/web/features/inspector/**` |
-| Graph controls | `packages/ui/src/graph-controls/index.tsx` |
-| E2E | `tests/e2e/operational-graph.spec.ts` |
-| Screenshots | `apps/web/scripts/capture-operational-graph-screenshots.mjs` |
-| Docs | `docs/frontend/operational-graph.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0007-sigma-operational-graph.md` |
+| Area              | Key paths                                                                                                |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| Operational graph | `apps/web/features/operational-graph/**`                                                                 |
+| Inspector         | `apps/web/features/inspector/**`                                                                         |
+| Graph controls    | `packages/ui/src/graph-controls/index.tsx`                                                               |
+| E2E               | `tests/e2e/operational-graph.spec.ts`                                                                    |
+| Screenshots       | `apps/web/scripts/capture-operational-graph-screenshots.mjs`                                             |
+| Docs              | `docs/frontend/operational-graph.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0007-sigma-operational-graph.md` |
 
 ## Files modified
 
-| File | Reason |
-| --- | --- |
-| `apps/web/features/shell/components/visualization-slot.tsx` | Mount Sigma operational graph; remove harness from production path |
-| `apps/web/features/shell/components/inspector-panel.tsx` | Graph entity and incident context sections |
-| `apps/web/stores/workspace-ui-store.ts` | Reset graph visual state on run change |
-| `apps/web/fixtures/shell-dataset.json` | Connected multi-node graph for demos/E2E |
-| `apps/web/package.json` | Add sigma, graphology dependencies |
-| `packages/ui/src/index.ts` | Export graph controls |
-| `packages/contracts-ts/src/versioning.ts` | `WORKSPACE_VERSION` → `0.0.0-phase06` |
-| `packages/contracts-python/src/aegis_contracts/versioning.py` | Parity bump |
-| `packages/graph-domain/src/aegis_graph_domain/__init__.py` | Stub parity bump |
-| `apps/web/vitest.config.ts` | JSX automatic for component tests |
-| `tests/e2e/graph-domain-harness.spec.ts` | Assert Sigma canvas instead of placeholder |
-| `pnpm-lock.yaml` | New dependencies |
+| File                                                          | Reason                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `apps/web/features/shell/components/visualization-slot.tsx`   | Mount Sigma operational graph; remove harness from production path |
+| `apps/web/features/shell/components/inspector-panel.tsx`      | Graph entity and incident context sections                         |
+| `apps/web/stores/workspace-ui-store.ts`                       | Reset graph visual state on run change                             |
+| `apps/web/fixtures/shell-dataset.json`                        | Connected multi-node graph for demos/E2E                           |
+| `apps/web/package.json`                                       | Add sigma, graphology dependencies                                 |
+| `packages/ui/src/index.ts`                                    | Export graph controls                                              |
+| `packages/contracts-ts/src/versioning.ts`                     | `WORKSPACE_VERSION` → `0.0.0-phase06`                              |
+| `packages/contracts-python/src/aegis_contracts/versioning.py` | Parity bump                                                        |
+| `packages/graph-domain/src/aegis_graph_domain/__init__.py`    | Stub parity bump                                                   |
+| `apps/web/vitest.config.ts`                                   | JSX automatic for component tests                                  |
+| `tests/e2e/graph-domain-harness.spec.ts`                      | Assert Sigma canvas instead of placeholder                         |
+| `pnpm-lock.yaml`                                              | New dependencies                                                   |
 
 ## Files removed
 
@@ -53,14 +53,14 @@ None (Phase 05 harness component retained in repo but not mounted in production 
 
 ## Contracts introduced or changed
 
-| Contract | Version | Description |
-| --- | --- | --- |
-| `OperationalGraphAdapter` | v1 (web-local) | Sigma renderer adapter interface |
-| `GraphVisualState` | v1 (web-local) | Ephemeral filter, selection, highlight, overlay, camera state |
-| `GraphSelection` | v1 (web-local) | Primary/secondary node and edge selection |
-| `GraphCameraBookmark` | v1 (web-local) | Camera position bookmark |
-| Semantic style mapping | v1 (web-local) | Canonical field → visual token mapping |
-| `WORKSPACE_VERSION` | `0.0.0-phase06` | Workspace metadata |
+| Contract                  | Version         | Description                                                   |
+| ------------------------- | --------------- | ------------------------------------------------------------- |
+| `OperationalGraphAdapter` | v1 (web-local)  | Sigma renderer adapter interface                              |
+| `GraphVisualState`        | v1 (web-local)  | Ephemeral filter, selection, highlight, overlay, camera state |
+| `GraphSelection`          | v1 (web-local)  | Primary/secondary node and edge selection                     |
+| `GraphCameraBookmark`     | v1 (web-local)  | Camera position bookmark                                      |
+| Semantic style mapping    | v1 (web-local)  | Canonical field → visual token mapping                        |
+| `WORKSPACE_VERSION`       | `0.0.0-phase06` | Workspace metadata                                            |
 
 Phase 01 wire contracts unchanged. `GraphFilterSet` reused from `@aegis/graph-domain`.
 
@@ -79,28 +79,28 @@ None.
 
 ## Tests added
 
-| Test | Proves |
-| --- | --- |
-| `features/operational-graph/contracts/contracts.test.ts` | Schema validation |
-| `features/operational-graph/layout/initial-layout.test.ts` | Deterministic layout |
-| `features/operational-graph/semantic/graph-semantic-styles.test.ts` | Style from canonical fields |
-| `features/operational-graph/adapters/sigma-operational-graph-adapter.test.ts` | Store projection, dispose |
-| `features/operational-graph/components/sigma-canvas.test.tsx` | Mount/unmount lifecycle |
-| `stores/workspace-ui-store.test.ts` | Graph visual reset on run change |
-| `tests/e2e/operational-graph.spec.ts` | Search, select, isolate, path, overlay, responsive, reduced motion |
-| `tests/e2e/graph-domain-harness.spec.ts` | Sigma canvas replaces placeholder |
+| Test                                                                          | Proves                                                             |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `features/operational-graph/contracts/contracts.test.ts`                      | Schema validation                                                  |
+| `features/operational-graph/layout/initial-layout.test.ts`                    | Deterministic layout                                               |
+| `features/operational-graph/semantic/graph-semantic-styles.test.ts`           | Style from canonical fields                                        |
+| `features/operational-graph/adapters/sigma-operational-graph-adapter.test.ts` | Store projection, dispose                                          |
+| `features/operational-graph/components/sigma-canvas.test.tsx`                 | Mount/unmount lifecycle                                            |
+| `stores/workspace-ui-store.test.ts`                                           | Graph visual reset on run change                                   |
+| `tests/e2e/operational-graph.spec.ts`                                         | Search, select, isolate, path, overlay, responsive, reduced motion |
+| `tests/e2e/graph-domain-harness.spec.ts`                                      | Sigma canvas replaces placeholder                                  |
 
 ## Commands executed and results
 
-| Command | Result |
-| --- | --- |
-| `pnpm format:check` | PASS |
-| `pnpm lint` | PASS (ESLint + dependency-cruiser: 0 violations) |
-| `pnpm typecheck` | PASS |
-| `pnpm test` | PASS (144 tests: 60 contracts + 31 graph-domain + 20 ui + 33 web) |
-| `pnpm build` | PASS |
-| `pnpm check-contracts` | PASS |
-| `CI=1 pnpm --filter @aegis/web test:e2e` | PASS (21 Playwright tests) |
+| Command                                  | Result                                                            |
+| ---------------------------------------- | ----------------------------------------------------------------- |
+| `pnpm format:check`                      | PASS                                                              |
+| `pnpm lint`                              | PASS (ESLint + dependency-cruiser: 0 violations)                  |
+| `pnpm typecheck`                         | PASS                                                              |
+| `pnpm test`                              | PASS (144 tests: 60 contracts + 31 graph-domain + 20 ui + 33 web) |
+| `pnpm build`                             | PASS                                                              |
+| `pnpm check-contracts`                   | PASS                                                              |
+| `CI=1 pnpm --filter @aegis/web test:e2e` | PASS (21 Playwright tests)                                        |
 
 Visual evidence commands:
 
@@ -141,12 +141,12 @@ SCREENSHOT_BASE_URL=http://127.0.0.1:3000 node apps/web/scripts/capture-operatio
 
 ## Acceptance criteria evidence
 
-| Criterion | Evidence |
-| --- | --- |
+| Criterion                                                        | Evidence                                                                                                                                                        |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | User can search, isolate, trace, inspect, and restore full graph | E2E `operational-graph.spec.ts`; screenshots `06-search-filter.png`, `06-neighborhood-isolation.png`, `06-path-highlight.png`, `06-selected-node-inspector.png` |
-| Visual state derives only from semantic contracts | `graph-semantic-styles.test.ts`; adapter reads `GraphStore.exportSnapshot()` only |
-| Keyboard/reduced-motion alternatives remain useful | E2E entity list + reduced motion test; accessible list in `OperationalGraphView` |
-| Unmounting cleans renderer resources | `sigma-canvas.test.tsx`, `sigma-operational-graph-adapter.test.ts` dispose |
+| Visual state derives only from semantic contracts                | `graph-semantic-styles.test.ts`; adapter reads `GraphStore.exportSnapshot()` only                                                                               |
+| Keyboard/reduced-motion alternatives remain useful               | E2E entity list + reduced motion test; accessible list in `OperationalGraphView`                                                                                |
+| Unmounting cleans renderer resources                             | `sigma-canvas.test.tsx`, `sigma-operational-graph-adapter.test.ts` dispose                                                                                      |
 
 ## Prohibited-shortcut confirmation
 
