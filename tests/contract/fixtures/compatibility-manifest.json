@@ -44,7 +44,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/executed_action_v1.json",
-      "sha256": "cf9185e4ffc46f351ce109ae7ed7b4647a706e4036d480d723f4e4f8187ca2be",
+      "sha256": "15281aafd98d976e1d2e982892dcdaafcaf187bd788b83c757465c99afc05d86",
       "schemaVersion": 1
     },
     {
@@ -84,7 +84,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/idempotency_v1.json",
-      "sha256": "9d9847bf24e65aeae29bb3397e9b972f18baa1ad630fb7cae8d8cd632195a676",
+      "sha256": "4d7a44c90a29b69c4b5cda62d43e74b1195996f972214dfb1b8204a15b914f49",
       "schemaVersion": 1
     },
     {

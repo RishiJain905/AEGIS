@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "idempotencyKey": "idem_01ARZ3NDEKTSV4RRFFQ69G5FB3",
+  "idempotencyKey": "idem_synthetic_fixture_001",
   "requestHash": "sha256:abcdef0123456789",
   "replayed": false
 }
