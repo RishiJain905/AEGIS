@@ -8,14 +8,14 @@ Phase 08 owns scenario manifest contracts, validation, checksums, behavior-plugi
 
 ## Module map
 
-| Module | Responsibility |
-|--------|----------------|
-| `contracts/` | `ScenarioManifestV1`, `ScenarioPackageManifestV1`, templates |
-| `validation/` | Safety, semantic, and pipeline validation |
-| `plugins/` | Allowlisted behavior plugins and typed configs |
-| `packaging/` | Checksums and package manifest construction |
-| `publication.py` | Immutable publish workflow |
-| `cli.py` | `aegis-scenario` commands |
+| Module           | Responsibility                                               |
+| ---------------- | ------------------------------------------------------------ |
+| `contracts/`     | `ScenarioManifestV1`, `ScenarioPackageManifestV1`, templates |
+| `validation/`    | Safety, semantic, and pipeline validation                    |
+| `plugins/`       | Allowlisted behavior plugins and typed configs               |
+| `packaging/`     | Checksums and package manifest construction                  |
+| `publication.py` | Immutable publish workflow                                   |
+| `cli.py`         | `aegis-scenario` commands                                    |
 
 ## Commands
 

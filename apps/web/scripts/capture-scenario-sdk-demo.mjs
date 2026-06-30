@@ -29,18 +29,11 @@ function run(command) {
   }
 }
 
-const success = run(
-  'uv run aegis-scenario validate scenarios/_fixtures/valid-minimal',
-);
-const failure = run(
-  'uv run aegis-scenario validate scenarios/_fixtures/invalid-dangling-edge',
-);
+const success = run('uv run aegis-scenario validate scenarios/_fixtures/valid-minimal');
+const failure = run('uv run aegis-scenario validate scenarios/_fixtures/invalid-dangling-edge');
 
 function escapeHtml(value) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
 function panel(title, result) {
@@ -79,12 +72,18 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 
 await page.goto(`file://${htmlPath}`);
 await page.waitForTimeout(300);
-await page.locator('section.panel').nth(0).screenshot({
-  path: `${OUT}/08-scenario-validate-success.png`,
-});
-await page.locator('section.panel').nth(1).screenshot({
-  path: `${OUT}/08-scenario-validate-failure.png`,
-});
+await page
+  .locator('section.panel')
+  .nth(0)
+  .screenshot({
+    path: `${OUT}/08-scenario-validate-success.png`,
+  });
+await page
+  .locator('section.panel')
+  .nth(1)
+  .screenshot({
+    path: `${OUT}/08-scenario-validate-failure.png`,
+  });
 
 await browser.close();
 
