@@ -1,25 +1,26 @@
 [project]
-name = "aegis-api"
+name = "aegis-persistence"
 version = "0.0.0"
-description = "AEGIS FastAPI application"
+description = "AEGIS PostgreSQL persistence layer"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "aegis-contracts",
-    "aegis-persistence",
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.34",
+    "sqlalchemy[asyncio]>=2.0.40",
+    "asyncpg>=0.30",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.15",
+    "greenlet>=3.1",
 ]
 
 [tool.uv.sources]
 aegis-contracts = { workspace = true }
-aegis-persistence = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/aegis_api"]
+packages = ["src/aegis_persistence"]
 
 [project.scripts]
-aegis-api = "aegis_api.main:run"
+aegis-seed = "aegis_persistence.seed:main"

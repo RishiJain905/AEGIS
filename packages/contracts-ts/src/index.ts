@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
+import { idempotencyRecordSchema, objectMetadataReferenceSchema } from './persistence';
 import {
   actionProposalSchema,
   agentSessionSchema,
@@ -35,6 +36,7 @@ export * from './events';
 export * from './graph';
 export * from './entities';
 export * from './api';
+export * from './persistence';
 export * from './parsing';
 
 export const aegisEnvironmentSchema = z.object({
@@ -75,6 +77,8 @@ export const FIXTURE_SCHEMA_MAP = {
   api_error_v1: apiErrorEnvelopeSchema,
   cursor_page_v1: cursorPaginationSchema,
   idempotency_v1: idempotencyMetadataSchema,
+  idempotency_record_v1: idempotencyRecordSchema,
+  object_metadata_reference_v1: objectMetadataReferenceSchema,
   scenario_v1: scenarioSchema,
   scenario_version_v1: scenarioVersionSchema,
   run_v1: runSchema,

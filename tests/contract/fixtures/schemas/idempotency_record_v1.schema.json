@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "idempotencyKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Idempotencykey",
+      "type": "string"
+    },
+    "replayed": {
+      "default": false,
+      "title": "Replayed",
+      "type": "boolean"
+    },
+    "requestHash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Requesthash"
+    },
+    "responseRef": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Responseref",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "scope": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Scope",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "scope", "idempotencyKey", "responseRef", "createdAt"],
+  "title": "IdempotencyRecordV1",
+  "type": "object"
+}

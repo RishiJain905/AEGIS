@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase01",
+  "workspaceVersion": "0.0.0-phase02",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/valid/action_proposal_v1.json",
@@ -83,6 +83,11 @@
       "schemaVersion": 1
     },
     {
+      "path": "tests/contract/fixtures/valid/idempotency_record_v1.json",
+      "sha256": "55f06b25bdfeed8680a596169a846937ff5849d56eded6834d8eda01a7e4a6bf",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/idempotency_v1.json",
       "sha256": "4d7a44c90a29b69c4b5cda62d43e74b1195996f972214dfb1b8204a15b914f49",
       "schemaVersion": 1
@@ -103,6 +108,11 @@
       "schemaVersion": 1
     },
     {
+      "path": "tests/contract/fixtures/valid/object_metadata_reference_v1.json",
+      "sha256": "b79b13477ffe4551500d6fbd35e5106026bb9d0d4c59674b06717ec69accdc20",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/run_v1.json",
       "sha256": "eb59e067565bdeff9a8db74ffa0683a2c5992a5479dbeb4b9bb12d884ec6fc17",
       "schemaVersion": 1
@@ -119,95 +129,128 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",
-      "sha256": "053b9bafd86fde6a9a6a0b6fbf8708aa673bc299dbbe7684dda471e2289abb02"
+      "sha256": "053b9bafd86fde6a9a6a0b6fbf8708aa673bc299dbbe7684dda471e2289abb02",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_session_v1.schema.json",
-      "sha256": "0eeddb6e6fa5541742b8106654447e494b92b000c363dea654733cc3bfe10b04"
+      "sha256": "0eeddb6e6fa5541742b8106654447e494b92b000c363dea654733cc3bfe10b04",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/alert_v1.schema.json",
-      "sha256": "5cd365531a7fc4691d6bffe043c86ccc657f821b722f95c6e50b24705c1b9c76"
+      "sha256": "5cd365531a7fc4691d6bffe043c86ccc657f821b722f95c6e50b24705c1b9c76",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/api_error_v1.schema.json",
-      "sha256": "8017c5de1a406f0d3d3aeb226b7b6cf7042e476e08426c8b5385f7a8c37ba06e"
+      "sha256": "8017c5de1a406f0d3d3aeb226b7b6cf7042e476e08426c8b5385f7a8c37ba06e",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/approval_v1.schema.json",
-      "sha256": "34089af415f183782773421a8a33cbbf3828f31dfb037ec63542dbec19397eeb"
+      "sha256": "34089af415f183782773421a8a33cbbf3828f31dfb037ec63542dbec19397eeb",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/cursor_page_v1.schema.json",
-      "sha256": "aa8593a8d89bec9482ecfebc5e4980d47256794f8b20354d0926e907c5980843"
+      "sha256": "aa8593a8d89bec9482ecfebc5e4980d47256794f8b20354d0926e907c5980843",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/event_envelope_v1.schema.json",
-      "sha256": "19d6a5df6012ae4509673943d122e33fe0a89fabf505388f7c181a1864f903ec"
+      "sha256": "19d6a5df6012ae4509673943d122e33fe0a89fabf505388f7c181a1864f903ec",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/evidence_v1.schema.json",
-      "sha256": "9333d4a3806f11563eb7777736462b325fd11b0049760054d24f285b17e7dad2"
+      "sha256": "9333d4a3806f11563eb7777736462b325fd11b0049760054d24f285b17e7dad2",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/executed_action_v1.schema.json",
-      "sha256": "bc398b210f470217f51b86d0a384d4dd1931aae7874c38ff30a2c4d01c7c9c9a"
+      "sha256": "bc398b210f470217f51b86d0a384d4dd1931aae7874c38ff30a2c4d01c7c9c9a",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_delta_v1.schema.json",
-      "sha256": "a61051321482d083bc245eec3d8e0655959cc7940e2be472519bfd6ea61cc78a"
+      "sha256": "a61051321482d083bc245eec3d8e0655959cc7940e2be472519bfd6ea61cc78a",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_edge_v1.schema.json",
-      "sha256": "8f698eb5d4e844979b60360d71a20475b692c6d3b0a44c9b0d2d9047381c8bde"
+      "sha256": "8f698eb5d4e844979b60360d71a20475b692c6d3b0a44c9b0d2d9047381c8bde",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_node_v1.schema.json",
-      "sha256": "44c8f4dfe00b16bebcdea6949a062a7a32bd078b53f57c5ba64c20cc58879362"
+      "sha256": "44c8f4dfe00b16bebcdea6949a062a7a32bd078b53f57c5ba64c20cc58879362",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_path_query_v1.schema.json",
-      "sha256": "5dda5de8c035e00a541b51a31817b662c89970b38423d5686c389edcc57740ea"
+      "sha256": "5dda5de8c035e00a541b51a31817b662c89970b38423d5686c389edcc57740ea",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_path_result_v1.schema.json",
-      "sha256": "8450d5dd553a9a6c76b378ddef26193b0bcd17385c65b071483931af921f1c51"
+      "sha256": "8450d5dd553a9a6c76b378ddef26193b0bcd17385c65b071483931af921f1c51",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_snapshot_v1.schema.json",
-      "sha256": "2ede124ee2da3fadf5fea217917f459fee56eba082538eb40a781ebf3128394b"
+      "sha256": "2ede124ee2da3fadf5fea217917f459fee56eba082538eb40a781ebf3128394b",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/hypothesis_v1.schema.json",
-      "sha256": "8110c971af9c071b642203c45740777ae7833e2186e9b5a11a349a6c64593894"
+      "sha256": "8110c971af9c071b642203c45740777ae7833e2186e9b5a11a349a6c64593894",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/idempotency_record_v1.schema.json",
+      "sha256": "e9240a03e9d07b565707e55aa1cb11cc0769adf88a251afffc49f96174edc112",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/idempotency_v1.schema.json",
-      "sha256": "b179e3d0f285723a9738b38fd6485194eb7369b7abbc685834f5928c57020983"
+      "sha256": "b179e3d0f285723a9738b38fd6485194eb7369b7abbc685834f5928c57020983",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/incident_v1.schema.json",
-      "sha256": "c57144c891528c5fb63cee1d753d98e17b887ccf23c903bbcfe32b9810926544"
+      "sha256": "c57144c891528c5fb63cee1d753d98e17b887ccf23c903bbcfe32b9810926544",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/model_manifest_v1.schema.json",
-      "sha256": "0f8c9a5f3f610133310d7c0fb48c1053872cfee0764f2c796cb7fc3d11ed10c1"
+      "sha256": "0f8c9a5f3f610133310d7c0fb48c1053872cfee0764f2c796cb7fc3d11ed10c1",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/model_score_v1.schema.json",
-      "sha256": "8e7f8cb3b4247b2c83d286797b7083da921c4126f8f35ca11a0e5259bb79e353"
+      "sha256": "8e7f8cb3b4247b2c83d286797b7083da921c4126f8f35ca11a0e5259bb79e353",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/object_metadata_reference_v1.schema.json",
+      "sha256": "89d7b189e8fc1503e091267b8ada48ce12e595698099cd9d8709e76f884354d9",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/run_v1.schema.json",
-      "sha256": "e5483e0c0649d840a61c7f923fedd10eed6b9a6ae07b1d6ffe50b3dcca49571f"
+      "sha256": "e5483e0c0649d840a61c7f923fedd10eed6b9a6ae07b1d6ffe50b3dcca49571f",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/scenario_v1.schema.json",
-      "sha256": "2c4e11350ac90e65b4439e21b4187afa52df4d7c468416906ef75aec449a844c"
+      "sha256": "2c4e11350ac90e65b4439e21b4187afa52df4d7c468416906ef75aec449a844c",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/scenario_version_v1.schema.json",
-      "sha256": "035290a2c2c552de7fa2b476e67c92728d1590880771c9988c147eb27348837a"
+      "sha256": "035290a2c2c552de7fa2b476e67c92728d1590880771c9988c147eb27348837a",
+      "schemaVersion": 1
     }
   ]
 }

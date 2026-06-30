@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "scope": "api:runs:create",
+  "idempotencyKey": "idem_record_synthetic_fixture_001",
+  "requestHash": "sha256:abcdef0123456789",
+  "responseRef": "run:run_01ARZ3NDEKTSV4RRFFQ69G5FAX",
+  "createdAt": "2026-06-30T12:00:00.000Z",
+  "replayed": false
+}

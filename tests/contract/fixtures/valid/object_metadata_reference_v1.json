@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "objectKey": "artifacts/models/baseline-v1/model.pkl",
+  "checksum": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "contentType": "application/octet-stream",
+  "sizeBytes": 4096,
+  "createdAt": "2026-06-30T12:00:00.000Z"
+}
