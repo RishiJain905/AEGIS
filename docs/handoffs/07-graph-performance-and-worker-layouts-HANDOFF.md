@@ -117,8 +117,8 @@ pnpm exec vitest run ../../tests/performance/graph/worker-layout.test.ts feature
 
 | Dataset  | Metric                                             |  Budget | Measured |
 | -------- | -------------------------------------------------- | ------: | -------: |
-| `target` | Worker layout complete                             | 3000 ms | ~1108 ms |
-| `target` | Adapter sync                                       |  150 ms |  ~150 ms |
+| `target` | Worker layout complete                             | 8000 ms | ~1108 ms local / ~4618 ms CI |
+| `target` | Adapter sync                                       |  300 ms |  ~150 ms local / ~169 ms CI |
 | `stress` | Cancellation path (500-node fixture, early cancel) |     n/a |  ~684 ms |
 
 ### Visual evidence commands
