@@ -1,0 +1,1 @@
+"""AEGIS FastAPI application package."""

@@ -1,0 +1,2113 @@
+AEGIS v1.0 — BEST PRACTICES, SECURITY, AND ENGINEERING STANDARDS SOP
+===============================================================================
+
+Document name: bestPractices.txt
+Status: MANDATORY
+Applies to: implementation agents, validation agents, repair agents, reviewers,
+            maintainers, CI workflows, local development, and production builds
+Project: AEGIS Command
+Last reviewed: 2026-06-30
+
+PURPOSE
+-------------------------------------------------------------------------------
+
+This Standard Operating Procedure defines the minimum engineering, security,
+quality, testing, dependency-management, and framework-specific standards for
+AEGIS v1.0.
+
+This is not optional guidance. An agent working on AEGIS MUST follow this file
+together with:
+
+1. architecture.md
+2. The assigned numbered phase specification
+3. ARCH-Explained.md sections relevant to the phase
+4. PHASE-EXECUTION-PROTOCOL.md
+5. Direct dependency handoffs
+6. Relevant Architecture Decision Records (ADRs)
+7. Existing code, tests, migrations, schemas, and package documentation
+
+Where this SOP conflicts with a phase specification, architecture.md, or an
+accepted ADR, the agent MUST stop and report the conflict. It MUST NOT silently
+choose whichever instruction is easier.
+
+This SOP is intentionally strict because AEGIS is:
+
+- A security-oriented application.
+- An agent-developed codebase with many handoffs.
+- A deterministic simulation and replay platform.
+- A realtime system.
+- A graph-heavy frontend.
+- An ML and LLM orchestration platform.
+- A production-ready v1.0 rather than a disposable prototype.
+
+
+0. ORDER OF AUTHORITY
+-------------------------------------------------------------------------------
+
+The order of authority is:
+
+1. Explicit project-owner instruction.
+2. architecture.md.
+3. Accepted ADRs that do not conflict with architecture.md.
+4. Assigned numbered phase specification.
+5. PHASE-EXECUTION-PROTOCOL.md.
+6. bestPractices.txt.
+7. Approved dependency handoffs.
+8. Existing implementation patterns.
+9. Framework defaults and ordinary engineering judgment.
+
+An implementation agent MUST stop and escalate when:
+
+- Two authoritative documents conflict.
+- A requirement would weaken a security boundary.
+- A durable contract must change.
+- A database migration may destroy or reinterpret existing data.
+- A dependency introduces a new runtime, platform, or architectural layer.
+- A shortcut would make replay, auditability, authorization, or determinism
+  weaker.
+- The agent cannot meet an acceptance criterion without expanding scope.
+
+The agent MUST NOT invent project-owner approval.
+
+
+1. PACKAGE MANAGER AND JAVASCRIPT SUPPLY-CHAIN POLICY
+-------------------------------------------------------------------------------
+
+1.1 Canonical package manager
+
+AEGIS uses PNPM as the only JavaScript/TypeScript package manager.
+
+The following are prohibited in project instructions, CI, documentation, and
+committed scripts:
+
+- npm install
+- npm ci
+- npm update
+- npm audit
+- npx
+- yarn
+- bun install
+- bun add
+- bun update
+- package-lock.json
+- yarn.lock
+- bun.lock or bun.lockb as the workspace lockfile
+
+Use:
+
+- pnpm install
+- pnpm add
+- pnpm remove
+- pnpm update
+- pnpm exec
+- pnpm dlx
+- pnpm audit
+- pnpm run
+- pnpm --filter
+- pnpm -r
+
+Bun may be evaluated later as a runtime or tool only through an approved ADR.
+It is not the package manager for AEGIS v1.0. This decision matches the existing
+Phase 00 specification and avoids two competing lockfiles or install semantics.
+
+1.2 Version pinning
+
+The repository MUST pin:
+
+- A supported Node.js version.
+- An exact or repository-resolved pnpm version.
+- Python major and minor versions.
+- Container base image versions.
+- Important infrastructure image versions.
+
+CI MUST install the repository-declared pnpm version. It MUST NOT install
+"latest".
+
+Do not assume Corepack is bundled with every supported Node.js release. The CI
+bootstrap must work even when Corepack is not preinstalled.
+
+The root package manifest SHOULD declare the package manager and runtime using
+the repository-supported pnpm mechanism. The exact mechanism selected in Phase
+00 must be documented and tested on a clean machine.
+
+1.3 Lockfile rules
+
+- pnpm-lock.yaml is mandatory and committed.
+- CI uses `pnpm install --frozen-lockfile`.
+- A lockfile change without a corresponding manifest change must be explained.
+- Never manually edit pnpm-lock.yaml.
+- Never regenerate the entire lockfile merely to change one dependency.
+- Dependency updates must be isolated from unrelated feature work where
+  practical.
+- Merge conflicts in the lockfile must be resolved by rerunning pnpm from the
+  correct manifests, never by guessing conflict markers.
+- Workspace dependencies use the `workspace:` protocol where appropriate.
+
+1.4 Mandatory dependency security controls
+
+The root pnpm configuration MUST explicitly configure and preserve controls
+equivalent to:
+
+    minimumReleaseAge: 1440
+    minimumReleaseAgeStrict: true
+    minimumReleaseAgeIgnoreMissingTime: false
+    blockExoticSubdeps: true
+    trustLockfile: false
+    strictDepBuilds: true
+    dangerouslyAllowAllBuilds: false
+    engineStrict: true
+    strictPeerDependencies: true
+
+Rationale:
+
+- Newly published packages are delayed before installation.
+- Transitive dependencies cannot silently pull from arbitrary Git repositories
+  or direct tarball URLs.
+- Lockfile contents remain subject to supply-chain verification.
+- Dependency install scripts require explicit review.
+- Runtime and peer dependency mismatches fail instead of being ignored.
+
+Exceptions must be:
+
+- Narrowly scoped.
+- Version-specific whenever possible.
+- Explained in the pull request and handoff.
+- Reviewed for security impact.
+- Removed when no longer needed.
+
+1.5 Install and build scripts
+
+Dependency lifecycle scripts are code execution.
+
+- Use the pnpm `allowBuilds` allowlist.
+- Every allowed build-script dependency must be reviewed.
+- Do not set `dangerouslyAllowAllBuilds: true`.
+- Do not approve a dependency build merely because installation fails without
+  it.
+- Record why each allowed package needs a build script.
+- Re-review the allowlist when the package major version changes.
+- Do not use shell commands in package lifecycle scripts when a portable Node
+  script is safer.
+- Project scripts must fail on errors and propagate nonzero exit codes.
+- Never interpolate untrusted values into shell commands.
+
+1.6 Required JavaScript dependency checks
+
+The root validation workflow MUST include:
+
+    pnpm install --frozen-lockfile
+    pnpm audit --audit-level high
+    pnpm audit signatures
+    pnpm outdated
+    pnpm licenses
+    pnpm lint
+    pnpm typecheck
+    pnpm test
+    pnpm build
+
+Additional requirements:
+
+- Critical and high vulnerabilities fail CI unless a documented, time-bounded
+  exception is approved.
+- Moderate vulnerabilities must be triaged.
+- Audit exceptions use GHSA identifiers and include owner, rationale,
+  compensating controls, and expiry date.
+- Do not run `pnpm audit --fix` automatically in CI.
+- Do not accept a forced override without verifying compatibility and tests.
+- Signature verification failures fail CI.
+- Generate an SBOM for production releases.
+- Scan the final production container, not only the source tree.
+
+1.7 Adding a JavaScript dependency
+
+Before adding a package, the agent MUST answer:
+
+- Is this already possible with the platform or an existing dependency?
+- Is the package actively maintained?
+- Is the package necessary in production or only development?
+- What install scripts does it run?
+- What transitive dependencies does it introduce?
+- Does it require broad browser, filesystem, network, or process access?
+- Does it duplicate an existing project abstraction?
+- Is its license compatible?
+- Is its API stable enough for a long-lived package?
+- Can it be isolated behind an adapter?
+
+The handoff must list newly added dependencies and why they were required.
+
+1.8 Prohibited dependency behavior
+
+Do not:
+
+- Depend on packages directly from a personal Git branch.
+- Depend on unpinned tarball URLs.
+- Add a package to solve a trivial helper function.
+- Add overlapping state-management libraries.
+- add a second graph rendering source of truth.
+- Add a second validation/schema system without an ADR.
+- Add a second HTTP client merely for preference.
+- Import undeclared transitive dependencies.
+- weaken pnpm strictness to make a broken package work.
+- commit registry authentication tokens.
+- place authentication secrets in `.npmrc`.
+- publish internal packages accidentally.
+
+
+2. GENERAL ENGINEERING STANDARDS
+-------------------------------------------------------------------------------
+
+2.1 Production implementation only
+
+A phase is not complete when it contains:
+
+- Stubs.
+- Placeholder return values.
+- Hard-coded demo responses in production paths.
+- TODO comments for required behavior.
+- Fake authorization.
+- Fake persistence.
+- Unreachable feature flags masking unfinished work.
+- Tests that only confirm a file exists.
+- UI elements that claim an action succeeded without server confirmation.
+
+Temporary scaffolding is allowed only when:
+
+- The phase specification explicitly permits it.
+- It is not reachable in production.
+- It is clearly labeled.
+- It has a removal phase or issue.
+- Tests cannot mistake it for the final implementation.
+
+2.2 Small, explicit units
+
+Prefer:
+
+- Small modules with one responsibility.
+- Pure domain functions.
+- Explicit data flow.
+- Composition over inheritance.
+- Typed interfaces at boundaries.
+- Dependency injection for external systems.
+- Adapters around third-party libraries.
+- Reusable domain contracts rather than duplicated shapes.
+
+Avoid:
+
+- God classes.
+- Large utility files.
+- Hidden singleton state.
+- Deep inheritance trees.
+- Side effects during import.
+- Cross-package circular dependencies.
+- Framework types leaking into domain packages.
+- Business logic inside route handlers or React components.
+
+2.3 Naming
+
+Names must describe domain meaning.
+
+Good:
+
+- `action_proposal`
+- `incident_id`
+- `event_sequence`
+- `GraphDelta`
+- `apply_graph_delta`
+- `authorize_tool_call`
+
+Bad:
+
+- `data`
+- `stuff`
+- `obj`
+- `temp`
+- `manager`
+- `helper2`
+- `doThing`
+- `processEverything`
+
+Rules:
+
+- IDs and display names are separate.
+- Acronyms use consistent casing.
+- Booleans read as predicates: `is_active`, `has_evidence`,
+  `requires_approval`.
+- Functions use verbs.
+- Types and classes use nouns.
+- Collections use plural names.
+- Units appear in names when ambiguity is possible:
+  `timeout_ms`, `retention_days`, `payload_bytes`.
+- Time fields distinguish simulation time and wall-clock time.
+
+2.4 Error handling
+
+- Never swallow exceptions silently.
+- Never use a broad exception handler without rethrowing, mapping, or logging
+  with context.
+- Map expected domain failures to typed errors.
+- Include stable machine-readable error codes.
+- Return a trace ID in external error envelopes.
+- Do not expose stack traces, SQL, filesystem paths, secrets, provider
+  responses, or internal prompts to users.
+- Retry only transient failures.
+- Bound retry count and total retry time.
+- Use exponential backoff with jitter for remote calls.
+- Do not retry validation failures, authorization failures, or deterministic
+  business-rule failures.
+- Make partial failure visible and recoverable.
+
+2.5 Comments and documentation
+
+Comments explain why, invariants, risks, or non-obvious tradeoffs. They must not
+repeat the code.
+
+Required documentation:
+
+- Public package entry points.
+- Durable contracts.
+- Non-obvious algorithms.
+- Security-sensitive code.
+- Replay and determinism assumptions.
+- Database migration intent.
+- Complex graph transformations.
+- Model feature definitions.
+- Agent tool permissions.
+- Operational runbooks.
+
+Do not leave misleading comments after code changes.
+
+2.6 Configuration
+
+- Configuration is typed and validated at startup.
+- Missing required production configuration fails fast.
+- Defaults must be safe.
+- Development defaults must not silently reach production.
+- Environment variables are read in one configuration layer, not throughout
+  business logic.
+- Secrets are never committed.
+- Public frontend variables are explicitly allowlisted.
+- Feature flags have owner, purpose, default, expiry/review date, and tests.
+- Unknown configuration keys should fail in strict production modes.
+
+2.7 Time, identifiers, and ordering
+
+- Store timestamps in UTC.
+- Use timezone-aware values.
+- Never use local time for durable ordering.
+- Distinguish `sim_time` from `recorded_at`.
+- Run event ordering is defined by the canonical sequence, not wall-clock time.
+- Use canonical project ID helpers.
+- Never use display labels as identity.
+- Never generate a new ID during replay for an already recorded entity.
+- Comparisons and hashes must normalize nondeterministic fields.
+
+2.8 Determinism
+
+For deterministic paths:
+
+- Seed every random generator.
+- Do not use global random state.
+- Do not use current wall-clock time as simulated input.
+- Sort unordered collections before hashing or serialization.
+- Use stable serialization rules.
+- Do not depend on database row-return order without `ORDER BY`.
+- Record model, feature, scenario, and schema versions.
+- Golden replay changes require an explanation.
+
+LLM text is allowed to vary, but it cannot define the authoritative simulated
+world.
+
+2.9 Concurrency and idempotency
+
+- Commands that can be retried require idempotency keys.
+- Consumers must tolerate duplicate delivery.
+- Use database constraints to enforce uniqueness where possible.
+- Do not rely on in-memory locks across processes.
+- Define transaction boundaries explicitly.
+- Avoid long-running database transactions.
+- Protect compare-and-set operations with version checks or row locks.
+- Revalidate authorization and preconditions immediately before execution.
+- Handle cancellation and timeouts.
+- Do not spawn untracked background tasks.
+
+2.10 Logging
+
+Logs are structured events, not prose dumps.
+
+Include relevant fields:
+
+- trace_id
+- run_id
+- incident_id
+- agent_session_id
+- event_sequence
+- service
+- operation
+- outcome
+- duration_ms
+
+Do not log:
+
+- Access tokens.
+- Refresh tokens.
+- Cookies.
+- Authorization headers.
+- Private keys.
+- Database connection strings.
+- Full prompts containing sensitive data.
+- Raw model-provider responses by default.
+- Private object URLs.
+- User-uploaded content without classification and redaction.
+- Entire request or response bodies by default.
+
+2.11 Data minimization
+
+Persist only what AEGIS needs.
+
+- Define retention for logs, transcripts, exports, and model artifacts.
+- Separate operational data from analytics data.
+- Use synthetic scenario data by default.
+- Mark data classification.
+- Restrict exports.
+- Redact sensitive fields from reports.
+- Never use production secrets or personal data in test fixtures.
+
+
+3. GIT, BRANCH, REVIEW, AND CHANGE CONTROL
+-------------------------------------------------------------------------------
+
+3.1 Scope discipline
+
+- One phase or bounded repair per branch.
+- Do not combine dependency upgrades with unrelated feature work.
+- Do not mass-format unrelated files.
+- Do not rename public contracts without updating every consumer and test.
+- Do not modify generated files manually.
+- Do not rewrite approved history or released artifacts.
+- Do not delete failing tests to make CI pass.
+
+3.2 Commit discipline
+
+Commits should be:
+
+- Small enough to review.
+- Coherent.
+- Descriptive.
+- Free of secrets and local artifacts.
+- Inclusive of tests and migrations needed by the change.
+
+A commit message should explain the intent, not merely say "update files".
+
+3.3 Required review evidence
+
+The phase handoff must contain:
+
+- Files added, changed, and removed.
+- Contracts introduced or changed.
+- Dependencies added, removed, or upgraded.
+- Migrations.
+- Configuration changes.
+- Tests added.
+- Commands executed.
+- Actual results.
+- ADRs created or superseded.
+- Security implications.
+- Known limitations.
+- Acceptance-criteria evidence.
+
+3.4 Architecture decisions
+
+Create or update an ADR when a decision affects:
+
+- Durable contracts.
+- Data ownership.
+- Dependency direction.
+- Security boundaries.
+- Authorization.
+- Simulation determinism.
+- Replay semantics.
+- Event delivery.
+- Database technology.
+- Major framework choice.
+- Cloud deployment shape.
+- Artifact compatibility.
+
+Do not create ADRs for trivial local implementation details.
+
+
+4. SECURITY BASELINE
+-------------------------------------------------------------------------------
+
+4.1 Security principles
+
+All code follows:
+
+- Least privilege.
+- Deny by default.
+- Defense in depth.
+- Explicit trust boundaries.
+- Complete mediation.
+- Secure defaults.
+- Fail closed for authorization.
+- Minimized attack surface.
+- Auditable actions.
+- Separation of duties.
+
+4.2 Authentication
+
+- Production authentication uses OIDC.
+- Validate issuer, audience, signature, expiry, and nonce/state where
+  applicable.
+- Do not implement custom password storage unless explicitly approved.
+- Sessions use secure, HttpOnly, SameSite cookies when cookies are used.
+- Never store bearer tokens in localStorage.
+- Token handling belongs in the approved authentication layer.
+- Logout invalidates local session state and server session where supported.
+- Authentication failures reveal minimal information.
+
+4.3 Authorization
+
+- Authorization is enforced server-side on every protected operation.
+- UI visibility is not authorization.
+- Roles are not the only check; validate resource ownership and action context.
+- Use deny-by-default policy rules.
+- Important simulator-changing actions require WARDEN and human approval as
+  defined by architecture.md.
+- Revalidate approval state and proposal version before execution.
+- Audit authorization decisions.
+- Never let an LLM authorize itself.
+
+4.4 Input validation
+
+Treat as untrusted:
+
+- HTTP bodies.
+- Query strings.
+- Headers.
+- Cookies.
+- WebSocket messages.
+- Scenario bundles.
+- Telemetry.
+- Uploaded files.
+- Model output.
+- Tool arguments.
+- Object-storage metadata.
+- Database content originating from previous external input.
+
+Requirements:
+
+- Validate type, format, length, range, enum, and semantic constraints.
+- Reject unknown fields at security-sensitive boundaries.
+- Normalize before comparison.
+- Enforce request and upload size limits.
+- Validate content type and inspect actual file type where needed.
+- Never interpolate input into SQL, shell commands, object keys, URLs, HTML,
+  log templates, or prompts without the proper safe API and validation.
+
+4.5 Output handling
+
+- Escape or safely render untrusted text.
+- Do not render model output as raw HTML.
+- Sanitize any explicitly supported rich text with an allowlist.
+- Never use `dangerouslySetInnerHTML` without a documented sanitization path.
+- Use safe download content types and `Content-Disposition`.
+- Prevent user-controlled filenames from determining server filesystem paths.
+
+4.6 Browser security
+
+Production responses must use appropriate controls:
+
+- Content-Security-Policy.
+- `frame-ancestors` protection.
+- Strict-Transport-Security when HTTPS is guaranteed.
+- X-Content-Type-Options: nosniff.
+- Referrer-Policy.
+- Permissions-Policy.
+- Secure cookie attributes.
+- A restrictive CORS allowlist.
+
+Requirements:
+
+- No wildcard CORS with credentials.
+- Development CSP exceptions must not reach production.
+- Third-party scripts require review.
+- Do not enable broad `unsafe-inline` or `unsafe-eval` in production without an
+  approved, documented reason.
+- Avoid unnecessary browser permissions.
+- Sensitive pages must not be frameable.
+
+4.7 CSRF
+
+When cookie-based authentication is used:
+
+- Use SameSite protection.
+- Require CSRF tokens or an equivalent approved defense for state-changing
+  cross-site requests.
+- Verify Origin/Referer where appropriate.
+- Do not treat CORS as a complete CSRF defense.
+
+4.8 SSRF and outbound requests
+
+- Outbound destinations are allowlisted.
+- Block loopback, link-local, metadata-service, private-network, and unexpected
+  schemes unless explicitly required.
+- Resolve and validate destinations safely.
+- Revalidate redirects.
+- Apply connection, read, and total timeouts.
+- Limit response size.
+- Agent-supplied URLs are never fetched directly without policy enforcement.
+
+4.9 Secrets
+
+- Secrets come from a secret manager in production.
+- Local `.env` files are ignored.
+- Commit `.env.example` with names and descriptions, never real values.
+- Rotate exposed secrets immediately.
+- Avoid secrets in command-line arguments.
+- Do not bake secrets into images.
+- Do not store secrets in frontend bundles.
+- Redact secrets from logs and traces.
+- Use separate credentials per environment and service.
+- Prefer short-lived credentials and workload identity.
+
+4.10 Cryptography
+
+- Use platform-vetted cryptographic libraries.
+- Do not invent encryption, signing, or password hashing.
+- Use cryptographically secure randomness for security tokens.
+- Compare secrets using constant-time helpers where relevant.
+- Include algorithm and key version in signed/encrypted artifact metadata.
+- Plan key rotation.
+
+4.11 File and object handling
+
+- No public object-storage buckets.
+- Use signed URLs with short expiry.
+- Verify checksum, size, and content type.
+- Store object metadata in PostgreSQL.
+- Object keys are generated by the server.
+- Never execute uploaded files.
+- Scan or quarantine untrusted uploads when upload functionality exists.
+- Prevent path traversal and archive extraction bombs.
+- Set retention and deletion behavior.
+
+4.12 Database security
+
+- Use parameterized SQL only.
+- Separate application, migration, read-only, and administrative roles where
+  practical.
+- Grant minimum privileges.
+- Use TLS in production.
+- Never expose the database directly to the public internet.
+- Apply statement timeouts.
+- Log administrative actions without logging sensitive query parameters.
+- Backups are encrypted and restore-tested.
+
+4.13 Redis security
+
+- Redis is private-network only.
+- Use authentication and TLS where supported.
+- Do not store authoritative-only state.
+- Do not store secrets.
+- Apply TTLs to cache keys.
+- Bound key cardinality and payload size.
+- Use namespaced keys.
+- Handle stream trimming deliberately.
+- Protect against unbounded consumer lag.
+
+4.14 Agent and LLM security
+
+Model output is untrusted.
+
+Agents must:
+
+- Use schema-constrained outputs.
+- Use an allowlisted tool registry.
+- Have least-privilege tool grants.
+- Validate every tool argument server-side.
+- Enforce timeouts, rate limits, and budgets.
+- Treat scenario content and telemetry as data, never system instructions.
+- Keep system policy outside user-controlled content.
+- Ground claims in evidence identifiers.
+- Never execute arbitrary shell commands.
+- Never make unrestricted outbound requests.
+- Never directly mutate simulator state.
+- Submit proposals through BASTION/WARDEN/approval flow.
+- Never reveal hidden system prompts, secrets, or private chain-of-thought.
+- Store concise justifications and evidence, not private reasoning traces.
+- Resist prompt injection by separating instructions from evidence.
+- Mark provider/model/prompt/tool versions in audit records.
+
+4.15 Supply-chain security
+
+- Lock all dependencies.
+- Audit JavaScript and Python dependencies.
+- Verify package signatures where supported.
+- Generate SBOMs.
+- Scan source, containers, and infrastructure definitions.
+- Review install scripts.
+- Pin CI actions and container images.
+- Protect release credentials.
+- Use provenance/signing for release artifacts when implemented.
+- Never run untrusted pull-request code with production secrets.
+
+
+5. TYPESCRIPT STANDARDS
+-------------------------------------------------------------------------------
+
+5.1 Compiler strictness
+
+TypeScript packages MUST enable strict checking. Required intent includes:
+
+- `strict: true`
+- no implicit any
+- strict null checks
+- exact optional-property behavior where compatible
+- checked indexed access where compatible
+- no unchecked fallthrough
+- no unused locals/parameters in CI or equivalent lint enforcement
+- consistent module resolution
+- no emit during typecheck
+
+Do not weaken compiler strictness for one package to avoid fixing errors.
+
+5.2 Type rules
+
+- Do not use `any` in production code.
+- Use `unknown` for untrusted input and narrow it.
+- Avoid unsafe type assertions.
+- Never cast external input directly to a domain type.
+- Use discriminated unions for lifecycle states and event variants.
+- Use branded/opaque types for IDs if the canonical contracts provide them.
+- Prefer readonly input types.
+- Make impossible states unrepresentable where practical.
+- Exhaustively check unions.
+- Use `never` assertions for exhaustive switches.
+- Keep DTOs, domain models, and renderer models distinct when their semantics
+  differ.
+
+5.3 Runtime validation
+
+TypeScript types disappear at runtime.
+
+- Validate network, storage, worker, and cross-language payloads.
+- Use the canonical contracts package and selected runtime validator.
+- Do not duplicate a schema locally.
+- Reject unsupported schema versions.
+- Preserve unknown future-compatible metadata only where the contract permits.
+- Include validation tests using valid and invalid fixtures shared with Python.
+
+5.4 Async code
+
+- Await promises or deliberately handle them.
+- Do not leave floating promises.
+- Use AbortSignal for cancellable I/O.
+- Bound concurrency.
+- Do not use `forEach(async ...)`.
+- Handle rejection paths.
+- Avoid unnecessary Promise wrappers.
+- Propagate trace and cancellation context.
+
+5.5 Module boundaries
+
+- Use package exports.
+- Do not import another package's private source paths.
+- Avoid barrel files that create cycles or large browser bundles.
+- Keep browser-only and server-only modules separate.
+- Do not import Node-only modules into client components.
+- Do not leak Next.js, Sigma.js, or React types into canonical domain packages.
+
+
+6. NEXT.JS STANDARDS
+-------------------------------------------------------------------------------
+
+6.1 Architectural role
+
+Next.js provides the command-centre web application. FastAPI owns the canonical
+external/domain API.
+
+Do not:
+
+- Reimplement domain services inside Next.js route handlers.
+- Create a second persistence layer in the web app.
+- Put authorization only in middleware.
+- Let server actions bypass the FastAPI command path.
+- duplicate API contracts manually.
+
+6.2 Server and client boundaries
+
+- Use server-rendered components by default where they improve security and
+  bundle size.
+- Add `"use client"` only at the smallest interactive boundary.
+- Do not pass secrets or privileged server data into client props.
+- Keep WebGL, browser APIs, and client state in explicit client components.
+- Lazy-load heavy graph and Three.js code.
+- Avoid hydration mismatches.
+- Treat URL state as public and user-controllable.
+
+6.3 Data fetching
+
+- Server fetching must use the approved authenticated server client.
+- Browser server-state fetching uses TanStack Query.
+- Do not duplicate the same remote data into Zustand.
+- Propagate cancellation.
+- Handle stale, loading, empty, error, unauthorized, and reconnecting states.
+- Do not cache per-user sensitive responses in a shared cache.
+- Explicitly define revalidation/cache semantics.
+
+6.4 Security headers
+
+- Configure a production CSP.
+- Keep development-only relaxations out of production.
+- Set HSTS only when deployment guarantees HTTPS.
+- Set `nosniff`, Referrer-Policy, Permissions-Policy, and frame protections.
+- Review every third-party origin.
+- Prefer no third-party scripts.
+- Test headers in E2E and deployed smoke tests.
+
+6.5 Error boundaries
+
+- Use route-level and component-level error boundaries where recovery differs.
+- User-visible errors must be actionable and non-sensitive.
+- Send trace IDs to observability.
+- Do not expose server stack traces.
+- Distinguish "no data", "not authorized", "offline", and "server error".
+
+6.6 Images, scripts, and links
+
+- Use allowlists for remote images.
+- Use Next.js script controls for approved scripts.
+- External links from untrusted content require safe protocols.
+- Add `rel="noopener noreferrer"` where appropriate.
+- Never create `javascript:` URLs.
+- Do not proxy arbitrary remote images.
+
+
+7. REACT STANDARDS
+-------------------------------------------------------------------------------
+
+7.1 Components
+
+- Function components only unless a framework constraint requires otherwise.
+- Components should have one clear responsibility.
+- Keep domain logic outside presentation components.
+- Prefer composition.
+- Avoid prop drilling of broad mutable objects.
+- Use stable keys based on identity, never array indexes for mutable lists.
+- Do not perform side effects during render.
+- Do not mutate props or state.
+- Derive values during render instead of syncing duplicate state with effects.
+
+7.2 Hooks
+
+- Follow hook rules.
+- Keep effect dependency lists correct.
+- Effects synchronize with external systems; they are not a general data-flow
+  mechanism.
+- Clean up subscriptions, timers, workers, WebGL resources, and observers.
+- Avoid stale closures.
+- Memoize only when measured or required for stable identity.
+- Do not hide complex business workflows in a custom hook without tests.
+
+7.3 Accessibility
+
+- Use semantic HTML first.
+- All interactive controls are keyboard accessible.
+- Focus order is logical.
+- Dialogs trap and restore focus.
+- Visible focus is never removed.
+- Icons have accessible names when meaningful.
+- Color is not the only indicator.
+- Respect reduced motion.
+- Graph interactions require a non-canvas accessible alternative for critical
+  information.
+- Test important workflows with keyboard and accessibility tooling.
+
+7.4 Performance
+
+- Avoid rerendering the full graph for local panel changes.
+- Use selectors for external stores.
+- Virtualize long lists.
+- Lazy-load heavy modes.
+- Profile before introducing memoization complexity.
+- Do not place rapidly changing values in broad React context.
+- Keep animation loops outside React state.
+
+
+8. TAILWIND CSS AND DESIGN-SYSTEM STANDARDS
+-------------------------------------------------------------------------------
+
+- Design tokens are the source of truth for colors, spacing, typography,
+  elevations, motion, and status semantics.
+- Use semantic token names, not "red means danger" hard-coding.
+- Avoid arbitrary values when a token should exist.
+- Repeated class combinations become components or variants.
+- Do not generate class names dynamically in ways the compiler cannot detect.
+- Maintain strong contrast.
+- Support reduced motion.
+- Avoid global CSS leakage.
+- Do not use `!important` as a routine fix.
+- Keep responsive behavior intentional.
+- Do not encode authorization or business state only through CSS.
+- Security status visuals must have text/icon/state equivalents.
+- Use the shared class-composition utility rather than ad hoc concatenation.
+
+
+9. RADIX-STYLE UI PRIMITIVES
+-------------------------------------------------------------------------------
+
+- Use approved accessible primitives for dialogs, menus, popovers, tooltips,
+  tabs, and switches.
+- Preserve keyboard behavior and ARIA semantics.
+- Do not replace accessible behavior merely to match a visual mock.
+- Controlled and uncontrolled usage must be consistent.
+- Modal actions that alter state require clear labels and confirmation
+  appropriate to risk.
+- Destructive or containment actions must not be the default focused action.
+- Tooltips do not contain essential information available nowhere else.
+- Portals must preserve layering and focus behavior.
+
+
+10. TANSTACK QUERY STANDARDS
+-------------------------------------------------------------------------------
+
+- TanStack Query owns remote/server state in the browser.
+- Query keys are centralized, typed, and include every input that affects the
+  response.
+- Do not use stringly-typed ad hoc keys throughout components.
+- Set stale and garbage-collection timing intentionally.
+- Retry only safe, transient reads by default.
+- Mutations do not retry blindly.
+- Pass AbortSignal to fetches.
+- Optimistic updates require rollback and server reconciliation.
+- Security-sensitive actions should prefer server-confirmed state.
+- Invalidate or update exactly the affected queries.
+- Do not cache secrets or raw tokens.
+- Clear user-scoped cache at logout/account change.
+- Test offline, reconnect, and stale-data behavior.
+
+
+11. ZUSTAND STANDARDS
+-------------------------------------------------------------------------------
+
+Zustand is for ephemeral client UI state, such as:
+
+- Selected node.
+- Open panels.
+- Camera preferences.
+- Local graph filters.
+- Temporary timeline controls.
+- Non-authoritative view mode.
+
+Zustand is NOT for:
+
+- Canonical incidents.
+- Durable events.
+- Server authorization.
+- Agent sessions.
+- Approval state.
+- Database-backed entities.
+- A duplicate TanStack Query cache.
+
+Rules:
+
+- Use small stores.
+- Use narrow selectors.
+- Keep actions next to state.
+- Avoid one global catch-all store.
+- Do not persist sensitive state.
+- Version and migrate intentionally persisted preferences.
+- Reset run-scoped state when the run changes.
+
+
+12. SIGMA.JS AND GRAPHOLOGY STANDARDS
+-------------------------------------------------------------------------------
+
+12.1 Source of truth
+
+Graphology represents the client operational graph model. Sigma.js renders it.
+
+- Sigma.js visual state is not domain truth.
+- Coordinates, colors, and camera state do not create domain facts.
+- Canonical IDs come from shared contracts.
+- The 2D and 3D renderers consume the same semantic graph contract.
+- Do not create a second graph data model inside a component.
+
+12.2 Graph updates
+
+- Apply canonical graph deltas through one tested adapter.
+- Delta application is idempotent.
+- Validate node and edge endpoints.
+- Batch changes to avoid one render per event.
+- Preserve selection when entities still exist.
+- Handle deleted/hidden entities explicitly.
+- Never infer compromise solely from visual adjacency.
+- Stable IDs must survive replay.
+
+12.3 Performance
+
+- Layout calculation runs in a Web Worker.
+- Avoid O(n²) scans in interaction handlers.
+- Precompute or index common lookups.
+- Use level-of-detail and cluster collapsing.
+- Hide low-value edges by default.
+- Benchmark realistic high-density graphs.
+- Avoid per-frame allocation.
+- Remove listeners and kill renderer/worker instances on cleanup.
+- Do not copy the entire graph for every small update.
+
+12.4 Interaction
+
+- Hover is lightweight.
+- Selection is persistent and keyboard-representable elsewhere.
+- Neighborhood/path queries operate on the semantic graph.
+- The user can isolate an incident without losing the original full state.
+- Filtering must distinguish hidden from deleted.
+- Search uses stable IDs and indexed searchable labels.
+- Critical findings must also be available in text/panels.
+
+12.5 Layout
+
+- ForceAtlas2 inputs and worker protocol are versioned.
+- Layout state does not affect replay truth.
+- Layout restarts are controlled.
+- Large delta bursts are coalesced.
+- Persisting coordinates is allowed only as a presentation optimization.
+- Tests verify worker termination and stale-result rejection.
+
+
+13. THREE.JS AND REACT THREE FIBER STANDARDS
+-------------------------------------------------------------------------------
+
+Three.js is a secondary cinematic/presentation view, not the primary
+investigation tool.
+
+- Use React Three Fiber as the integration layer.
+- Consume the canonical semantic graph.
+- Do not invent nodes, edges, risk, or incident facts.
+- Provide a 2D/accessibility fallback.
+- Lazy-load the 3D mode.
+- Dispose geometries, materials, textures, render targets, and controls.
+- Use instancing for repeated objects.
+- Cap device pixel ratio.
+- Avoid React state updates inside every frame.
+- Use `useFrame` only for animation/render-loop work.
+- Pause or reduce rendering when hidden.
+- Respect reduced motion.
+- Enforce a performance budget.
+- Test context loss/recovery where practical.
+- Keep shaders small, reviewed, and free of untrusted code generation.
+- Do not load arbitrary remote models or textures.
+- Camera transitions cannot hide required operator information.
+
+
+14. WEB WORKER STANDARDS
+-------------------------------------------------------------------------------
+
+- Worker messages use versioned, validated contracts.
+- Transfer large typed arrays where practical.
+- Do not send secrets to workers.
+- Workers do not access arbitrary network endpoints.
+- Every worker has initialization, ready, error, cancel, and shutdown behavior.
+- Discard stale responses using request/version IDs.
+- Bound worker memory.
+- Terminate workers on component/app teardown.
+- Test crash and restart behavior.
+- Do not put authoritative state only inside a worker.
+
+
+15. PLAYWRIGHT STANDARDS
+-------------------------------------------------------------------------------
+
+- Test user-visible behavior, not implementation details.
+- Prefer role, label, and accessible-name selectors.
+- Use test IDs only when no stable semantic selector exists.
+- Never use arbitrary sleeps.
+- Wait for explicit UI/network/application conditions.
+- Seed deterministic scenario data.
+- Isolate tests.
+- Capture traces, screenshots, and relevant logs on failure.
+- Test keyboard navigation.
+- Test reconnect/reload for realtime workflows.
+- Test approval denial as well as approval success.
+- Test production-like security headers in deployed smoke tests.
+- Avoid mocking the entire backend for full-system E2E tests.
+- Keep a small fast smoke suite and a broader release suite.
+
+
+16. PYTHON STANDARDS
+-------------------------------------------------------------------------------
+
+16.1 Tooling and style
+
+The Python project must use the Phase 00 selected tools for:
+
+- Formatting.
+- Linting.
+- Type checking.
+- Testing.
+- Dependency locking.
+- Security auditing.
+
+Do not introduce competing tools without an ADR.
+
+Requirements:
+
+- Type annotations on public functions and important internal functions.
+- No wildcard imports.
+- No mutable default arguments.
+- No module-level network/database side effects.
+- Explicit encodings for text files.
+- Pathlib for filesystem paths.
+- Context managers for resources.
+- Dataclasses or Pydantic models for structured data.
+- Enums/literals for finite domain states.
+- UTC-aware datetime objects.
+- Structured logging.
+- Specific exception types.
+
+16.2 Typing
+
+- Avoid `Any`.
+- Use protocols for adapters.
+- Use generics where they clarify contracts.
+- Narrow optional values.
+- Do not suppress type errors globally.
+- Every type-ignore includes a reason and narrow code.
+- ORM and Pydantic types do not substitute for domain types automatically.
+- Validate external data at boundaries.
+
+16.3 Async Python
+
+- Do not call blocking I/O from the event loop.
+- Use async-compatible clients in async paths.
+- Move CPU-bound work to worker processes.
+- Bound task groups and concurrency.
+- Apply timeouts.
+- Handle cancellation.
+- Do not create orphan `asyncio.create_task` tasks.
+- Close clients and sessions.
+- Avoid sharing non-thread-safe objects across workers.
+
+16.4 Errors and logging
+
+- Wrap third-party errors at adapter boundaries.
+- Preserve causes.
+- Do not expose internals to API clients.
+- Do not log secrets.
+- Include domain IDs.
+- Avoid logging the same exception repeatedly at every layer.
+- Use warning/error levels consistently.
+
+
+17. FASTAPI STANDARDS
+-------------------------------------------------------------------------------
+
+17.1 Route handlers
+
+Routes are thin.
+
+A route should:
+
+1. Parse and validate input.
+2. Resolve authenticated principal.
+3. Invoke an application use case.
+4. Map typed result/error.
+5. Return a declared response model.
+
+A route should not:
+
+- Contain SQL.
+- Implement graph algorithms.
+- Directly publish Redis events.
+- Call an LLM.
+- Enforce authorization only through UI assumptions.
+- Return ORM objects.
+- Catch every exception into HTTP 500 without observability.
+
+17.2 API contracts
+
+- External APIs are under `/api/v1`.
+- Request and response models are explicit.
+- Standard error envelopes include code, message, details, and trace ID.
+- Cursor pagination is used for events.
+- Retryable commands require idempotency keys.
+- Schema changes preserve compatibility or create a new version.
+- OpenAPI output is reviewed and tested.
+- Content types are strict.
+- Request size limits are enforced at edge and application layers.
+
+17.3 Dependencies and security
+
+- Authentication and authorization use explicit dependencies/security helpers.
+- Permission checks are close to the use case.
+- CORS uses explicit origins.
+- Never use wildcard origins with credentials.
+- Trusted hosts are constrained in production.
+- Proxy headers are trusted only from known proxies.
+- Rate limits protect expensive and mutation endpoints.
+- Health endpoints do not reveal sensitive configuration.
+
+17.4 Performance
+
+- Use async routes for async I/O.
+- Use sync routes/workers for blocking or CPU work.
+- Stream only when required and safely bounded.
+- Avoid loading unbounded event histories.
+- Use pagination and query limits.
+- Measure serialization cost for graph snapshots.
+
+
+18. PYDANTIC STANDARDS
+-------------------------------------------------------------------------------
+
+- Boundary models use strict validation where practical.
+- Security-sensitive models reject unknown fields.
+- Distinguish create, update, response, and domain models.
+- Do not use one giant model for every lifecycle stage.
+- Validators are deterministic and side-effect free.
+- Cross-field rules are explicit.
+- Schema versions are fields in durable payloads.
+- Never serialize secrets by default.
+- Use aliases deliberately and test them.
+- Validate model/agent output before use.
+- Contract fixtures are shared with TypeScript tests.
+
+
+19. SQLALCHEMY 2 STANDARDS
+-------------------------------------------------------------------------------
+
+- Use SQLAlchemy 2-style statements and sessions.
+- Session lifetime follows a request/job unit of work.
+- Do not use a global mutable session.
+- Explicitly commit or roll back.
+- Keep transaction boundaries in application services.
+- Repositories encapsulate persistence concerns.
+- Return domain/data transfer objects, not live ORM entities across layers.
+- Avoid N+1 queries.
+- Select only required columns for high-volume paths.
+- Use eager loading deliberately.
+- Parameterize all SQL.
+- Raw SQL requires justification, tests, and safe parameters.
+- Use database constraints in addition to application validation.
+- Handle optimistic concurrency or row locking where needed.
+- Do not perform network calls inside an open database transaction.
+
+
+20. ALEMBIC MIGRATION STANDARDS
+-------------------------------------------------------------------------------
+
+Every schema change has a migration.
+
+- Migrations are reviewed as production code.
+- Use expand/contract for breaking changes.
+- Separate schema change from large data backfill when needed.
+- Avoid long table locks.
+- Add indexes concurrently or using the platform-safe method where applicable.
+- New non-null columns on populated tables require a safe rollout.
+- Destructive changes require explicit approval and backup/restore plan.
+- Never edit an already-applied released migration.
+- Test upgrades from the previous approved schema.
+- Test a clean database.
+- Downgrade support follows the project policy; when downgrade is unsafe, state
+  that clearly.
+- Migration code must not import current application models.
+
+
+21. POSTGRESQL STANDARDS
+-------------------------------------------------------------------------------
+
+- PostgreSQL is authoritative for durable state.
+- Use normalized columns for commonly filtered/constrained data.
+- Use JSONB for versioned flexible payloads, not as an excuse to avoid schema.
+- Enforce foreign keys.
+- Enforce unique `(run_id, sequence)`.
+- Add indexes based on real query patterns.
+- Review query plans for critical/high-volume queries.
+- Always use explicit ordering for ordered results.
+- Use cursor pagination.
+- Bound result sets.
+- Apply statement and lock timeouts.
+- Keep transactions short.
+- Avoid serializable isolation unless justified.
+- Partition only when measured scale needs it.
+- Store checksums and metadata for object-store artifacts.
+- Backup and restore procedures are tested.
+
+
+22. REDIS STREAMS AND CACHE STANDARDS
+-------------------------------------------------------------------------------
+
+22.1 Role
+
+Redis provides:
+
+- Live event delivery.
+- Cache.
+- Worker coordination.
+
+Redis is not the only authoritative copy of durable state.
+
+22.2 Streams
+
+- Use namespaced stream names.
+- Every message has a schema version and stable event identity.
+- Consumers are idempotent.
+- Acknowledge only after successful processing.
+- Use consumer groups deliberately.
+- Reclaim stale pending messages.
+- Poison messages go to a dead-letter path with diagnostics.
+- Stream retention is configured and monitored.
+- PostgreSQL can rebuild lost derived/live state.
+- Monitor lag and pending counts.
+
+22.3 Cache
+
+- Cache entries have TTLs unless permanence is explicitly justified.
+- Cache keys include version/context.
+- Prevent cache-key injection.
+- Do not cache authorization decisions longer than their validity.
+- Invalidate deliberately.
+- Treat cache as disposable.
+- Avoid stampedes with locking/coalescing where needed.
+- Bound payload and key cardinality.
+
+
+23. BACKGROUND WORKER / DRAMATIQ-COMPATIBLE STANDARDS
+-------------------------------------------------------------------------------
+
+- Jobs are small, typed, versioned messages.
+- Payloads contain IDs, not huge object graphs.
+- Workers re-read authoritative state.
+- Jobs are idempotent.
+- Retries are bounded and only for transient failures.
+- Use backoff with jitter.
+- Apply execution timeouts.
+- Record attempt count and final outcome.
+- Dead-letter failed jobs.
+- Do not hide permanent failures in infinite retries.
+- Propagate trace context.
+- Separate CPU-heavy, I/O-heavy, and privileged queues where needed.
+- Graceful shutdown stops accepting jobs and completes or safely returns work.
+- One failed job must not terminate the worker process indefinitely.
+
+
+24. S3-COMPATIBLE OBJECT-STORAGE STANDARDS
+-------------------------------------------------------------------------------
+
+- Buckets are private.
+- Object keys are server-generated and namespaced.
+- Use checksums.
+- Record content type, size, checksum, key, creator, and timestamps in
+  PostgreSQL.
+- Signed URLs are short-lived and scoped.
+- Validate upload size and content.
+- Multipart uploads are completed or aborted.
+- Lifecycle policies are explicit.
+- Do not overwrite versioned artifacts in place.
+- Model, scenario, report, and snapshot artifacts include compatibility and
+  schema metadata.
+- Never trust metadata supplied by the browser without validation.
+
+
+25. WEBSOCKET AND REALTIME STANDARDS
+-------------------------------------------------------------------------------
+
+- Authenticate before subscription.
+- Authorize each run/channel subscription.
+- Use a versioned envelope.
+- Include sequence/cursor information.
+- Validate all incoming messages.
+- Apply message-size limits.
+- Use heartbeats and idle timeouts.
+- Bound per-connection queues.
+- Define backpressure behavior.
+- Slow clients receive a resync instruction rather than unbounded memory.
+- Reconnect supplies the last processed cursor.
+- Missing events come from PostgreSQL or a fresh snapshot plus deltas.
+- Do not assume exactly-once delivery.
+- UI state reconciles idempotently.
+- Never send secrets or hidden scenario truth to unauthorized clients.
+
+
+26. DETERMINISTIC SIMULATION STANDARDS
+-------------------------------------------------------------------------------
+
+- A run is defined by scenario version, seed, configuration, and engine version.
+- Use a virtual clock.
+- Use a deterministic priority queue.
+- Tie-breaking is explicit and stable.
+- Randomness comes from run-scoped generators.
+- Wall-clock scheduling does not change domain outcomes.
+- Commands become durable events.
+- Actions are applied only after authorization.
+- Checkpoints include compatibility version and checksum.
+- Recovery from checkpoint plus events reproduces state.
+- The engine does not call an LLM to decide authoritative outcomes.
+- Golden replay hashes normalize allowed nondeterministic fields.
+- Scenario bundles are immutable once published.
+
+
+27. ML AND FEATURE-ENGINEERING STANDARDS
+-------------------------------------------------------------------------------
+
+27.1 General
+
+- Begin with transparent baselines.
+- Version feature definitions.
+- Keep training and inference transformations identical.
+- Record dataset, code, feature, model, and environment versions.
+- Prevent train/test leakage.
+- Split data according to scenario/time/entity semantics.
+- Evaluate false positives and false negatives.
+- Calibrate confidence where used.
+- Document intended use and limitations.
+- Never let a model score directly execute an action.
+
+27.2 Feature pipeline
+
+- Feature windows use simulation time.
+- Missing-value behavior is explicit.
+- Categorical mappings are versioned.
+- Feature order is deterministic.
+- Unit and range are documented.
+- Inputs are bounded.
+- Feature extraction has golden fixtures.
+- Online and offline outputs are compared in tests.
+
+27.3 Evaluation
+
+Track suitable metrics, including:
+
+- Precision.
+- Recall.
+- F1.
+- PR-AUC where class imbalance makes it useful.
+- ROC-AUC where appropriate.
+- False-positive rate.
+- Detection delay.
+- Calibration.
+- Performance by scenario cause/entity group.
+- Inference latency and memory.
+
+A model is not accepted because one aggregate metric improved.
+
+27.4 Drift and monitoring
+
+- Record score distributions.
+- Monitor feature availability and range.
+- Detect schema mismatch.
+- Define fallback behavior.
+- Keep the last approved model available.
+- Rollback is possible.
+- Model changes require evaluation artifacts.
+
+
+28. SCIKIT-LEARN STANDARDS
+-------------------------------------------------------------------------------
+
+- Use Pipelines for preprocessing plus model.
+- Set `random_state` wherever supported.
+- Fit preprocessing only on training data.
+- Persist a complete approved pipeline, not disconnected transformations.
+- Record library versions.
+- Do not load untrusted pickle/joblib artifacts.
+- Verify checksum and manifest before loading.
+- Validate feature schema before inference.
+- Use `predict_proba`/decision scores according to documented semantics.
+- Keep inference read-only and thread/process safe.
+- Test serialization round trips.
+- Benchmark on realistic event volumes.
+
+
+29. PYTORCH STANDARDS
+-------------------------------------------------------------------------------
+
+PyTorch is optional after baselines justify it.
+
+- Use deterministic settings where practical and document unavoidable
+  nondeterminism.
+- Seed all relevant generators.
+- Separate training and inference code.
+- Call `model.eval()` for inference.
+- Use `torch.inference_mode()` or no-grad inference.
+- Validate tensor shape, dtype, device, and range.
+- Avoid implicit device transfers.
+- Bound batch sizes.
+- Monitor memory.
+- Save reviewed state dictionaries/artifacts with manifests.
+- Never load untrusted serialized Python objects.
+- Verify artifact checksum.
+- Pin compatible framework/CUDA versions.
+- Compare against simpler baselines before acceptance.
+
+
+30. MODEL ARTIFACT AND MANIFEST STANDARDS
+-------------------------------------------------------------------------------
+
+Every model version includes:
+
+- Stable model version ID.
+- Algorithm/family.
+- Training code revision.
+- Dataset/version identifiers.
+- Feature-definition version.
+- Hyperparameters.
+- Evaluation summary.
+- Intended use.
+- Known limitations.
+- Artifact key.
+- Checksum.
+- Size.
+- Serialization format.
+- Runtime/library compatibility.
+- Approval status.
+- Created timestamp.
+- Rollback predecessor.
+
+Models without a valid manifest and checksum cannot be loaded in production.
+
+
+31. LLM PROVIDER AND AGENT-RUNTIME STANDARDS
+-------------------------------------------------------------------------------
+
+31.1 Provider abstraction
+
+- All providers implement the canonical adapter.
+- Provider-specific request/response types stay inside the adapter.
+- Timeouts, retries, cost, token usage, and errors are normalized.
+- Provider credentials never reach the browser.
+- Recorded/fake providers support CI without external inference.
+- Provider fallback cannot weaken policy or structured-output requirements.
+
+31.2 Prompts
+
+- Prompts are versioned.
+- System policy is separated from scenario evidence.
+- Dynamic content is delimited and labeled untrusted.
+- Tool descriptions are precise.
+- Ask for structured outputs rather than free-form parsing.
+- Avoid embedding secrets.
+- Do not request or store hidden chain-of-thought.
+- Keep concise user-visible justifications with evidence references.
+
+31.3 Structured output
+
+- Validate every output.
+- Reject unsupported fields/actions.
+- Bound lists and text lengths.
+- Validate confidence range.
+- Evidence IDs must exist and be authorized.
+- Invalid output triggers bounded repair/retry, not unsafe best-effort parsing.
+- Model text never becomes SQL, shell, HTML, object key, or URL without a safe
+  adapter.
+
+31.4 Tool calls
+
+- Tool names are allowlisted.
+- Tool schemas are versioned.
+- Tool arguments are validated.
+- Tool permission is checked per agent, role, run, incident, and action.
+- Tools are read-only by default.
+- Mutating tools produce proposals, not direct execution.
+- Every tool call is audited with result and duration.
+- Outputs are bounded and redacted.
+- Tool errors do not expose secrets.
+
+31.5 Evidence grounding
+
+- Hypotheses cite evidence IDs.
+- Evidence comes from authoritative events/artifacts.
+- Contradictory evidence is represented.
+- Confidence is not a substitute for evidence.
+- Unsupported claims are marked.
+- Reports distinguish observed fact, model score, agent inference, and human
+  decision.
+
+
+32. POLICY, WARDEN, AND HUMAN APPROVAL STANDARDS
+-------------------------------------------------------------------------------
+
+- Policy is deterministic code/configuration, not only prompt text.
+- Deny by default.
+- Action class and resource scope are explicit.
+- A proposal includes current target version/state.
+- Approval references the exact proposal version.
+- Execution rechecks proposal, approval, permission, and target state.
+- Modified proposals return through policy evaluation.
+- Reject and expiry states are final unless a new proposal is created.
+- All transitions are audited.
+- The frontend cannot forge approval state.
+- The simulator accepts commands only from the authorized command service.
+- Agent sessions cannot call simulator mutation APIs directly.
+
+
+33. OBSERVABILITY AND OPENTELEMETRY STANDARDS
+-------------------------------------------------------------------------------
+
+- Propagate trace context across HTTP, WebSocket setup, Redis, workers, ML, and
+  agent calls.
+- Use stable span names.
+- Add domain IDs as attributes only when cardinality is controlled.
+- Do not put secrets or large payloads in spans.
+- Metrics have documented units.
+- Avoid unbounded labels.
+- Record latency, errors, queue depth, lag, throughput, cost, and retries.
+- Health checks distinguish liveness and readiness.
+- Readiness verifies required dependencies without causing load.
+- Alerts are actionable and tied to runbooks.
+- Observability failures do not crash core processing, but they are visible.
+
+
+34. DOCKER AND CONTAINER STANDARDS
+-------------------------------------------------------------------------------
+
+- Use multi-stage builds.
+- Pin base-image versions; use digests for release-critical images where
+  practical.
+- Run as a non-root user.
+- Use a minimal runtime image.
+- Do not include compilers/dev dependencies in production images.
+- Do not copy `.git`, tests, local secrets, caches, or unnecessary source.
+- Use `.dockerignore`.
+- Never use `curl | sh` from an unverified source in a build.
+- Verify downloaded artifacts.
+- Do not bake secrets into layers or build arguments.
+- Use exec-form ENTRYPOINT/CMD.
+- Handle termination signals.
+- Add meaningful health checks.
+- Use a read-only filesystem and dropped capabilities where compatible.
+- Write temporary data only to approved paths.
+- Scan final images.
+- Build reproducibly.
+- Tag images with immutable revision identifiers.
+
+
+35. DOCKER COMPOSE LOCAL-DEVELOPMENT STANDARDS
+-------------------------------------------------------------------------------
+
+`docker compose up` should provide the approved local stack.
+
+- No production credentials.
+- Safe synthetic seed data.
+- Health-based dependency ordering.
+- Persistent volumes only where useful.
+- Document reset commands.
+- Do not expose PostgreSQL/Redis/object storage broadly beyond local need.
+- Match production versions closely.
+- Mock/recorded LLM mode must be available.
+- Local shortcuts must not become production defaults.
+- Compose files are validated in CI.
+
+
+36. INFRASTRUCTURE-AS-CODE AND CLOUD STANDARDS
+-------------------------------------------------------------------------------
+
+- Infrastructure changes are reviewed and versioned.
+- No manual production-only resources without reconciliation.
+- Least-privilege identities per service.
+- Private networking for data services.
+- Encryption in transit and at rest.
+- Secret manager integration.
+- Backup and restore policy.
+- Resource limits and budgets.
+- Central logs, metrics, and traces.
+- Immutable deployment artifacts.
+- Separate environments/accounts/projects where practical.
+- Production changes require approval and rollback plan.
+- State files are encrypted and access-controlled.
+- Do not place secrets in IaC variables committed to source.
+
+
+37. API AND CONTRACT STANDARDS
+-------------------------------------------------------------------------------
+
+- One canonical contract per concept per language.
+- Cross-language schemas are compatibility-tested.
+- Durable payloads include schema version.
+- New required fields require a compatibility plan.
+- Enums are extended carefully; consumers handle unknown future values where
+  designed.
+- Error codes are stable.
+- Pagination is deterministic.
+- Idempotency behavior is documented.
+- Contract changes update docs, fixtures, tests, and handoff.
+- Do not return internal database or provider representations.
+
+
+38. TESTING STANDARDS
+-------------------------------------------------------------------------------
+
+38.1 General principles
+
+- Test behavior, invariants, failure, recovery, and security.
+- A test must fail when the required behavior is broken.
+- Tests are deterministic.
+- Tests do not depend on order unless order is the behavior.
+- Avoid excessive mocking.
+- Use real PostgreSQL and Redis containers for integration tests.
+- Core CI does not require an external LLM.
+- Flaky tests are defects, not acceptable noise.
+- Do not retry a failing test suite to hide nondeterminism.
+
+38.2 Required categories
+
+Use as applicable:
+
+- Unit tests.
+- Contract tests.
+- Property-based tests.
+- Integration tests.
+- Migration tests.
+- Golden replay tests.
+- Agent policy/grounding tests.
+- Frontend component/accessibility tests.
+- Playwright E2E tests.
+- Performance tests.
+- Recovery/chaos tests.
+- Security tests.
+
+38.3 Test data
+
+- Synthetic.
+- Minimal.
+- Deterministic.
+- Clearly named.
+- No real secrets or personal data.
+- Factories/builders preserve valid defaults.
+- Invalid fixtures target one failure at a time.
+- Released golden artifacts are versioned.
+
+38.4 Coverage
+
+Coverage is a signal, not the acceptance criterion.
+
+- Critical domain, policy, replay, authorization, and parsing code needs strong
+  branch coverage.
+- Do not add meaningless tests to inflate percentages.
+- Uncovered security-sensitive branches require justification.
+- Mutation testing may be used for critical rules when introduced by a phase.
+
+38.5 Golden replay
+
+- Same scenario version, seed, config, and engine version produces the expected
+  normalized event hash.
+- Intentional changes include a readable diff/explanation.
+- Golden updates cannot be automatic side effects of tests.
+- Replay tests include checkpoint recovery.
+
+
+39. PERFORMANCE AND RESOURCE STANDARDS
+-------------------------------------------------------------------------------
+
+- Define budgets before optimizing.
+- Measure with realistic data.
+- Record benchmark environment.
+- Prevent regressions in critical paths.
+- Bound payload size and result count.
+- Paginate event histories.
+- Batch realtime deltas.
+- Use workers for graph layout.
+- Avoid unbounded in-memory transcript/event accumulation.
+- Apply model and agent concurrency limits.
+- Track latency percentiles, not only averages.
+- Gracefully degrade cinematic effects on weaker devices.
+- Performance optimizations must preserve correctness and security.
+
+
+40. ACCESSIBILITY AND UX SAFETY STANDARDS
+-------------------------------------------------------------------------------
+
+- Critical workflows work with keyboard.
+- Focus is managed.
+- Status has text and icon meaning, not color only.
+- Motion respects user preference.
+- Time-critical actions are clear but not coercive.
+- Destructive actions are distinguishable and confirmable.
+- Error messages explain recovery.
+- Loading states do not imply success.
+- Realtime disconnect is visible.
+- Historical replay is visibly distinct from live mode.
+- Simulated actions are clearly labeled as simulation.
+- The UI must never imply AEGIS is connected to or controlling a real external
+  system when it is not.
+
+
+41. DOCUMENTATION, HANDOFF, AND ADR STANDARDS
+-------------------------------------------------------------------------------
+
+41.1 Documentation updates
+
+A phase updates documentation when it changes:
+
+- Setup.
+- Commands.
+- Configuration.
+- Contracts.
+- Architecture.
+- Operational behavior.
+- Security behavior.
+- Deployment.
+- Scenario authoring.
+- Model usage.
+
+41.2 Handoff
+
+Every phase creates:
+
+    handoffs/NN-phase-slug-HANDOFF.md
+
+It must include factual evidence and list:
+
+- Implemented behavior.
+- Files.
+- Contracts.
+- Migrations.
+- Configuration.
+- Dependencies.
+- Tests.
+- Commands and results.
+- ADR changes.
+- Security/reliability impact.
+- Limitations and risks.
+- Acceptance-criteria evidence.
+
+41.3 ADR behavior
+
+When no ADR is required, state:
+
+    No new architectural decisions were introduced during this phase.
+    No existing ADRs were modified or superseded.
+
+When an ADR is required:
+
+- Create it before silently changing architecture.
+- Preserve superseded ADRs.
+- Link old and new decisions.
+- Include alternatives and consequences.
+- Obtain required project-owner approval.
+
+
+42. VALIDATION AGENT CHECKLIST
+-------------------------------------------------------------------------------
+
+The independent validator must verify:
+
+[ ] The assigned phase scope is complete.
+[ ] No future-phase scope was silently absorbed.
+[ ] architecture.md boundaries are preserved.
+[ ] bestPractices.txt is followed.
+[ ] No production stubs or fake behavior remain.
+[ ] New dependencies are necessary and documented.
+[ ] pnpm is the only JS package manager.
+[ ] pnpm-lock.yaml is consistent.
+[ ] `pnpm install --frozen-lockfile` passes.
+[ ] `pnpm audit --audit-level high` passes or approved exceptions exist.
+[ ] `pnpm audit signatures` passes.
+[ ] Python dependency audit passes under the selected Phase 00 tool.
+[ ] Type checking passes.
+[ ] Linting and formatting checks pass.
+[ ] Unit and applicable integration/E2E tests pass.
+[ ] Security-sensitive tests include denial/failure cases.
+[ ] Authorization is server-side.
+[ ] Agent tools are allowlisted and validated.
+[ ] Replay and deterministic behavior remain correct.
+[ ] Database migrations are safe and tested.
+[ ] Logs do not expose secrets.
+[ ] Containers run without root where required.
+[ ] Documentation is accurate.
+[ ] Handoff claims match the tree.
+[ ] ADR changes are present or explicitly declared unnecessary.
+
+
+43. DEFINITION OF DONE
+-------------------------------------------------------------------------------
+
+A feature or phase is done only when:
+
+- In-scope behavior is implemented in production paths.
+- Architecture and package boundaries are respected.
+- Inputs are validated.
+- Authorization is enforced server-side.
+- Errors and partial failures are handled.
+- Security controls are applied.
+- Observability is present.
+- Tests prove success, failure, and relevant recovery.
+- Required performance constraints pass.
+- Dependency audits pass.
+- Documentation is updated.
+- Migrations/configuration are included.
+- Handoff is complete.
+- ADRs are created or explicitly declared unnecessary.
+- Independent validation approves it.
+
+"Works on my machine", "the UI renders", "the agent said complete", and "tests
+were not run" are not acceptable completion states.
+
+
+44. STANDARD COMMAND EXPECTATIONS
+-------------------------------------------------------------------------------
+
+The final exact commands are defined in Phase 00 and package scripts. The
+repository should provide a consistent root interface equivalent to:
+
+JavaScript/TypeScript:
+
+    pnpm install --frozen-lockfile
+    pnpm format:check
+    pnpm lint
+    pnpm typecheck
+    pnpm test
+    pnpm test:integration
+    pnpm test:e2e
+    pnpm build
+    pnpm audit --audit-level high
+    pnpm audit signatures
+    pnpm licenses
+
+Python:
+
+    <python package manager> sync/install from lock
+    <formatter> --check
+    <linter>
+    <type checker>
+    pytest
+    <dependency vulnerability audit>
+
+System:
+
+    docker compose config
+    docker compose build
+    docker compose up -d
+    <migration upgrade test>
+    <container scan>
+    <secret scan>
+    <SBOM generation>
+
+Agents must use repository scripts rather than inventing inconsistent commands.
+
+
+45. PROHIBITED SHORTCUTS
+-------------------------------------------------------------------------------
+
+Never:
+
+- Use npm, npx, Yarn, or Bun as the project package manager.
+- Commit more than one JavaScript lockfile.
+- Disable security audits to pass CI.
+- Ignore critical/high vulnerabilities indefinitely.
+- Turn on all dependency install scripts.
+- Use `any` to silence TypeScript.
+- Disable Python type checks globally.
+- Return raw ORM entities.
+- Put SQL in FastAPI routes.
+- Put server state in Zustand.
+- Make Sigma.js or Three.js domain truth.
+- Block the browser main thread with graph layout.
+- Store JWT/access tokens in localStorage.
+- Use wildcard CORS with credentials.
+- Log secrets.
+- Render unsanitized model output as HTML.
+- Allow agents arbitrary shell or network access.
+- Let agents directly mutate simulation state.
+- Rely on prompts for authorization.
+- Load untrusted model serialization artifacts.
+- Treat Redis as the only durable store.
+- Use sleeps in Playwright.
+- Update golden replay artifacts without explanation.
+- Delete failing tests.
+- Mark a phase complete without validation.
+- Skip the handoff.
+- Skip ADR review.
+
+
+46. OFFICIAL REFERENCE BASELINE
+-------------------------------------------------------------------------------
+
+Agents should consult current official documentation when a framework-specific
+detail is uncertain. Do not rely on old blog posts for security-sensitive
+behavior.
+
+PNPM:
+https://pnpm.io/
+https://pnpm.io/cli/audit
+https://pnpm.io/settings
+https://pnpm.io/cli/install
+https://pnpm.io/package_json
+
+Next.js:
+https://nextjs.org/docs
+https://nextjs.org/docs/app/guides/content-security-policy
+https://nextjs.org/docs/app/api-reference/config/next-config-js/headers
+
+React:
+https://react.dev/
+
+TypeScript:
+https://www.typescriptlang.org/docs/
+
+Tailwind CSS:
+https://tailwindcss.com/docs
+
+TanStack Query:
+https://tanstack.com/query/latest/docs/framework/react/overview
+
+Zustand:
+https://zustand.docs.pmnd.rs/
+
+Sigma.js:
+https://www.sigmajs.org/docs/
+
+Graphology:
+https://graphology.github.io/
+
+Three.js:
+https://threejs.org/docs/
+
+React Three Fiber:
+https://r3f.docs.pmnd.rs/
+
+Playwright:
+https://playwright.dev/docs/intro
+
+Python:
+https://docs.python.org/
+
+FastAPI:
+https://fastapi.tiangolo.com/
+https://fastapi.tiangolo.com/reference/security/
+https://fastapi.tiangolo.com/advanced/strict-content-type/
+
+Pydantic:
+https://docs.pydantic.dev/
+
+SQLAlchemy:
+https://docs.sqlalchemy.org/
+
+Alembic:
+https://alembic.sqlalchemy.org/
+
+PostgreSQL:
+https://www.postgresql.org/docs/
+
+Redis:
+https://redis.io/docs/latest/
+
+Dramatiq:
+https://dramatiq.io/
+
+OpenTelemetry:
+https://opentelemetry.io/docs/
+
+scikit-learn:
+https://scikit-learn.org/stable/
+
+PyTorch:
+https://pytorch.org/docs/stable/
+
+Docker:
+https://docs.docker.com/
+
+
+END OF SOP
+===============================================================================
