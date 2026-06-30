@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@aegis/contracts-ts": "workspace:*",
+    "@aegis/graph-domain": "workspace:*",
     "@aegis/ui": "workspace:*",
     "@tanstack/react-query": "5.80.7",
     "next": "15.5.19",
