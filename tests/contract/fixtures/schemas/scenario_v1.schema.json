@@ -1,0 +1,31 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "id", "name", "createdAt"],
+  "title": "ScenarioV1",
+  "type": "object"
+}

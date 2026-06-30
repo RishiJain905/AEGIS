@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "not-a-valid-id",
+  "entityType": "asset",
+  "assetType": "service",
+  "label": "API Gateway",
+  "riskScore": 0.78,
+  "criticality": 0.91,
+  "status": "under_investigation",
+  "revision": 42
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sequence": 501,
+  "revision": 13,
+  "operation": "upsert_node",
+  "node": {
+    "schemaVersion": 1,
+    "id": "asset:svc-api-gateway",
+    "entityType": "asset",
+    "assetType": "service",
+    "label": "API Gateway",
+    "clusterId": "business-unit:bu-platform",
+    "riskScore": 0.8,
+    "criticality": 0.91,
+    "status": "suspicious",
+    "revision": 43
+  }
+}

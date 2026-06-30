@@ -1,0 +1,281 @@
+{
+  "$defs": {
+    "AssetType": {
+      "enum": ["service", "device", "user", "identity", "database", "control", "ai_model"],
+      "title": "AssetType",
+      "type": "string"
+    },
+    "EntityType": {
+      "enum": ["asset", "cluster"],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "GraphClusterV1": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "memberNodeIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Membernodeids",
+          "type": "array"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": ["schemaVersion", "id", "label", "memberNodeIds", "revision"],
+      "title": "GraphClusterV1",
+      "type": "object"
+    },
+    "GraphDeltaOperation": {
+      "enum": ["upsert_node", "upsert_edge", "delete_node", "delete_edge", "upsert_cluster"],
+      "title": "GraphDeltaOperation",
+      "type": "string"
+    },
+    "GraphEdgeV1": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "directed": {
+          "title": "Directed",
+          "type": "boolean"
+        },
+        "eventCount": {
+          "minimum": 0,
+          "title": "Eventcount",
+          "type": "integer"
+        },
+        "firstSeenAt": {
+          "title": "Firstseenat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "title": "Lastseenat",
+          "type": "string"
+        },
+        "relationshipType": {
+          "$ref": "#/$defs/RelationshipType"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "riskContribution": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Riskcontribution",
+          "type": "number"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "source",
+        "target",
+        "relationshipType",
+        "directed",
+        "confidence",
+        "riskContribution",
+        "firstSeenAt",
+        "lastSeenAt",
+        "eventCount",
+        "revision"
+      ],
+      "title": "GraphEdgeV1",
+      "type": "object"
+    },
+    "GraphNodeV1": {
+      "additionalProperties": false,
+      "properties": {
+        "assetType": {
+          "$ref": "#/$defs/AssetType"
+        },
+        "clusterId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Clusterid"
+        },
+        "criticality": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Criticality",
+          "type": "number"
+        },
+        "entityType": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "riskScore": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Riskscore",
+          "type": "number"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/NodeStatus"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "entityType",
+        "assetType",
+        "label",
+        "riskScore",
+        "criticality",
+        "status",
+        "revision"
+      ],
+      "title": "GraphNodeV1",
+      "type": "object"
+    },
+    "NodeStatus": {
+      "enum": ["normal", "suspicious", "under_investigation", "contained", "compromised"],
+      "title": "NodeStatus",
+      "type": "string"
+    },
+    "RelationshipType": {
+      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
+      "title": "RelationshipType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "cluster": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GraphClusterV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "edge": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GraphEdgeV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "node": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GraphNodeV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "operation": {
+      "$ref": "#/$defs/GraphDeltaOperation"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "targetId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Targetid"
+    }
+  },
+  "required": ["schemaVersion", "runId", "sequence", "revision", "operation"],
+  "title": "GraphDeltaV1",
+  "type": "object"
+}

@@ -33,10 +33,9 @@ module.exports = {
       name: 'no-private-cross-package',
       severity: 'error',
       comment: 'Do not import private source paths from other packages',
-      from: {},
+      from: { path: '^packages/([^/]+)/' },
       to: {
-        path: '^packages/[^/]+/src/(?!index)',
-        pathNot: ['^packages/[^/]+/src/index'],
+        path: '^packages/(?!$1)[^/]+/src/(?!index)',
       },
     },
   ],

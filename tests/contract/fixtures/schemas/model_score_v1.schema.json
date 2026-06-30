@@ -1,0 +1,66 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "entityId": {
+      "title": "Entityid",
+      "type": "string"
+    },
+    "explanation": {
+      "additionalProperties": true,
+      "title": "Explanation",
+      "type": "object"
+    },
+    "featureSchemaVersion": {
+      "minimum": 1,
+      "title": "Featureschemaversion",
+      "type": "integer"
+    },
+    "modelVersionId": {
+      "title": "Modelversionid",
+      "type": "string"
+    },
+    "riskBand": {
+      "minLength": 1,
+      "title": "Riskband",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "score": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Score",
+      "type": "number"
+    },
+    "scoredAt": {
+      "title": "Scoredat",
+      "type": "string"
+    },
+    "sourceEventId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sourceeventid"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "modelVersionId",
+    "entityId",
+    "score",
+    "riskBand",
+    "featureSchemaVersion",
+    "scoredAt"
+  ],
+  "title": "ModelScoreV1",
+  "type": "object"
+}

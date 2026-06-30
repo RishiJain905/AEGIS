@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Assetid"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sourceEventId": {
+      "title": "Sourceeventid",
+      "type": "string"
+    },
+    "summary": {
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "id", "runId", "sourceEventId", "summary", "createdAt"],
+  "title": "EvidenceV1",
+  "type": "object"
+}

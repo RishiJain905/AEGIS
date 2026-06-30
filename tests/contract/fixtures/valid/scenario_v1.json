@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "id": "scenario:scenario-synthetic-01",
+  "name": "Synthetic Training Scenario",
+  "description": "Platform test scenario",
+  "createdAt": "2026-01-01T00:00:00.000Z"
+}

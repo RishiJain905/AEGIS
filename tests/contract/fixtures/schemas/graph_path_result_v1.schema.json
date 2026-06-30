@@ -1,0 +1,40 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "explanation": {
+      "additionalProperties": true,
+      "title": "Explanation",
+      "type": "object"
+    },
+    "paths": {
+      "items": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Paths",
+      "type": "array"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sourceId": {
+      "title": "Sourceid",
+      "type": "string"
+    },
+    "targetId": {
+      "title": "Targetid",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "runId", "sourceId", "targetId", "paths"],
+  "title": "GraphPathResultV1",
+  "type": "object"
+}

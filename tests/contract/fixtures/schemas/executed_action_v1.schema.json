@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "executedAt": {
+      "title": "Executedat",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "idempotencyKey": {
+      "minLength": 1,
+      "title": "Idempotencykey",
+      "type": "string"
+    },
+    "proposalId": {
+      "title": "Proposalid",
+      "type": "string"
+    },
+    "resultEventId": {
+      "title": "Resulteventid",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "proposalId",
+    "runId",
+    "resultEventId",
+    "idempotencyKey",
+    "executedAt"
+  ],
+  "title": "ExecutedActionV1",
+  "type": "object"
+}

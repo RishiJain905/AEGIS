@@ -1,0 +1,111 @@
+{
+  "$defs": {
+    "ActorRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/ActorType"
+        }
+      },
+      "required": ["type", "id"],
+      "title": "ActorRef",
+      "type": "object"
+    },
+    "ActorType": {
+      "enum": ["asset", "agent", "system", "operator"],
+      "title": "ActorType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actor": {
+      "$ref": "#/$defs/ActorRef"
+    },
+    "causationId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Causationid"
+    },
+    "correlationId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correlationid"
+    },
+    "eventId": {
+      "title": "Eventid",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "recordedAt": {
+      "title": "Recordedat",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "subject": {
+      "$ref": "#/$defs/ActorRef"
+    },
+    "traceId": {
+      "title": "Traceid",
+      "type": "string"
+    },
+    "type": {
+      "minLength": 1,
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "eventId",
+    "runId",
+    "sequence",
+    "type",
+    "schemaVersion",
+    "simTime",
+    "recordedAt",
+    "actor",
+    "subject",
+    "traceId"
+  ],
+  "title": "DomainEventEnvelopeV1",
+  "type": "object"
+}

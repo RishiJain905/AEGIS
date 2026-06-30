@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "asset:svc-api-gateway",
+  "entityType": "asset",
+  "assetType": "service",
+  "label": "API Gateway",
+  "clusterId": "business-unit:bu-platform",
+  "riskScore": 0.78,
+  "criticality": 0.91,
+  "status": "under_investigation",
+  "revision": 42
+}

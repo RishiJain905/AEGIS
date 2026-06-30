@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "alert:alt_synthetic_001",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "title": "Repeated authentication failures",
+  "severity": "high",
+  "sourceEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "assetId": "asset:device-workstation-01",
+  "createdAt": "2026-06-30T02:00:01.102Z"
+}

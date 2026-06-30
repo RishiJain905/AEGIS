@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "mdl_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+  "semanticVersion": "1.0.0",
+  "algorithm": "isolation_forest",
+  "featureSchemaVersion": 1,
+  "artifactChecksum": "sha256:0123456789abcdef",
+  "artifactObjectKey": "models/isolation-forest/v1/artifact.bin",
+  "evaluationMetrics": {
+    "precision": 0.91,
+    "recall": 0.84
+  },
+  "knownLimitations": ["Trained on synthetic data only"],
+  "createdAt": "2026-01-01T00:00:00.000Z"
+}

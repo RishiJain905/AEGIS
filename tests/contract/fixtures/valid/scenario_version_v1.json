@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "id": "scenario-version:v1.0.0-synthetic",
+  "scenarioId": "scenario:scenario-synthetic-01",
+  "version": "1.0.0",
+  "requiredPlatformVersion": "0.0.0-phase01",
+  "publishedAt": "2026-01-01T00:00:00.000Z"
+}

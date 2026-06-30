@@ -1,0 +1,50 @@
+{
+  "$defs": {
+    "RelationshipType": {
+      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
+      "title": "RelationshipType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "directedOnly": {
+      "default": true,
+      "title": "Directedonly",
+      "type": "boolean"
+    },
+    "maxHops": {
+      "maximum": 32,
+      "minimum": 1,
+      "title": "Maxhops",
+      "type": "integer"
+    },
+    "relationshipTypes": {
+      "items": {
+        "$ref": "#/$defs/RelationshipType"
+      },
+      "title": "Relationshiptypes",
+      "type": "array"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sourceId": {
+      "title": "Sourceid",
+      "type": "string"
+    },
+    "targetId": {
+      "title": "Targetid",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "runId", "sourceId", "targetId", "maxHops"],
+  "title": "GraphPathQueryV1",
+  "type": "object"
+}

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "code": "VALIDATION_FAILED",
+  "message": "Example validation failure",
+  "details": {
+    "field": "assetId"
+  },
+  "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAX"
+}

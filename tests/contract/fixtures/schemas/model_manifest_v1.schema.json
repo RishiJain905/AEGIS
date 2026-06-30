@@ -1,0 +1,67 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "algorithm": {
+      "minLength": 1,
+      "title": "Algorithm",
+      "type": "string"
+    },
+    "artifactChecksum": {
+      "minLength": 1,
+      "title": "Artifactchecksum",
+      "type": "string"
+    },
+    "artifactObjectKey": {
+      "minLength": 1,
+      "title": "Artifactobjectkey",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "evaluationMetrics": {
+      "additionalProperties": true,
+      "title": "Evaluationmetrics",
+      "type": "object"
+    },
+    "featureSchemaVersion": {
+      "minimum": 1,
+      "title": "Featureschemaversion",
+      "type": "integer"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "knownLimitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Knownlimitations",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "semanticVersion": {
+      "minLength": 1,
+      "title": "Semanticversion",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "semanticVersion",
+    "algorithm",
+    "featureSchemaVersion",
+    "artifactChecksum",
+    "artifactObjectKey",
+    "createdAt"
+  ],
+  "title": "ModelManifestV1",
+  "type": "object"
+}

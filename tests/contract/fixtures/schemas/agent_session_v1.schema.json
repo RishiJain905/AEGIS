@@ -1,0 +1,71 @@
+{
+  "$defs": {
+    "AgentRole": {
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
+      "title": "AgentRole",
+      "type": "string"
+    },
+    "AgentSessionState": {
+      "enum": [
+        "queued",
+        "gathering",
+        "hypothesizing",
+        "verifying",
+        "proposing",
+        "approval_pending",
+        "executing",
+        "completed",
+        "failed",
+        "cancelled"
+      ],
+      "title": "AgentSessionState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/AgentRole"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "state": {
+      "$ref": "#/$defs/AgentSessionState"
+    },
+    "traceId": {
+      "title": "Traceid",
+      "type": "string"
+    },
+    "updatedAt": {
+      "title": "Updatedat",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "incidentId",
+    "role",
+    "state",
+    "traceId",
+    "createdAt",
+    "updatedAt"
+  ],
+  "title": "AgentSessionV1",
+  "type": "object"
+}

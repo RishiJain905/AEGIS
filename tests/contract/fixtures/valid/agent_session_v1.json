@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "agent-session:ags_synthetic_001",
+  "incidentId": "incident:inc_synthetic_001",
+  "role": "TRACE",
+  "state": "gathering",
+  "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAX",
+  "createdAt": "2026-06-30T02:15:00.000Z",
+  "updatedAt": "2026-06-30T02:15:00.000Z"
+}
