@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "scenarioVersionId": {
+      "title": "Scenarioversionid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "seed": {
+      "title": "Seed",
+      "type": "integer"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "startedAt": {
+      "title": "Startedat",
+      "type": "string"
+    },
+    "status": {
+      "minLength": 1,
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "scenarioVersionId",
+    "seed",
+    "status",
+    "startedAt",
+    "simTime",
+    "revision"
+  ],
+  "title": "RunV1",
+  "type": "object"
+}

@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from aegis_contracts import AegisSettings, load_settings
+from aegis_contracts import WORKSPACE_VERSION, AegisSettings, load_settings
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -16,10 +16,6 @@ class ReadyResponse(BaseModel):
     status: str
     service: str
     environment: str
-
-
-WORKSPACE_VERSION = "0.0.0-phase00"
-
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:

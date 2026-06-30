@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "hyp_01ARZ3NDEKTSV4RRFFQ69G5FB2",
+  "incidentId": "incident:inc_synthetic_001",
+  "statement": "Credentials may be compromised on workstation",
+  "confidence": 0.72,
+  "evidenceIds": ["evidence:evd_synthetic_001"],
+  "createdAt": "2026-06-30T02:10:00.000Z"
+}

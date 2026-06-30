@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "publishedAt": {
+      "title": "Publishedat",
+      "type": "string"
+    },
+    "requiredPlatformVersion": {
+      "title": "Requiredplatformversion",
+      "type": "string"
+    },
+    "scenarioId": {
+      "title": "Scenarioid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "scenarioId",
+    "version",
+    "requiredPlatformVersion",
+    "publishedAt"
+  ],
+  "title": "ScenarioVersionV1",
+  "type": "object"
+}

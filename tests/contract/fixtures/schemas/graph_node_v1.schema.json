@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "AssetType": {
+      "enum": ["service", "device", "user", "identity", "database", "control", "ai_model"],
+      "title": "AssetType",
+      "type": "string"
+    },
+    "EntityType": {
+      "enum": ["asset", "cluster"],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "NodeStatus": {
+      "enum": ["normal", "suspicious", "under_investigation", "contained", "compromised"],
+      "title": "NodeStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assetType": {
+      "$ref": "#/$defs/AssetType"
+    },
+    "clusterId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Clusterid"
+    },
+    "criticality": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Criticality",
+      "type": "number"
+    },
+    "entityType": {
+      "$ref": "#/$defs/EntityType"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "label": {
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "riskScore": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Riskscore",
+      "type": "number"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/NodeStatus"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "entityType",
+    "assetType",
+    "label",
+    "riskScore",
+    "criticality",
+    "status",
+    "revision"
+  ],
+  "title": "GraphNodeV1",
+  "type": "object"
+}

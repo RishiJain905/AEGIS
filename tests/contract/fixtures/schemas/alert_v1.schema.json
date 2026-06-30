@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "title": "Assetid",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "severity": {
+      "minLength": 1,
+      "title": "Severity",
+      "type": "string"
+    },
+    "sourceEventId": {
+      "title": "Sourceeventid",
+      "type": "string"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "runId",
+    "title",
+    "severity",
+    "sourceEventId",
+    "assetId",
+    "createdAt"
+  ],
+  "title": "AlertV1",
+  "type": "object"
+}

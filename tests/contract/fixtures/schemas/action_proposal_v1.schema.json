@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "enum": ["class_0", "class_1", "class_2", "class_3"],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "ProposalStatus": {
+      "enum": ["pending", "approved", "rejected", "executed", "cancelled"],
+      "title": "ProposalStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actionClass": {
+      "$ref": "#/$defs/ActionClass"
+    },
+    "agentSessionId": {
+      "title": "Agentsessionid",
+      "type": "string"
+    },
+    "command": {
+      "minLength": 1,
+      "title": "Command",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "rationale": {
+      "default": "",
+      "title": "Rationale",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/ProposalStatus"
+    },
+    "targetAssetId": {
+      "title": "Targetassetid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "incidentId",
+    "agentSessionId",
+    "actionClass",
+    "targetAssetId",
+    "command",
+    "status",
+    "revision",
+    "createdAt"
+  ],
+  "title": "ActionProposalV1",
+  "type": "object"
+}

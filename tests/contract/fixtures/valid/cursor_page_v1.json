@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "cursor": "seq:1842",
+  "limit": 100,
+  "hasMore": true,
+  "nextCursor": "seq:1942"
+}

@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "IncidentState": {
+      "enum": [
+        "open",
+        "triaged",
+        "investigating",
+        "containment_proposed",
+        "approval_pending",
+        "containing",
+        "monitoring",
+        "resolved",
+        "closed"
+      ],
+      "title": "IncidentState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "alertIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Alertids",
+      "type": "array"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "state": {
+      "$ref": "#/$defs/IncidentState"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "updatedAt": {
+      "title": "Updatedat",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "runId",
+    "title",
+    "state",
+    "alertIds",
+    "createdAt",
+    "updatedAt",
+    "revision"
+  ],
+  "title": "IncidentV1",
+  "type": "object"
+}

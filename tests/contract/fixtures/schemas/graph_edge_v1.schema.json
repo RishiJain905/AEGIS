@@ -1,0 +1,82 @@
+{
+  "$defs": {
+    "RelationshipType": {
+      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
+      "title": "RelationshipType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "directed": {
+      "title": "Directed",
+      "type": "boolean"
+    },
+    "eventCount": {
+      "minimum": 0,
+      "title": "Eventcount",
+      "type": "integer"
+    },
+    "firstSeenAt": {
+      "title": "Firstseenat",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "lastSeenAt": {
+      "title": "Lastseenat",
+      "type": "string"
+    },
+    "relationshipType": {
+      "$ref": "#/$defs/RelationshipType"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "riskContribution": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Riskcontribution",
+      "type": "number"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "source": {
+      "title": "Source",
+      "type": "string"
+    },
+    "target": {
+      "title": "Target",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "source",
+    "target",
+    "relationshipType",
+    "directed",
+    "confidence",
+    "riskContribution",
+    "firstSeenAt",
+    "lastSeenAt",
+    "eventCount",
+    "revision"
+  ],
+  "title": "GraphEdgeV1",
+  "type": "object"
+}

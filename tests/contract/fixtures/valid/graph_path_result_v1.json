@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sourceId": "asset:device-workstation-01",
+  "targetId": "asset:svc-api-gateway",
+  "paths": [["asset:device-workstation-01", "asset:svc-api-gateway"]],
+  "explanation": {
+    "hopCount": 1,
+    "relationshipType": "COMMUNICATED_WITH"
+  }
+}

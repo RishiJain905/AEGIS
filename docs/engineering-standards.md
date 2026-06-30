@@ -1,6 +1,6 @@
 # AEGIS Engineering Standards
 
-> Phase 00 baseline — mandatory for all contributors and coding agents.
+> Phase 00–01 baseline — mandatory for all contributors and coding agents.
 
 ## Bootstrap workflow
 
@@ -43,6 +43,7 @@ CI installs pnpm via Corepack without assuming it is preinstalled globally.
 | `pnpm typecheck`                     | TypeScript strict check                    |
 | `pnpm test`                          | Workspace unit tests                       |
 | `pnpm build`                         | Production builds                          |
+| `pnpm check-contracts`               | Cross-language contract compatibility gate |
 | `uv run ruff check .`                | Python lint                                |
 | `uv run mypy apps services packages` | Python type check                          |
 | `uv run pytest -q`                   | Python tests                               |
@@ -86,6 +87,14 @@ Shared validation:
 - Phase handoffs live in `docs/handoffs/`
 - Canonical architecture contract: `docs/architecture.md` (also linked from root `architecture.md`)
 
+## Shared contracts (Phase 01+)
+
+Canonical domain contracts live in `packages/contracts-python` and `packages/contracts-ts` only.
+
+- Versioning policy: [`docs/contracts/versioning.md`](contracts/versioning.md)
+- Regenerate JSON Schemas: `uv run python scripts/generate_contract_schemas.py`
+- Compatibility gate: `pnpm check-contracts`
+
 ## Deferred to later phases
 
-Domain contracts, database migrations, auth, simulation, graph, agents, ML, and production cloud deployment are out of Phase 00 scope.
+Database migrations, auth, simulation runtime, graph engine, agents, ML, and production cloud deployment are out of Phase 01 scope.

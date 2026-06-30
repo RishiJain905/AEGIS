@@ -9,8 +9,8 @@
   },
   "scripts": {
     "bootstrap": "bash scripts/bootstrap.sh",
-    "format": "prettier --config config/.prettierrc.json --write apps packages scripts tests .github docs/handoffs config README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
-    "format:check": "prettier --config config/.prettierrc.json --check apps packages scripts tests .github docs/handoffs config README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
+    "format": "prettier --config config/.prettierrc.json --write apps packages scripts tests .github docs/handoffs docs/contracts config README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
+    "format:check": "prettier --config config/.prettierrc.json --check apps packages scripts tests .github docs/handoffs docs/contracts config README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
     "lint": "eslint apps packages && pnpm boundaries",
     "boundaries": "depcruise apps packages --config .dependency-cruiser.cjs",
     "typecheck": "turbo run typecheck",
@@ -19,7 +19,8 @@
     "build": "turbo run build",
     "clean": "turbo run clean && rm -rf node_modules/.cache .turbo",
     "typecheck:py": "uv run mypy -p aegis_api -p aegis_contracts -p aegis_simulation -p aegis_workers -p aegis_incidents -p aegis_agents -p aegis_ml -p aegis_scenario_sdk -p aegis_graph_domain -p aegis_policy -p aegis_observability",
-    "validate-env": "tsx packages/contracts-ts/scripts/validate-env.ts"
+    "validate-env": "tsx packages/contracts-ts/scripts/validate-env.ts",
+    "check-contracts": "uv run python scripts/check_contract_compatibility.py"
   },
   "devDependencies": {
     "@eslint/js": "9.28.0",

@@ -1,0 +1,10 @@
+title = "AEGIS gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Synthetic cross-language contract fixtures are not secrets"
+paths = [
+  '''tests/contract/fixtures/''',
+]

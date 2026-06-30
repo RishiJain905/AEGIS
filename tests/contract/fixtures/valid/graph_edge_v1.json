@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "edge:edge_conn_001",
+  "source": "asset:device-workstation-01",
+  "target": "asset:svc-api-gateway",
+  "relationshipType": "COMMUNICATED_WITH",
+  "directed": true,
+  "confidence": 1.0,
+  "riskContribution": 0.43,
+  "firstSeenAt": "2026-01-01T18:00:00.000Z",
+  "lastSeenAt": "2026-06-30T02:00:01.102Z",
+  "eventCount": 31,
+  "revision": 9
+}
