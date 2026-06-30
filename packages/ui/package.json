@@ -7,6 +7,12 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./styles/tokens.css": "./src/styles/tokens.css",
+    "./styles/motion.css": "./src/styles/motion.css",
+    "./tailwind.preset": {
+      "types": "./tailwind.preset.ts",
+      "default": "./tailwind.preset.ts"
     }
   },
   "scripts": {
@@ -15,10 +21,35 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@aegis/contracts-ts": "workspace:*"
+    "@aegis/contracts-ts": "workspace:*",
+    "@radix-ui/react-dialog": "1.1.14",
+    "@radix-ui/react-dropdown-menu": "2.1.15",
+    "@radix-ui/react-separator": "1.1.7",
+    "@radix-ui/react-slot": "1.2.3",
+    "@radix-ui/react-tabs": "1.1.12",
+    "@radix-ui/react-tooltip": "1.2.7",
+    "@radix-ui/react-visually-hidden": "1.2.3",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "0.511.0",
+    "tailwind-merge": "3.3.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "14.6.1",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.5",
+    "axe-core": "4.10.3",
+    "jsdom": "26.1.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "typescript": "^5.8.3",
-    "vitest": "3.2.6"
+    "vitest": "3.2.6",
+    "vitest-axe": "0.1.0"
   }
 }

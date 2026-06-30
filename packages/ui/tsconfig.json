@@ -1,8 +1,16 @@
 {
   "extends": "../../config/tsconfig.base.json",
   "compilerOptions": {
+    "jsx": "react-jsx",
     "outDir": "dist",
     "composite": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "vitest.config.ts",
+    "tailwind.preset.ts"
+  ]
 }

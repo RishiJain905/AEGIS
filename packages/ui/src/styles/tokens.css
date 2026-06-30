@@ -1,0 +1,85 @@
+:root {
+  /* Surfaces */
+  --aegis-surface-base: #0b0f14;
+  --aegis-surface-elevated: #121820;
+  --aegis-surface-panel: #161d27;
+  --aegis-surface-rail: #10161f;
+  --aegis-surface-overlay: #1c2430;
+
+  /* Typography */
+  --aegis-font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --aegis-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --aegis-text-primary: #e8edf4;
+  --aegis-text-secondary: #9aa8b8;
+  --aegis-text-muted: #6b7a8c;
+  --aegis-text-inverse: #0b0f14;
+
+  /* Spacing (4px grid) */
+  --aegis-space-1: 0.25rem;
+  --aegis-space-2: 0.5rem;
+  --aegis-space-3: 0.75rem;
+  --aegis-space-4: 1rem;
+  --aegis-space-5: 1.25rem;
+  --aegis-space-6: 1.5rem;
+  --aegis-space-8: 2rem;
+  --aegis-space-10: 2.5rem;
+  --aegis-space-12: 3rem;
+  --aegis-space-16: 4rem;
+
+  /* Borders */
+  --aegis-border-default: #2a3544;
+  --aegis-border-subtle: #1e2835;
+  --aegis-border-strong: #3d4d62;
+  --aegis-radius-sm: 0.25rem;
+  --aegis-radius-md: 0.5rem;
+  --aegis-radius-lg: 0.75rem;
+  --aegis-radius-xl: 1rem;
+
+  /* Depth */
+  --aegis-shadow-panel: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 12px rgb(0 0 0 / 0.25);
+  --aegis-shadow-dialog: 0 8px 32px rgb(0 0 0 / 0.45);
+  --aegis-shadow-rail: 2px 0 8px rgb(0 0 0 / 0.2);
+
+  /* Focus */
+  --aegis-focus-ring: #4da3ff;
+  --aegis-focus-ring-offset: #0b0f14;
+  --aegis-focus-width: 2px;
+
+  /* Risk */
+  --aegis-risk-low: #3d9a6a;
+  --aegis-risk-low-bg: #132820;
+  --aegis-risk-medium: #c9a227;
+  --aegis-risk-medium-bg: #2a2410;
+  --aegis-risk-high: #e07a2f;
+  --aegis-risk-high-bg: #2a1a10;
+  --aegis-risk-critical: #e05252;
+  --aegis-risk-critical-bg: #2a1212;
+
+  /* Status — NodeStatus + UI states */
+  --aegis-status-normal: #3d9a6a;
+  --aegis-status-normal-bg: #132820;
+  --aegis-status-suspicious: #c9a227;
+  --aegis-status-suspicious-bg: #2a2410;
+  --aegis-status-under-investigation: #4da3ff;
+  --aegis-status-under-investigation-bg: #102030;
+  --aegis-status-contained: #7b8cff;
+  --aegis-status-contained-bg: #181a30;
+  --aegis-status-compromised: #e05252;
+  --aegis-status-compromised-bg: #2a1212;
+  --aegis-status-loading: #6b7a8c;
+  --aegis-status-loading-bg: #1a2030;
+  --aegis-status-error: #e05252;
+  --aegis-status-error-bg: #2a1212;
+  --aegis-status-disconnected: #9aa8b8;
+  --aegis-status-disconnected-bg: #1a2030;
+  --aegis-status-empty: #6b7a8c;
+  --aegis-status-empty-bg: #161d27;
+
+  /* Density */
+  --aegis-density-compact-gap: var(--aegis-space-2);
+  --aegis-density-comfortable-gap: var(--aegis-space-4);
+  --aegis-density-spacious-gap: var(--aegis-space-6);
+  --aegis-density-compact-padding: var(--aegis-space-3);
+  --aegis-density-comfortable-padding: var(--aegis-space-4);
+  --aegis-density-spacious-padding: var(--aegis-space-6);
+}

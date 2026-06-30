@@ -1,0 +1,57 @@
+:root {
+  --aegis-motion-duration-instant: 0ms;
+  --aegis-motion-duration-fast: 120ms;
+  --aegis-motion-duration-normal: 200ms;
+  --aegis-motion-duration-slow: 320ms;
+  --aegis-motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --aegis-motion-ease-emphasis: cubic-bezier(0.2, 0, 0, 1);
+  --aegis-motion-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --aegis-motion-duration-fast: 0ms;
+    --aegis-motion-duration-normal: 0ms;
+    --aegis-motion-duration-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.aegis-motion-fade {
+  transition: opacity var(--aegis-motion-duration-normal) var(--aegis-motion-ease-standard);
+}
+
+.aegis-motion-slide {
+  transition: transform var(--aegis-motion-duration-normal) var(--aegis-motion-ease-decelerate);
+}
+
+.aegis-motion-pulse {
+  animation: aegis-pulse var(--aegis-motion-duration-slow) var(--aegis-motion-ease-standard)
+    infinite;
+}
+
+@keyframes aegis-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aegis-motion-pulse {
+    animation: none;
+    opacity: 0.7;
+  }
+}

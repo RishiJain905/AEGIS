@@ -1,0 +1,5 @@
+@import '../../../packages/ui/src/styles/tokens.css';
+@import '../../../packages/ui/src/styles/motion.css';
+@import 'tailwindcss';
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";

@@ -1,19 +1,21 @@
-import type { Metadata } from 'next';
-import { formatPlatformStatus } from '@aegis/ui';
+import Link from 'next/link';
 
-export const metadata: Metadata = {
-  title: 'AEGIS Command',
-  description: 'Interactive cyber-defence simulation and defensive-agent evaluation platform',
-};
+import { formatPlatformStatus } from '@aegis/ui';
 
 export default function HomePage() {
   const status = formatPlatformStatus('web');
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem' }}>
-      <h1>AEGIS Command</h1>
-      <p>Platform status: {status}</p>
-      <p>Phase 00 — repository and engineering standards baseline.</p>
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 p-8">
+      <h1 className="text-3xl font-semibold">AEGIS Command</h1>
+      <p className="text-text-secondary">Platform status: {status}</p>
+      <p className="text-text-secondary">Phase 03 — Command-Centre Design System.</p>
+      <Link
+        href="/design-system"
+        className="inline-flex w-fit items-center rounded-md border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-elevated)] px-4 py-2 text-sm font-medium text-[var(--aegis-text-primary)] hover:bg-[var(--aegis-surface-overlay)]"
+      >
+        View design system showcase
+      </Link>
     </main>
   );
 }
