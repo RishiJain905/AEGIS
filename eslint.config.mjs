@@ -16,6 +16,7 @@ export default tseslint.config(
       '**/tests/fixtures/**',
       'apps/web/.storybook/**',
       'apps/web/postcss.config.mjs',
+      'apps/web/scripts/**',
       'eslint.config.mjs',
       'docs/**',
     ],

@@ -16,9 +16,12 @@
   "dependencies": {
     "@aegis/contracts-ts": "workspace:*",
     "@aegis/ui": "workspace:*",
+    "@tanstack/react-query": "5.80.7",
     "next": "15.5.19",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "zod": "3.25.56",
+    "zustand": "5.0.5"
   },
   "devDependencies": {
     "@playwright/test": "1.55.1",

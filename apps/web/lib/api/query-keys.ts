@@ -1,0 +1,21 @@
+export const queryKeys = {
+  scenarios: {
+    all: ['scenarios'] as const,
+    detail: (scenarioId: string) => ['scenarios', scenarioId] as const,
+    versions: (scenarioId: string) => ['scenarios', scenarioId, 'versions'] as const,
+  },
+  runs: {
+    all: ['runs'] as const,
+    detail: (runId: string) => ['runs', runId] as const,
+    incidents: (runId: string) => ['runs', runId, 'incidents'] as const,
+    alerts: (runId: string) => ['runs', runId, 'alerts'] as const,
+    graph: (runId: string) => ['runs', runId, 'graph'] as const,
+    readOnly: (runId: string) => ['runs', runId, 'read-only'] as const,
+  },
+  incidents: {
+    detail: (incidentId: string) => ['incidents', incidentId] as const,
+  },
+  connection: {
+    status: ['connection', 'status'] as const,
+  },
+} as const;
