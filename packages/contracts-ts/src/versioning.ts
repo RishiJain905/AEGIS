@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase07' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase08' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 

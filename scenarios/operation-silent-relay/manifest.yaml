@@ -1,0 +1,144 @@
+schemaVersion: 1
+metadata:
+  scenarioId: scenario:operation-silent-relay
+  name: Operation Silent Relay Skeleton
+  description: Minimal structural package scaffold for Phase 08 validation. Phase 10 replaces this content.
+  version: 0.0.0-skeleton
+  requiredPlatformVersion: 0.0.0-phase08
+zones:
+  - id: business-unit:logistics
+    label: Logistics Operations
+    securityLevel: standard
+  - id: business-unit:communications
+    label: Communications
+    securityLevel: elevated
+assets:
+  - id: asset:svc-logistics-api
+    assetType: service
+    label: Logistics API
+    zoneId: business-unit:logistics
+    criticality: 0.91
+    initialRiskScore: 0.1
+    initialStatus: normal
+  - id: asset:svc-comms-gateway
+    assetType: service
+    label: Communications Gateway
+    zoneId: business-unit:communications
+    criticality: 0.88
+    initialRiskScore: 0.1
+    initialStatus: normal
+  - id: asset:svc-identity-broker
+    assetType: service
+    label: Identity Broker
+    zoneId: business-unit:communications
+    criticality: 0.95
+    initialRiskScore: 0.05
+    initialStatus: normal
+  - id: asset:device-analyst-01
+    assetType: device
+    label: Analyst Workstation
+    zoneId: business-unit:logistics
+    criticality: 0.5
+    initialRiskScore: 0.0
+    initialStatus: normal
+  - id: asset:database-audit-store
+    assetType: database
+    label: Audit Store
+    zoneId: business-unit:logistics
+    criticality: 0.85
+    initialRiskScore: 0.05
+    initialStatus: normal
+relationships:
+  - id: edge:analyst-to-logistics
+    source: asset:device-analyst-01
+    target: asset:svc-logistics-api
+    relationshipType: COMMUNICATED_WITH
+    directed: true
+    confidence: 1.0
+    riskContribution: 0.1
+  - id: edge:logistics-to-comms
+    source: asset:svc-logistics-api
+    target: asset:svc-comms-gateway
+    relationshipType: DEPENDS_ON
+    directed: true
+    confidence: 1.0
+    riskContribution: 0.2
+  - id: edge:comms-to-identity
+    source: asset:svc-comms-gateway
+    target: asset:svc-identity-broker
+    relationshipType: AUTHENTICATED_TO
+    directed: true
+    confidence: 1.0
+    riskContribution: 0.15
+  - id: edge:logistics-to-audit
+    source: asset:svc-logistics-api
+    target: asset:database-audit-store
+    relationshipType: DEPENDS_ON
+    directed: true
+    confidence: 1.0
+    riskContribution: 0.25
+generators:
+  - id: gen-api-traffic
+    targetAssetId: asset:svc-logistics-api
+    plugin:
+      pluginId: telemetry.api_request
+      config:
+        requestsPerInterval: 20
+        errorRate: 0.02
+    schedule:
+      intervalSimSeconds: 15
+      jitterSimSeconds: 2
+  - id: gen-auth-traffic
+    targetAssetId: asset:svc-identity-broker
+    plugin:
+      pluginId: telemetry.auth_attempt
+      config:
+        failureRate: 0.03
+        successRate: 0.97
+hiddenConditions:
+  - id: hidden-placeholder-cause
+    causeLabel: Placeholder hidden cause
+    triggerRefs:
+      - gen-auth-traffic
+    effectRefs:
+      - evt-placeholder-shift
+    visibility:
+      mode: hidden_until_triggered
+scheduledEvents:
+  - id: evt-placeholder-shift
+    simTime: '2026-01-01T00:30:00.000Z'
+    priority: 1
+    tieBreaker: 0
+    action:
+      pluginId: effect.set_asset_status
+      config:
+        status: suspicious
+branches:
+  - id: branch-placeholder-a
+    label: Placeholder branch A
+    weight: 0.5
+    triggerCondition: placeholder_signal_a
+    outcomes:
+      - targetRef: hidden-placeholder-cause
+        description: Placeholder outcome
+  - id: branch-placeholder-b
+    label: Placeholder branch B
+    weight: 0.5
+    triggerCondition: placeholder_signal_b
+    outcomes:
+      - targetRef: evt-placeholder-shift
+        description: Placeholder alternate outcome
+objectives:
+  - id: objective-placeholder
+    label: Placeholder objective
+    successCriteria: structural validation only
+    failureCriteria: invalid package structure
+scoring:
+  maxScore: 100
+  criteria:
+    - id: criterion-structure
+      label: Structural validity
+      weight: 1.0
+      description: Package validates against Scenario SDK schema
+  rubric: Skeleton rubric for Phase 08 only
+media: []

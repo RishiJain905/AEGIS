@@ -1,0 +1,35 @@
+schemaVersion: 1
+metadata:
+  scenarioId: scenario:fixture-invalid-unknown-plugin
+  name: Invalid Unknown Plugin Fixture
+  description: Generator references an unknown plugin
+  version: 1.0.0-fixture
+  requiredPlatformVersion: 0.0.0-phase08
+zones:
+  - id: business-unit:core-ops
+    label: Core Operations
+assets:
+  - id: asset:svc-api-gateway
+    assetType: service
+    label: API Gateway
+    zoneId: business-unit:core-ops
+    criticality: 0.8
+    initialRiskScore: 0.2
+relationships: []
+generators:
+  - id: gen-bad-plugin
+    targetAssetId: asset:svc-api-gateway
+    plugin:
+      pluginId: telemetry.unapproved_plugin
+      config: {}
+hiddenConditions: []
+scheduledEvents: []
+objectives: []
+branches: []
+scoring:
+  maxScore: 100
+  criteria:
+    - id: criterion-detection
+      label: Detection speed
+      weight: 1.0
+media: []

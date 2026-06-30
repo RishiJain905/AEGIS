@@ -1,0 +1,647 @@
+{
+  "$defs": {
+    "AssetTemplateV1": {
+      "additionalProperties": false,
+      "properties": {
+        "assetType": {
+          "$ref": "#/$defs/AssetType"
+        },
+        "criticality": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Criticality",
+          "type": "number"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "initialRiskScore": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Initialriskscore",
+          "type": "number"
+        },
+        "initialStatus": {
+          "$ref": "#/$defs/NodeStatus",
+          "default": "normal"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "zoneId": {
+          "title": "Zoneid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "assetType",
+        "label",
+        "zoneId",
+        "criticality",
+        "initialRiskScore"
+      ],
+      "title": "AssetTemplateV1",
+      "type": "object"
+    },
+    "AssetType": {
+      "enum": [
+        "service",
+        "device",
+        "user",
+        "identity",
+        "database",
+        "control",
+        "ai_model"
+      ],
+      "title": "AssetType",
+      "type": "string"
+    },
+    "BehaviorPluginConfigV1": {
+      "additionalProperties": false,
+      "properties": {
+        "config": {
+          "additionalProperties": true,
+          "title": "Config",
+          "type": "object"
+        },
+        "pluginId": {
+          "minLength": 1,
+          "title": "Pluginid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pluginId"
+      ],
+      "title": "BehaviorPluginConfigV1",
+      "type": "object"
+    },
+    "BranchOutcomeV1": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "targetRef": {
+          "title": "Targetref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "targetRef"
+      ],
+      "title": "BranchOutcomeV1",
+      "type": "object"
+    },
+    "GeneratorDefinitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "plugin": {
+          "$ref": "#/$defs/BehaviorPluginConfigV1"
+        },
+        "schedule": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GeneratorScheduleV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "targetAssetId",
+        "plugin"
+      ],
+      "title": "GeneratorDefinitionV1",
+      "type": "object"
+    },
+    "GeneratorScheduleV1": {
+      "additionalProperties": false,
+      "properties": {
+        "intervalSimSeconds": {
+          "exclusiveMinimum": 0.0,
+          "title": "Intervalsimseconds",
+          "type": "number"
+        },
+        "jitterSimSeconds": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Jittersimseconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "intervalSimSeconds"
+      ],
+      "title": "GeneratorScheduleV1",
+      "type": "object"
+    },
+    "HiddenConditionDefinitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "causeLabel": {
+          "minLength": 1,
+          "title": "Causelabel",
+          "type": "string"
+        },
+        "effectRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Effectrefs",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "triggerRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Triggerrefs",
+          "type": "array"
+        },
+        "visibility": {
+          "$ref": "#/$defs/HiddenConditionVisibilityV1"
+        }
+      },
+      "required": [
+        "id",
+        "causeLabel",
+        "triggerRefs",
+        "effectRefs",
+        "visibility"
+      ],
+      "title": "HiddenConditionDefinitionV1",
+      "type": "object"
+    },
+    "HiddenConditionVisibilityV1": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "hidden_until_triggered",
+          "title": "Mode",
+          "type": "string"
+        },
+        "revealAfterSimSeconds": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revealaftersimseconds"
+        }
+      },
+      "title": "HiddenConditionVisibilityV1",
+      "type": "object"
+    },
+    "MediaReferenceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "contentType": {
+          "minLength": 1,
+          "title": "Contenttype",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "contentType"
+      ],
+      "title": "MediaReferenceV1",
+      "type": "object"
+    },
+    "NodeStatus": {
+      "enum": [
+        "normal",
+        "suspicious",
+        "under_investigation",
+        "contained",
+        "compromised"
+      ],
+      "title": "NodeStatus",
+      "type": "string"
+    },
+    "ObjectiveDefinitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "failureCriteria": {
+          "default": "",
+          "title": "Failurecriteria",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "successCriteria": {
+          "minLength": 1,
+          "title": "Successcriteria",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "successCriteria"
+      ],
+      "title": "ObjectiveDefinitionV1",
+      "type": "object"
+    },
+    "OutcomeBranchDefinitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "outcomes": {
+          "items": {
+            "$ref": "#/$defs/BranchOutcomeV1"
+          },
+          "minItems": 1,
+          "title": "Outcomes",
+          "type": "array"
+        },
+        "triggerCondition": {
+          "minLength": 1,
+          "title": "Triggercondition",
+          "type": "string"
+        },
+        "weight": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "weight",
+        "triggerCondition",
+        "outcomes"
+      ],
+      "title": "OutcomeBranchDefinitionV1",
+      "type": "object"
+    },
+    "RelationshipTemplateV1": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "directed": {
+          "default": true,
+          "title": "Directed",
+          "type": "boolean"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "relationshipType": {
+          "$ref": "#/$defs/RelationshipType"
+        },
+        "riskContribution": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Riskcontribution",
+          "type": "number"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "target",
+        "relationshipType",
+        "confidence",
+        "riskContribution"
+      ],
+      "title": "RelationshipTemplateV1",
+      "type": "object"
+    },
+    "RelationshipType": {
+      "enum": [
+        "COMMUNICATED_WITH",
+        "AUTHENTICATED_TO",
+        "DEPENDS_ON",
+        "ADMINISTERS",
+        "HOSTS"
+      ],
+      "title": "RelationshipType",
+      "type": "string"
+    },
+    "ScenarioMetadataV1": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "requiredPlatformVersion": {
+          "minLength": 1,
+          "title": "Requiredplatformversion",
+          "type": "string"
+        },
+        "scenarioId": {
+          "title": "Scenarioid",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scenarioId",
+        "name",
+        "version",
+        "requiredPlatformVersion"
+      ],
+      "title": "ScenarioMetadataV1",
+      "type": "object"
+    },
+    "ScheduledEventDefinitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/BehaviorPluginConfigV1"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "priority": {
+          "minimum": 0,
+          "title": "Priority",
+          "type": "integer"
+        },
+        "simTime": {
+          "title": "Simtime",
+          "type": "string"
+        },
+        "tieBreaker": {
+          "minimum": 0,
+          "title": "Tiebreaker",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "simTime",
+        "priority",
+        "tieBreaker",
+        "action"
+      ],
+      "title": "ScheduledEventDefinitionV1",
+      "type": "object"
+    },
+    "ScoringCriterionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "weight": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "weight"
+      ],
+      "title": "ScoringCriterionV1",
+      "type": "object"
+    },
+    "ScoringDefinitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {
+          "items": {
+            "$ref": "#/$defs/ScoringCriterionV1"
+          },
+          "minItems": 1,
+          "title": "Criteria",
+          "type": "array"
+        },
+        "maxScore": {
+          "exclusiveMinimum": 0.0,
+          "title": "Maxscore",
+          "type": "number"
+        },
+        "rubric": {
+          "default": "",
+          "title": "Rubric",
+          "type": "string"
+        }
+      },
+      "required": [
+        "maxScore",
+        "criteria"
+      ],
+      "title": "ScoringDefinitionV1",
+      "type": "object"
+    },
+    "ZoneDefinitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "securityLevel": {
+          "default": "standard",
+          "title": "Securitylevel",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "ZoneDefinitionV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assets": {
+      "items": {
+        "$ref": "#/$defs/AssetTemplateV1"
+      },
+      "minItems": 1,
+      "title": "Assets",
+      "type": "array"
+    },
+    "branches": {
+      "items": {
+        "$ref": "#/$defs/OutcomeBranchDefinitionV1"
+      },
+      "title": "Branches",
+      "type": "array"
+    },
+    "generators": {
+      "items": {
+        "$ref": "#/$defs/GeneratorDefinitionV1"
+      },
+      "title": "Generators",
+      "type": "array"
+    },
+    "hiddenConditions": {
+      "items": {
+        "$ref": "#/$defs/HiddenConditionDefinitionV1"
+      },
+      "title": "Hiddenconditions",
+      "type": "array"
+    },
+    "media": {
+      "items": {
+        "$ref": "#/$defs/MediaReferenceV1"
+      },
+      "title": "Media",
+      "type": "array"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ScenarioMetadataV1"
+    },
+    "objectives": {
+      "items": {
+        "$ref": "#/$defs/ObjectiveDefinitionV1"
+      },
+      "title": "Objectives",
+      "type": "array"
+    },
+    "relationships": {
+      "items": {
+        "$ref": "#/$defs/RelationshipTemplateV1"
+      },
+      "title": "Relationships",
+      "type": "array"
+    },
+    "scheduledEvents": {
+      "items": {
+        "$ref": "#/$defs/ScheduledEventDefinitionV1"
+      },
+      "title": "Scheduledevents",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "scoring": {
+      "$ref": "#/$defs/ScoringDefinitionV1"
+    },
+    "zones": {
+      "items": {
+        "$ref": "#/$defs/ZoneDefinitionV1"
+      },
+      "title": "Zones",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "metadata",
+    "assets",
+    "scoring"
+  ],
+  "title": "ScenarioManifestV1",
+  "type": "object"
+}

@@ -1,0 +1,103 @@
+schemaVersion: 1
+metadata:
+  scenarioId: scenario:fixture-valid-minimal
+  name: Valid Minimal Fixture
+  description: Synthetic Phase 08 validation fixture
+  version: 1.0.0-fixture
+  requiredPlatformVersion: 0.0.0-phase08
+zones:
+  - id: business-unit:core-ops
+    label: Core Operations
+    securityLevel: standard
+assets:
+  - id: asset:svc-api-gateway
+    assetType: service
+    label: API Gateway
+    zoneId: business-unit:core-ops
+    criticality: 0.8
+    initialRiskScore: 0.2
+    initialStatus: normal
+  - id: asset:svc-auth-service
+    assetType: service
+    label: Auth Service
+    zoneId: business-unit:core-ops
+    criticality: 0.9
+    initialRiskScore: 0.1
+    initialStatus: normal
+  - id: asset:device-laptop-01
+    assetType: device
+    label: Analyst Laptop
+    zoneId: business-unit:core-ops
+    criticality: 0.4
+    initialRiskScore: 0.0
+    initialStatus: normal
+relationships:
+  - id: edge:device-to-gateway
+    source: asset:device-laptop-01
+    target: asset:svc-api-gateway
+    relationshipType: COMMUNICATED_WITH
+    directed: true
+    confidence: 1.0
+    riskContribution: 0.1
+  - id: edge:gateway-to-auth
+    source: asset:svc-api-gateway
+    target: asset:svc-auth-service
+    relationshipType: DEPENDS_ON
+    directed: true
+    confidence: 1.0
+    riskContribution: 0.2
+generators:
+  - id: gen-auth-logs
+    targetAssetId: asset:svc-auth-service
+    plugin:
+      pluginId: telemetry.auth_attempt
+      config:
+        failureRate: 0.05
+        successRate: 0.95
+    schedule:
+      intervalSimSeconds: 30
+      jitterSimSeconds: 0
+hiddenConditions:
+  - id: hidden-cause-01
+    causeLabel: Latent misconfiguration
+    triggerRefs:
+      - gen-auth-logs
+    effectRefs:
+      - evt-status-shift
+    visibility:
+      mode: hidden_until_triggered
+scheduledEvents:
+  - id: evt-status-shift
+    simTime: '2026-01-01T00:10:00.000Z'
+    priority: 1
+    tieBreaker: 0
+    action:
+      pluginId: effect.set_asset_status
+      config:
+        status: suspicious
+branches:
+  - id: branch-contain
+    label: Containment path
+    weight: 0.6
+    triggerCondition: elevated_auth_failures
+    outcomes:
+      - targetRef: hidden-cause-01
+        description: Operator contains suspected asset
+objectives:
+  - id: objective-detect
+    label: Detect suspicious authentication activity
+    successCriteria: auth anomaly identified
+    failureCriteria: missed detection window
+scoring:
+  maxScore: 100
+  criteria:
+    - id: criterion-detection
+      label: Detection speed
+      weight: 0.6
+      description: Time to first credible alert
+    - id: criterion-response
+      label: Response quality
+      weight: 0.4
+      description: Appropriateness of containment actions
+  rubric: Synthetic fixture rubric
+media: []
