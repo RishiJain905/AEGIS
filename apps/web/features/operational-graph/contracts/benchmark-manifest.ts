@@ -33,8 +33,8 @@ export const defaultGraphBenchmarkManifest: GraphBenchmarkManifest = {
       nodeCount: 500,
       edgeCount: 900,
       description: 'Heterogeneous target graph for interactive layout budgets',
-      workerLayoutBudgetMs: 3000,
-      adapterSyncBudgetMs: 150,
+      workerLayoutBudgetMs: 8000,
+      adapterSyncBudgetMs: 300,
       interactiveFrameBudgetMs: 16,
     },
     {

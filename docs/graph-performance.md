@@ -79,7 +79,7 @@ Collapsed clusters render as presentation super-nodes (`presentation:cluster:*`)
 
 | Dataset | Nodes | Edges | Worker budget | Adapter sync budget |
 | --- | ---: | ---: | ---: | ---: |
-| `target` | 500 | ~900 | 3000 ms | 150 ms |
+| `target` | 500 | ~900 | 8000 ms | 300 ms |
 | `stress` | 2500 | 5000 | 15000 ms | 250 ms |
 
 Generate fixtures:
