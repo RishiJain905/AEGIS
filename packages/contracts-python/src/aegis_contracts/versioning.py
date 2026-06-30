@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase01"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase02"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -20,6 +20,8 @@ GRAPH_PATH_RESULT_SCHEMA_VERSION: Final[int] = 1
 API_ERROR_SCHEMA_VERSION: Final[int] = 1
 CURSOR_PAGINATION_SCHEMA_VERSION: Final[int] = 1
 IDEMPOTENCY_SCHEMA_VERSION: Final[int] = 1
+IDEMPOTENCY_RECORD_SCHEMA_VERSION: Final[int] = 1
+OBJECT_METADATA_REFERENCE_SCHEMA_VERSION: Final[int] = 1
 SCENARIO_SCHEMA_VERSION: Final[int] = 1
 SCENARIO_VERSION_SCHEMA_VERSION: Final[int] = 1
 RUN_SCHEMA_VERSION: Final[int] = 1
@@ -45,6 +47,8 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "api_error": frozenset({API_ERROR_SCHEMA_VERSION}),
     "cursor_pagination": frozenset({CURSOR_PAGINATION_SCHEMA_VERSION}),
     "idempotency": frozenset({IDEMPOTENCY_SCHEMA_VERSION}),
+    "idempotency_record": frozenset({IDEMPOTENCY_RECORD_SCHEMA_VERSION}),
+    "object_metadata_reference": frozenset({OBJECT_METADATA_REFERENCE_SCHEMA_VERSION}),
     "scenario": frozenset({SCENARIO_SCHEMA_VERSION}),
     "scenario_version": frozenset({SCENARIO_VERSION_SCHEMA_VERSION}),
     "run": frozenset({RUN_SCHEMA_VERSION}),

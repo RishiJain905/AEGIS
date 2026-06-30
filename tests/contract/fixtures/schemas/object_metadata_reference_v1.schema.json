@@ -1,0 +1,47 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "checksum": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Checksum",
+      "type": "string"
+    },
+    "contentType": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Contenttype",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "objectKey": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Objectkey",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sizeBytes": {
+      "minimum": 0,
+      "title": "Sizebytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "objectKey",
+    "checksum",
+    "contentType",
+    "sizeBytes",
+    "createdAt"
+  ],
+  "title": "ObjectMetadataReferenceV1",
+  "type": "object"
+}

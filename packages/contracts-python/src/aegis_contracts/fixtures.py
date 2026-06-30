@@ -30,6 +30,7 @@ from aegis_contracts.graph import (
     GraphPathResultV1,
     GraphSnapshotV1,
 )
+from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
 
 FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "event_envelope_v1": DomainEventEnvelopeV1,
@@ -42,6 +43,8 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "api_error_v1": ApiErrorEnvelopeV1,
     "cursor_page_v1": CursorPaginationV1,
     "idempotency_v1": IdempotencyMetadataV1,
+    "idempotency_record_v1": IdempotencyRecordV1,
+    "object_metadata_reference_v1": ObjectMetadataReferenceV1,
     "scenario_v1": ScenarioV1,
     "scenario_version_v1": ScenarioVersionV1,
     "run_v1": RunV1,

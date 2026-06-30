@@ -44,6 +44,7 @@ from aegis_contracts.graph import (
     RelationshipType,
 )
 from aegis_contracts.parsing import parse_contract
+from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
 from aegis_contracts.settings import (
     AegisEnvironment,
     AegisSettings,
@@ -89,8 +90,10 @@ __all__ = [
     "GraphSnapshotV1",
     "HypothesisV1",
     "IdempotencyMetadataV1",
+    "IdempotencyRecordV1",
     "IncidentState",
     "IncidentV1",
+    "ObjectMetadataReferenceV1",
     "LogLevel",
     "ModelManifestV1",
     "ModelScoreV1",

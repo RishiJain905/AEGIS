@@ -48,7 +48,20 @@ class AegisSettings(BaseSettings):
     def postgres_dsn(self) -> str:
         return str(
             PostgresDsn.build(
-                scheme="postgresql",
+                scheme="postgresql+psycopg",
+                username=self.POSTGRES_USER,
+                password=self.POSTGRES_PASSWORD,
+                host=self.POSTGRES_HOST,
+                port=self.POSTGRES_PORT,
+                path=self.POSTGRES_DB,
+            )
+        )
+
+    @property
+    def postgres_async_dsn(self) -> str:
+        return str(
+            PostgresDsn.build(
+                scheme="postgresql+asyncpg",
                 username=self.POSTGRES_USER,
                 password=self.POSTGRES_PASSWORD,
                 host=self.POSTGRES_HOST,

@@ -5,12 +5,14 @@ description = "AEGIS FastAPI application"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "aegis-contracts",
+    "aegis-persistence",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
 ]
 
 [tool.uv.sources]
 aegis-contracts = { workspace = true }
+aegis-persistence = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

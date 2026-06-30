@@ -95,6 +95,13 @@ Canonical domain contracts live in `packages/contracts-python` and `packages/con
 - Regenerate JSON Schemas: `uv run python scripts/generate_contract_schemas.py`
 - Compatibility gate: `pnpm check-contracts`
 
+## Database (Phase 02+)
+
+- Architecture and operations: [`docs/database.md`](database.md)
+- Apply migrations: `uv run alembic upgrade head`
+- Integration tests: `uv run pytest tests/integration -q` (requires PostgreSQL)
+- Local infrastructure: `docker compose up -d postgres redis minio`
+
 ## Deferred to later phases
 
-Database migrations, auth, simulation runtime, graph engine, agents, ML, and production cloud deployment are out of Phase 01 scope.
+Auth, simulation runtime, graph engine, agents, ML, Redis outbox relay, and production cloud deployment are out of current foundation scope.

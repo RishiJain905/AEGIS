@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase01' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase02' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -12,6 +12,8 @@ export const GRAPH_PATH_RESULT_SCHEMA_VERSION = 1;
 export const API_ERROR_SCHEMA_VERSION = 1;
 export const CURSOR_PAGINATION_SCHEMA_VERSION = 1;
 export const IDEMPOTENCY_SCHEMA_VERSION = 1;
+export const IDEMPOTENCY_RECORD_SCHEMA_VERSION = 1;
+export const OBJECT_METADATA_REFERENCE_SCHEMA_VERSION = 1;
 export const SCENARIO_SCHEMA_VERSION = 1;
 export const SCENARIO_VERSION_SCHEMA_VERSION = 1;
 export const RUN_SCHEMA_VERSION = 1;
@@ -37,6 +39,8 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   api_error: [API_ERROR_SCHEMA_VERSION],
   cursor_pagination: [CURSOR_PAGINATION_SCHEMA_VERSION],
   idempotency: [IDEMPOTENCY_SCHEMA_VERSION],
+  idempotency_record: [IDEMPOTENCY_RECORD_SCHEMA_VERSION],
+  object_metadata_reference: [OBJECT_METADATA_REFERENCE_SCHEMA_VERSION],
   scenario: [SCENARIO_SCHEMA_VERSION],
   scenario_version: [SCENARIO_VERSION_SCHEMA_VERSION],
   run: [RUN_SCHEMA_VERSION],
