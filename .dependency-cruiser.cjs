@@ -46,7 +46,7 @@ module.exports = {
     },
     tsPreCompilationDeps: true,
     tsConfig: {
-      fileName: 'tsconfig.base.json',
+      fileName: 'tsconfig.json',
     },
   },
 };

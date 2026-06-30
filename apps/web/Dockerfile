@@ -3,7 +3,8 @@
 FROM node:22.15.1-alpine AS deps
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json tsconfig.base.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json ./
+COPY config/tsconfig.base.json config/
 COPY apps/web/package.json apps/web/
 COPY packages/contracts-ts/package.json packages/contracts-ts/
 COPY packages/ui/package.json packages/ui/

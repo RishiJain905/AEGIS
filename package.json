@@ -9,8 +9,8 @@
   },
   "scripts": {
     "bootstrap": "bash scripts/bootstrap.sh",
-    "format": "prettier --write apps packages scripts tests .github docs/handoffs README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.base.json .prettierrc.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
-    "format:check": "prettier --check apps packages scripts tests .github docs/handoffs README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.base.json .prettierrc.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
+    "format": "prettier --config config/.prettierrc.json --write apps packages scripts tests .github docs/handoffs config README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
+    "format:check": "prettier --config config/.prettierrc.json --check apps packages scripts tests .github docs/handoffs config README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
     "lint": "eslint apps packages && pnpm boundaries",
     "boundaries": "depcruise apps packages --config .dependency-cruiser.cjs",
     "typecheck": "turbo run typecheck",
