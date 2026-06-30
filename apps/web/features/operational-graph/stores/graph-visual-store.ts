@@ -24,6 +24,8 @@ interface GraphVisualStore {
   toggleOverlay: (key: keyof GraphVisualState['overlayToggles']) => void;
   setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
   mergeNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
+  setCollapsedClusterIds: (clusterIds: string[]) => void;
+  setLayoutStatus: (status: GraphVisualState['layoutStatus']) => void;
   resetVisualState: () => void;
 }
 
@@ -124,6 +126,18 @@ export const useGraphVisualStore = create<GraphVisualStore>()((set) => ({
         ...state.visualState,
         nodePositions: { ...state.visualState.nodePositions, ...positions },
       },
+    }));
+  },
+
+  setCollapsedClusterIds: (clusterIds) => {
+    set((state) => ({
+      visualState: { ...state.visualState, collapsedClusterIds: clusterIds },
+    }));
+  },
+
+  setLayoutStatus: (status) => {
+    set((state) => ({
+      visualState: { ...state.visualState, layoutStatus: status },
     }));
   },
 

@@ -22,4 +22,16 @@ export {
 export { GraphDomainError, GraphDomainErrorCode } from './errors/graph-domain-error';
 export type { GraphDomainErrorCodeValue } from './errors/graph-domain-error';
 
-export const GRAPH_DOMAIN_VERSION = '0.0.0-phase05' as const;
+export {
+  buildMediumGraphSnapshot,
+  MEDIUM_GRAPH_NODE_COUNT,
+  MEDIUM_GRAPH_RUN_ID,
+} from './fixtures/medium-graph-snapshot';
+export {
+  buildStressGraphSnapshot,
+  buildTargetGraphSnapshot,
+  STRESS_GRAPH_RUN_ID,
+  TARGET_GRAPH_NODE_COUNT,
+} from './fixtures/graph-performance-snapshots';
+
+export const GRAPH_DOMAIN_VERSION = '0.0.0-phase07' as const;

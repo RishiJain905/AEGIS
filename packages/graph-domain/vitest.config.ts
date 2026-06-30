@@ -26,6 +26,7 @@ export default defineConfig({
     include: [
       '../../tests/unit/graph-domain/**/*.test.ts',
       '../../tests/performance/graph-domain/**/*.test.ts',
+      '../../tests/unit/graph-fixtures/**/*.test.ts',
     ],
   },
 });

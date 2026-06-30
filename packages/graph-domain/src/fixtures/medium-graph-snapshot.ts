@@ -65,7 +65,30 @@ export function buildMediumGraphSnapshot(): GraphSnapshotV1 {
     capturedAt: '2026-06-30T03:00:00.000Z',
     nodes,
     edges,
-    clusters: [],
+    clusters: buildMediumClusters(nodes),
     revision: 1,
   };
+}
+
+function buildMediumClusters(nodes: GraphNodeV1[]): import('@aegis/contracts-ts').GraphClusterV1[] {
+  const membersByCluster = new Map<string, string[]>();
+  for (const node of nodes) {
+    const clusterId = node.clusterId;
+    if (!clusterId) {
+      continue;
+    }
+    const members = membersByCluster.get(clusterId) ?? [];
+    members.push(node.id);
+    membersByCluster.set(clusterId, members);
+  }
+
+  return [...membersByCluster.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([id, memberNodeIds]) => ({
+      schemaVersion: 1,
+      id,
+      label: `Cluster ${id.split(':').at(-1) ?? id}`,
+      memberNodeIds,
+      revision: 1,
+    }));
 }

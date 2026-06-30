@@ -55,13 +55,15 @@ GraphVisualState (Zustand)         ← ephemeral UI (positions, highlights, came
 ## Renderer lifecycle
 
 1. `SigmaCanvas` mounts adapter in `useEffect`.
-2. `OperationalGraphView` syncs on filter/selection/highlight changes.
-3. Unmount calls `adapter.dispose()` (Sigma `kill()` + graph clear).
+2. `OperationalGraphView` syncs through `UpdateBatcher` and schedules worker layout via `LayoutCoordinator`.
+3. Unmount/run change cancels layout, terminates worker, and calls `adapter.dispose()`.
 
-## Deferred to Phase 07+
+## Performance (Phase 07)
 
-- ForceAtlas2 Web Worker layout
-- Label culling, edge reduction, frame budgets at 2500+ nodes
+See [`docs/graph-performance.md`](../../graph-performance.md) for worker protocol, LOD tiers, cluster collapse, benchmarks, and budgets.
+
+## Deferred to later phases
+
 - Live WebSocket delta streaming (Phase 11–13)
 - Three.js cinematic view (Phase 27)
 

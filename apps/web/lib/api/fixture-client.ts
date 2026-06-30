@@ -17,6 +17,7 @@ import type {
   RunGraphResult,
 } from '@/lib/api/types';
 import { ApiClientError } from '@/lib/api/types';
+import { buildStressGraphSnapshot, STRESS_GRAPH_RUN_ID } from '@aegis/graph-domain';
 
 const fixtureProfileSchema = z
   .object({
@@ -204,6 +205,12 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
     async getRunGraph(runId, signal) {
       if (profile.omitGraphSnapshot) {
         return applyProfile({ snapshot: null, partial: true } satisfies RunGraphResult, signal);
+      }
+      if (runId === STRESS_GRAPH_RUN_ID) {
+        return applyProfile(
+          { snapshot: buildStressGraphSnapshot(), partial: false } satisfies RunGraphResult,
+          signal,
+        );
       }
       const snapshot = dataset.graphSnapshots.find((item) => item.runId === runId);
       if (!snapshot) {
