@@ -46,19 +46,13 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     return app
 
 
-def create_app_for_runtime() -> FastAPI:
-    return create_app()
-
-
-app = create_app_for_runtime()
-
-
 def run() -> None:
     import uvicorn
 
     settings = load_settings()
     uvicorn.run(
-        "aegis_api.main:app",
+        "aegis_api.main:create_app",
+        factory=True,
         host="0.0.0.0",
         port=settings.API_PORT,
         reload=settings.AEGIS_ENV.value == "development",

@@ -48,6 +48,7 @@ jobs:
           corepack prepare pnpm@11.9.0 --activate
       - run: pnpm install --frozen-lockfile
       - run: uv sync --frozen --all-packages
+      - run: cp .env.example .env
       - run: uv run ruff check .
       - run: pnpm typecheck:py
       - run: uv run pytest -q

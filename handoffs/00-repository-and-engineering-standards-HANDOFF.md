@@ -23,25 +23,25 @@ Phase 00 deliverables per `docs/AEGIS-v1.0-Agent-Specs/foundation/00-repository-
 
 ## Files added
 
-| Area | Key paths |
-| --- | --- |
+| Area          | Key paths                                                                                                                                                                                                                                                         |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Monorepo root | `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `pyproject.toml`, `uv.lock`, `turbo.json`, `tsconfig.base.json`, `.prettierrc.json`, `eslint.config.mjs`, `.dependency-cruiser.cjs`, `.env.example`, `docker-compose.yml`, `.dockerignore`, `.gitignore` |
-| Apps | `apps/web/`, `apps/api/` |
-| Services | `services/{simulation,incidents,agents,ml,workers}/` |
-| Packages | `packages/{contracts-ts,contracts-python,ui,scenario-sdk,graph-domain,policy,observability}/` |
-| Tests | `tests/contract/`, `tests/unit/`, `tests/fixtures/boundary-violation/` |
-| Infra/CI | `.github/workflows/ci.yml`, Dockerfiles under apps and services |
-| Docs | `docs/engineering-standards.md`, `ARCH-Explained.md`, `handoffs/`, ADR `0001-monorepo-toolchain-and-layout.md` |
-| Scripts | `scripts/bootstrap.sh`, `scripts/validate_env.py` |
+| Apps          | `apps/web/`, `apps/api/`                                                                                                                                                                                                                                          |
+| Services      | `services/{simulation,incidents,agents,ml,workers}/`                                                                                                                                                                                                              |
+| Packages      | `packages/{contracts-ts,contracts-python,ui,scenario-sdk,graph-domain,policy,observability}/`                                                                                                                                                                     |
+| Tests         | `tests/contract/`, `tests/unit/`, `tests/fixtures/boundary-violation/`                                                                                                                                                                                            |
+| Infra/CI      | `.github/workflows/ci.yml`, Dockerfiles under apps and services                                                                                                                                                                                                   |
+| Docs          | `docs/engineering-standards.md`, `ARCH-Explained.md`, `handoffs/`, ADR `0001-monorepo-toolchain-and-layout.md`                                                                                                                                                    |
+| Scripts       | `scripts/bootstrap.sh`, `scripts/validate_env.py`                                                                                                                                                                                                                 |
 
 ## Files modified
 
-| File | Reason |
-| --- | --- |
-| `README.md` | Bootstrap workflow and project overview |
-| `docs/architecture.md` | Status label updated to AEGIS v1.0 baseline |
-| `docs/handoffs/README.md` | Pointer to root `handoffs/` |
-| `architecture.md` | Symlink to `docs/architecture.md` |
+| File                      | Reason                                      |
+| ------------------------- | ------------------------------------------- |
+| `README.md`               | Bootstrap workflow and project overview     |
+| `docs/architecture.md`    | Status label updated to AEGIS v1.0 baseline |
+| `docs/handoffs/README.md` | Pointer to root `handoffs/`                 |
+| `architecture.md`         | Symlink to `docs/architecture.md`           |
 
 ## Files removed
 
@@ -49,13 +49,13 @@ None.
 
 ## Contracts introduced or changed
 
-| Contract | Version | Description |
-| --- | --- | --- |
-| `WORKSPACE_VERSION` | `0.0.0-phase00` | Shared workspace metadata constant (TS) |
-| `aegisEnvironmentSchema` | v1 (implicit) | Zod schema for required environment variables |
-| `AegisSettings` | v1 (implicit) | Pydantic Settings mirror of env contract |
-| CI task names | stable | `format:check`, `lint`, `typecheck`, `typecheck:py`, `test`, `build`, `boundaries` |
-| Boundary rules | v1 | dependency-cruiser + import-linter layer contracts |
+| Contract                 | Version         | Description                                                                        |
+| ------------------------ | --------------- | ---------------------------------------------------------------------------------- |
+| `WORKSPACE_VERSION`      | `0.0.0-phase00` | Shared workspace metadata constant (TS)                                            |
+| `aegisEnvironmentSchema` | v1 (implicit)   | Zod schema for required environment variables                                      |
+| `AegisSettings`          | v1 (implicit)   | Pydantic Settings mirror of env contract                                           |
+| CI task names            | stable          | `format:check`, `lint`, `typecheck`, `typecheck:py`, `test`, `build`, `boundaries` |
+| Boundary rules           | v1              | dependency-cruiser + import-linter layer contracts                                 |
 
 No domain event, graph, or API domain contracts were introduced (Phase 01 scope).
 
@@ -78,15 +78,15 @@ None (Phase 02).
 
 ## Tests added
 
-| Test | Proves |
-| --- | --- |
-| `packages/contracts-ts/tests/env.test.ts` | Zod env validation success/failure paths |
-| `packages/ui/tests/ui.test.ts` | Workspace package wiring |
-| `apps/web/tests/web.test.ts` | Web → UI → contracts dependency chain |
-| `tests/unit/test_settings.py` | Pydantic settings validation and failure paths |
-| `tests/unit/test_api_health.py` | FastAPI `/health` and `/ready` endpoints |
-| `tests/contract/test_repository_layout.py` | Required directory tree and `.env.example` hygiene |
-| `tests/contract/test_boundary_rules.py` | Boundary tools pass on repo; negative fixtures fail |
+| Test                                       | Proves                                              |
+| ------------------------------------------ | --------------------------------------------------- |
+| `packages/contracts-ts/tests/env.test.ts`  | Zod env validation success/failure paths            |
+| `packages/ui/tests/ui.test.ts`             | Workspace package wiring                            |
+| `apps/web/tests/web.test.ts`               | Web → UI → contracts dependency chain               |
+| `tests/unit/test_settings.py`              | Pydantic settings validation and failure paths      |
+| `tests/unit/test_api_health.py`            | FastAPI `/health` and `/ready` endpoints            |
+| `tests/contract/test_repository_layout.py` | Required directory tree and `.env.example` hygiene  |
+| `tests/contract/test_boundary_rules.py`    | Boundary tools pass on repo; negative fixtures fail |
 
 **Totals:** 37 pytest tests passed; 6 Vitest tests passed.
 
@@ -94,26 +94,26 @@ None (Phase 02).
 
 Executed on branch `cursor/phase-00-foundation-20c4` at commit pending push.
 
-| Command | Result |
-| --- | --- |
-| `pnpm install --frozen-lockfile` | **PASS** (pnpm 11.9.0; lockfile passes supply-chain policies) |
-| `uv sync --frozen --all-packages` | **PASS** (canonical equivalent of `uv sync --frozen` for uv workspace members) |
-| `pnpm format:check` | **PASS** |
-| `pnpm lint` | **PASS** (ESLint + dependency-cruiser: 0 violations) |
-| `pnpm typecheck` | **PASS** (3/3 packages) |
-| `pnpm test` | **PASS** (6 Vitest tests) |
-| `pnpm build` | **PASS** (Next.js production build) |
-| `uv run ruff check .` | **PASS** |
-| `pnpm typecheck:py` | **PASS** (mypy over installed workspace packages; canonical equivalent of `uv run mypy apps services packages`) |
-| `uv run pytest -q` | **PASS** (37 passed) |
-| `docker compose config` | **PASS** |
-| `docker compose build` | **FAIL** in this cloud VM — Docker daemon cannot start (`iptables`/`nf_tables` NAT chain unsupported). Compose file and Dockerfiles are present; **CI `compose` job is expected to validate builds on GitHub Actions runners.** |
-| `pnpm audit --audit-level high` | **PASS** (exit 0; 2 moderate remain, triaged) |
-| `pnpm audit signatures` | **PASS** (350 packages verified; requires pnpm ≥ 11.1) |
-| `uv run pip-audit` | **PASS** (no known vulnerabilities in PyPI deps; workspace packages skipped as local) |
-| `pnpm validate-env` | **PASS** |
-| `uv run python scripts/validate_env.py` | **PASS** |
-| `./scripts/bootstrap.sh` | **PASS** (full bootstrap workflow) |
+| Command                                 | Result                                                                                                                                                                                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile`        | **PASS** (pnpm 11.9.0; lockfile passes supply-chain policies)                                                                                                                                                                   |
+| `uv sync --frozen --all-packages`       | **PASS** (canonical equivalent of `uv sync --frozen` for uv workspace members)                                                                                                                                                  |
+| `pnpm format:check`                     | **PASS**                                                                                                                                                                                                                        |
+| `pnpm lint`                             | **PASS** (ESLint + dependency-cruiser: 0 violations)                                                                                                                                                                            |
+| `pnpm typecheck`                        | **PASS** (3/3 packages)                                                                                                                                                                                                         |
+| `pnpm test`                             | **PASS** (6 Vitest tests)                                                                                                                                                                                                       |
+| `pnpm build`                            | **PASS** (Next.js production build)                                                                                                                                                                                             |
+| `uv run ruff check .`                   | **PASS**                                                                                                                                                                                                                        |
+| `pnpm typecheck:py`                     | **PASS** (mypy over installed workspace packages; canonical equivalent of `uv run mypy apps services packages`)                                                                                                                 |
+| `uv run pytest -q`                      | **PASS** (37 passed)                                                                                                                                                                                                            |
+| `docker compose config`                 | **PASS**                                                                                                                                                                                                                        |
+| `docker compose build`                  | **FAIL** in this cloud VM — Docker daemon cannot start (`iptables`/`nf_tables` NAT chain unsupported). Compose file and Dockerfiles are present; **CI `compose` job is expected to validate builds on GitHub Actions runners.** |
+| `pnpm audit --audit-level high`         | **PASS** (exit 0; 2 moderate remain, triaged)                                                                                                                                                                                   |
+| `pnpm audit signatures`                 | **PASS** (350 packages verified; requires pnpm ≥ 11.1)                                                                                                                                                                          |
+| `uv run pip-audit`                      | **PASS** (no known vulnerabilities in PyPI deps; workspace packages skipped as local)                                                                                                                                           |
+| `pnpm validate-env`                     | **PASS**                                                                                                                                                                                                                        |
+| `uv run python scripts/validate_env.py` | **PASS**                                                                                                                                                                                                                        |
+| `./scripts/bootstrap.sh`                | **PASS** (full bootstrap workflow)                                                                                                                                                                                              |
 
 ## Architecture decisions and ADRs
 
@@ -152,12 +152,12 @@ No other ADRs were modified or superseded.
 
 ## Acceptance criteria evidence
 
-| Criterion | Evidence |
-| --- | --- |
-| Clean checkout bootstraps via one documented workflow | `./scripts/bootstrap.sh` documented in `README.md` and `docs/engineering-standards.md`; bootstrap executed successfully |
-| Frozen installs and root quality commands pass | All JS/Py static commands above pass except `docker compose build` (environment limitation) |
+| Criterion                                                | Evidence                                                                                                                |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Clean checkout bootstraps via one documented workflow    | `./scripts/bootstrap.sh` documented in `README.md` and `docs/engineering-standards.md`; bootstrap executed successfully |
+| Frozen installs and root quality commands pass           | All JS/Py static commands above pass except `docker compose build` (environment limitation)                             |
 | Repository boundaries match architecture; cycles fail CI | `pnpm boundaries` clean; `uv run lint-imports` clean; negative fixtures fail in `tests/contract/test_boundary_rules.py` |
-| No secrets or machine-local paths committed | `.gitignore` excludes `.env`; `.env.example` only; gitleaks CI job configured |
+| No secrets or machine-local paths committed              | `.gitignore` excludes `.env`; `.env.example` only; gitleaks CI job configured                                           |
 
 ## Prohibited-shortcut confirmation
 
