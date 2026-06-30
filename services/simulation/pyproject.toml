@@ -1,0 +1,18 @@
+[project]
+name = "aegis-simulation"
+version = "0.0.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["aegis-contracts"]
+
+[tool.uv.sources]
+aegis-contracts = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aegis_simulation"]
+
+[project.scripts]
+aegis-simulator = "aegis_simulation.runner:main"

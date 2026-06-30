@@ -1,7 +1,7 @@
 # AEGIS Command — Architecture Contract
 
 > **Audience:** Coding agents and contributors implementing AEGIS  
-> **Status:** v0.1 architecture baseline  
+> **Status:** AEGIS v1.0 architecture baseline  
 > **Read first:** This file is the implementation contract. `ARCH-Explained.md` contains the full reasoning and deeper design discussion.
 
 ---
@@ -166,25 +166,25 @@ AEGIS/
 
 Use stable names and IDs.
 
-| Entity | Purpose |
-|---|---|
-| Scenario | Immutable published scenario identity |
-| ScenarioVersion | Versioned topology, generators, hidden conditions, objectives |
-| Run | One scenario execution with seed and virtual clock |
-| AssetInstance | User, device, service, identity, database, AI model, control, etc. |
-| RelationshipInstance | Typed edge between assets |
-| DomainEvent | Append-only fact with run sequence and schema version |
-| Alert | Machine-generated suspicious signal |
-| Incident | Correlated investigation object |
-| Evidence | Stable reference to an observable fact |
-| Hypothesis | Explanation with confidence and evidence |
-| AgentSession | Audited agent state machine instance |
-| ActionProposal | Requested world change, not yet executed |
-| Approval | Human or policy decision on a proposal |
-| ExecutedAction | Authoritative simulator command result |
-| GraphSnapshot | Replay acceleration artifact |
-| ModelVersion | Versioned model manifest and artifact pointer |
-| ModelScore | Model output tied to entity, features, and version |
+| Entity               | Purpose                                                            |
+| -------------------- | ------------------------------------------------------------------ |
+| Scenario             | Immutable published scenario identity                              |
+| ScenarioVersion      | Versioned topology, generators, hidden conditions, objectives      |
+| Run                  | One scenario execution with seed and virtual clock                 |
+| AssetInstance        | User, device, service, identity, database, AI model, control, etc. |
+| RelationshipInstance | Typed edge between assets                                          |
+| DomainEvent          | Append-only fact with run sequence and schema version              |
+| Alert                | Machine-generated suspicious signal                                |
+| Incident             | Correlated investigation object                                    |
+| Evidence             | Stable reference to an observable fact                             |
+| Hypothesis           | Explanation with confidence and evidence                           |
+| AgentSession         | Audited agent state machine instance                               |
+| ActionProposal       | Requested world change, not yet executed                           |
+| Approval             | Human or policy decision on a proposal                             |
+| ExecutedAction       | Authoritative simulator command result                             |
+| GraphSnapshot        | Replay acceleration artifact                                       |
+| ModelVersion         | Versioned model manifest and artifact pointer                      |
+| ModelScore           | Model output tied to entity, features, and version                 |
 
 ID namespaces must be explicit, for example:
 
@@ -213,8 +213,8 @@ Every durable event uses this envelope shape:
   "schemaVersion": 1,
   "simTime": "2026-01-01T18:42:03.420Z",
   "recordedAt": "2026-06-30T02:00:01.102Z",
-  "actor": {"type": "asset", "id": "asset:laptop-17"},
-  "subject": {"type": "asset", "id": "asset:idp-main"},
+  "actor": { "type": "asset", "id": "asset:laptop-17" },
+  "subject": { "type": "asset", "id": "asset:idp-main" },
   "payload": {},
   "traceId": "trc_01J...",
   "causationId": null,
@@ -573,12 +573,12 @@ stateDiagram-v2
 
 ### Tool classes
 
-| Class | Description | Example |
-|---|---|---|
-| Read | No state change | `search_events`, `get_asset` |
-| Analysis write | Adds investigation artifacts | `create_hypothesis` |
-| Proposal | Requests a world change | `propose_isolation` |
-| Execution | Internal command only after approval | simulator command adapter |
+| Class          | Description                          | Example                      |
+| -------------- | ------------------------------------ | ---------------------------- |
+| Read           | No state change                      | `search_events`, `get_asset` |
+| Analysis write | Adds investigation artifacts         | `create_hypothesis`          |
+| Proposal       | Requests a world change              | `propose_isolation`          |
+| Execution      | Internal command only after approval | simulator command adapter    |
 
 Agents can access the first three classes according to role. Execution tools are not exposed to the model.
 

@@ -1,0 +1,10 @@
+node_modules
+.next
+.turbo
+dist
+coverage
+.venv
+pnpm-lock.yaml
+uv.lock
+.dependency-cruiser.cjs
+tests/fixtures/boundary-violation/.dependency-cruiser.fixture.cjs

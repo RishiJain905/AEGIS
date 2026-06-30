@@ -1,0 +1,110 @@
+[project]
+name = "aegis"
+version = "0.0.0"
+description = "AEGIS Command — cyber-defence simulation platform"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "apps/api",
+    "packages/contracts-python",
+    "packages/scenario-sdk",
+    "packages/graph-domain",
+    "packages/policy",
+    "packages/observability",
+    "services/simulation",
+    "services/incidents",
+    "services/agents",
+    "services/ml",
+    "services/workers",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28",
+    "import-linter>=2.3",
+    "mypy>=1.15",
+    "pip-audit>=2.9",
+    "pytest>=8.3",
+    "pytest-cov>=6.1",
+    "ruff>=0.11",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["apps", "packages", "services", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+no_implicit_optional = true
+check_untyped_defs = true
+namespace_packages = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["apps", "packages", "services"]
+
+[tool.importlinter]
+root_packages = [
+    "aegis_api",
+    "aegis_contracts",
+    "aegis_scenario_sdk",
+    "aegis_graph_domain",
+    "aegis_policy",
+    "aegis_observability",
+    "aegis_simulation",
+    "aegis_incidents",
+    "aegis_agents",
+    "aegis_ml",
+    "aegis_workers",
+]
+
+[[tool.importlinter.contracts]]
+name = "packages do not import apps"
+type = "forbidden"
+source_modules = [
+    "aegis_contracts",
+    "aegis_scenario_sdk",
+    "aegis_graph_domain",
+    "aegis_policy",
+    "aegis_observability",
+]
+forbidden_modules = ["aegis_api"]
+
+[[tool.importlinter.contracts]]
+name = "packages do not import services"
+type = "forbidden"
+source_modules = [
+    "aegis_contracts",
+    "aegis_scenario_sdk",
+    "aegis_graph_domain",
+    "aegis_policy",
+    "aegis_observability",
+]
+forbidden_modules = [
+    "aegis_simulation",
+    "aegis_incidents",
+    "aegis_agents",
+    "aegis_ml",
+    "aegis_workers",
+]
+
+[tool.coverage.run]
+source = ["apps", "packages", "services"]
