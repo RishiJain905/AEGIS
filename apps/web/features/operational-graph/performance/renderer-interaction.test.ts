@@ -1,4 +1,8 @@
-import { createGraphStore, buildTargetGraphSnapshot, type GraphFilterSet } from '@aegis/graph-domain';
+import {
+  createGraphStore,
+  buildTargetGraphSnapshot,
+  type GraphFilterSet,
+} from '@aegis/graph-domain';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('sigma', () => ({
