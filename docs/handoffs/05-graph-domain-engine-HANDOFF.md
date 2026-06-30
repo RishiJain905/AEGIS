@@ -21,27 +21,27 @@ Phase 05 deliverables per `docs/AEGIS-v1.0-Agent-Specs/graph-platform/05-graph-d
 
 ## Files added
 
-| Area | Key paths |
-| ---- | --------- |
-| Graph domain package | `packages/graph-domain/package.json`, `tsconfig.json`, `vitest.config.ts`, `src/**` |
-| Fixtures | `packages/graph-domain/fixtures/medium-graph-snapshot.json`, `scripts/generate-medium-fixture.ts` |
-| Tests | `tests/unit/graph-domain/**`, `tests/performance/graph-domain/performance.test.ts` |
-| Web harness | `apps/web/features/graph-domain-harness/**` |
-| E2E | `tests/e2e/graph-domain-harness.spec.ts` |
-| Docs | `docs/graph-domain.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0006-graph-domain-engine.md` |
+| Area                 | Key paths                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| Graph domain package | `packages/graph-domain/package.json`, `tsconfig.json`, `vitest.config.ts`, `src/**`               |
+| Fixtures             | `packages/graph-domain/fixtures/medium-graph-snapshot.json`, `scripts/generate-medium-fixture.ts` |
+| Tests                | `tests/unit/graph-domain/**`, `tests/performance/graph-domain/performance.test.ts`                |
+| Web harness          | `apps/web/features/graph-domain-harness/**`                                                       |
+| E2E                  | `tests/e2e/graph-domain-harness.spec.ts`                                                          |
+| Docs                 | `docs/graph-domain.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0006-graph-domain-engine.md`            |
 
 ## Files modified
 
-| File | Reason |
-| ---- | ------ |
-| `apps/web/package.json` | Add `@aegis/graph-domain` dependency |
-| `apps/web/features/shell/components/visualization-slot.tsx` | Mount Phase 05 harness below Phase 04 placeholder |
-| `apps/web/scripts/capture-shell-screenshots.mjs` | Capture graph-domain harness screenshot |
-| `packages/graph-domain/README.md` | TS-primary implementation guidance |
-| `packages/graph-domain/src/aegis_graph_domain/__init__.py` | Bump stub version; point to TS engine |
-| `packages/contracts-ts/src/versioning.ts` | `WORKSPACE_VERSION` → `0.0.0-phase05` |
-| `packages/contracts-python/src/aegis_contracts/versioning.py` | `WORKSPACE_VERSION` → `0.0.0-phase05` |
-| `pnpm-lock.yaml` | graphology + workspace wiring |
+| File                                                          | Reason                                            |
+| ------------------------------------------------------------- | ------------------------------------------------- |
+| `apps/web/package.json`                                       | Add `@aegis/graph-domain` dependency              |
+| `apps/web/features/shell/components/visualization-slot.tsx`   | Mount Phase 05 harness below Phase 04 placeholder |
+| `apps/web/scripts/capture-shell-screenshots.mjs`              | Capture graph-domain harness screenshot           |
+| `packages/graph-domain/README.md`                             | TS-primary implementation guidance                |
+| `packages/graph-domain/src/aegis_graph_domain/__init__.py`    | Bump stub version; point to TS engine             |
+| `packages/contracts-ts/src/versioning.ts`                     | `WORKSPACE_VERSION` → `0.0.0-phase05`             |
+| `packages/contracts-python/src/aegis_contracts/versioning.py` | `WORKSPACE_VERSION` → `0.0.0-phase05`             |
+| `pnpm-lock.yaml`                                              | graphology + workspace wiring                     |
 
 ## Files removed
 
@@ -49,17 +49,17 @@ None.
 
 ## Contracts introduced or changed
 
-| Contract | Version | Description |
-| -------- | ------- | ----------- |
-| `GraphStore` | v1 (TS domain API) | In-process graph engine interface |
-| `GraphDeltaApplyResult` | v1 | Delta outcome with stable status + error codes |
-| `NeighborhoodResult` | v1 | k-hop neighborhood with hop rings |
-| `IncidentSubgraphResult` | v1 | Seed-expanded induced subgraph |
-| `GraphConsistencyReport` | v1 | Structural integrity issues |
-| `GraphFilterSet` / `FilteredGraphView` | v1 | Non-destructive visibility |
-| `GraphDomainError` / `GraphDomainErrorCode` | v1 | Domain boundary errors |
-| `GRAPH_DOMAIN_VERSION` | `0.0.0-phase05` | Package metadata |
-| `WORKSPACE_VERSION` | `0.0.0-phase05` | Workspace metadata (no schema changes) |
+| Contract                                    | Version            | Description                                    |
+| ------------------------------------------- | ------------------ | ---------------------------------------------- |
+| `GraphStore`                                | v1 (TS domain API) | In-process graph engine interface              |
+| `GraphDeltaApplyResult`                     | v1                 | Delta outcome with stable status + error codes |
+| `NeighborhoodResult`                        | v1                 | k-hop neighborhood with hop rings              |
+| `IncidentSubgraphResult`                    | v1                 | Seed-expanded induced subgraph                 |
+| `GraphConsistencyReport`                    | v1                 | Structural integrity issues                    |
+| `GraphFilterSet` / `FilteredGraphView`      | v1                 | Non-destructive visibility                     |
+| `GraphDomainError` / `GraphDomainErrorCode` | v1                 | Domain boundary errors                         |
+| `GRAPH_DOMAIN_VERSION`                      | `0.0.0-phase05`    | Package metadata                               |
+| `WORKSPACE_VERSION`                         | `0.0.0-phase05`    | Workspace metadata (no schema changes)         |
 
 Phase 01 wire contracts (`GraphSnapshotV1`, `GraphDeltaV1`, etc.) unchanged.
 
@@ -77,30 +77,30 @@ None.
 
 ## Tests added
 
-| Test | Proves |
-| ---- | ------ |
-| `tests/unit/graph-domain/delta-apply.test.ts` | Idempotent duplicate, gap rejection, stale revision, batch stop |
-| `tests/unit/graph-domain/snapshot-load.test.ts` | Valid load; invalid input fails closed |
-| `tests/unit/graph-domain/consistency.test.ts` | Orphan edge skip on load; cluster membership issues |
-| `tests/unit/graph-domain/paths.test.ts` | Deterministic paths; relationship filters |
-| `tests/unit/graph-domain/neighborhoods.test.ts` | k-hop rings; incident subgraph; dependencies |
-| `tests/unit/graph-domain/filtering.test.ts` | Hidden ≠ deleted |
-| `tests/unit/graph-domain/adapters.test.ts` | Snapshot round-trip |
-| `tests/unit/graph-domain/acceptance-criteria.test.ts` | Spec §18 mapping |
-| `tests/performance/graph-domain/performance.test.ts` | Medium-graph load, delta batch, query budgets |
-| `tests/e2e/graph-domain-harness.spec.ts` | Harness visible; Phase 04 placeholder preserved |
+| Test                                                  | Proves                                                          |
+| ----------------------------------------------------- | --------------------------------------------------------------- |
+| `tests/unit/graph-domain/delta-apply.test.ts`         | Idempotent duplicate, gap rejection, stale revision, batch stop |
+| `tests/unit/graph-domain/snapshot-load.test.ts`       | Valid load; invalid input fails closed                          |
+| `tests/unit/graph-domain/consistency.test.ts`         | Orphan edge skip on load; cluster membership issues             |
+| `tests/unit/graph-domain/paths.test.ts`               | Deterministic paths; relationship filters                       |
+| `tests/unit/graph-domain/neighborhoods.test.ts`       | k-hop rings; incident subgraph; dependencies                    |
+| `tests/unit/graph-domain/filtering.test.ts`           | Hidden ≠ deleted                                                |
+| `tests/unit/graph-domain/adapters.test.ts`            | Snapshot round-trip                                             |
+| `tests/unit/graph-domain/acceptance-criteria.test.ts` | Spec §18 mapping                                                |
+| `tests/performance/graph-domain/performance.test.ts`  | Medium-graph load, delta batch, query budgets                   |
+| `tests/e2e/graph-domain-harness.spec.ts`              | Harness visible; Phase 04 placeholder preserved                 |
 
 ## Commands executed and results
 
-| Command | Result |
-| ------- | ------ |
-| `pnpm format:check` | PASS |
-| `pnpm lint` | PASS (ESLint + dependency-cruiser: 0 violations) |
-| `pnpm typecheck` | PASS |
-| `pnpm test` | PASS (127 tests: 60 contracts + 30 graph-domain + 20 ui + 17 web) |
-| `pnpm build` | PASS |
-| `pnpm check-contracts` | PASS |
-| `pnpm --filter @aegis/web test:e2e` | PASS (13 Playwright tests) |
+| Command                             | Result                                                            |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| `pnpm format:check`                 | PASS                                                              |
+| `pnpm lint`                         | PASS (ESLint + dependency-cruiser: 0 violations)                  |
+| `pnpm typecheck`                    | PASS                                                              |
+| `pnpm test`                         | PASS (127 tests: 60 contracts + 30 graph-domain + 20 ui + 17 web) |
+| `pnpm build`                        | PASS                                                              |
+| `pnpm check-contracts`              | PASS                                                              |
+| `pnpm --filter @aegis/web test:e2e` | PASS (13 Playwright tests)                                        |
 
 Visual evidence commands:
 
@@ -143,12 +143,12 @@ Screenshots: `03-visualization-placeholder.png` (Phase 04), `03b-graph-domain-ha
 
 ## Acceptance criteria evidence
 
-| Criterion | Evidence |
-| --------- | -------- |
+| Criterion                                                   | Evidence                                                                                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Duplicate/out-of-order deltas cannot silently corrupt state | `delta-apply.test.ts`, `acceptance-criteria.test.ts`; gap/duplicate leave `exportSnapshot()` unchanged |
-| Algorithms return deterministic explainable results | `paths.test.ts` lexicographic ordering; `explanation` populated |
-| Package has no React/renderer dependency | `packages/graph-domain/package.json`; dependency-cruiser; `acceptance-criteria.test.ts` |
-| Same semantic graph feeds 2D/3D/replay/analysis | `adapters.test.ts` round-trip; `exportSnapshot()` after delta; documented in `docs/graph-domain.md` |
+| Algorithms return deterministic explainable results         | `paths.test.ts` lexicographic ordering; `explanation` populated                                        |
+| Package has no React/renderer dependency                    | `packages/graph-domain/package.json`; dependency-cruiser; `acceptance-criteria.test.ts`                |
+| Same semantic graph feeds 2D/3D/replay/analysis             | `adapters.test.ts` round-trip; `exportSnapshot()` after delta; documented in `docs/graph-domain.md`    |
 
 ## Prohibited-shortcut confirmation
 

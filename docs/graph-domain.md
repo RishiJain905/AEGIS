@@ -8,11 +8,11 @@
 
 ## Package boundaries
 
-| Allowed | Forbidden |
-| ------- | --------- |
-| `@aegis/contracts-ts` | React, Next.js, Sigma.js, Three.js |
+| Allowed                | Forbidden                                     |
+| ---------------------- | --------------------------------------------- |
+| `@aegis/contracts-ts`  | React, Next.js, Sigma.js, Three.js            |
 | `graphology` (private) | Redefining `GraphSnapshotV1` / `GraphDeltaV1` |
-| | Importing `apps/*` or `services/*` |
+|                        | Importing `apps/*` or `services/*`            |
 
 Graphology types are **not exported**. Consumers interact with `GraphStore` and canonical contract types only.
 
@@ -36,16 +36,16 @@ Statuses: `applied`, `duplicate`, `rejected`, `gap_detected`.
 
 ## Delta semantics
 
-| Condition | Behavior |
-| --------- | -------- |
-| `delta.runId !== store.runId` | Reject (`GRAPH_RUN_MISMATCH`) |
-| `delta.sequence <= lastAppliedSequence` | Idempotent duplicate — no mutation |
-| `delta.sequence > lastAppliedSequence + 1` | Reject (`GRAPH_SEQUENCE_GAP`) — no partial apply |
-| `delta.sequence === lastAppliedSequence + 1` | Apply if revision valid |
-| Entity revision older than stored | Reject (`GRAPH_STALE_REVISION`) |
-| `delete_node` | Cascade-remove incident edges |
-| `delete_edge` / missing delete target | Idempotent no-op |
-| Edge upsert with missing endpoint | Reject (`GRAPH_CONSISTENCY_VIOLATION`) |
+| Condition                                    | Behavior                                         |
+| -------------------------------------------- | ------------------------------------------------ |
+| `delta.runId !== store.runId`                | Reject (`GRAPH_RUN_MISMATCH`)                    |
+| `delta.sequence <= lastAppliedSequence`      | Idempotent duplicate — no mutation               |
+| `delta.sequence > lastAppliedSequence + 1`   | Reject (`GRAPH_SEQUENCE_GAP`) — no partial apply |
+| `delta.sequence === lastAppliedSequence + 1` | Apply if revision valid                          |
+| Entity revision older than stored            | Reject (`GRAPH_STALE_REVISION`)                  |
+| `delete_node`                                | Cascade-remove incident edges                    |
+| `delete_edge` / missing delete target        | Idempotent no-op                                 |
+| Edge upsert with missing endpoint            | Reject (`GRAPH_CONSISTENCY_VIOLATION`)           |
 
 Snapshot load skips edges whose endpoints are missing rather than inserting orphan topology.
 
@@ -58,13 +58,13 @@ Snapshot load skips edges whose endpoints are missing rather than inserting orph
 
 ## Graph layers (filtering)
 
-| Layer | Visibility rule (summary) |
-| ----- | ------------------------- |
-| `infrastructure` | device, service, database, control asset types |
-| `activity` | nodes with incident edges where `eventCount > 0` |
-| `security_state` | `riskScore > 0` or non-normal status |
-| `investigation` | suspicious / under_investigation / contained / compromised |
-| `presentation` | always passes; use `hiddenNodeIds` / `hiddenEdgeIds` for local toggles |
+| Layer            | Visibility rule (summary)                                              |
+| ---------------- | ---------------------------------------------------------------------- |
+| `infrastructure` | device, service, database, control asset types                         |
+| `activity`       | nodes with incident edges where `eventCount > 0`                       |
+| `security_state` | `riskScore > 0` or non-normal status                                   |
+| `investigation`  | suspicious / under_investigation / contained / compromised             |
+| `presentation`   | always passes; use `hiddenNodeIds` / `hiddenEdgeIds` for local toggles |
 
 Filters return a `FilteredGraphView`; `exportSnapshot()` always returns full canonical state.
 

@@ -30,12 +30,12 @@ Phase 05 must not leak Graphology types to consumers, must not depend on React o
 
 ## Alternatives considered
 
-| Alternative | Why not chosen |
-|---|---|
-| Python-only graph-domain with networkx | Graphology is the architecture-mandated browser model; duplicating algorithms in Python now adds drift without Phase 05 consumers |
-| Graphology inside `apps/web` | Violates package boundaries; Phase 06 and replay tooling need a shared domain package |
-| New cross-language GraphStore wire contract | Phase 05 engine is in-process; durable contracts remain Phase 01 graph payloads |
-| Remove Python graph-domain package | Breaks uv workspace layout and import-linter contracts established in Phase 00 |
+| Alternative                                 | Why not chosen                                                                                                                    |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Python-only graph-domain with networkx      | Graphology is the architecture-mandated browser model; duplicating algorithms in Python now adds drift without Phase 05 consumers |
+| Graphology inside `apps/web`                | Violates package boundaries; Phase 06 and replay tooling need a shared domain package                                             |
+| New cross-language GraphStore wire contract | Phase 05 engine is in-process; durable contracts remain Phase 01 graph payloads                                                   |
+| Remove Python graph-domain package          | Breaks uv workspace layout and import-linter contracts established in Phase 00                                                    |
 
 ## Consequences
 
