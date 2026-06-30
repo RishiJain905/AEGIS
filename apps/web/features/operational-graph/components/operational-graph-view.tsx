@@ -16,9 +16,18 @@ import {
 
 import {
   GraphHighlightMode,
+  LayoutStatus,
   type GraphVisualState,
 } from '@/features/operational-graph/contracts/graph-visual-state';
 import { filterNodesBySearch } from '@/features/operational-graph/layout/initial-layout';
+import {
+  autoCollapseClusterIds,
+  buildLodRenderHints,
+  LayoutCoordinator,
+  PerformanceInstrumentation,
+  toggleCollapsedCluster,
+  UpdateBatcher,
+} from '@/features/operational-graph/performance';
 import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-visual-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
@@ -69,8 +78,16 @@ function buildVisualStateWithPositions(
 export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
   const store = useGraphStoreInstance(snapshot);
   const adapterRef = useRef<SigmaOperationalGraphAdapter | null>(null);
+  const layoutCoordinatorRef = useRef<LayoutCoordinator | null>(null);
+  const updateBatcherRef = useRef<UpdateBatcher | null>(null);
+  const instrumentationRef = useRef<PerformanceInstrumentation | null>(null);
   const positionsRef = useRef<Record<string, { x: number; y: number }>>({});
+  const workerPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
   const [adapterReady, setAdapterReady] = useState(false);
+  const [layoutStatus, setLayoutStatus] = useState<GraphVisualState['layoutStatus']>(
+    LayoutStatus.IDLE,
+  );
+  const [lodTier, setLodTier] = useState('detail');
   const reducedMotion = useReducedMotion();
 
   const filterSet = useGraphVisualStore((s) => s.visualState.filterSet);
@@ -83,6 +100,7 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
   const searchQuery = useGraphVisualStore((s) => s.visualState.searchQuery);
   const overlayToggles = useGraphVisualStore((s) => s.visualState.overlayToggles);
   const pathModeActive = useGraphVisualStore((s) => s.visualState.pathModeActive);
+  const collapsedClusterIds = useGraphVisualStore((s) => s.visualState.collapsedClusterIds);
 
   const setSearchQuery = useGraphVisualStore((s) => s.setSearchQuery);
   const setFilterSet = useGraphVisualStore((s) => s.setFilterSet);
@@ -91,6 +109,9 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
   const clearHighlight = useGraphVisualStore((s) => s.clearHighlight);
   const setPathModeActive = useGraphVisualStore((s) => s.setPathModeActive);
   const toggleOverlay = useGraphVisualStore((s) => s.toggleOverlay);
+  const setCollapsedClusterIds = useGraphVisualStore((s) => s.setCollapsedClusterIds);
+  const mergeNodePositions = useGraphVisualStore((s) => s.mergeNodePositions);
+  const setLayoutStatusInStore = useGraphVisualStore((s) => s.setLayoutStatus);
 
   const setSelectedEntityId = useWorkspaceUiStore((s) => s.setSelectedEntityId);
   const selectedEntityId = useWorkspaceUiStore((s) => s.workspace.selectedEntityId);
@@ -108,24 +129,86 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
     if (!adapter) {
       return;
     }
+    const syncStartedAt = performance.now();
     const state = buildVisualStateWithPositions(
       useGraphVisualStore.getState().visualState,
       positionsRef,
     );
-    const projection = adapter.syncFromStore(store, state.filterSet as GraphFilterSet, state);
+    const filtered = store.applyFilters(state.filterSet as GraphFilterSet);
+    const autoCollapsed = autoCollapseClusterIds(
+      store.exportSnapshot().nodes.filter((node) => filtered.visibleNodeIds.includes(node.id)),
+      buildLodRenderHints({
+        visibleNodeIds: filtered.visibleNodeIds,
+        visibleEdgeIds: filtered.visibleEdgeIds,
+        highlightedEdgeIds: state.highlightedEdgeIds,
+        collapsedClusterIds: state.collapsedClusterIds,
+      }).clusterCollapseThreshold,
+    );
+    const effectiveCollapsed = [...new Set([...state.collapsedClusterIds, ...autoCollapsed])];
+    const lodHints = buildLodRenderHints({
+      visibleNodeIds: filtered.visibleNodeIds,
+      visibleEdgeIds: filtered.visibleEdgeIds,
+      highlightedEdgeIds: state.highlightedEdgeIds,
+      collapsedClusterIds: effectiveCollapsed,
+    });
+    setLodTier(lodHints.tierId);
+
+    const projection = adapter.syncFromStore(
+      store,
+      state.filterSet as GraphFilterSet,
+      { ...state, collapsedClusterIds: effectiveCollapsed },
+      {
+        lodHints,
+        workerPositions: workerPositionsRef.current,
+      },
+    );
     for (const id of projection.visibleNodeIds) {
       const attrs = adapter.getPresentationGraph().getNodeAttributes(id);
       positionsRef.current[id] = { x: attrs.x as number, y: attrs.y as number };
     }
+
+    const instrumentation = instrumentationRef.current;
+    instrumentation?.recordSample({
+      frameTimeMs: performance.now() - syncStartedAt,
+      syncLatencyMs: performance.now() - syncStartedAt,
+      workerDurationMs: layoutCoordinatorRef.current?.getWorkerDurationMs() ?? null,
+      visibleNodes: projection.nodeCount,
+      visibleEdges: projection.edgeCount,
+      lodTier: lodHints.tierId,
+      droppedFrames: updateBatcherRef.current?.getDroppedFrames() ?? 0,
+      droppedWorkerResults: instrumentation.getDroppedWorkerResults(),
+    });
+  }, [store]);
+
+  const scheduleSync = useCallback(() => {
+    if (!updateBatcherRef.current) {
+      updateBatcherRef.current = new UpdateBatcher({
+        onOverBudget: () => {
+          instrumentationRef.current?.recordDroppedFrame();
+        },
+      });
+    }
+    updateBatcherRef.current.schedule(runSync);
+  }, [runSync]);
+
+  const scheduleLayout = useCallback(() => {
+    const coordinator = layoutCoordinatorRef.current;
+    if (!coordinator) {
+      return;
+    }
+    const state = useGraphVisualStore.getState().visualState;
+    coordinator.scheduleLayout(store, state.filterSet as GraphFilterSet, state.pinnedNodeIds);
   }, [store]);
 
   useEffect(() => {
     if (adapterReady) {
-      runSync();
+      scheduleSync();
+      scheduleLayout();
     }
   }, [
     adapterReady,
-    runSync,
+    scheduleSync,
+    scheduleLayout,
     filterSet,
     selection,
     hoveredNodeId,
@@ -134,6 +217,9 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
     highlightedEdgeIds,
     isolationActive,
     overlayToggles,
+    collapsedClusterIds,
+    snapshot.revision,
+    snapshot.sequence,
   ]);
 
   useEffect(() => {
@@ -160,13 +246,44 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
     );
   }, [pathModeActive, selection.primaryNodeId, selection.secondaryNodeId, store, setHighlight]);
 
-  const handleAdapterReady = useCallback((adapter: SigmaOperationalGraphAdapter) => {
-    adapterRef.current = adapter;
-    setAdapterReady(true);
-  }, []);
+  const handleAdapterReady = useCallback(
+    (adapter: SigmaOperationalGraphAdapter) => {
+      adapterRef.current = adapter;
+      instrumentationRef.current = new PerformanceInstrumentation();
+      layoutCoordinatorRef.current = new LayoutCoordinator({
+        instrumentation: instrumentationRef.current,
+        onPositionsUpdated: (positions) => {
+          workerPositionsRef.current = positions;
+          mergeNodePositions(positions);
+          scheduleSync();
+        },
+        onLayoutStatusChanged: (status) => {
+          setLayoutStatus(status);
+          setLayoutStatusInStore(status);
+        },
+      });
+      void layoutCoordinatorRef.current.initialize().then(() => {
+        setAdapterReady(true);
+        scheduleLayout();
+      });
+    },
+    [mergeNodePositions, scheduleLayout, scheduleSync, setLayoutStatusInStore],
+  );
 
   const handleNodeClick = useCallback(
     (nodeId: string) => {
+      const presentationGraph = adapterRef.current?.getPresentationGraph();
+      const presentationClusterId = presentationGraph?.hasNode(nodeId)
+        ? (presentationGraph.getNodeAttribute(nodeId, 'presentationClusterId') as
+            | string
+            | undefined)
+        : undefined;
+
+      if (presentationClusterId) {
+        setCollapsedClusterIds(toggleCollapsedCluster(collapsedClusterIds, presentationClusterId));
+        return;
+      }
+
       setSelectedEntityId(nodeId);
 
       if (pathModeActive) {
@@ -182,8 +299,19 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
 
       adapterRef.current?.focusNode(nodeId);
     },
-    [setSelectedEntityId, pathModeActive],
+    [setSelectedEntityId, pathModeActive, collapsedClusterIds, setCollapsedClusterIds],
   );
+
+  useEffect(() => {
+    return () => {
+      layoutCoordinatorRef.current?.dispose();
+      layoutCoordinatorRef.current = null;
+      updateBatcherRef.current?.dispose();
+      updateBatcherRef.current = null;
+      instrumentationRef.current = null;
+      workerPositionsRef.current = {};
+    };
+  }, [snapshot.runId]);
 
   const handleIsolate = useCallback(() => {
     const primaryId = selection.primaryNodeId ?? selectedEntityId;
@@ -232,6 +360,12 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
     [filterSet, setFilterSet],
   );
 
+  useEffect(() => {
+    if (layoutStatus === LayoutStatus.COMPLETE) {
+      adapterRef.current?.fitGraph();
+    }
+  }, [layoutStatus]);
+
   const filteredNodeIds = useMemo(() => {
     const exported = store.exportSnapshot();
     const allIds = exported.nodes.map((n) => n.id);
@@ -239,7 +373,12 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
   }, [store, nodeLabels, searchQuery]);
 
   return (
-    <div className="flex min-h-[20rem] flex-col gap-3" data-testid="operational-graph-view">
+    <div
+      className="flex min-h-[20rem] flex-col gap-3"
+      data-testid="operational-graph-view"
+      data-layout-status={layoutStatus}
+      data-lod-tier={lodTier}
+    >
       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
         <GraphSearchInput value={searchQuery} onChange={setSearchQuery} className="max-w-xs" />
         <GraphCameraControls
@@ -275,6 +414,25 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
               }}
             >
               {pathModeActive ? 'Path mode (select 2 nodes)' : 'Trace path'}
+            </button>
+            <button
+              type="button"
+              className="rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-default)] px-3 py-1 text-xs hover:bg-[var(--aegis-surface-elevated)]"
+              data-testid="graph-collapse-clusters"
+              onClick={() => {
+                const filtered = store.applyFilters(
+                  useGraphVisualStore.getState().visualState.filterSet as GraphFilterSet,
+                );
+                const autoCollapsed = autoCollapseClusterIds(
+                  store
+                    .exportSnapshot()
+                    .nodes.filter((node) => filtered.visibleNodeIds.includes(node.id)),
+                  3,
+                );
+                setCollapsedClusterIds(autoCollapsed);
+              }}
+            >
+              Collapse dense clusters
             </button>
           </div>
         </div>

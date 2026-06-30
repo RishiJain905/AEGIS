@@ -103,6 +103,16 @@
       "startedAt": "2026-06-30T02:00:00.000Z",
       "simTime": "2026-01-01T18:42:03.420Z",
       "revision": 1
+    },
+    {
+      "schemaVersion": 1,
+      "id": "run_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "scenarioVersionId": "scenario-version:v1.0.0-synthetic",
+      "seed": 900001,
+      "status": "running",
+      "startedAt": "2026-06-30T05:00:00.000Z",
+      "simTime": "2026-01-01T20:00:00.000Z",
+      "revision": 1
     }
   ],
   "incidents": [

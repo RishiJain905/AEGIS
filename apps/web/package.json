@@ -19,6 +19,7 @@
     "@aegis/ui": "workspace:*",
     "@tanstack/react-query": "5.80.7",
     "graphology": "0.26.0",
+    "graphology-layout-forceatlas2": "0.10.1",
     "graphology-types": "0.24.8",
     "next": "15.5.19",
     "react": "19.1.0",

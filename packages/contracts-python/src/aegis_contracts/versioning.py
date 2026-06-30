@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase06"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase07"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 

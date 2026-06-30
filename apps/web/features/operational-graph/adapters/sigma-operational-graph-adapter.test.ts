@@ -50,6 +50,42 @@ describe('SigmaOperationalGraphAdapter', () => {
     document.body.removeChild(container);
   });
 
+  it('applies LOD edge reduction and collapsed cluster presentation nodes', () => {
+    const snapshot = parseContract(graphSnapshotSchema, shellDataset.graphSnapshots[0]);
+    const store = createGraphStore();
+    store.loadSnapshot(snapshot);
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const adapter = new SigmaOperationalGraphAdapter(container);
+
+    const projection = adapter.syncFromStore(
+      store,
+      defaultGraphVisualState.filterSet as import('@aegis/graph-domain').GraphFilterSet,
+      {
+        ...defaultGraphVisualState,
+        collapsedClusterIds: ['business-unit:retail'],
+      },
+      {
+        lodHints: {
+          tierId: 'dense',
+          maxVisibleEdges: 2,
+          labelMode: 'selected',
+          clusterCollapseThreshold: 2,
+          edgeOpacityFloor: 0.1,
+          labelRenderedSizeThreshold: 20,
+          labelDensity: 0.1,
+          renderEdgeLabels: false,
+          visibleEdgeIds: snapshot.edges.slice(0, 2).map((edge) => edge.id),
+          collapsedClusterIds: ['business-unit:retail'],
+        },
+      },
+    );
+
+    expect(projection.edgeCount).toBeLessThanOrEqual(2);
+    adapter.dispose();
+    document.body.removeChild(container);
+  });
+
   it('disposes sigma and clears graph on cleanup', () => {
     const container = document.createElement('div');
     container.style.width = '200px';

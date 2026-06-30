@@ -7,9 +7,12 @@ import type { GraphFilterSet, GraphStore } from '@aegis/graph-domain';
 import type {
   OperationalGraphAdapter,
   RenderGraphProjection,
+  SyncFromStoreOptions,
 } from '../contracts/operational-graph-adapter';
 import { GraphHighlightMode, type GraphVisualState } from '../contracts/graph-visual-state';
+import { LabelMode } from '../contracts/lod-policy';
 import { computeInitialLayout } from '../layout/initial-layout';
+import { buildClusterPresentationNodes } from '../performance/cluster-presentation';
 import {
   getEdgeVisualStyle,
   getHighlightColor,
@@ -33,6 +36,26 @@ function buildEntityMaps(snapshot: GraphSnapshotV1): {
     edges.set(edge.id, edge);
   }
   return { nodes, edges };
+}
+
+function shouldRenderLabel(
+  labelMode: (typeof LabelMode)[keyof typeof LabelMode],
+  isSelected: boolean,
+  isHighlighted: boolean,
+  isHovered: boolean,
+): boolean {
+  switch (labelMode) {
+    case LabelMode.ALL:
+      return true;
+    case LabelMode.SELECTED:
+      return isSelected || isHighlighted || isHovered;
+    case LabelMode.NONE:
+      return false;
+    default: {
+      const _exhaustive: never = labelMode;
+      throw new Error(`Unhandled label mode: ${String(_exhaustive)}`);
+    }
+  }
 }
 
 export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
@@ -75,21 +98,45 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
     store: GraphStore,
     filterSet: GraphFilterSet,
     visualState: GraphVisualState,
+    options: SyncFromStoreOptions = {},
   ): RenderGraphProjection {
     const snapshot = store.exportSnapshot();
     const filtered = store.applyFilters(filterSet);
     const entityMaps = buildEntityMaps(snapshot);
+    const lodHints = options.lodHints;
+    const collapsedClusterIds = lodHints?.collapsedClusterIds ?? visualState.collapsedClusterIds;
 
-    const positions = computeInitialLayout(
-      snapshot.nodes.filter((n) => filtered.visibleNodeIds.includes(n.id)),
+    const visibleNodes = snapshot.nodes.filter((node) => filtered.visibleNodeIds.includes(node.id));
+    const { presentationNodes, hiddenNodeIds } = buildClusterPresentationNodes(
+      visibleNodes,
+      snapshot.clusters,
+      collapsedClusterIds,
+    );
+
+    const layoutPositions = computeInitialLayout(
+      visibleNodes,
       snapshot.clusters,
       visualState.nodePositions,
     );
+    const positions = {
+      ...layoutPositions,
+      ...(options.workerPositions ?? {}),
+    };
 
-    const visibleSet = new Set(filtered.visibleNodeIds);
+    const renderNodeIds = filtered.visibleNodeIds.filter((nodeId) => !hiddenNodeIds.has(nodeId));
+    const visibleSet = new Set([...renderNodeIds, ...presentationNodes.map((node) => node.id)]);
     const highlightNodes = new Set(visualState.highlightedNodeIds);
     const highlightEdges = new Set(visualState.highlightedEdgeIds);
     const isIsolation = visualState.isolationActive && highlightNodes.size > 0;
+    const labelMode = lodHints?.labelMode ?? LabelMode.ALL;
+    const edgeOpacityFloor = lodHints?.edgeOpacityFloor ?? 0.4;
+    const renderEdgeIds = lodHints?.visibleEdgeIds ?? filtered.visibleEdgeIds;
+
+    if (this.sigma && lodHints) {
+      this.sigma.setSetting('labelRenderedSizeThreshold', lodHints.labelRenderedSizeThreshold);
+      this.sigma.setSetting('labelDensity', lodHints.labelDensity);
+      this.sigma.setSetting('renderEdgeLabels', lodHints.renderEdgeLabels);
+    }
 
     for (const nodeId of this.graph.nodes()) {
       if (!visibleSet.has(nodeId)) {
@@ -99,7 +146,7 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       }
     }
 
-    for (const nodeId of filtered.visibleNodeIds) {
+    for (const nodeId of renderNodeIds) {
       const canonical = entityMaps.nodes.get(nodeId);
       if (!canonical) {
         continue;
@@ -116,7 +163,9 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
         y: pos.y,
         size: style.size + (isSelected ? 4 : 0) + (isHovered ? 2 : 0),
         color: isDimmed ? `${style.color}33` : style.color,
-        label: canonical.label,
+        label: shouldRenderLabel(labelMode, isSelected, isHighlighted, isHovered)
+          ? canonical.label
+          : '',
         borderColor: style.borderColor,
         zIndex: isSelected ? 2 : isHighlighted ? 1 : 0,
         riskHalo: visualState.overlayToggles.risk
@@ -132,7 +181,43 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       }
     }
 
-    const visibleEdgeSet = new Set(filtered.visibleEdgeIds);
+    for (const presentationNode of presentationNodes) {
+      const memberPositions = presentationNode.memberIds
+        .map((memberId) => positions[memberId])
+        .filter((position): position is { x: number; y: number } => Boolean(position));
+      const centroid =
+        memberPositions.length > 0
+          ? {
+              x:
+                memberPositions.reduce((sum, position) => sum + position.x, 0) /
+                memberPositions.length,
+              y:
+                memberPositions.reduce((sum, position) => sum + position.y, 0) /
+                memberPositions.length,
+            }
+          : { x: 0, y: 0 };
+
+      const attrs = {
+        x: centroid.x,
+        y: centroid.y,
+        size: 18 + Math.min(presentationNode.memberCount, 20),
+        color: '#0f766e',
+        label: `${presentationNode.label} (${String(presentationNode.memberCount)})`,
+        borderColor: '#115e59',
+        zIndex: 3,
+        presentationClusterId: presentationNode.clusterId,
+        riskHalo: 'transparent',
+        statusIndicator: 'transparent',
+      };
+
+      if (this.graph.hasNode(presentationNode.id)) {
+        this.graph.mergeNodeAttributes(presentationNode.id, attrs);
+      } else {
+        this.graph.addNode(presentationNode.id, attrs);
+      }
+    }
+
+    const visibleEdgeSet = new Set(renderEdgeIds);
     for (const edgeId of this.graph.edges()) {
       const attrs = this.graph.getEdgeAttributes(edgeId);
       const key = attrs.key as string;
@@ -141,12 +226,17 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       }
     }
 
-    for (const edgeId of filtered.visibleEdgeIds) {
+    for (const edgeId of renderEdgeIds) {
       const canonical = entityMaps.edges.get(edgeId);
       if (!canonical) {
         continue;
       }
-      if (!this.graph.hasNode(canonical.source) || !this.graph.hasNode(canonical.target)) {
+      if (
+        hiddenNodeIds.has(canonical.source) ||
+        hiddenNodeIds.has(canonical.target) ||
+        !this.graph.hasNode(canonical.source) ||
+        !this.graph.hasNode(canonical.target)
+      ) {
         continue;
       }
 
@@ -180,7 +270,11 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
         size: isHighlighted ? edgeStyle.size * 2 : edgeStyle.size,
         color: isDimmed ? DEFAULT_EDGE_COLOR : isHighlighted ? highlightColor : edgeStyle.color,
         type: edgeStyle.type,
-        opacity: isDimmed ? DIMMED_OPACITY : isHighlighted ? 1 : edgeStyle.opacity,
+        opacity: isDimmed
+          ? DIMMED_OPACITY
+          : isHighlighted
+            ? 1
+            : Math.max(edgeStyle.opacity, edgeOpacityFloor),
         zIndex: isHighlighted ? 1 : 0,
       };
 
@@ -199,10 +293,10 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
     this.sigma?.refresh();
 
     return {
-      visibleNodeIds: filtered.visibleNodeIds,
-      visibleEdgeIds: filtered.visibleEdgeIds,
-      nodeCount: filtered.visibleNodeIds.length,
-      edgeCount: filtered.visibleEdgeIds.length,
+      visibleNodeIds: [...renderNodeIds, ...presentationNodes.map((node) => node.id)],
+      visibleEdgeIds: renderEdgeIds,
+      nodeCount: renderNodeIds.length + presentationNodes.length,
+      edgeCount: renderEdgeIds.length,
     };
   }
 

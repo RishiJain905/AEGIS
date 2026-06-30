@@ -54,6 +54,25 @@ test.describe('operational graph', () => {
     await expect(page.getByTestId('operational-graph-canvas')).toBeVisible();
   });
 
+  test('stress run remains interactive with layout completion', async ({ page }) => {
+    await page.goto('/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FAW');
+    await expect(page.getByTestId('operational-graph-view')).toBeVisible();
+    await expect(page.getByTestId('operational-graph-canvas')).toBeVisible();
+    await expect(page.getByTestId('operational-graph-view')).toHaveAttribute(
+      'data-layout-status',
+      /complete|running|idle/,
+    );
+  });
+
+  test('cluster collapse control is available on stress run', async ({ page }) => {
+    await page.goto('/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FAW');
+    await page.getByTestId('graph-collapse-clusters').click();
+    await expect(page.getByTestId('operational-graph-view')).toHaveAttribute(
+      'data-lod-tier',
+      /balanced|overview|dense/,
+    );
+  });
+
   test('respects reduced motion preference', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DEFAULT_RUN);

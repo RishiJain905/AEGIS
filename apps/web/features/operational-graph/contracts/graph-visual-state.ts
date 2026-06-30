@@ -64,6 +64,22 @@ export type GraphFilterSetState = z.infer<typeof graphFilterSetSchema> & {
   enabledLayers: GraphLayerValue[];
 };
 
+export const LayoutStatus = {
+  IDLE: 'idle',
+  RUNNING: 'running',
+  COMPLETE: 'complete',
+  ERROR: 'error',
+} as const;
+
+export type LayoutStatusValue = (typeof LayoutStatus)[keyof typeof LayoutStatus];
+
+export const layoutStatusSchema = z.enum([
+  LayoutStatus.IDLE,
+  LayoutStatus.RUNNING,
+  LayoutStatus.COMPLETE,
+  LayoutStatus.ERROR,
+]);
+
 export const graphVisualStateSchema = z
   .object({
     schemaVersion: z.literal(GRAPH_VISUAL_STATE_SCHEMA_VERSION),
@@ -79,6 +95,9 @@ export const graphVisualStateSchema = z
     nodePositions: z.record(z.string(), z.object({ x: z.number(), y: z.number() }).strict()),
     camera: graphCameraBookmarkSchema,
     pathModeActive: z.boolean(),
+    pinnedNodeIds: z.array(z.string()),
+    collapsedClusterIds: z.array(z.string()),
+    layoutStatus: layoutStatusSchema,
   })
   .strict();
 
@@ -109,6 +128,9 @@ export const defaultGraphVisualState: GraphVisualState = {
   nodePositions: {},
   camera: defaultGraphCameraBookmark,
   pathModeActive: false,
+  pinnedNodeIds: [],
+  collapsedClusterIds: [],
+  layoutStatus: LayoutStatus.IDLE,
 };
 
 export function parseGraphVisualState(data: unknown): GraphVisualState {

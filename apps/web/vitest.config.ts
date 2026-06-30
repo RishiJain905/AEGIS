@@ -14,12 +14,15 @@ export default defineConfig({
       'features/**/*.test.tsx',
       'lib/**/*.test.ts',
       'stores/**/*.test.ts',
+      '../../tests/performance/graph/**/*.test.ts',
+      '../../tests/unit/graph-fixtures/**/*.test.ts',
     ],
     setupFiles: ['./tests/setup.ts'],
   },
   resolve: {
     alias: [
       { find: '@/features', replacement: path.resolve(__dirname, './features') },
+      { find: '@/workers', replacement: path.resolve(__dirname, './workers') },
       { find: '@/lib', replacement: path.resolve(__dirname, './lib') },
       { find: '@/stores', replacement: path.resolve(__dirname, './stores') },
       { find: '@/fixtures', replacement: path.resolve(__dirname, './fixtures') },
@@ -29,6 +32,10 @@ export default defineConfig({
       {
         find: '@aegis/contracts-ts',
         replacement: path.resolve(__dirname, '../../packages/contracts-ts/src/index.ts'),
+      },
+      {
+        find: '@aegis/graph-domain',
+        replacement: path.resolve(__dirname, '../../packages/graph-domain/src/index.ts'),
       },
     ],
   },
