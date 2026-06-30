@@ -8,7 +8,11 @@
     "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./src/*"],
-      "@/components/*": ["./components/*"]
+      "@/components/*": ["./components/*"],
+      "@/features/*": ["./features/*"],
+      "@/lib/*": ["./lib/*"],
+      "@/stores/*": ["./stores/*"],
+      "@/fixtures/*": ["./fixtures/*"]
     }
   },
   "include": [
@@ -17,7 +21,13 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "components/**/*.ts",
-    "components/**/*.tsx"
+    "components/**/*.tsx",
+    "features/**/*.ts",
+    "features/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "stores/**/*.ts",
+    "fixtures/**/*.json"
   ],
   "exclude": ["node_modules"]
 }

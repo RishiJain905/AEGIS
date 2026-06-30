@@ -146,6 +146,4 @@ pnpm --filter @aegis/web test:e2e     # Playwright design-system path
 
 ## Deferred to later phases
 
-- TanStack Query and Zustand wiring (Phase 04)
-- Application shell layout and routing (Phase 04)
 - Sigma.js graph controls (Phase 06)

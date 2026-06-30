@@ -291,3 +291,17 @@ export const modelScoreSchema = z
     sourceEventId: eventIdSchema.optional(),
   })
   .strict();
+
+export type ScenarioV1 = z.infer<typeof scenarioSchema>;
+export type ScenarioVersionV1 = z.infer<typeof scenarioVersionSchema>;
+export type RunV1 = z.infer<typeof runSchema>;
+export type AlertV1 = z.infer<typeof alertSchema>;
+export type IncidentV1 = z.infer<typeof incidentSchema>;
+export type EvidenceV1 = z.infer<typeof evidenceSchema>;
+export type HypothesisV1 = z.infer<typeof hypothesisSchema>;
+export type AgentSessionV1 = z.infer<typeof agentSessionSchema>;
+export type ActionProposalV1 = z.infer<typeof actionProposalSchema>;
+export type ApprovalV1 = z.infer<typeof approvalSchema>;
+export type ExecutedActionV1 = z.infer<typeof executedActionSchema>;
+export type ModelManifestV1 = z.infer<typeof modelManifestSchema>;
+export type ModelScoreV1 = z.infer<typeof modelScoreSchema>;

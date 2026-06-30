@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "profiles": {
+    "default": {
+      "id": "default",
+      "connectionStatus": "connected",
+      "readOnly": false,
+      "simulateLoadingMs": 0,
+      "simulateError": false,
+      "emptyScenarios": false,
+      "omitGraphSnapshot": false
+    },
+    "loading": {
+      "id": "loading",
+      "connectionStatus": "connected",
+      "readOnly": false,
+      "simulateLoadingMs": 3000,
+      "simulateError": false,
+      "emptyScenarios": false,
+      "omitGraphSnapshot": false
+    },
+    "empty": {
+      "id": "empty",
+      "connectionStatus": "connected",
+      "readOnly": false,
+      "simulateLoadingMs": 0,
+      "simulateError": false,
+      "emptyScenarios": true,
+      "omitGraphSnapshot": false
+    },
+    "error": {
+      "id": "error",
+      "connectionStatus": "connected",
+      "readOnly": false,
+      "simulateLoadingMs": 0,
+      "simulateError": true,
+      "emptyScenarios": false,
+      "omitGraphSnapshot": false
+    },
+    "offline": {
+      "id": "offline",
+      "connectionStatus": "offline",
+      "readOnly": false,
+      "simulateLoadingMs": 0,
+      "simulateError": false,
+      "emptyScenarios": false,
+      "omitGraphSnapshot": false
+    },
+    "reconnecting": {
+      "id": "reconnecting",
+      "connectionStatus": "reconnecting",
+      "readOnly": false,
+      "simulateLoadingMs": 0,
+      "simulateError": false,
+      "emptyScenarios": false,
+      "omitGraphSnapshot": false
+    },
+    "readonly": {
+      "id": "readonly",
+      "connectionStatus": "connected",
+      "readOnly": true,
+      "simulateLoadingMs": 0,
+      "simulateError": false,
+      "emptyScenarios": false,
+      "omitGraphSnapshot": false
+    },
+    "partial": {
+      "id": "partial",
+      "connectionStatus": "connected",
+      "readOnly": false,
+      "simulateLoadingMs": 0,
+      "simulateError": false,
+      "emptyScenarios": false,
+      "omitGraphSnapshot": true
+    }
+  },
+  "scenarios": [
+    {
+      "schemaVersion": 1,
+      "id": "scenario:scenario-synthetic-01",
+      "name": "Synthetic Training Scenario",
+      "description": "Platform test scenario for command-centre shell development",
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "scenarioVersions": [
+    {
+      "schemaVersion": 1,
+      "id": "scenario-version:v1.0.0-synthetic",
+      "scenarioId": "scenario:scenario-synthetic-01",
+      "version": "1.0.0",
+      "requiredPlatformVersion": "0.0.0-phase01",
+      "publishedAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "runs": [
+    {
+      "schemaVersion": 1,
+      "id": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "scenarioVersionId": "scenario-version:v1.0.0-synthetic",
+      "seed": 424242,
+      "status": "running",
+      "startedAt": "2026-06-30T02:00:00.000Z",
+      "simTime": "2026-01-01T18:42:03.420Z",
+      "revision": 1
+    }
+  ],
+  "incidents": [
+    {
+      "schemaVersion": 1,
+      "id": "incident:inc_synthetic_001",
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "title": "Suspicious authentication activity",
+      "state": "investigating",
+      "alertIds": ["alert:alt_synthetic_001"],
+      "createdAt": "2026-06-30T02:00:01.102Z",
+      "updatedAt": "2026-06-30T02:05:00.000Z",
+      "revision": 2
+    }
+  ],
+  "alerts": [
+    {
+      "schemaVersion": 1,
+      "id": "alert:alt_synthetic_001",
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "title": "Unusual login pattern detected",
+      "severity": "high",
+      "sourceEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "assetId": "asset:svc-api-gateway",
+      "createdAt": "2026-06-30T02:00:01.000Z"
+    }
+  ],
+  "graphSnapshots": [
+    {
+      "schemaVersion": 1,
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "sequence": 500,
+      "capturedAt": "2026-06-30T02:00:01.102Z",
+      "nodes": [
+        {
+          "schemaVersion": 1,
+          "id": "asset:svc-api-gateway",
+          "entityType": "asset",
+          "assetType": "service",
+          "label": "API Gateway",
+          "clusterId": "business-unit:bu-platform",
+          "riskScore": 0.78,
+          "criticality": 0.91,
+          "status": "under_investigation",
+          "revision": 42
+        }
+      ],
+      "edges": [
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_conn_001",
+          "source": "asset:device-workstation-01",
+          "target": "asset:svc-api-gateway",
+          "relationshipType": "COMMUNICATED_WITH",
+          "directed": true,
+          "confidence": 1.0,
+          "riskContribution": 0.43,
+          "firstSeenAt": "2026-01-01T18:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:01.102Z",
+          "eventCount": 31,
+          "revision": 9
+        }
+      ],
+      "clusters": [],
+      "revision": 12
+    }
+  ],
+  "timelineMarks": [
+    {
+      "sequence": 120,
+      "label": "Alert raised",
+      "timestamp": "2026-06-30T02:00:01.000Z",
+      "status": "suspicious"
+    },
+    {
+      "sequence": 250,
+      "label": "Incident opened",
+      "timestamp": "2026-06-30T02:00:01.102Z",
+      "status": "under_investigation"
+    },
+    {
+      "sequence": 500,
+      "label": "Graph snapshot captured",
+      "timestamp": "2026-06-30T02:00:01.102Z",
+      "status": "normal"
+    }
+  ]
+}
