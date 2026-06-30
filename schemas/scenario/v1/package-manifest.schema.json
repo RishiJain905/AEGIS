@@ -1,0 +1,70 @@
+{
+  "$defs": {
+    "PackageFileEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "checksum": {
+          "minLength": 1,
+          "title": "Checksum",
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "checksum"
+      ],
+      "title": "PackageFileEntryV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "files": {
+      "items": {
+        "$ref": "#/$defs/PackageFileEntryV1"
+      },
+      "minItems": 1,
+      "title": "Files",
+      "type": "array"
+    },
+    "packageChecksum": {
+      "minLength": 1,
+      "title": "Packagechecksum",
+      "type": "string"
+    },
+    "requiredPlatformVersion": {
+      "minLength": 1,
+      "title": "Requiredplatformversion",
+      "type": "string"
+    },
+    "scenarioId": {
+      "title": "Scenarioid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "scenarioId",
+    "version",
+    "requiredPlatformVersion",
+    "files",
+    "packageChecksum"
+  ],
+  "title": "ScenarioPackageManifestV1",
+  "type": "object"
+}

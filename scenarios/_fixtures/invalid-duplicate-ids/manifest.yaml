@@ -1,0 +1,36 @@
+schemaVersion: 1
+metadata:
+  scenarioId: scenario:fixture-invalid-duplicate-ids
+  name: Invalid Duplicate IDs Fixture
+  description: Duplicate asset identifiers
+  version: 1.0.0-fixture
+  requiredPlatformVersion: 0.0.0-phase08
+zones:
+  - id: business-unit:core-ops
+    label: Core Operations
+assets:
+  - id: asset:svc-api-gateway
+    assetType: service
+    label: API Gateway A
+    zoneId: business-unit:core-ops
+    criticality: 0.8
+    initialRiskScore: 0.2
+  - id: asset:svc-api-gateway
+    assetType: service
+    label: API Gateway B
+    zoneId: business-unit:core-ops
+    criticality: 0.7
+    initialRiskScore: 0.3
+relationships: []
+generators: []
+hiddenConditions: []
+scheduledEvents: []
+objectives: []
+branches: []
+scoring:
+  maxScore: 100
+  criteria:
+    - id: criterion-detection
+      label: Detection speed
+      weight: 1.0
+media: []
