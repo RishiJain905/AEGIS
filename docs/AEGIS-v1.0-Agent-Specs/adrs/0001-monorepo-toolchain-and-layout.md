@@ -16,7 +16,7 @@ Phase specifications reference project-root `architecture.md`, while the canonic
 2. **Python toolchain:** uv workspace with Python 3.12, Ruff, mypy, pytest, and import-linter.
 3. **Boundary enforcement:** dependency-cruiser (TypeScript) and import-linter (Python), both wired into `pnpm lint` and CI.
 4. **Documentation layout:** `docs/architecture.md` remains canonical; root `architecture.md` is a symlink for agent ergonomics.
-5. **Handoffs:** root `handoffs/` directory per phase execution protocol.
+5. **Handoffs:** `docs/handoffs/` directory per phase execution protocol.
 
 ## Alternatives considered
 

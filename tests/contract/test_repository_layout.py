@@ -31,7 +31,7 @@ REQUIRED_DIRECTORIES = [
     "tests/golden-replays",
     "infra",
     "scripts",
-    "handoffs",
+    "docs/handoffs",
     "docs",
 ]
 

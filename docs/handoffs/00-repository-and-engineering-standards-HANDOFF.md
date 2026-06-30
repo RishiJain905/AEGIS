@@ -31,7 +31,7 @@ Phase 00 deliverables per `docs/AEGIS-v1.0-Agent-Specs/foundation/00-repository-
 | Packages      | `packages/{contracts-ts,contracts-python,ui,scenario-sdk,graph-domain,policy,observability}/`                                                                                                                                                                     |
 | Tests         | `tests/contract/`, `tests/unit/`, `tests/fixtures/boundary-violation/`                                                                                                                                                                                            |
 | Infra/CI      | `.github/workflows/ci.yml`, Dockerfiles under apps and services                                                                                                                                                                                                   |
-| Docs          | `docs/engineering-standards.md`, `ARCH-Explained.md`, `handoffs/`, ADR `0001-monorepo-toolchain-and-layout.md`                                                                                                                                                    |
+| Docs          | `docs/engineering-standards.md`, `ARCH-Explained.md`, `docs/handoffs/`, ADR `0001-monorepo-toolchain-and-layout.md`                                                                                                                                               |
 | Scripts       | `scripts/bootstrap.sh`, `scripts/validate_env.py`                                                                                                                                                                                                                 |
 
 ## Files modified
@@ -40,7 +40,7 @@ Phase 00 deliverables per `docs/AEGIS-v1.0-Agent-Specs/foundation/00-repository-
 | ------------------------- | ------------------------------------------- |
 | `README.md`               | Bootstrap workflow and project overview     |
 | `docs/architecture.md`    | Status label updated to AEGIS v1.0 baseline |
-| `docs/handoffs/README.md` | Pointer to root `handoffs/`                 |
+| `docs/handoffs/README.md` | Phase handoff index and naming convention   |
 | `architecture.md`         | Symlink to `docs/architecture.md`           |
 
 ## Files removed

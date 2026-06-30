@@ -83,7 +83,7 @@ Shared validation:
 ## ADR and handoff conventions
 
 - ADRs live in `docs/AEGIS-v1.0-Agent-Specs/adrs/`
-- Phase handoffs live in `handoffs/`
+- Phase handoffs live in `docs/handoffs/`
 - Canonical architecture contract: `docs/architecture.md` (also linked from root `architecture.md`)
 
 ## Deferred to later phases
