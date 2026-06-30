@@ -7,6 +7,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./fixtures/medium-graph-snapshot": {
+      "types": "./src/fixtures/medium-graph-snapshot.ts",
+      "default": "./src/fixtures/medium-graph-snapshot.ts"
     }
   },
   "scripts": {

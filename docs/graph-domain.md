@@ -70,10 +70,21 @@ Filters return a `FilteredGraphView`; `exportSnapshot()` always returns full can
 
 ## Performance assumptions
 
-Medium fixture (`packages/graph-domain/fixtures/medium-graph-snapshot.json`):
+Medium baseline is generated in memory by `buildMediumGraphSnapshot()` (`src/fixtures/medium-graph-snapshot.ts`):
 
-- 2,500 nodes, 5,000 edges
-- CI budgets: load & batch delta apply < 5s; path query < 3s; 2-hop neighborhood < 1s
+- `MEDIUM_GRAPH_NODE_COUNT`: 2,500
+- `MEDIUM_GRAPH_EDGES_PER_NODE`: 2 (5,000 edges total)
+- Deterministic output; not committed to git
+
+Optional local JSON for inspection:
+
+```bash
+pnpm exec tsx packages/graph-domain/scripts/generate-medium-fixture.ts
+```
+
+Output path `packages/graph-domain/fixtures/medium-graph-snapshot.json` is gitignored.
+
+CI budgets: load & batch delta apply < 5s; path query < 3s; 2-hop neighborhood < 1s
 
 ## Consumers
 

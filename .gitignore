@@ -51,6 +51,9 @@ coverage/
 *.sqlite
 *.db
 
+# Generated graph-domain performance fixtures (see packages/graph-domain/fixtures/README.md)
+packages/graph-domain/fixtures/medium-graph-snapshot.json
+
 # Secrets and local paths
 *.pem
 *.key

@@ -38,3 +38,13 @@ See [`docs/graph-domain.md`](../../docs/graph-domain.md) and ADR 0006.
 pnpm --filter @aegis/graph-domain typecheck
 pnpm --filter @aegis/graph-domain test
 ```
+
+## Performance fixtures
+
+Medium-graph snapshots are generated in memory for tests (`src/fixtures/medium-graph-snapshot.ts`). Optional local JSON:
+
+```bash
+pnpm exec tsx packages/graph-domain/scripts/generate-medium-fixture.ts
+```
+
+See [`fixtures/README.md`](fixtures/README.md).

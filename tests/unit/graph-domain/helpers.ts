@@ -4,6 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 import type { GraphDeltaV1, GraphSnapshotV1 } from '@aegis/contracts-ts';
 import { graphDeltaSchema, graphSnapshotSchema, parseContract } from '@aegis/contracts-ts';
+import {
+  buildMediumGraphSnapshot,
+  MEDIUM_GRAPH_NODE_COUNT,
+} from '@aegis/graph-domain/fixtures/medium-graph-snapshot';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -21,12 +25,10 @@ export function loadGraphDeltaFixture(relativePath: string): GraphDeltaV1 {
 }
 
 export function loadMediumSnapshot(): GraphSnapshotV1 {
-  const raw = readFileSync(
-    join(repoRoot, 'packages/graph-domain/fixtures/medium-graph-snapshot.json'),
-    'utf8',
-  );
-  return parseContract(graphSnapshotSchema, JSON.parse(raw));
+  return buildMediumGraphSnapshot();
 }
+
+export { MEDIUM_GRAPH_NODE_COUNT };
 
 export function buildConnectedSnapshot(): GraphSnapshotV1 {
   return {

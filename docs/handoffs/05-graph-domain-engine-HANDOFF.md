@@ -14,21 +14,21 @@ Phase 05 deliverables per `docs/AEGIS-v1.0-Agent-Specs/graph-platform/05-graph-d
 - Path queries with deterministic lexicographic ordering and explanation metadata
 - k-hop neighborhoods, incident subgraph extraction, connected components, cluster members, `DEPENDS_ON` dependencies
 - Layer and predicate filtering without deleting canonical state
-- Medium graph fixture (2,500 nodes / 5,000 edges) and performance baselines
+- Medium graph fixture (2,500 nodes / 5,000 edges) generated at test time; performance baselines
 - Unit, performance, and acceptance-criteria tests
 - Phase 05 web harness (`GraphDomainHarnessPanel`) mounted below Phase 04 visualization placeholder
 - Documentation (`docs/graph-domain.md`) and ADR 0006
 
 ## Files added
 
-| Area                 | Key paths                                                                                         |
-| -------------------- | ------------------------------------------------------------------------------------------------- |
-| Graph domain package | `packages/graph-domain/package.json`, `tsconfig.json`, `vitest.config.ts`, `src/**`               |
-| Fixtures             | `packages/graph-domain/fixtures/medium-graph-snapshot.json`, `scripts/generate-medium-fixture.ts` |
-| Tests                | `tests/unit/graph-domain/**`, `tests/performance/graph-domain/performance.test.ts`                |
-| Web harness          | `apps/web/features/graph-domain-harness/**`                                                       |
-| E2E                  | `tests/e2e/graph-domain-harness.spec.ts`                                                          |
-| Docs                 | `docs/graph-domain.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0006-graph-domain-engine.md`            |
+| Area                 | Key paths                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------- |
+| Graph domain package | `packages/graph-domain/package.json`, `tsconfig.json`, `vitest.config.ts`, `src/**`                 |
+| Fixtures             | `src/fixtures/medium-graph-snapshot.ts`, `scripts/generate-medium-fixture.ts`, `fixtures/README.md` |
+| Tests                | `tests/unit/graph-domain/**`, `tests/performance/graph-domain/performance.test.ts`                  |
+| Web harness          | `apps/web/features/graph-domain-harness/**`                                                         |
+| E2E                  | `tests/e2e/graph-domain-harness.spec.ts`                                                            |
+| Docs                 | `docs/graph-domain.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0006-graph-domain-engine.md`              |
 
 ## Files modified
 
@@ -73,7 +73,7 @@ None.
 
 ## Generated artifacts and fixtures
 
-- `packages/graph-domain/fixtures/medium-graph-snapshot.json` — 2,500 nodes, 5,000 edges (regenerate: `pnpm exec tsx packages/graph-domain/scripts/generate-medium-fixture.ts`)
+- Medium graph baseline generated in memory (`buildMediumGraphSnapshot()`): 2,500 nodes / 5,000 edges; optional local JSON via script (gitignored)
 
 ## Tests added
 
@@ -87,6 +87,7 @@ None.
 | `tests/unit/graph-domain/filtering.test.ts`           | Hidden ≠ deleted                                                |
 | `tests/unit/graph-domain/adapters.test.ts`            | Snapshot round-trip                                             |
 | `tests/unit/graph-domain/acceptance-criteria.test.ts` | Spec §18 mapping                                                |
+| `tests/unit/graph-domain/medium-fixture.test.ts`      | Deterministic medium-graph generator; expected node/edge counts |
 | `tests/performance/graph-domain/performance.test.ts`  | Medium-graph load, delta batch, query budgets                   |
 | `tests/e2e/graph-domain-harness.spec.ts`              | Harness visible; Phase 04 placeholder preserved                 |
 

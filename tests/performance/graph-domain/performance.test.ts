@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createGraphStore } from '@aegis/graph-domain';
 
-import { loadMediumSnapshot } from '../../unit/graph-domain/helpers';
+import { loadMediumSnapshot, MEDIUM_GRAPH_NODE_COUNT } from '../../unit/graph-domain/helpers';
 
 describe('graph-domain performance baselines', () => {
   it('loads a medium snapshot within budget', () => {
@@ -11,7 +11,7 @@ describe('graph-domain performance baselines', () => {
     const start = performance.now();
     store.loadSnapshot(snapshot);
     const elapsed = performance.now() - start;
-    expect(store.exportSnapshot().nodes.length).toBe(2500);
+    expect(store.exportSnapshot().nodes.length).toBe(MEDIUM_GRAPH_NODE_COUNT);
     expect(elapsed).toBeLessThan(5000);
   });
 
