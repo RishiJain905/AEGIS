@@ -1,9 +1,28 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+
 import { Alert, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
-import { GraphDomainHarnessPanel } from '@/features/graph-domain-harness';
 import { useRunGraph } from '@/features/shell/hooks/use-shell-queries';
+
+const OperationalGraphView = dynamic(
+  () =>
+    import('@/features/operational-graph').then((mod) => ({
+      default: mod.OperationalGraphView,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="flex min-h-[16rem] items-center justify-center text-sm text-[var(--aegis-text-secondary)]"
+        data-testid="operational-graph-loading"
+      >
+        Initializing graph renderer…
+      </div>
+    ),
+  },
+);
 
 interface VisualizationSlotProps {
   runId: string;
@@ -57,7 +76,7 @@ export function VisualizationSlot({ runId }: VisualizationSlotProps) {
   return (
     <Panel
       title="Operational graph"
-      description="Sigma.js renderer — Phase 06"
+      description="Sigma.js operational investigation graph"
       data-testid="visualization-slot"
       className="min-h-[20rem] flex-1"
     >
@@ -71,19 +90,7 @@ export function VisualizationSlot({ runId }: VisualizationSlotProps) {
           Graph snapshot is incomplete. Additional nodes and edges arrive in later phases.
         </Alert>
       ) : null}
-      <div className="flex min-h-[16rem] flex-col items-center justify-center gap-3 rounded-[var(--aegis-radius-md)] border border-dashed border-[var(--aegis-border-default)] bg-[var(--aegis-surface-base)] p-8 text-center">
-        <p className="text-sm font-medium text-[var(--aegis-text-primary)]">
-          Graph visualization placeholder
-        </p>
-        <p className="max-w-md text-sm text-[var(--aegis-text-secondary)]">
-          {snapshot.nodes.length} nodes and {snapshot.edges.length} edges loaded from validated
-          fixture snapshot (sequence {snapshot.sequence}).
-        </p>
-        <p className="font-mono text-xs text-[var(--aegis-text-muted)]">
-          Primary node: {snapshot.nodes[0]?.label ?? '—'}
-        </p>
-      </div>
-      <GraphDomainHarnessPanel snapshot={snapshot} />
+      <OperationalGraphView snapshot={snapshot} runId={runId} />
     </Panel>
   );
 }
