@@ -1,0 +1,38 @@
+{
+  "name": "aegis",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.0.0 <23.0.0",
+    "pnpm": ">=11.9.0 <12.0.0"
+  },
+  "scripts": {
+    "bootstrap": "bash scripts/bootstrap.sh",
+    "format": "prettier --write apps packages scripts tests .github handoffs README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.base.json .prettierrc.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
+    "format:check": "prettier --check apps packages scripts tests .github handoffs README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.base.json .prettierrc.json docs/engineering-standards.md docs/architecture.md --ignore-unknown",
+    "lint": "eslint apps packages && pnpm boundaries",
+    "boundaries": "depcruise apps packages --config .dependency-cruiser.cjs",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:integration": "echo 'Integration tests require docker compose up; deferred smoke in Phase 00'",
+    "build": "turbo run build",
+    "clean": "turbo run clean && rm -rf node_modules/.cache .turbo",
+    "typecheck:py": "uv run mypy -p aegis_api -p aegis_contracts -p aegis_simulation -p aegis_workers -p aegis_incidents -p aegis_agents -p aegis_ml -p aegis_scenario_sdk -p aegis_graph_domain -p aegis_policy -p aegis_observability",
+    "validate-env": "tsx packages/contracts-ts/scripts/validate-env.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.28.0",
+    "@types/node": "22.15.29",
+    "dependency-cruiser": "16.10.0",
+    "dotenv": "16.5.0",
+    "eslint": "9.28.0",
+    "globals": "16.2.0",
+    "prettier": "3.5.3",
+    "tsx": "4.19.4",
+    "turbo": "2.5.4",
+    "typescript": "5.8.3",
+    "typescript-eslint": "8.33.1",
+    "vitest": "3.2.6"
+  }
+}

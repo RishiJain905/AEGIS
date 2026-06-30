@@ -1,0 +1,26 @@
+{
+  "name": "@aegis/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port ${WEB_PORT:-3000}",
+    "build": "next build",
+    "start": "next start --port ${WEB_PORT:-3000}",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "@aegis/contracts-ts": "workspace:*",
+    "@aegis/ui": "workspace:*",
+    "next": "15.5.19",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.5",
+    "typescript": "5.8.3",
+    "vitest": "3.2.6"
+  }
+}
