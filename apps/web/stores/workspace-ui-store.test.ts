@@ -40,6 +40,15 @@ describe('workspace ui store', () => {
     expect(useWorkspaceUiStore.getState().activeRunId).toBe('run_a');
   });
 
+  it('resets graph visual state when run changes', async () => {
+    const { useGraphVisualStore } = await import(
+      '@/features/operational-graph/stores/graph-visual-store'
+    );
+    useGraphVisualStore.getState().setSearchQuery('test-query');
+    useWorkspaceUiStore.getState().resetForRun('run_b');
+    expect(useGraphVisualStore.getState().visualState.searchQuery).toBe('');
+  });
+
   it('opens command palette', () => {
     useWorkspaceUiStore.getState().setCommandPaletteOpen(true);
     expect(useWorkspaceUiStore.getState().workspace.commandPaletteOpen).toBe(true);

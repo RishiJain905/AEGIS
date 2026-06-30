@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-visual-store';
+
 import {
   defaultOperatorWorkspaceState,
   type OperatorWorkspaceState,
@@ -114,6 +116,7 @@ export const useWorkspaceUiStore = create<WorkspaceUiState>()(
         if (get().activeRunId === runId) {
           return;
         }
+        useGraphVisualStore.getState().resetVisualState();
         set({
           activeRunId: runId,
           workspace: {

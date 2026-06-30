@@ -95,3 +95,22 @@ export type {
   ErrorStateProps,
   DisconnectedStateProps,
 } from './composed/state-shells';
+
+export {
+  GraphSearchInput,
+  GraphLayerControls,
+  GraphLegend,
+  GraphCameraControls,
+  GraphIsolationControls,
+  GraphOverlayToggle,
+} from './graph-controls';
+export type {
+  GraphSearchInputProps,
+  GraphLayerControlsProps,
+  GraphLegendProps,
+  GraphCameraControlsProps,
+  GraphIsolationControlsProps,
+  GraphOverlayToggleProps,
+  GraphLayerOption,
+  GraphLegendItem,
+} from './graph-controls';

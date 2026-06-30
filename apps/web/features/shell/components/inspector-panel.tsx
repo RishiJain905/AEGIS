@@ -2,9 +2,11 @@
 
 import { Badge, Button, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
+import { GraphEntityInspector, IncidentContextInspector } from '@/features/inspector';
 import {
   useIncident,
   useRunAlerts,
+  useRunGraph,
   useRunIncidents,
 } from '@/features/shell/hooks/use-shell-queries';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
@@ -25,6 +27,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
   const incidentQuery = useIncident(incidentId ?? '');
   const incidentsQuery = useRunIncidents(runId ?? '');
   const alertsQuery = useRunAlerts(runId ?? '');
+  const graphQuery = useRunGraph(runId ?? '');
 
   if (collapsed) {
     return (
@@ -46,10 +49,12 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
   const isLoading =
     (incidentId && incidentQuery.isPending) ||
-    (runId && (incidentsQuery.isPending || alertsQuery.isPending));
+    (runId && (incidentsQuery.isPending || alertsQuery.isPending || graphQuery.isPending));
   const isError =
     (incidentId && incidentQuery.isError) ||
-    (runId && (incidentsQuery.isError || alertsQuery.isError));
+    (runId && (incidentsQuery.isError || alertsQuery.isError || graphQuery.isError));
+
+  const snapshot = graphQuery.data?.snapshot ?? null;
 
   return (
     <aside
@@ -81,12 +86,25 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
               void incidentQuery.refetch();
               void incidentsQuery.refetch();
               void alertsQuery.refetch();
+              void graphQuery.refetch();
             }}
           />
         ) : null}
 
         {!isLoading && !isError ? (
           <div className="flex flex-col gap-4">
+            {snapshot ? (
+              <GraphEntityInspector snapshot={snapshot} selectedEntityId={selectedEntityId} />
+            ) : null}
+
+            {incidentsQuery.data && alertsQuery.data ? (
+              <IncidentContextInspector
+                incidents={incidentsQuery.data}
+                alerts={alertsQuery.data}
+                selectedEntityId={selectedEntityId}
+              />
+            ) : null}
+
             {incidentQuery.data ? (
               <Panel title="Incident" density="compact">
                 <p className="text-sm font-medium">{incidentQuery.data.title}</p>
@@ -134,12 +152,13 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
               </Panel>
             ) : null}
 
-            {!incidentQuery.data &&
+            {!selectedEntityId &&
+            !incidentQuery.data &&
             (!incidentsQuery.data || incidentsQuery.data.length === 0) &&
             (!alertsQuery.data || alertsQuery.data.length === 0) ? (
               <EmptyState
                 title="No selection"
-                description="Select an incident or alert to inspect evidence and context."
+                description="Select a graph node, incident, or alert to inspect evidence and context."
               />
             ) : null}
           </div>

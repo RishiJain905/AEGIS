@@ -139,6 +139,30 @@
       "nodes": [
         {
           "schemaVersion": 1,
+          "id": "asset:device-workstation-01",
+          "entityType": "asset",
+          "assetType": "device",
+          "label": "Workstation 01",
+          "clusterId": "business-unit:bu-endpoints",
+          "riskScore": 0.62,
+          "criticality": 0.55,
+          "status": "suspicious",
+          "revision": 18
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:device-laptop-remote",
+          "entityType": "asset",
+          "assetType": "device",
+          "label": "Remote Laptop",
+          "clusterId": "business-unit:bu-endpoints",
+          "riskScore": 0.91,
+          "criticality": 0.48,
+          "status": "compromised",
+          "revision": 22
+        },
+        {
+          "schemaVersion": 1,
           "id": "asset:svc-api-gateway",
           "entityType": "asset",
           "assetType": "service",
@@ -148,6 +172,114 @@
           "criticality": 0.91,
           "status": "under_investigation",
           "revision": 42
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:svc-auth-service",
+          "entityType": "asset",
+          "assetType": "service",
+          "label": "Auth Service",
+          "clusterId": "business-unit:bu-platform",
+          "riskScore": 0.35,
+          "criticality": 0.88,
+          "status": "normal",
+          "revision": 15
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:svc-logistics-api",
+          "entityType": "asset",
+          "assetType": "service",
+          "label": "Logistics API",
+          "clusterId": "business-unit:bu-logistics",
+          "riskScore": 0.52,
+          "criticality": 0.72,
+          "status": "suspicious",
+          "revision": 20
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:db-customer-records",
+          "entityType": "asset",
+          "assetType": "database",
+          "label": "Customer Records DB",
+          "clusterId": "business-unit:bu-logistics",
+          "riskScore": 0.28,
+          "criticality": 0.95,
+          "status": "normal",
+          "revision": 11
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:identity-admin-portal",
+          "entityType": "asset",
+          "assetType": "identity",
+          "label": "Admin Portal Identity",
+          "clusterId": "business-unit:bu-platform",
+          "riskScore": 0.41,
+          "criticality": 0.65,
+          "status": "normal",
+          "revision": 9
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:control-firewall-edge",
+          "entityType": "asset",
+          "assetType": "control",
+          "label": "Edge Firewall",
+          "clusterId": "business-unit:bu-platform",
+          "riskScore": 0.15,
+          "criticality": 0.82,
+          "status": "normal",
+          "revision": 7
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:user-analyst-01",
+          "entityType": "asset",
+          "assetType": "user",
+          "label": "Analyst User",
+          "clusterId": "business-unit:bu-endpoints",
+          "riskScore": 0.08,
+          "criticality": 0.3,
+          "status": "normal",
+          "revision": 5
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:svc-notification",
+          "entityType": "asset",
+          "assetType": "service",
+          "label": "Notification Service",
+          "clusterId": "business-unit:bu-platform",
+          "riskScore": 0.12,
+          "criticality": 0.45,
+          "status": "normal",
+          "revision": 8
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:db-audit-logs",
+          "entityType": "asset",
+          "assetType": "database",
+          "label": "Audit Logs DB",
+          "clusterId": "business-unit:bu-platform",
+          "riskScore": 0.22,
+          "criticality": 0.78,
+          "status": "normal",
+          "revision": 10
+        },
+        {
+          "schemaVersion": 1,
+          "id": "asset:svc-ml-scoring",
+          "entityType": "asset",
+          "assetType": "ai_model",
+          "label": "ML Scoring Service",
+          "clusterId": "business-unit:bu-platform",
+          "riskScore": 0.19,
+          "criticality": 0.58,
+          "status": "normal",
+          "revision": 6
         }
       ],
       "edges": [
@@ -164,9 +296,183 @@
           "lastSeenAt": "2026-06-30T02:00:01.102Z",
           "eventCount": 31,
           "revision": 9
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_conn_002",
+          "source": "asset:device-laptop-remote",
+          "target": "asset:svc-api-gateway",
+          "relationshipType": "COMMUNICATED_WITH",
+          "directed": true,
+          "confidence": 0.68,
+          "riskContribution": 0.72,
+          "firstSeenAt": "2026-01-02T10:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:00.500Z",
+          "eventCount": 18,
+          "revision": 7
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_dep_001",
+          "source": "asset:svc-api-gateway",
+          "target": "asset:svc-auth-service",
+          "relationshipType": "DEPENDS_ON",
+          "directed": true,
+          "confidence": 1.0,
+          "riskContribution": 0.1,
+          "firstSeenAt": "2026-01-01T00:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:01.102Z",
+          "eventCount": 0,
+          "revision": 3
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_dep_002",
+          "source": "asset:svc-api-gateway",
+          "target": "asset:svc-logistics-api",
+          "relationshipType": "DEPENDS_ON",
+          "directed": true,
+          "confidence": 1.0,
+          "riskContribution": 0.15,
+          "firstSeenAt": "2026-01-01T00:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:01.102Z",
+          "eventCount": 0,
+          "revision": 3
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_dep_003",
+          "source": "asset:svc-logistics-api",
+          "target": "asset:db-customer-records",
+          "relationshipType": "DEPENDS_ON",
+          "directed": true,
+          "confidence": 1.0,
+          "riskContribution": 0.05,
+          "firstSeenAt": "2026-01-01T00:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:01.102Z",
+          "eventCount": 0,
+          "revision": 2
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_auth_001",
+          "source": "asset:identity-admin-portal",
+          "target": "asset:svc-auth-service",
+          "relationshipType": "AUTHENTICATED_TO",
+          "directed": true,
+          "confidence": 0.95,
+          "riskContribution": 0.08,
+          "firstSeenAt": "2026-01-01T12:00:00.000Z",
+          "lastSeenAt": "2026-06-30T01:55:00.000Z",
+          "eventCount": 12,
+          "revision": 4
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_host_001",
+          "source": "asset:control-firewall-edge",
+          "target": "asset:svc-api-gateway",
+          "relationshipType": "HOSTS",
+          "directed": true,
+          "confidence": 1.0,
+          "riskContribution": 0.0,
+          "firstSeenAt": "2026-01-01T00:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:01.102Z",
+          "eventCount": 0,
+          "revision": 1
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_admin_001",
+          "source": "asset:user-analyst-01",
+          "target": "asset:device-workstation-01",
+          "relationshipType": "ADMINISTERS",
+          "directed": true,
+          "confidence": 1.0,
+          "riskContribution": 0.0,
+          "firstSeenAt": "2026-01-01T08:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:01.102Z",
+          "eventCount": 5,
+          "revision": 2
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_conn_003",
+          "source": "asset:svc-api-gateway",
+          "target": "asset:svc-notification",
+          "relationshipType": "COMMUNICATED_WITH",
+          "directed": true,
+          "confidence": 0.88,
+          "riskContribution": 0.05,
+          "firstSeenAt": "2026-01-01T14:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:00.800Z",
+          "eventCount": 8,
+          "revision": 3
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_dep_004",
+          "source": "asset:svc-auth-service",
+          "target": "asset:db-audit-logs",
+          "relationshipType": "DEPENDS_ON",
+          "directed": true,
+          "confidence": 1.0,
+          "riskContribution": 0.02,
+          "firstSeenAt": "2026-01-01T00:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:01.102Z",
+          "eventCount": 0,
+          "revision": 2
+        },
+        {
+          "schemaVersion": 1,
+          "id": "edge:edge_dep_005",
+          "source": "asset:svc-ml-scoring",
+          "target": "asset:svc-logistics-api",
+          "relationshipType": "DEPENDS_ON",
+          "directed": true,
+          "confidence": 0.92,
+          "riskContribution": 0.03,
+          "firstSeenAt": "2026-01-03T00:00:00.000Z",
+          "lastSeenAt": "2026-06-30T02:00:01.102Z",
+          "eventCount": 0,
+          "revision": 1
         }
       ],
-      "clusters": [],
+      "clusters": [
+        {
+          "schemaVersion": 1,
+          "id": "business-unit:bu-platform",
+          "label": "Platform Services",
+          "memberNodeIds": [
+            "asset:svc-api-gateway",
+            "asset:svc-auth-service",
+            "asset:identity-admin-portal",
+            "asset:control-firewall-edge",
+            "asset:svc-notification",
+            "asset:db-audit-logs",
+            "asset:svc-ml-scoring"
+          ],
+          "revision": 3
+        },
+        {
+          "schemaVersion": 1,
+          "id": "business-unit:bu-logistics",
+          "label": "Logistics Domain",
+          "memberNodeIds": ["asset:svc-logistics-api", "asset:db-customer-records"],
+          "revision": 2
+        },
+        {
+          "schemaVersion": 1,
+          "id": "business-unit:bu-endpoints",
+          "label": "Endpoint Assets",
+          "memberNodeIds": [
+            "asset:device-workstation-01",
+            "asset:device-laptop-remote",
+            "asset:user-analyst-01"
+          ],
+          "revision": 2
+        }
+      ],
       "revision": 12
     }
   ],
