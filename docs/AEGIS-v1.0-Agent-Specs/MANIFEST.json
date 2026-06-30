@@ -1,0 +1,268 @@
+{
+  "name": "AEGIS v1.0 Agent Implementation Specifications",
+  "phase_count": 36,
+  "phase_range": "00-35",
+  "generated_files": 52,
+  "files": [
+    {
+      "path": "PHASE-EXECUTION-PROTOCOL.md",
+      "bytes": 5850,
+      "sha256": "fea8d340210704304b4774baa5149c7fe538bcde7a616f18ffe86692018cd0a7"
+    },
+    {
+      "path": "PHASE-SPEC-TEMPLATE.md",
+      "bytes": 912,
+      "sha256": "06e68ceaaa52df510279613201df53f3de86d0ab50ec4af860d7cda9c81597c9"
+    },
+    {
+      "path": "README.md",
+      "bytes": 8602,
+      "sha256": "b7c723635fcd7f69602b20cb02f6d28ebf7a9a353d34913555e500b12ad1b46e"
+    },
+    {
+      "path": "adrs/README.md",
+      "bytes": 322,
+      "sha256": "e6322e8fb5655f25f92134ef25d03104bbd3472ff2659447bd81da19330c24ca"
+    },
+    {
+      "path": "agent-system/18-model-provider-abstraction.md",
+      "bytes": 16811,
+      "sha256": "0cb9a8b257f288fb367b27ed910d8a3613c3a14d418e240049ac82da0744ba34"
+    },
+    {
+      "path": "agent-system/19-agent-runtime.md",
+      "bytes": 16967,
+      "sha256": "4aa2a528ea8422a9e779b34656f8935519380a9f1ca3ecbc53cf82abacd36058"
+    },
+    {
+      "path": "agent-system/20-watchtower-and-trace.md",
+      "bytes": 17027,
+      "sha256": "d3c19c265b2e9668d253770056393244ae4730c7e50a2a40289c46c1394089d6"
+    },
+    {
+      "path": "agent-system/21-oracle.md",
+      "bytes": 16575,
+      "sha256": "255e12f9e55616db6674e21afcd533edc78ccdd317d7e0f660fbc5370a8162ff"
+    },
+    {
+      "path": "agent-system/22-bastion-and-warden.md",
+      "bytes": 17103,
+      "sha256": "6c1250727d33d6a02b910da62df4d5afdc97aab609baad7ecd4c23fe05e2de2b"
+    },
+    {
+      "path": "agent-system/23-scribe.md",
+      "bytes": 16865,
+      "sha256": "3ef7598cd4780d7164d9455077a62e1dbcb21e422933c6122161012e3b546a94"
+    },
+    {
+      "path": "agent-system/README.md",
+      "bytes": 683,
+      "sha256": "47e63aa4a90c67501d75fa0c891f65fc2742731fdcf940ee60bfc53b7e9a3869"
+    },
+    {
+      "path": "cinematic-and-reporting/27-threejs-semantic-renderer.md",
+      "bytes": 17034,
+      "sha256": "153f4c8de3d678dc62306a6b232252203655b0233de14f5b1df298c6ac6db25c"
+    },
+    {
+      "path": "cinematic-and-reporting/28-cinematic-incident-replay.md",
+      "bytes": 16778,
+      "sha256": "0aeb4c3c0ea9e0cf26cd3dee74e3f3bb65ee745e8afb9eaeb7cd7d2b36ec0281"
+    },
+    {
+      "path": "cinematic-and-reporting/29-scoring-and-after-action-experience.md",
+      "bytes": 17156,
+      "sha256": "6dcfee52c529ac537ea3e82ac5531adb895060ecd01e30a802a72159c0a8e155"
+    },
+    {
+      "path": "cinematic-and-reporting/README.md",
+      "bytes": 580,
+      "sha256": "8b9c4d2088d6ad1dade5612c9d620fc40f9b0231cf470ea22ecdfb3a2945f6a0"
+    },
+    {
+      "path": "detection-and-machine-learning/14-feature-pipeline.md",
+      "bytes": 16716,
+      "sha256": "54205491fe57894d9f1dbb8e911dded06f2367a11130d39a12d3bb5b9cdab07d"
+    },
+    {
+      "path": "detection-and-machine-learning/15-rules-and-statistical-baselines.md",
+      "bytes": 16672,
+      "sha256": "86b01814ee2616be0f0d1c764766fe74b0b9dbb4fa33653df37b0da43fba15bd"
+    },
+    {
+      "path": "detection-and-machine-learning/16-anomaly-model.md",
+      "bytes": 16796,
+      "sha256": "f5071615a667501e5f1e5a0b45f3eb22ebfa2925384dad96d0850b47a6bf4144"
+    },
+    {
+      "path": "detection-and-machine-learning/17-graph-risk-propagation.md",
+      "bytes": 16759,
+      "sha256": "24d270e04ceaf79518e3e3e8efffef2a1f5d3d4e03169df72e03bbd73b87777f"
+    },
+    {
+      "path": "detection-and-machine-learning/README.md",
+      "bytes": 609,
+      "sha256": "7705fd610a8495228218eb1dce0abe602f52a67f169998f59330f1d404bbb6ad"
+    },
+    {
+      "path": "foundation/00-repository-and-engineering-standards.md",
+      "bytes": 16821,
+      "sha256": "eb03bb6b405c24a4f3f6dba68d6a743d35cf922a0104ab2fda762435aa04b20a"
+    },
+    {
+      "path": "foundation/01-shared-contracts.md",
+      "bytes": 16763,
+      "sha256": "eda57c2db95ec7b1252db1b1af7b2dcd11b605bfc2a6959a19d7d17a52194b90"
+    },
+    {
+      "path": "foundation/02-database-foundation.md",
+      "bytes": 16890,
+      "sha256": "138d9f148edcdc5d5b0ae1b62931b257055ceac088fd7e7326ce29cd4c9103ba"
+    },
+    {
+      "path": "foundation/README.md",
+      "bytes": 515,
+      "sha256": "834337792499f59cb6d6c73e380f1f8fd00c2c36441bced55a3f53fb3a12cb76"
+    },
+    {
+      "path": "graph-platform/05-graph-domain-engine.md",
+      "bytes": 16399,
+      "sha256": "90330da5d33a5b45447eeb9d62ffecca44dcb42ca956ad9ec8bddfd576fd9286"
+    },
+    {
+      "path": "graph-platform/06-sigma-operational-graph.md",
+      "bytes": 16864,
+      "sha256": "64a59a24a151b5850b5cbf941fa788998bb35f2d7f59f758cf73f72e70d4582e"
+    },
+    {
+      "path": "graph-platform/07-graph-performance-and-worker-layouts.md",
+      "bytes": 16699,
+      "sha256": "e5cf3a20eb57b861d7f6d4822bb1acbd0fdbb000157c35f2093f0ac2970abd37"
+    },
+    {
+      "path": "graph-platform/README.md",
+      "bytes": 543,
+      "sha256": "b696e0edb3ff539c86140f2708cd3c33c011b31c80cbe5d6e0491d11bfe411a6"
+    },
+    {
+      "path": "handoffs/README.md",
+      "bytes": 323,
+      "sha256": "49c22e489d6e8f1071abe3923c2604068169bba2249d77ea0445829d7c7cbf6f"
+    },
+    {
+      "path": "human-control-and-replay/24-approval-workflow.md",
+      "bytes": 17197,
+      "sha256": "36a29c6ec3c6e3142db03fd422a123463d1066e1b6fe880530cfcd5c7c05475b"
+    },
+    {
+      "path": "human-control-and-replay/25-snapshot-and-replay-engine.md",
+      "bytes": 17006,
+      "sha256": "a6a0ab04df8f0120520d65474514c4f1bb4b2ea1b21caf8eba92682e4d25d882"
+    },
+    {
+      "path": "human-control-and-replay/26-replay-frontend.md",
+      "bytes": 17036,
+      "sha256": "d0f40ac902879a19347afdccbc64d5cdd97cb725f1330ea6effe0054c45120e7"
+    },
+    {
+      "path": "human-control-and-replay/README.md",
+      "bytes": 534,
+      "sha256": "3ec22392681e3044728330619eae2495e3248af887bc2d826c2a48ac2394b343"
+    },
+    {
+      "path": "product-shell/03-command-centre-design-system.md",
+      "bytes": 16513,
+      "sha256": "2fa6ce63f792c0269ff2c7c2d37b772f02102db223426493fad3b12efd717bf3"
+    },
+    {
+      "path": "product-shell/04-application-shell.md",
+      "bytes": 16570,
+      "sha256": "3a957438898d3a018e63a2dc984fa5e09b799e5e5f6a7be036007f66437812f9"
+    },
+    {
+      "path": "product-shell/README.md",
+      "bytes": 440,
+      "sha256": "c37d3284f771c604b2767ad9a834b10c3322dbe9f1e12c58d9e51089ed94740b"
+    },
+    {
+      "path": "production-readiness/30-authentication-and-authorization.md",
+      "bytes": 17339,
+      "sha256": "1f49209d42e8c811b9ad63fddd73777f6be1e00d962d801d45c54f1b67179934"
+    },
+    {
+      "path": "production-readiness/31-observability.md",
+      "bytes": 17567,
+      "sha256": "71e3d4ea2ef3495125867d144853407175da7e00b099e4a5f946c1be119fd2e8"
+    },
+    {
+      "path": "production-readiness/32-security-hardening.md",
+      "bytes": 17383,
+      "sha256": "a9a7b98746901021023a74c3d55fc6cebd3457c66dce67991cbbe2f60c627d90"
+    },
+    {
+      "path": "production-readiness/33-cloud-deployment.md",
+      "bytes": 17534,
+      "sha256": "66f16cb696515af9011e2dfdf726acdb6681bea1e82af3f747546f55cdaf5528"
+    },
+    {
+      "path": "production-readiness/34-full-system-validation.md",
+      "bytes": 22451,
+      "sha256": "1299a4af19d5e4240d14a70eecabee2909c7f6d537ec0ab94f06b9e6f755bd79"
+    },
+    {
+      "path": "production-readiness/35-v1-release-preparation.md",
+      "bytes": 17322,
+      "sha256": "47c011fcb3535018d4240962caf6a9def5ae61d41b1c66589b3c8aea595e94cc"
+    },
+    {
+      "path": "production-readiness/README.md",
+      "bytes": 917,
+      "sha256": "071be82aa86a74fa81550e753386653e233330ac573b10aa9f42f6bc9b47a55d"
+    },
+    {
+      "path": "realtime-platform/11-event-persistence-and-streaming.md",
+      "bytes": 16673,
+      "sha256": "02dbaa4e33b1005e90be549795fbad97da1711697de805e4fc5f681888d2aca3"
+    },
+    {
+      "path": "realtime-platform/12-websocket-gateway.md",
+      "bytes": 16709,
+      "sha256": "fb467bcb5d2b3cd90f07325393db5ad86e49f8974eb5bf03f8bf6bce00ac7c6f"
+    },
+    {
+      "path": "realtime-platform/13-live-command-centre-integration.md",
+      "bytes": 17460,
+      "sha256": "da07e90f17d9b0c233163cba7bde9ec5af7582e6a347de9325cb6f790bb11dde"
+    },
+    {
+      "path": "realtime-platform/README.md",
+      "bytes": 565,
+      "sha256": "6993e8f73e877dfcd4c75a47e402bdd533c356d4f5e22e394db6781c6e3d11e7"
+    },
+    {
+      "path": "scenario-and-simulation/08-scenario-sdk.md",
+      "bytes": 16648,
+      "sha256": "9b6df6371ba56646c08c139c8e6eaaf32fb09d3ab384765c1b9e37295be28fbd"
+    },
+    {
+      "path": "scenario-and-simulation/09-deterministic-simulation-core.md",
+      "bytes": 16981,
+      "sha256": "8832f001bdf105aca44dcd5012f798fe4371f8665e20f3a91ed794f8e1c9edda"
+    },
+    {
+      "path": "scenario-and-simulation/10-operation-silent-relay.md",
+      "bytes": 17144,
+      "sha256": "ba5fe1688794b472487bc8f5c912c08cd3b6ece2921d77c62f89febc3cc22d72"
+    },
+    {
+      "path": "scenario-and-simulation/README.md",
+      "bytes": 535,
+      "sha256": "973dd7cbcb696cb4f6b117fe1288c89aee912467890480d42fe82fdcd9f66c9a"
+    }
+  ],
+  "note": "MANIFEST.json excludes its own checksum.",
+  "control_documents": [
+    "bestPractices.txt"
+  ],
+  "updated_at": "2026-06-30T02:45:35.822395+00:00"
+}
