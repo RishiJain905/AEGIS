@@ -96,14 +96,14 @@ None.
 
 ## Commands executed and results
 
-| Command                             | Result                                                        |
-| ----------------------------------- | ------------------------------------------------------------- |
-| `pnpm format:check`                 | PASS                                                          |
-| `pnpm lint`                         | PASS (ESLint + dependency-cruiser: 0 violations)              |
-| `pnpm typecheck`                    | PASS                                                          |
-| `pnpm test`                         | PASS (97 tests: 60 contracts + 17 web + 20 ui) |
-| `pnpm build`                        | PASS                                                          |
-| `pnpm --filter @aegis/web test:e2e` | PASS (11 Playwright tests)                                    |
+| Command                             | Result                                           |
+| ----------------------------------- | ------------------------------------------------ |
+| `pnpm format:check`                 | PASS                                             |
+| `pnpm lint`                         | PASS (ESLint + dependency-cruiser: 0 violations) |
+| `pnpm typecheck`                    | PASS                                             |
+| `pnpm test`                         | PASS (97 tests: 60 contracts + 17 web + 20 ui)   |
+| `pnpm build`                        | PASS                                             |
+| `pnpm --filter @aegis/web test:e2e` | PASS (11 Playwright tests)                       |
 
 Visual review command:
 
