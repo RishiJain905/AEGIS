@@ -27,6 +27,9 @@ htmlcov/
 .next/
 out/
 .turbo/
+storybook-static/
+test-results/
+playwright-report/
 *.tsbuildinfo
 
 # IDE / OS

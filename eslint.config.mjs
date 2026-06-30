@@ -14,6 +14,8 @@ export default tseslint.config(
       '**/.venv/**',
       '**/.dependency-cruiser.cjs',
       '**/tests/fixtures/**',
+      'apps/web/.storybook/**',
+      'apps/web/postcss.config.mjs',
       'eslint.config.mjs',
       'docs/**',
     ],
