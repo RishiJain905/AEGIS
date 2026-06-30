@@ -2,6 +2,7 @@
 
 import { Alert, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
+import { GraphDomainHarnessPanel } from '@/features/graph-domain-harness';
 import { useRunGraph } from '@/features/shell/hooks/use-shell-queries';
 
 interface VisualizationSlotProps {
@@ -82,6 +83,7 @@ export function VisualizationSlot({ runId }: VisualizationSlotProps) {
           Primary node: {snapshot.nodes[0]?.label ?? '—'}
         </p>
       </div>
+      <GraphDomainHarnessPanel snapshot={snapshot} />
     </Panel>
   );
 }

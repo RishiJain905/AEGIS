@@ -12,6 +12,7 @@ const shots = [
   { name: '01-desktop-command-centre', url: RUN, fullPage: true },
   { name: '02-operations-rail', url: RUN, selector: '[data-testid=operations-rail]' },
   { name: '03-visualization-placeholder', url: RUN, selector: '[data-testid=visualization-slot]' },
+  { name: '03b-graph-domain-harness', url: RUN, selector: '[data-testid=graph-domain-harness]' },
   { name: '04-inspector-panel', url: INCIDENT, selector: '[data-testid=inspector-panel]' },
   { name: '05-timeline-area', url: RUN, selector: '[data-testid=timeline-area]' },
   { name: '06-responsive-layout', url: RUN, fullPage: true, viewport: { width: 768, height: 900 } },
