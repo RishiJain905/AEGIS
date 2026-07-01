@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import sys
 from pathlib import Path
 
-from aegis_contracts import ActorRef, ActorType, SimulationCommandType
+from aegis_contracts import ActorRef, ActorType, SimulationCommandType, load_settings
+from aegis_persistence.engine import create_engine, dispose_engine, get_session_maker
+from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_simulation_domain import SimulationEngine, SimulationError
 from aegis_simulation_domain.runtime import SIMULATION_ENGINE_VERSION
+
+from aegis_simulation.application import SimulationApplicationService
 
 
 def _print_json(data: object) -> None:
@@ -156,6 +161,60 @@ def _invalid_command_demo() -> dict[str, object]:
         return {"rejected": True, "errorCode": exc.code.value, "message": exc.message}
 
 
+async def _run_persisted(
+    package_dir: Path,
+    *,
+    seed: int,
+    steps: int,
+    run_id: str | None = None,
+) -> dict[str, object]:
+    settings = load_settings()
+    engine = create_engine(settings)
+    session_maker = get_session_maker(settings, engine=engine)
+    try:
+        async with PostgresUnitOfWork(session_maker) as uow:
+            service = SimulationApplicationService(uow)
+            runtime, manifest = await service.create_run_from_package(
+                package_dir,
+                seed=seed,
+                run_id=run_id,
+            )
+            await service.execute_command(
+                runtime,
+                service.build_command(
+                    command_id=f"cmd-start-{seed}",
+                    command_type=SimulationCommandType.START,
+                    run_id=runtime.run_id,
+                ),
+            )
+            for index in range(steps):
+                await service.execute_command(
+                    runtime,
+                    service.build_command(
+                        command_id=f"cmd-step-{seed}-{index}",
+                        command_type=SimulationCommandType.STEP,
+                        run_id=runtime.run_id,
+                    ),
+                )
+            scenario_version_id = f"scenario-version:{manifest.metadata.version}"
+            normalized = SimulationEngine.normalized_hash(
+                runtime,
+                scenario_version_id=scenario_version_id,
+            )
+            await uow.commit()
+            return {
+                "runId": runtime.run_id,
+                "engineVersion": SIMULATION_ENGINE_VERSION,
+                "eventCount": normalized.event_count,
+                "normalizedHash": normalized.hash_value,
+                "finalSimTime": runtime.clock.sim_time.isoformat().replace("+00:00", "Z"),
+                "status": runtime.world.status.value,
+                "persisted": True,
+            }
+    finally:
+        await dispose_engine(engine)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="aegis-simulator")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -164,6 +223,15 @@ def main() -> None:
     run_parser.add_argument("--scenario", type=Path, required=True)
     run_parser.add_argument("--seed", type=int, default=42)
     run_parser.add_argument("--steps", type=int, default=50)
+
+    persisted_parser = subparsers.add_parser(
+        "run-persisted",
+        help="Run simulation with PostgreSQL event persistence",
+    )
+    persisted_parser.add_argument("--scenario", type=Path, required=True)
+    persisted_parser.add_argument("--seed", type=int, default=42)
+    persisted_parser.add_argument("--steps", type=int, default=50)
+    persisted_parser.add_argument("--run-id", type=str, default=None)
 
     determinism_parser = subparsers.add_parser("determinism-check")
     determinism_parser.add_argument("--scenario", type=Path, required=True)
@@ -198,6 +266,18 @@ def main() -> None:
             return
         if args.command == "run":
             _print_json(_run_local(args.scenario, seed=args.seed, steps=args.steps))
+            return
+        if args.command == "run-persisted":
+            _print_json(
+                asyncio.run(
+                    _run_persisted(
+                        args.scenario,
+                        seed=args.seed,
+                        steps=args.steps,
+                        run_id=args.run_id,
+                    )
+                )
+            )
             return
         if args.command == "determinism-check":
             result = _determinism_check(args.scenario, seed=args.seed, steps=args.steps)

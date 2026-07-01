@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+import {
+  backfillRequestSchema,
+  backfillResultSchema,
+  consumerCursorSchema,
+  deadLetterRecordSchema,
+  realtimeMessageEnvelopeSchema,
+} from './realtime';
+
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
 import { idempotencyRecordSchema, objectMetadataReferenceSchema } from './persistence';
 import {
@@ -46,6 +54,7 @@ export * from './graph';
 export * from './entities';
 export * from './api';
 export * from './persistence';
+export * from './realtime';
 export * from './parsing';
 
 export const aegisEnvironmentSchema = z.object({
@@ -107,4 +116,9 @@ export const FIXTURE_SCHEMA_MAP = {
   simulation_checkpoint_v1: simulationCheckpointSchema,
   world_state_snapshot_v1: worldStateSnapshotSchema,
   normalized_event_hash_v1: normalizedEventHashSchema,
+  realtime_message_envelope_v1: realtimeMessageEnvelopeSchema,
+  consumer_cursor_v1: consumerCursorSchema,
+  dead_letter_record_v1: deadLetterRecordSchema,
+  backfill_request_v1: backfillRequestSchema,
+  backfill_result_v1: backfillResultSchema,
 } as const;

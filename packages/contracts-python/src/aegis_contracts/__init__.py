@@ -45,6 +45,14 @@ from aegis_contracts.graph import (
 )
 from aegis_contracts.parsing import parse_contract
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
+from aegis_contracts.realtime import (
+    BackfillRequestV1,
+    BackfillResultV1,
+    ConsumerCursorV1,
+    DeadLetterRecordV1,
+    RealtimeMessageEnvelopeV1,
+    StreamingErrorCode,
+)
 from aegis_contracts.settings import (
     AegisEnvironment,
     AegisSettings,
@@ -87,10 +95,14 @@ __all__ = [
     "ApprovalDecision",
     "ApprovalV1",
     "AssetType",
+    "BackfillRequestV1",
+    "BackfillResultV1",
     "ContractErrorCode",
     "ContractValidationError",
+    "ConsumerCursorV1",
     "CursorPaginationV1",
     "DomainEventEnvelopeV1",
+    "DeadLetterRecordV1",
     "EntityType",
     "EventTypeRegistry",
     "EvidenceV1",
@@ -118,6 +130,7 @@ __all__ = [
     "ProposalStatus",
     "ProtocolVersion",
     "RelationshipType",
+    "RealtimeMessageEnvelopeV1",
     "RunConfigurationV1",
     "RunV1",
     "ScheduledEventSourceType",
@@ -128,6 +141,7 @@ __all__ = [
     "SimulationCommandType",
     "SimulationCommandV1",
     "SimulationRunStatus",
+    "StreamingErrorCode",
     "WorldStateSnapshotV1",
     "AssetInstanceSnapshotV1",
     "GeneratorStateSnapshotV1",

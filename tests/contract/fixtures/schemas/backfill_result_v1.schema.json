@@ -1,0 +1,44 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "completedAt": {
+      "title": "Completedat",
+      "type": "string"
+    },
+    "eventsPublished": {
+      "minimum": 0,
+      "title": "Eventspublished",
+      "type": "integer"
+    },
+    "eventsScanned": {
+      "minimum": 0,
+      "title": "Eventsscanned",
+      "type": "integer"
+    },
+    "eventsSkipped": {
+      "minimum": 0,
+      "title": "Eventsskipped",
+      "type": "integer"
+    },
+    "runId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Runid"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "eventsScanned", "eventsPublished", "eventsSkipped", "completedAt"],
+  "title": "BackfillResultV1",
+  "type": "object"
+}

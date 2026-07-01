@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase10' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase11' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -33,6 +33,11 @@ export const SIMULATION_COMMAND_SCHEMA_VERSION = 1;
 export const SIMULATION_CHECKPOINT_SCHEMA_VERSION = 1;
 export const WORLD_STATE_SNAPSHOT_SCHEMA_VERSION = 1;
 export const NORMALIZED_EVENT_HASH_SCHEMA_VERSION = 1;
+export const REALTIME_MESSAGE_SCHEMA_VERSION = 1;
+export const CONSUMER_CURSOR_SCHEMA_VERSION = 1;
+export const DEAD_LETTER_RECORD_SCHEMA_VERSION = 1;
+export const BACKFILL_REQUEST_SCHEMA_VERSION = 1;
+export const BACKFILL_RESULT_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -66,4 +71,9 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   simulation_checkpoint: [SIMULATION_CHECKPOINT_SCHEMA_VERSION],
   world_state_snapshot: [WORLD_STATE_SNAPSHOT_SCHEMA_VERSION],
   normalized_event_hash: [NORMALIZED_EVENT_HASH_SCHEMA_VERSION],
+  realtime_message: [REALTIME_MESSAGE_SCHEMA_VERSION],
+  consumer_cursor: [CONSUMER_CURSOR_SCHEMA_VERSION],
+  dead_letter_record: [DEAD_LETTER_RECORD_SCHEMA_VERSION],
+  backfill_request: [BACKFILL_REQUEST_SCHEMA_VERSION],
+  backfill_result: [BACKFILL_RESULT_SCHEMA_VERSION],
 };

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "consumerGroup": "aegis-domain-events",
+  "consumerName": "test-consumer-1",
+  "streamKey": "aegis:stream:domain-events",
+  "lastEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "lastRunId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "lastSequence": 1842,
+  "updatedAt": "2026-06-30T12:00:00.000Z"
+}

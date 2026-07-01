@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "fromSequence": 1,
+  "toSequence": 100,
+  "streamKey": "aegis:stream:domain-events",
+  "force": false
+}

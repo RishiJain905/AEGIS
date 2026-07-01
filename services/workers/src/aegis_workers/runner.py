@@ -1,5 +1,9 @@
-"""Minimal worker process entrypoint for Phase 00 infrastructure."""
+"""Minimal worker process entrypoint with outbox relay mode."""
 
+from __future__ import annotations
+
+import argparse
+import os
 import signal
 import sys
 import time
@@ -8,6 +12,20 @@ from aegis_workers import get_health
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(prog="aegis-worker")
+    parser.add_argument(
+        "--mode",
+        choices=["health", "outbox-relay"],
+        default=os.environ.get("AEGIS_WORKER_MODE", "health"),
+    )
+    args = parser.parse_args()
+
+    if args.mode == "outbox-relay":
+        from aegis_workers.outbox.relay_runner import main as relay_main
+
+        relay_main()
+        return
+
     health = get_health("worker")
     print(f"{health.service} {health.status} {health.version}", flush=True)
 

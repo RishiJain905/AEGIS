@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "channel": "events",
+  "streamMessageId": "1700000000000-0",
+  "publishedAt": "2026-06-30T12:00:00.000Z",
+  "event": {
+    "eventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "sequence": 1842,
+    "type": "telemetry.authentication.failed",
+    "schemaVersion": 1,
+    "simTime": "2026-01-01T18:42:03.420Z",
+    "recordedAt": "2026-06-30T02:00:01.102Z",
+    "actor": {
+      "type": "asset",
+      "id": "asset:device-workstation-01"
+    },
+    "subject": {
+      "type": "asset",
+      "id": "asset:svc-auth-service"
+    },
+    "payload": {
+      "schemaVersion": 1,
+      "reason": "invalid_credentials"
+    },
+    "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAX",
+    "causationId": null,
+    "correlationId": null
+  }
+}

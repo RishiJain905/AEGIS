@@ -31,6 +31,13 @@ from aegis_contracts.graph import (
     GraphSnapshotV1,
 )
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
+from aegis_contracts.realtime import (
+    BackfillRequestV1,
+    BackfillResultV1,
+    ConsumerCursorV1,
+    DeadLetterRecordV1,
+    RealtimeMessageEnvelopeV1,
+)
 from aegis_contracts.simulation import (
     NormalizedEventHashV1,
     RunConfigurationV1,
@@ -72,4 +79,9 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "simulation_checkpoint_v1": SimulationCheckpointV1,
     "world_state_snapshot_v1": WorldStateSnapshotV1,
     "normalized_event_hash_v1": NormalizedEventHashV1,
+    "realtime_message_envelope_v1": RealtimeMessageEnvelopeV1,
+    "consumer_cursor_v1": ConsumerCursorV1,
+    "dead_letter_record_v1": DeadLetterRecordV1,
+    "backfill_request_v1": BackfillRequestV1,
+    "backfill_result_v1": BackfillResultV1,
 }

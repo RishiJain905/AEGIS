@@ -5,7 +5,11 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY services/workers/pyproject.toml services/workers/
 COPY packages/contracts-python/pyproject.toml packages/contracts-python/
+COPY packages/persistence/pyproject.toml packages/persistence/
+COPY packages/event-streaming/pyproject.toml packages/event-streaming/
 COPY packages/contracts-python/src packages/contracts-python/src
+COPY packages/persistence/src packages/persistence/src
+COPY packages/event-streaming/src packages/event-streaming/src
 COPY services/workers/src services/workers/src
 RUN uv sync --frozen --no-dev --package aegis-workers
 
@@ -15,6 +19,8 @@ RUN groupadd -r aegis && useradd -r -g aegis aegis
 COPY --from=builder /app/.venv /app/.venv
 COPY services/workers/src services/workers/src
 COPY packages/contracts-python/src packages/contracts-python/src
+COPY packages/persistence/src packages/persistence/src
+COPY packages/event-streaming/src packages/event-streaming/src
 ENV PATH="/app/.venv/bin:$PATH"
 USER aegis
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

@@ -102,6 +102,13 @@ Canonical domain contracts live in `packages/contracts-python` and `packages/con
 - Integration tests: `uv run pytest tests/integration -q` (requires PostgreSQL)
 - Local infrastructure: `docker compose up -d postgres redis minio`
 
+## Event streaming (Phase 11+)
+
+- Architecture and operations: [`docs/realtime-streaming.md`](realtime-streaming.md)
+- Streaming integration tests: `uv run pytest tests/integration/streaming -q` (requires PostgreSQL + Redis)
+- Outbox relay worker: `uv run aegis-worker --mode outbox-relay`
+- Persisted simulation: `uv run aegis-simulator run-persisted --scenario <path> --seed <n> --steps <n>`
+
 ## Deferred to later phases
 
-Auth, simulation runtime, graph engine, agents, ML, Redis outbox relay, and production cloud deployment are out of current foundation scope.
+Auth, WebSocket gateway, live frontend reducers, agents, ML, and production cloud deployment are out of current foundation scope.
