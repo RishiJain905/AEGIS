@@ -1,7 +1,13 @@
 {
   "$defs": {
     "RelationshipType": {
-      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
+      "enum": [
+        "COMMUNICATED_WITH",
+        "AUTHENTICATED_TO",
+        "DEPENDS_ON",
+        "ADMINISTERS",
+        "HOSTS"
+      ],
       "title": "RelationshipType",
       "type": "string"
     }

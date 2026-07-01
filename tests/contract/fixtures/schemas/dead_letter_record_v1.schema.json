@@ -1,0 +1,83 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "attemptCount": {
+      "minimum": 1,
+      "title": "Attemptcount",
+      "type": "integer"
+    },
+    "consumerId": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Consumerid",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "errorCode": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Errorcode",
+      "type": "string"
+    },
+    "errorMessage": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Errormessage",
+      "type": "string"
+    },
+    "eventId": {
+      "title": "Eventid",
+      "type": "string"
+    },
+    "originalEnvelope": {
+      "additionalProperties": true,
+      "title": "Originalenvelope",
+      "type": "object"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "streamKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Streamkey",
+      "type": "string"
+    },
+    "streamMessageId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Streammessageid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "runId",
+    "sequence",
+    "consumerId",
+    "streamKey",
+    "streamMessageId",
+    "errorCode",
+    "errorMessage",
+    "attemptCount",
+    "originalEnvelope",
+    "createdAt"
+  ],
+  "title": "DeadLetterRecordV1",
+  "type": "object"
+}

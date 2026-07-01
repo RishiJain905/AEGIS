@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase02",
+  "workspaceVersion": "0.0.0-phase11",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",
@@ -28,8 +28,28 @@
       "schemaVersion": 1
     },
     {
+      "path": "tests/contract/fixtures/schemas/backfill_request_v1.schema.json",
+      "sha256": "b949e289ab7351e1e2c323df4ef1d3a7593f1bf7dc9b11f8761c7c5eb16d5348",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/backfill_result_v1.schema.json",
+      "sha256": "e8ab00c09aad2003a619660a4f52f726b65d83df2bb45ef5d3dbd1ae1a337130",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/consumer_cursor_v1.schema.json",
+      "sha256": "73f65b1467ebd0fd491efadd0d747890b516cbf4413d220ecc27d82c418a5226",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/cursor_page_v1.schema.json",
       "sha256": "d9ccec7c4cd326c22ece4e596f5a2220535c3c056a1c5035c03cd4972dab8c43",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/dead_letter_record_v1.schema.json",
+      "sha256": "baab3f6b07b55d5a06aab372e3c1724363aebf277b4b4002f3c6b7a2348bcb56",
       "schemaVersion": 1
     },
     {
@@ -118,6 +138,11 @@
       "schemaVersion": 1
     },
     {
+      "path": "tests/contract/fixtures/schemas/realtime_message_envelope_v1.schema.json",
+      "sha256": "51028461a1e872d4fb9e0465087206179397625e5d8460f4c5142784cc7466c8",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/run_configuration_v1.schema.json",
       "sha256": "6f7982fdf7a4928c6a3082b2aca7f5c34f82c99fda7cdd96e263c2f470237efe",
       "schemaVersion": 1
@@ -183,8 +208,28 @@
       "schemaVersion": 1
     },
     {
+      "path": "tests/contract/fixtures/valid/backfill_request_v1.json",
+      "sha256": "5883089281aa3f9955725fbe73d12a0a5da8998ba96e57a6dd0cfd16129306ca",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/backfill_result_v1.json",
+      "sha256": "fa6c199641771482478db21364d78a14e6a016c184f58a4366d29f8b5c41f469",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/consumer_cursor_v1.json",
+      "sha256": "a928893ca295ce605a6c243201b1f702d0ba9ad0ba3f75b74dae013635af7960",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/cursor_page_v1.json",
       "sha256": "cac98aaea0cdbbdc542e100e3556331c924e55f29a44b62a3a341047f2caa216",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/dead_letter_record_v1.json",
+      "sha256": "8d98947cb55934f4f1fdf1a135c9d2bf018f1d42830512199af9d8a9d76d6ea4",
       "schemaVersion": 1
     },
     {
@@ -270,6 +315,11 @@
     {
       "path": "tests/contract/fixtures/valid/object_metadata_reference_v1.json",
       "sha256": "b79b13477ffe4551500d6fbd35e5106026bb9d0d4c59674b06717ec69accdc20",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/realtime_message_envelope_v1.json",
+      "sha256": "07657602985d2809880ad8b466038112011b7ab3329aa550c6846e7f0aa5d42c",
       "schemaVersion": 1
     },
     {

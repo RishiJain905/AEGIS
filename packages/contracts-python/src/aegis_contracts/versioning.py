@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase10"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase11"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -41,6 +41,11 @@ SIMULATION_COMMAND_SCHEMA_VERSION: Final[int] = 1
 SIMULATION_CHECKPOINT_SCHEMA_VERSION: Final[int] = 1
 WORLD_STATE_SNAPSHOT_SCHEMA_VERSION: Final[int] = 1
 NORMALIZED_EVENT_HASH_SCHEMA_VERSION: Final[int] = 1
+REALTIME_MESSAGE_SCHEMA_VERSION: Final[int] = 1
+CONSUMER_CURSOR_SCHEMA_VERSION: Final[int] = 1
+DEAD_LETTER_RECORD_SCHEMA_VERSION: Final[int] = 1
+BACKFILL_REQUEST_SCHEMA_VERSION: Final[int] = 1
+BACKFILL_RESULT_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -74,6 +79,11 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "simulation_checkpoint": frozenset({SIMULATION_CHECKPOINT_SCHEMA_VERSION}),
     "world_state_snapshot": frozenset({WORLD_STATE_SNAPSHOT_SCHEMA_VERSION}),
     "normalized_event_hash": frozenset({NORMALIZED_EVENT_HASH_SCHEMA_VERSION}),
+    "realtime_message": frozenset({REALTIME_MESSAGE_SCHEMA_VERSION}),
+    "consumer_cursor": frozenset({CONSUMER_CURSOR_SCHEMA_VERSION}),
+    "dead_letter_record": frozenset({DEAD_LETTER_RECORD_SCHEMA_VERSION}),
+    "backfill_request": frozenset({BACKFILL_REQUEST_SCHEMA_VERSION}),
+    "backfill_result": frozenset({BACKFILL_RESULT_SCHEMA_VERSION}),
 }
 
 

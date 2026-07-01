@@ -1,0 +1,57 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "consumerGroup": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Consumergroup",
+      "type": "string"
+    },
+    "consumerName": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Consumername",
+      "type": "string"
+    },
+    "lastEventId": {
+      "title": "Lasteventid",
+      "type": "string"
+    },
+    "lastRunId": {
+      "title": "Lastrunid",
+      "type": "string"
+    },
+    "lastSequence": {
+      "minimum": 0,
+      "title": "Lastsequence",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "streamKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Streamkey",
+      "type": "string"
+    },
+    "updatedAt": {
+      "title": "Updatedat",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "consumerGroup",
+    "consumerName",
+    "streamKey",
+    "lastEventId",
+    "lastRunId",
+    "lastSequence",
+    "updatedAt"
+  ],
+  "title": "ConsumerCursorV1",
+  "type": "object"
+}

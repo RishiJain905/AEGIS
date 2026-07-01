@@ -8,6 +8,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from aegis_api.db.session import init_db, shutdown_db
+from aegis_api.realtime.backfill import router as backfill_router
+from aegis_api.realtime.events import router as events_router
+from aegis_api.realtime.observability import router as observability_router
+from aegis_api.realtime.status import router as status_router
 
 
 class HealthResponse(BaseModel):
@@ -59,6 +63,11 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
             environment=resolved_settings.AEGIS_ENV.value,
             database="ok",
         )
+
+    app.include_router(backfill_router)
+    app.include_router(events_router)
+    app.include_router(status_router)
+    app.include_router(observability_router)
 
     return app
 

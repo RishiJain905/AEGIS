@@ -11,7 +11,7 @@ PostgreSQL is the authoritative durable store for AEGIS v1.0. The `aegis_persist
 - Repository protocols returning `aegis_contracts` domain types
 - `PostgresUnitOfWork` for atomic state + domain event + outbox commits
 
-Redis publication of outbox rows is deferred to Phase 11.
+Redis publication of outbox rows is implemented in Phase 11 — see [realtime-streaming.md](realtime-streaming.md).
 
 ## Schema tables
 
@@ -21,7 +21,10 @@ Redis publication of outbox rows is deferred to Phase 11.
 | `runs` | Scenario execution instances with optimistic `revision` |
 | `asset_instances`, `relationship_instances` | Run-scoped topology |
 | `domain_events` | Append-only event envelopes; unique `(run_id, sequence)` |
-| `outbox` | Transactional outbox rows (one per event, unpublished until relay) |
+| `outbox` | Transactional outbox with relay claim/retry columns (`003_event_streaming`) |
+| `consumer_receipts` | Idempotent consumer deduplication by `(consumer_id, event_id)` |
+| `consumer_cursors` | Per-consumer stream cursor state |
+| `dead_letters` | Durable poison-message records |
 | `alerts`, `incidents`, `evidence`, `hypotheses` | Investigation domain state |
 | `agent_sessions` | Agent runtime audit records |
 | `tools` | Allowlisted tool registry metadata |
@@ -82,9 +85,12 @@ uv run alembic downgrade -1
 # Deterministic local seed (synthetic IDs only)
 uv run aegis-seed
 
-# Integration tests (require PostgreSQL)
+# Integration tests (require PostgreSQL; streaming tests also require Redis)
 uv run pytest tests/integration -q
+uv run pytest tests/integration/streaming -q
 ```
+
+See [realtime-streaming.md](realtime-streaming.md) for outbox relay, Redis Streams, and backfill operations.
 
 ## Migration policy
 

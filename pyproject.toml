@@ -11,6 +11,7 @@ members = [
     "apps/api",
     "packages/contracts-python",
     "packages/persistence",
+    "packages/event-streaming",
     "packages/scenario-sdk",
     "packages/simulation-domain",
     "packages/graph-domain",
@@ -68,7 +69,7 @@ disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["apps", "packages", "services"]
+pythonpath = ["apps", "packages", "services", "tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
@@ -82,6 +83,7 @@ root_packages = [
     "aegis_graph_domain",
     "aegis_policy",
     "aegis_observability",
+    "aegis_event_streaming",
     "aegis_simulation",
     "aegis_incidents",
     "aegis_agents",
@@ -112,6 +114,7 @@ source_modules = [
     "aegis_graph_domain",
     "aegis_policy",
     "aegis_observability",
+    "aegis_event_streaming",
 ]
 forbidden_modules = ["aegis_api"]
 
@@ -126,6 +129,7 @@ source_modules = [
     "aegis_graph_domain",
     "aegis_policy",
     "aegis_observability",
+    "aegis_event_streaming",
 ]
 forbidden_modules = [
     "aegis_simulation",
