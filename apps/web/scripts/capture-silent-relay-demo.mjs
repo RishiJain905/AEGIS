@@ -39,7 +39,9 @@ const determinism = run(
 const divergence = run(
   `uv run aegis-simulator seed-divergence-check --scenario ${SCENARIO} --seed-a 1000 --seed-b 1007 --steps ${STEPS}`,
 );
-const pytest = run('uv run pytest tests/scenarios/operation_silent_relay tests/golden-replays/operation-silent-relay -q');
+const pytest = run(
+  'uv run pytest tests/scenarios/operation_silent_relay tests/golden-replays/operation-silent-relay -q',
+);
 
 function escapeHtml(value) {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -93,9 +95,13 @@ async function shot(name, url, fn = async () => {}) {
 
 await shot('10-scenarios-list', '/scenarios');
 
-await shot('10-silent-relay-topology-seed-1000', '/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0', async () => {
-  await graphPage.waitForSelector('[data-testid=operational-graph-canvas]', { timeout: 90000 });
-});
+await shot(
+  '10-silent-relay-topology-seed-1000',
+  '/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0',
+  async () => {
+    await graphPage.waitForSelector('[data-testid=operational-graph-canvas]', { timeout: 90000 });
+  },
+);
 
 await shot('10-silent-relay-clusters', '/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0', async () => {
   await graphPage.waitForSelector('[data-testid=operational-graph-canvas]', { timeout: 90000 });
@@ -111,11 +117,15 @@ await shot('10-silent-relay-run-seed-1000', '/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB
   await graphPage.getByTestId('graph-overlay-risk').click();
 });
 
-await shot('10-silent-relay-inspector-evidence', '/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0', async () => {
-  await graphPage.waitForSelector('[data-testid=operational-graph-canvas]', { timeout: 90000 });
-  await graphPage.getByTestId('graph-entity-asset:svc-identity-broker').click();
-  await graphPage.waitForSelector('[data-testid=graph-entity-inspector]');
-});
+await shot(
+  '10-silent-relay-inspector-evidence',
+  '/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0',
+  async () => {
+    await graphPage.waitForSelector('[data-testid=operational-graph-canvas]', { timeout: 90000 });
+    await graphPage.getByTestId('graph-entity-asset:svc-identity-broker').click();
+    await graphPage.waitForSelector('[data-testid=graph-entity-inspector]');
+  },
+);
 
 await shot('10-silent-relay-run-seed-1007', '/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB1', async () => {
   await graphPage.waitForSelector('[data-testid=operational-graph-canvas]', { timeout: 90000 });
