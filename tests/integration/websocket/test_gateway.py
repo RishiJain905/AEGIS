@@ -58,7 +58,7 @@ def ws_settings() -> AegisSettings:
 
 
 @pytest.fixture
-def api_client(ws_settings: AegisSettings) -> TestClient:
+def api_client(ws_settings: AegisSettings, redis_available: None) -> TestClient:
     app = create_app(ws_settings)
     with TestClient(app) as client:
         yield client
