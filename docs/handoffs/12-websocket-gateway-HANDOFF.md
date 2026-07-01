@@ -17,30 +17,30 @@ Phase 12 deliverables per `docs/AEGIS-v1.0-Agent-Specs/realtime-platform/12-webs
 
 ## Files added
 
-| Area | Key paths |
-|------|-----------|
-| Contracts | `packages/contracts-python/src/aegis_contracts/websocket.py`, `packages/contracts-ts/src/websocket.ts` |
-| Gateway | `apps/api/src/aegis_api/websocket/**` |
-| TS client | `packages/realtime-client/**` |
-| Tests | `tests/unit/websocket/**`, `tests/integration/websocket/**`, `tests/contract/websocket/**` |
-| Fixtures | `tests/contract/fixtures/valid/websocket_frame_v1.json`, `tests/contract/fixtures/schemas/websocket_frame_v1.schema.json` |
-| Docs/ADR | `docs/websocket-protocol.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0013-websocket-gateway.md` |
-| Demo script | `apps/web/scripts/capture-websocket-gateway-demo.mjs` |
+| Area        | Key paths                                                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Contracts   | `packages/contracts-python/src/aegis_contracts/websocket.py`, `packages/contracts-ts/src/websocket.ts`                    |
+| Gateway     | `apps/api/src/aegis_api/websocket/**`                                                                                     |
+| TS client   | `packages/realtime-client/**`                                                                                             |
+| Tests       | `tests/unit/websocket/**`, `tests/integration/websocket/**`, `tests/contract/websocket/**`                                |
+| Fixtures    | `tests/contract/fixtures/valid/websocket_frame_v1.json`, `tests/contract/fixtures/schemas/websocket_frame_v1.schema.json` |
+| Docs/ADR    | `docs/websocket-protocol.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0013-websocket-gateway.md`                                |
+| Demo script | `apps/web/scripts/capture-websocket-gateway-demo.mjs`                                                                     |
 
 ## Files modified
 
-| File | Reason |
-|------|--------|
+| File                                                          | Reason                                                                  |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | `packages/contracts-python/src/aegis_contracts/versioning.py` | `WEBSOCKET_FRAME_SCHEMA_VERSION`, `WORKSPACE_VERSION` → `0.0.0-phase12` |
-| `packages/contracts-ts/src/versioning.ts` | Mirror |
-| `packages/contracts-python/src/aegis_contracts/settings.py` | WebSocket env vars |
-| `apps/api/src/aegis_api/main.py` | Gateway lifespan + routes |
-| `apps/api/src/aegis_api/realtime/status.py` | Gateway metrics in streaming status |
-| `apps/api/src/aegis_api/realtime/observability.py` | Link to WS demo |
-| `tests/integration/conftest.py` | Shared `redis_client` fixture |
-| `.env.example` | WebSocket configuration |
-| `docs/realtime-streaming.md` | Cross-link to protocol doc |
-| `tests/contract/fixtures/compatibility-manifest.json` | New fixture hashes |
+| `packages/contracts-ts/src/versioning.ts`                     | Mirror                                                                  |
+| `packages/contracts-python/src/aegis_contracts/settings.py`   | WebSocket env vars                                                      |
+| `apps/api/src/aegis_api/main.py`                              | Gateway lifespan + routes                                               |
+| `apps/api/src/aegis_api/realtime/status.py`                   | Gateway metrics in streaming status                                     |
+| `apps/api/src/aegis_api/realtime/observability.py`            | Link to WS demo                                                         |
+| `tests/integration/conftest.py`                               | Shared `redis_client` fixture                                           |
+| `.env.example`                                                | WebSocket configuration                                                 |
+| `docs/realtime-streaming.md`                                  | Cross-link to protocol doc                                              |
+| `tests/contract/fixtures/compatibility-manifest.json`         | New fixture hashes                                                      |
 
 ## Files removed
 
@@ -48,12 +48,12 @@ None.
 
 ## Contracts introduced or changed
 
-| Contract | Version | Description |
-|----------|---------|-------------|
-| `WebSocketFrameV1` | schema v1 | Versioned WS wire frame |
-| WebSocket payload models | v1 | hello, subscribe, event, error, snapshot_required, etc. |
-| `WebSocketErrorCode` | v1 | Stable gateway error codes |
-| `WORKSPACE_VERSION` | `0.0.0-phase12` | Workspace parity bump |
+| Contract                 | Version         | Description                                             |
+| ------------------------ | --------------- | ------------------------------------------------------- |
+| `WebSocketFrameV1`       | schema v1       | Versioned WS wire frame                                 |
+| WebSocket payload models | v1              | hello, subscribe, event, error, snapshot_required, etc. |
+| `WebSocketErrorCode`     | v1              | Stable gateway error codes                              |
+| `WORKSPACE_VERSION`      | `0.0.0-phase12` | Workspace parity bump                                   |
 
 ## Database migrations
 
@@ -70,41 +70,41 @@ See `.env.example`: `AEGIS_WS_PATH`, `AEGIS_WS_ENABLED`, `AEGIS_WS_MAX_CONNECTIO
 
 ## Tests added
 
-| Test | Proves |
-|------|--------|
-| `test_gateway_domain.py` | Auth hooks, dedup, frame validation |
-| `test_websocket_frames.py` | Cross-language protocol fixtures |
-| `test_connect_and_subscribe_delivers_events` | Authorized delivery in order |
-| `test_unauthorized_subscription_rejected` | Server-side auth rejection |
-| `test_unknown_run_rejected` | Invalid subscription rejected |
-| `test_reconnect_with_cursor` | Cursor-based catch-up without silent gaps |
-| `test_duplicate_events_suppressed` | Idempotent duplicate handling |
-| `test_pg_backfill_on_subscribe` | PostgreSQL authoritative recovery |
-| `test_slow_client_queue_overflow_triggers_snapshot_required` | Bounded queues / backpressure |
-| `test_invalid_message_rejected` | Safe rejection of invalid frames |
-| `realtime-client` vitest | Reconnect backoff + frame validation |
+| Test                                                         | Proves                                    |
+| ------------------------------------------------------------ | ----------------------------------------- |
+| `test_gateway_domain.py`                                     | Auth hooks, dedup, frame validation       |
+| `test_websocket_frames.py`                                   | Cross-language protocol fixtures          |
+| `test_connect_and_subscribe_delivers_events`                 | Authorized delivery in order              |
+| `test_unauthorized_subscription_rejected`                    | Server-side auth rejection                |
+| `test_unknown_run_rejected`                                  | Invalid subscription rejected             |
+| `test_reconnect_with_cursor`                                 | Cursor-based catch-up without silent gaps |
+| `test_duplicate_events_suppressed`                           | Idempotent duplicate handling             |
+| `test_pg_backfill_on_subscribe`                              | PostgreSQL authoritative recovery         |
+| `test_slow_client_queue_overflow_triggers_snapshot_required` | Bounded queues / backpressure             |
+| `test_invalid_message_rejected`                              | Safe rejection of invalid frames          |
+| `realtime-client` vitest                                     | Reconnect backoff + frame validation      |
 
 ## Commands executed and results
 
-| Command | Result |
-|---------|--------|
-| `pnpm format:check` | **PASS** |
-| `pnpm lint` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `pnpm test` | **PASS** |
-| `pnpm build` | **PASS** |
-| `pnpm check-contracts` | **PASS** |
-| `uv run ruff check .` | **PASS** (after `--fix`) |
-| `uv run pytest -q` | **PASS** — 280 passed |
-| `uv run lint-imports` | **PASS** |
-| `uv run pytest tests/integration -q` | **PASS** — 29 passed |
-| `uv run pytest tests/integration/websocket -q` | **PASS** — 8 passed |
-| `uv run pytest tests/contract/websocket -q` | **PASS** — 4 passed |
-| `uv run mypy apps services packages` | **BLOCKED** — pre-existing `aegis_api.db.session` duplicate module path |
-| `docker compose up -d postgres redis minio` | **BLOCKED** — Docker unavailable; local PostgreSQL/Redis used |
-| `uv run aegis-simulator run-persisted --scenario scenarios/operation-silent-relay --seed 1000 --steps 100` | **PASS** |
-| `uv run python scripts/publish-outbox-once.py` | **PASS** — `published: 101` |
-| `pnpm --filter @aegis/web exec node scripts/capture-websocket-gateway-demo.mjs` | **PASS** — 7 screenshots |
+| Command                                                                                                    | Result                                                                  |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `pnpm format:check`                                                                                        | **PASS**                                                                |
+| `pnpm lint`                                                                                                | **PASS**                                                                |
+| `pnpm typecheck`                                                                                           | **PASS**                                                                |
+| `pnpm test`                                                                                                | **PASS**                                                                |
+| `pnpm build`                                                                                               | **PASS**                                                                |
+| `pnpm check-contracts`                                                                                     | **PASS**                                                                |
+| `uv run ruff check .`                                                                                      | **PASS** (after `--fix`)                                                |
+| `uv run pytest -q`                                                                                         | **PASS** — 280 passed                                                   |
+| `uv run lint-imports`                                                                                      | **PASS**                                                                |
+| `uv run pytest tests/integration -q`                                                                       | **PASS** — 29 passed                                                    |
+| `uv run pytest tests/integration/websocket -q`                                                             | **PASS** — 8 passed                                                     |
+| `uv run pytest tests/contract/websocket -q`                                                                | **PASS** — 4 passed                                                     |
+| `uv run mypy apps services packages`                                                                       | **BLOCKED** — pre-existing `aegis_api.db.session` duplicate module path |
+| `docker compose up -d postgres redis minio`                                                                | **BLOCKED** — Docker unavailable; local PostgreSQL/Redis used           |
+| `uv run aegis-simulator run-persisted --scenario scenarios/operation-silent-relay --seed 1000 --steps 100` | **PASS**                                                                |
+| `uv run python scripts/publish-outbox-once.py`                                                             | **PASS** — `published: 101`                                             |
+| `pnpm --filter @aegis/web exec node scripts/capture-websocket-gateway-demo.mjs`                            | **PASS** — 7 screenshots                                                |
 
 ### Demo startup sequence
 

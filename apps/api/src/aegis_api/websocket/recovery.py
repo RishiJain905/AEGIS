@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from aegis_contracts import DomainEventEnvelopeV1, WebSocketDeliveryMode, WebSocketErrorCode
+from aegis_contracts import (
+    DomainEventEnvelopeV1,
+    RealtimeMessageEnvelopeV1,
+    WebSocketDeliveryMode,
+    WebSocketErrorCode,
+)
 from aegis_event_streaming.envelope import build_realtime_envelope
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -104,5 +109,9 @@ class SubscriptionRecoveryService:
         return events
 
 
-def envelope_from_domain_event(event: DomainEventEnvelopeV1, *, channel: str = "events"):
+def envelope_from_domain_event(
+    event: DomainEventEnvelopeV1,
+    *,
+    channel: str = "events",
+) -> RealtimeMessageEnvelopeV1:
     return build_realtime_envelope(event, channel=channel)
