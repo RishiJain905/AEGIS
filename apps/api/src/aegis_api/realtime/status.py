@@ -33,6 +33,7 @@ class StreamingStatusResponse(BaseModel):
     dlq_stream_length: int = Field(alias="dlqStreamLength")
     dlq_count: int = Field(alias="dlqCount")
     metrics: dict[str, Any]
+    gateway: dict[str, Any]
 
     model_config = {"populate_by_name": True}
 
@@ -73,4 +74,5 @@ async def streaming_status(request: Request) -> StreamingStatusResponse:
         dlq_stream_length=dlq_stream_length,
         dlq_count=dlq_count,
         metrics=GLOBAL_METRICS.snapshot(),
+        gateway=request.app.state.gateway.metrics.snapshot(),
     )

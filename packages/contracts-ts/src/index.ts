@@ -7,6 +7,7 @@ import {
   deadLetterRecordSchema,
   realtimeMessageEnvelopeSchema,
 } from './realtime';
+import { websocketFrameSchema } from './websocket';
 
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
 import { idempotencyRecordSchema, objectMetadataReferenceSchema } from './persistence';
@@ -55,6 +56,7 @@ export * from './entities';
 export * from './api';
 export * from './persistence';
 export * from './realtime';
+export * from './websocket';
 export * from './parsing';
 
 export const aegisEnvironmentSchema = z.object({
@@ -121,4 +123,5 @@ export const FIXTURE_SCHEMA_MAP = {
   dead_letter_record_v1: deadLetterRecordSchema,
   backfill_request_v1: backfillRequestSchema,
   backfill_result_v1: backfillResultSchema,
+  websocket_frame_v1: websocketFrameSchema,
 } as const;

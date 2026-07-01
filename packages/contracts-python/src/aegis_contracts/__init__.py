@@ -78,6 +78,13 @@ from aegis_contracts.versioning import (
     WORKSPACE_VERSION,
     assert_supported_schema_version,
 )
+from aegis_contracts.websocket import (
+    WebSocketDeliveryMode,
+    WebSocketErrorCode,
+    WebSocketFrameV1,
+    WebSocketMessageType,
+    build_websocket_frame,
+)
 
 __all__ = [
     "WORKSPACE_VERSION",
@@ -142,6 +149,11 @@ __all__ = [
     "SimulationCommandV1",
     "SimulationRunStatus",
     "StreamingErrorCode",
+    "WebSocketDeliveryMode",
+    "WebSocketErrorCode",
+    "WebSocketFrameV1",
+    "WebSocketMessageType",
+    "build_websocket_frame",
     "WorldStateSnapshotV1",
     "AssetInstanceSnapshotV1",
     "GeneratorStateSnapshotV1",

@@ -30,7 +30,8 @@ async def observability_page(request: Request) -> HTMLResponse:
 <body>
   <h1>AEGIS Phase 11 — Event Streaming Observability</h1>
   <p class="note">PostgreSQL is authoritative. Redis Streams provides at-least-once
-    delivery. WebSocket live updates are deferred to Phase 12–13.</p>
+    delivery. WebSocket live updates: <a href="/realtime/websocket-demo">Phase 12 gateway demo</a>.
+    Command-centre reducers remain Phase 13.</p>
   <section>
     <h2>Streaming status</h2>
     <pre id="status">Loading…</pre>

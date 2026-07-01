@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase11' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase12' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -38,6 +38,7 @@ export const CONSUMER_CURSOR_SCHEMA_VERSION = 1;
 export const DEAD_LETTER_RECORD_SCHEMA_VERSION = 1;
 export const BACKFILL_REQUEST_SCHEMA_VERSION = 1;
 export const BACKFILL_RESULT_SCHEMA_VERSION = 1;
+export const WEBSOCKET_FRAME_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -76,4 +77,5 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   dead_letter_record: [DEAD_LETTER_RECORD_SCHEMA_VERSION],
   backfill_request: [BACKFILL_REQUEST_SCHEMA_VERSION],
   backfill_result: [BACKFILL_RESULT_SCHEMA_VERSION],
+  websocket_frame: [WEBSOCKET_FRAME_SCHEMA_VERSION],
 };

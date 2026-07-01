@@ -12,6 +12,9 @@ from aegis_api.realtime.backfill import router as backfill_router
 from aegis_api.realtime.events import router as events_router
 from aegis_api.realtime.observability import router as observability_router
 from aegis_api.realtime.status import router as status_router
+from aegis_api.websocket.demo import router as websocket_demo_router
+from aegis_api.websocket.manager import WebSocketGatewayManager
+from aegis_api.websocket.router import create_websocket_router
 
 
 class HealthResponse(BaseModel):
@@ -31,14 +34,19 @@ class ReadyResponse(BaseModel):
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = app.state.settings
     init_db(settings)
+    gateway: WebSocketGatewayManager = app.state.gateway
+    await gateway.start()
     yield
+    await gateway.stop()
     await shutdown_db(settings)
 
 
 def create_app(settings: AegisSettings | None = None) -> FastAPI:
     resolved_settings = settings or load_settings()
+    gateway = WebSocketGatewayManager(resolved_settings)
     app = FastAPI(title="AEGIS API", version=WORKSPACE_VERSION, lifespan=lifespan)
     app.state.settings = resolved_settings
+    app.state.gateway = gateway
 
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
@@ -68,6 +76,8 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.include_router(events_router)
     app.include_router(status_router)
     app.include_router(observability_router)
+    app.include_router(create_websocket_router(gateway))
+    app.include_router(websocket_demo_router)
 
     return app
 

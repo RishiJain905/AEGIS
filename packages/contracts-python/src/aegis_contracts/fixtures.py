@@ -46,6 +46,7 @@ from aegis_contracts.simulation import (
     SimulationCommandV1,
     WorldStateSnapshotV1,
 )
+from aegis_contracts.websocket import WebSocketFrameV1
 
 FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "event_envelope_v1": DomainEventEnvelopeV1,
@@ -84,4 +85,5 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "dead_letter_record_v1": DeadLetterRecordV1,
     "backfill_request_v1": BackfillRequestV1,
     "backfill_result_v1": BackfillResultV1,
+    "websocket_frame_v1": WebSocketFrameV1,
 }
