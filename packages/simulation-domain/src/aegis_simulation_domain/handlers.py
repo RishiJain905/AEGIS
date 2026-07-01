@@ -8,7 +8,9 @@ from typing import Any
 
 from aegis_contracts import ActorRef, ActorType, DomainEventEnvelopeV1
 from aegis_contracts.versioning import DOMAIN_EVENT_SCHEMA_VERSION
+from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
 
+from aegis_simulation_domain.branch_selection import select_weighted_branch
 from aegis_simulation_domain.ids import derive_event_id, derive_trace_id
 from aegis_simulation_domain.random_streams import SeededRandomStreams
 from aegis_simulation_domain.world_state import GeneratorState, WorldState
@@ -51,6 +53,16 @@ def _build_envelope(
     )
 
 
+def _reschedule_generator(
+    generator: GeneratorState | None,
+    sim_time: datetime,
+) -> datetime | None:
+    if generator is None:
+        return None
+    generator.next_sim_time = sim_time + timedelta(seconds=generator.interval_sim_seconds)
+    return generator.next_sim_time
+
+
 def execute_plugin(
     *,
     plugin_id: str,
@@ -64,6 +76,7 @@ def execute_plugin(
     recorded_at_epoch: datetime,
     rng: SeededRandomStreams,
     generator: GeneratorState | None = None,
+    manifest: ScenarioManifestV1 | None = None,
 ) -> HandlerResult:
     system_actor = ActorRef(type=ActorType.SYSTEM, id="asset:simulation-engine")
     emitted: list[DomainEventEnvelopeV1] = []
@@ -93,12 +106,7 @@ def execute_plugin(
                 payload={"assetId": asset_id, "outcome": "failed" if is_failure else "succeeded"},
             )
         )
-        next_sequence += 1
-        reschedule = None
-        if generator is not None:
-            generator.next_sim_time = sim_time + timedelta(seconds=generator.interval_sim_seconds)
-            reschedule = generator.next_sim_time
-        return HandlerResult(events=emitted, reschedule=reschedule)
+        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
 
     if plugin_id == "telemetry.api_request":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -118,11 +126,7 @@ def execute_plugin(
                 payload={"assetId": asset_id, "statusCode": 500 if is_error else 200},
             )
         )
-        reschedule = None
-        if generator is not None:
-            generator.next_sim_time = sim_time + timedelta(seconds=generator.interval_sim_seconds)
-            reschedule = generator.next_sim_time
-        return HandlerResult(events=emitted, reschedule=reschedule)
+        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
 
     if plugin_id == "telemetry.network_flow":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -145,11 +149,7 @@ def execute_plugin(
                 },
             )
         )
-        reschedule = None
-        if generator is not None:
-            generator.next_sim_time = sim_time + timedelta(seconds=generator.interval_sim_seconds)
-            reschedule = generator.next_sim_time
-        return HandlerResult(events=emitted, reschedule=reschedule)
+        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
 
     if plugin_id == "telemetry.health_check":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -171,11 +171,119 @@ def execute_plugin(
                 payload={"assetId": asset_id, "healthy": healthy},
             )
         )
-        reschedule = None
-        if generator is not None:
-            generator.next_sim_time = sim_time + timedelta(seconds=generator.interval_sim_seconds)
-            reschedule = generator.next_sim_time
-        return HandlerResult(events=emitted, reschedule=reschedule)
+        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+
+    if plugin_id == "telemetry.database_query":
+        asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
+        stream = rng.stream(f"telemetry.database_query:{asset_id}")
+        anomaly_rate = float(config.get("anomalyRate", config.get("anomaly_rate", 0.02)))
+        anomalous = stream.random() < anomaly_rate
+        emitted.append(
+            _build_envelope(
+                run_id=run_id,
+                run_seed=run_seed,
+                sequence=next_sequence,
+                event_type="telemetry.database.query",
+                sim_time=sim_time,
+                recorded_at_epoch=recorded_at_epoch,
+                actor=system_actor,
+                subject=ActorRef(type=ActorType.ASSET, id=asset_id),
+                payload={
+                    "assetId": asset_id,
+                    "queryCount": int(
+                        config.get("queriesPerInterval", config.get("queries_per_interval", 5))
+                    ),
+                    "anomalous": anomalous,
+                },
+            )
+        )
+        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+
+    if plugin_id == "telemetry.deployment_event":
+        asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
+        stream = rng.stream(f"telemetry.deployment_event:{asset_id}")
+        failure_rate = float(config.get("failureRate", config.get("failure_rate", 0.05)))
+        failed = stream.random() < failure_rate
+        emitted.append(
+            _build_envelope(
+                run_id=run_id,
+                run_seed=run_seed,
+                sequence=next_sequence,
+                event_type="telemetry.deployment.event",
+                sim_time=sim_time,
+                recorded_at_epoch=recorded_at_epoch,
+                actor=system_actor,
+                subject=ActorRef(type=ActorType.ASSET, id=asset_id),
+                payload={
+                    "assetId": asset_id,
+                    "deploymentCount": int(
+                        config.get(
+                            "deploymentsPerInterval",
+                            config.get("deployments_per_interval", 1),
+                        )
+                    ),
+                    "failed": failed,
+                },
+            )
+        )
+        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+
+    if plugin_id == "telemetry.process_activity":
+        asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
+        stream = rng.stream(f"telemetry.process_activity:{asset_id}")
+        suspicious_rate = float(
+            config.get("suspiciousRate", config.get("suspicious_rate", 0.03))
+        )
+        suspicious = stream.random() < suspicious_rate
+        emitted.append(
+            _build_envelope(
+                run_id=run_id,
+                run_seed=run_seed,
+                sequence=next_sequence,
+                event_type="telemetry.process.activity",
+                sim_time=sim_time,
+                recorded_at_epoch=recorded_at_epoch,
+                actor=system_actor,
+                subject=ActorRef(type=ActorType.ASSET, id=asset_id),
+                payload={
+                    "assetId": asset_id,
+                    "eventCount": int(
+                        config.get("eventsPerInterval", config.get("events_per_interval", 10))
+                    ),
+                    "suspicious": suspicious,
+                },
+            )
+        )
+        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+
+    if plugin_id == "telemetry.ai_inference":
+        asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
+        stream = rng.stream(f"telemetry.ai_inference:{asset_id}")
+        anomaly_rate = float(config.get("anomalyRate", config.get("anomaly_rate", 0.02)))
+        anomalous = stream.random() < anomaly_rate
+        emitted.append(
+            _build_envelope(
+                run_id=run_id,
+                run_seed=run_seed,
+                sequence=next_sequence,
+                event_type="telemetry.ai.inference",
+                sim_time=sim_time,
+                recorded_at_epoch=recorded_at_epoch,
+                actor=system_actor,
+                subject=ActorRef(type=ActorType.ASSET, id=asset_id),
+                payload={
+                    "assetId": asset_id,
+                    "inferenceCount": int(
+                        config.get(
+                            "inferencesPerInterval",
+                            config.get("inferences_per_interval", 8),
+                        )
+                    ),
+                    "anomalous": anomalous,
+                },
+            )
+        )
+        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
 
     if plugin_id == "effect.set_asset_status":
         status = str(config.get("status", "unknown"))
@@ -200,7 +308,7 @@ def execute_plugin(
         return HandlerResult(events=emitted)
 
     if plugin_id == "effect.adjust_relationship_confidence":
-        edge_id = str(config.get("edgeId", ""))
+        edge_id = str(config.get("edgeId", config.get("edge_id", "")))
         delta = float(config.get("delta", 0.0))
         relationship = world.relationships.get(edge_id)
         if relationship is not None:
@@ -210,9 +318,34 @@ def execute_plugin(
 
     if plugin_id == "branch.seed_selector":
         branch_group = str(config.get("branchGroup", config.get("branch_group", "default")))
+        candidate_ids = list(
+            config.get("candidateBranchIds", config.get("candidate_branch_ids", []))
+        )
         stream = rng.stream(f"branch.seed_selector:{branch_group}")
-        selected = f"branch-{int(stream.random() * 1000)}"
+        selected: str | None = None
+        if manifest is not None:
+            selected = select_weighted_branch(
+                manifest.branches,
+                branch_group=branch_group,
+                candidate_branch_ids=candidate_ids,
+                stream=stream,
+            )
+        if selected is None:
+            selected = f"branch-{int(stream.random() * 1000)}"
         world.selected_branches[branch_group] = selected
+        emitted.append(
+            _build_envelope(
+                run_id=run_id,
+                run_seed=run_seed,
+                sequence=next_sequence,
+                event_type="sim.branch.selected",
+                sim_time=sim_time,
+                recorded_at_epoch=recorded_at_epoch,
+                actor=system_actor,
+                subject=ActorRef(type=ActorType.SYSTEM, id="asset:simulation-engine"),
+                payload={"branchGroup": branch_group, "branchId": selected},
+            )
+        )
         return HandlerResult(events=emitted)
 
     msg = f"Unknown plugin: {plugin_id}"

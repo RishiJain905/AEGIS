@@ -84,9 +84,13 @@ Reuse Phase 01 enums: `AssetType`, `RelationshipType`, `NodeStatus`.
 | `telemetry.api_request` | `requestsPerInterval`, `errorRate` |
 | `telemetry.network_flow` | `bytesPerInterval`, `protocol` |
 | `telemetry.health_check` | `healthyProbability` |
-| `effect.set_asset_status` | `status` |
-| `effect.adjust_relationship_confidence` | `delta` |
-| `branch.seed_selector` | `branchGroup` |
+| `telemetry.database_query` | `queriesPerInterval`, `anomalyRate` |
+| `telemetry.deployment_event` | `deploymentsPerInterval`, `failureRate` |
+| `telemetry.process_activity` | `eventsPerInterval`, `suspiciousRate` |
+| `telemetry.ai_inference` | `inferencesPerInterval`, `anomalyRate` |
+| `effect.set_asset_status` | `status`, optional `assetId` |
+| `effect.adjust_relationship_confidence` | `delta`, optional `edgeId` |
+| `branch.seed_selector` | `branchGroup`, optional `candidateBranchIds` |
 
 Unknown plugins fail validation with `UNKNOWN_PLUGIN`. Arbitrary code, prompts, and shell fields are rejected.
 

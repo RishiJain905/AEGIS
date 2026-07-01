@@ -40,18 +40,52 @@ class SetAssetStatusEffectConfigV1(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     status: str = Field(min_length=1)
+    asset_id: str | None = Field(default=None, alias="assetId")
 
 
 class AdjustRelationshipConfidenceEffectConfigV1(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     delta: float = Field(ge=-1.0, le=1.0)
+    edge_id: str | None = Field(default=None, alias="edgeId")
+
+
+class DatabaseQueryTelemetryConfigV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    queries_per_interval: int = Field(alias="queriesPerInterval", ge=1, default=5)
+    anomaly_rate: float = Field(alias="anomalyRate", ge=0.0, le=1.0, default=0.02)
+
+
+class DeploymentEventTelemetryConfigV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    deployments_per_interval: int = Field(alias="deploymentsPerInterval", ge=1, default=1)
+    failure_rate: float = Field(alias="failureRate", ge=0.0, le=1.0, default=0.05)
+
+
+class ProcessActivityTelemetryConfigV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    events_per_interval: int = Field(alias="eventsPerInterval", ge=1, default=10)
+    suspicious_rate: float = Field(alias="suspiciousRate", ge=0.0, le=1.0, default=0.03)
+
+
+class AiInferenceTelemetryConfigV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    inferences_per_interval: int = Field(alias="inferencesPerInterval", ge=1, default=8)
+    anomaly_rate: float = Field(alias="anomalyRate", ge=0.0, le=1.0, default=0.02)
 
 
 class SeedSelectorBranchConfigV1(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     branch_group: str = Field(alias="branchGroup", min_length=1)
+    candidate_branch_ids: list[str] = Field(
+        default_factory=list,
+        alias="candidateBranchIds",
+    )
 
 
 PLUGIN_REGISTRY.update(
@@ -60,6 +94,10 @@ PLUGIN_REGISTRY.update(
         "telemetry.api_request": ApiRequestTelemetryConfigV1,
         "telemetry.network_flow": NetworkFlowTelemetryConfigV1,
         "telemetry.health_check": HealthCheckTelemetryConfigV1,
+        "telemetry.database_query": DatabaseQueryTelemetryConfigV1,
+        "telemetry.deployment_event": DeploymentEventTelemetryConfigV1,
+        "telemetry.process_activity": ProcessActivityTelemetryConfigV1,
+        "telemetry.ai_inference": AiInferenceTelemetryConfigV1,
         "effect.set_asset_status": SetAssetStatusEffectConfigV1,
         "effect.adjust_relationship_confidence": AdjustRelationshipConfidenceEffectConfigV1,
         "branch.seed_selector": SeedSelectorBranchConfigV1,

@@ -31,6 +31,14 @@ export function useScenario(scenarioId: string) {
   });
 }
 
+export function useRuns() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.runs.all,
+    queryFn: ({ signal }) => client.listRuns(signal),
+  });
+}
+
 export function useRun(runId: string) {
   const client = useApiClient();
   return useQuery({

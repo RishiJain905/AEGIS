@@ -46,7 +46,13 @@
       "type": "string"
     }
   },
-  "required": ["schemaVersion", "scope", "idempotencyKey", "responseRef", "createdAt"],
+  "required": [
+    "schemaVersion",
+    "scope",
+    "idempotencyKey",
+    "responseRef",
+    "createdAt"
+  ],
   "title": "IdempotencyRecordV1",
   "type": "object"
 }

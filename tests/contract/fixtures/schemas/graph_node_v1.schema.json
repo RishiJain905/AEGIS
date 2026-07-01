@@ -1,17 +1,34 @@
 {
   "$defs": {
     "AssetType": {
-      "enum": ["service", "device", "user", "identity", "database", "control", "ai_model"],
+      "enum": [
+        "service",
+        "device",
+        "user",
+        "identity",
+        "database",
+        "control",
+        "ai_model"
+      ],
       "title": "AssetType",
       "type": "string"
     },
     "EntityType": {
-      "enum": ["asset", "cluster"],
+      "enum": [
+        "asset",
+        "cluster"
+      ],
       "title": "EntityType",
       "type": "string"
     },
     "NodeStatus": {
-      "enum": ["normal", "suspicious", "under_investigation", "contained", "compromised"],
+      "enum": [
+        "normal",
+        "suspicious",
+        "under_investigation",
+        "contained",
+        "compromised"
+      ],
       "title": "NodeStatus",
       "type": "string"
     }

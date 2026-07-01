@@ -1,0 +1,28 @@
+schemaVersion: 1
+simulationSteps: 300
+engineVersion: 0.0.0-phase10
+seeds:
+  - seed: 1000
+    rootCauseBranch: branch-cause-credentials
+    responseBranch: branch-response-investigate
+    description: Golden seed for compromised credentials cause
+  - seed: 1006
+    rootCauseBranch: branch-cause-maintenance
+    responseBranch: branch-response-remediate
+    description: Golden seed for undocumented maintenance cause
+  - seed: 1007
+    rootCauseBranch: branch-cause-misuse
+    responseBranch: branch-response-investigate
+    description: Golden seed for internal misuse cause
+  - seed: 1014
+    rootCauseBranch: branch-cause-deployment
+    responseBranch: branch-response-investigate
+    description: Golden seed for defective deployment cause
+  - seed: 1
+    rootCauseBranch: branch-cause-misuse
+    responseBranch: branch-response-remediate
+    description: Misuse cause with remediate response path
+  - seed: 11
+    rootCauseBranch: branch-cause-misuse
+    responseBranch: branch-response-contain
+    description: Misuse cause with aggressive containment response path

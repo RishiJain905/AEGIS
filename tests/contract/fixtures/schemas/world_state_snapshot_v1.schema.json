@@ -40,7 +40,15 @@
           "type": "string"
         }
       },
-      "required": ["id", "assetType", "status", "riskScore", "criticality", "zoneId", "revision"],
+      "required": [
+        "id",
+        "assetType",
+        "status",
+        "riskScore",
+        "criticality",
+        "zoneId",
+        "revision"
+      ],
       "title": "AssetInstanceSnapshotV1",
       "type": "object"
     },
@@ -104,12 +112,22 @@
           "title": "Revealed",
           "type": "boolean"
         },
+        "triggerCount": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Triggercount",
+          "type": "integer"
+        },
         "triggered": {
           "title": "Triggered",
           "type": "boolean"
         }
       },
-      "required": ["conditionId", "revealed", "triggered"],
+      "required": [
+        "conditionId",
+        "revealed",
+        "triggered"
+      ],
       "title": "HiddenConditionStateSnapshotV1",
       "type": "object"
     },
@@ -164,13 +182,40 @@
       "type": "object"
     },
     "ScheduledEventSourceType": {
-      "enum": ["scheduled", "generator"],
+      "enum": [
+        "scheduled",
+        "generator"
+      ],
       "title": "ScheduledEventSourceType",
       "type": "string"
     },
     "ScheduledEventV1": {
       "additionalProperties": false,
       "properties": {
+        "branchGateBranchId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Branchgatebranchid"
+        },
+        "branchGateGroup": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Branchgategroup"
+        },
         "config": {
           "additionalProperties": true,
           "title": "Config",
@@ -234,7 +279,12 @@
       "type": "object"
     },
     "SimulationRunStatus": {
-      "enum": ["created", "running", "paused", "stopped"],
+      "enum": [
+        "created",
+        "running",
+        "paused",
+        "stopped"
+      ],
       "title": "SimulationRunStatus",
       "type": "string"
     }

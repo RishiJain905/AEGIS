@@ -97,6 +97,14 @@ class HiddenConditionDefinitionV1(BaseModel):
     trigger_refs: list[ScenarioLocalId] = Field(alias="triggerRefs")
     effect_refs: list[ScenarioLocalId] = Field(alias="effectRefs")
     visibility: HiddenConditionVisibilityV1
+    trigger_threshold: int = Field(default=1, alias="triggerThreshold", ge=1)
+
+
+class BranchGateDefinitionV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    branch_group: str = Field(alias="branchGroup", min_length=1)
+    branch_id: ScenarioLocalId = Field(alias="branchId")
 
 
 class ScheduledEventDefinitionV1(BaseModel):
@@ -107,6 +115,8 @@ class ScheduledEventDefinitionV1(BaseModel):
     priority: int = Field(ge=0)
     tie_breaker: int = Field(alias="tieBreaker", ge=0)
     action: BehaviorPluginConfigV1
+    branch_gate: BranchGateDefinitionV1 | None = Field(default=None, alias="branchGate")
+    target_asset_id: AssetId | None = Field(default=None, alias="targetAssetId")
 
 
 class BranchOutcomeV1(BaseModel):
@@ -124,6 +134,7 @@ class OutcomeBranchDefinitionV1(BaseModel):
     weight: float = Field(ge=0.0, le=1.0)
     trigger_condition: str = Field(alias="triggerCondition", min_length=1)
     outcomes: list[BranchOutcomeV1] = Field(min_length=1)
+    branch_group: str | None = Field(default=None, alias="branchGroup")
 
 
 class ObjectiveDefinitionV1(BaseModel):

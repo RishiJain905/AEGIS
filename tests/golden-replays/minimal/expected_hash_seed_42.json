@@ -2,6 +2,6 @@
   "scenario": "scenarios/_fixtures/valid-minimal",
   "seed": 42,
   "steps": 30,
-  "engineVersion": "0.0.0-phase09",
-  "normalizedHash": "sha256:c65bea4e31eadfc9b66e40bf258c0294ccc006fdb2829a5cfd7aa7ed39ed15d8"
+  "engineVersion": "0.0.0-phase10",
+  "normalizedHash": "sha256:53b209f537852f7d8273046f7f3026f9e93a03c1b24f83e5593b148b90856242"
 }
