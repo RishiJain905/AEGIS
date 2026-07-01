@@ -16,6 +16,7 @@ members = [
     "aegis-policy",
     "aegis-scenario-sdk",
     "aegis-simulation",
+    "aegis-simulation-domain",
     "aegis-workers",
 ]
 
@@ -202,10 +203,33 @@ version = "0.0.0"
 source = { editable = "services/simulation" }
 dependencies = [
     { name = "aegis-contracts" },
+    { name = "aegis-persistence" },
+    { name = "aegis-scenario-sdk" },
+    { name = "aegis-simulation-domain" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "aegis-contracts", editable = "packages/contracts-python" }]
+requires-dist = [
+    { name = "aegis-contracts", editable = "packages/contracts-python" },
+    { name = "aegis-persistence", editable = "packages/persistence" },
+    { name = "aegis-scenario-sdk", editable = "packages/scenario-sdk" },
+    { name = "aegis-simulation-domain", editable = "packages/simulation-domain" },
+]
+
+[[package]]
+name = "aegis-simulation-domain"
+version = "0.0.0"
+source = { editable = "packages/simulation-domain" }
+dependencies = [
+    { name = "aegis-contracts" },
+    { name = "aegis-scenario-sdk" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aegis-contracts", editable = "packages/contracts-python" },
+    { name = "aegis-scenario-sdk", editable = "packages/scenario-sdk" },
+]
 
 [[package]]
 name = "aegis-workers"

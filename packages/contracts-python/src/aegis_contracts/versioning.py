@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase08"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase09"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -35,6 +35,12 @@ APPROVAL_SCHEMA_VERSION: Final[int] = 1
 EXECUTED_ACTION_SCHEMA_VERSION: Final[int] = 1
 MODEL_MANIFEST_SCHEMA_VERSION: Final[int] = 1
 MODEL_SCORE_SCHEMA_VERSION: Final[int] = 1
+RUN_CONFIGURATION_SCHEMA_VERSION: Final[int] = 1
+SCHEDULED_EVENT_SCHEMA_VERSION: Final[int] = 1
+SIMULATION_COMMAND_SCHEMA_VERSION: Final[int] = 1
+SIMULATION_CHECKPOINT_SCHEMA_VERSION: Final[int] = 1
+WORLD_STATE_SNAPSHOT_SCHEMA_VERSION: Final[int] = 1
+NORMALIZED_EVENT_HASH_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -62,6 +68,12 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "executed_action": frozenset({EXECUTED_ACTION_SCHEMA_VERSION}),
     "model_manifest": frozenset({MODEL_MANIFEST_SCHEMA_VERSION}),
     "model_score": frozenset({MODEL_SCORE_SCHEMA_VERSION}),
+    "run_configuration": frozenset({RUN_CONFIGURATION_SCHEMA_VERSION}),
+    "scheduled_event": frozenset({SCHEDULED_EVENT_SCHEMA_VERSION}),
+    "simulation_command": frozenset({SIMULATION_COMMAND_SCHEMA_VERSION}),
+    "simulation_checkpoint": frozenset({SIMULATION_CHECKPOINT_SCHEMA_VERSION}),
+    "world_state_snapshot": frozenset({WORLD_STATE_SNAPSHOT_SCHEMA_VERSION}),
+    "normalized_event_hash": frozenset({NORMALIZED_EVENT_HASH_SCHEMA_VERSION}),
 }
 
 

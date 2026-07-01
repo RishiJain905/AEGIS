@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "commandId": "cmd-start-001",
+  "commandType": "start",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "actor": {
+    "type": "operator",
+    "id": "asset:operator-console"
+  },
+  "authorizationToken": "auth-token-synthetic",
+  "payload": {}
+}

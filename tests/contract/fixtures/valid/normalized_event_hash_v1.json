@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "scenarioVersionId": "scenario-version:fixture-valid-minimal-1.0.0",
+  "seed": 42,
+  "engineVersion": "0.0.0-phase09",
+  "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "eventCount": 12
+}

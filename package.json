@@ -18,7 +18,7 @@
     "test:integration": "uv run pytest tests/integration -q",
     "build": "turbo run build",
     "clean": "turbo run clean && rm -rf node_modules/.cache .turbo",
-    "typecheck:py": "uv run mypy -p aegis_api -p aegis_contracts -p aegis_persistence -p aegis_simulation -p aegis_workers -p aegis_incidents -p aegis_agents -p aegis_ml -p aegis_scenario_sdk -p aegis_graph_domain -p aegis_policy -p aegis_observability",
+    "typecheck:py": "uv run mypy -p aegis_api -p aegis_contracts -p aegis_persistence -p aegis_simulation -p aegis_simulation_domain -p aegis_workers -p aegis_incidents -p aegis_agents -p aegis_ml -p aegis_scenario_sdk -p aegis_graph_domain -p aegis_policy -p aegis_observability",
     "validate-env": "tsx packages/contracts-ts/scripts/validate-env.ts",
     "check-contracts": "uv run python scripts/check_contract_compatibility.py",
     "generate:graph-fixtures": "tsx scripts/generate_graph_fixture.ts",

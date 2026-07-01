@@ -337,6 +337,31 @@ class GraphSnapshotRow(Base):
     )
 
 
+class SimulationCheckpointRow(Base):
+    __tablename__ = "simulation_checkpoints"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    sequence_at_checkpoint: Mapped[int] = mapped_column(Integer, nullable=False)
+    engine_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    checksum: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "sequence_at_checkpoint",
+            name="uq_simulation_checkpoints_run_sequence",
+        ),
+        Index("ix_simulation_checkpoints_run_created_at", "run_id", "created_at"),
+    )
+
+
 class IdempotencyRecordRow(Base):
     __tablename__ = "idempotency_records"
 

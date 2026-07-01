@@ -74,6 +74,7 @@ async def db_session(
 ) -> AsyncIterator[AsyncSession]:
     async with session_maker() as session:
         for table in (
+            "simulation_checkpoints",
             "outbox",
             "domain_events",
             "idempotency_records",

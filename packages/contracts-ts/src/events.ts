@@ -29,7 +29,17 @@ export const actorRefSchema = z
   .strict();
 
 export const EVENT_TYPE_REGISTRY: Readonly<Record<string, number>> = {
+  'sim.run.started': 1,
+  'sim.run.paused': 1,
+  'sim.run.resumed': 1,
+  'sim.run.stopped': 1,
+  'sim.checkpoint.created': 1,
+  'sim.command.executed': 1,
+  'sim.asset.status_changed': 1,
   'telemetry.authentication.failed': 1,
+  'telemetry.authentication.succeeded': 1,
+  'telemetry.api.request': 1,
+  'telemetry.health.check': 1,
   'telemetry.network.connection': 1,
   'alert.created': 1,
   'incident.created': 1,

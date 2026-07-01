@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase08' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase09' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -27,6 +27,12 @@ export const APPROVAL_SCHEMA_VERSION = 1;
 export const EXECUTED_ACTION_SCHEMA_VERSION = 1;
 export const MODEL_MANIFEST_SCHEMA_VERSION = 1;
 export const MODEL_SCORE_SCHEMA_VERSION = 1;
+export const RUN_CONFIGURATION_SCHEMA_VERSION = 1;
+export const SCHEDULED_EVENT_SCHEMA_VERSION = 1;
+export const SIMULATION_COMMAND_SCHEMA_VERSION = 1;
+export const SIMULATION_CHECKPOINT_SCHEMA_VERSION = 1;
+export const WORLD_STATE_SNAPSHOT_SCHEMA_VERSION = 1;
+export const NORMALIZED_EVENT_HASH_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -54,4 +60,10 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   executed_action: [EXECUTED_ACTION_SCHEMA_VERSION],
   model_manifest: [MODEL_MANIFEST_SCHEMA_VERSION],
   model_score: [MODEL_SCORE_SCHEMA_VERSION],
+  run_configuration: [RUN_CONFIGURATION_SCHEMA_VERSION],
+  scheduled_event: [SCHEDULED_EVENT_SCHEMA_VERSION],
+  simulation_command: [SIMULATION_COMMAND_SCHEMA_VERSION],
+  simulation_checkpoint: [SIMULATION_CHECKPOINT_SCHEMA_VERSION],
+  world_state_snapshot: [WORLD_STATE_SNAPSHOT_SCHEMA_VERSION],
+  normalized_event_hash: [NORMALIZED_EVENT_HASH_SCHEMA_VERSION],
 };

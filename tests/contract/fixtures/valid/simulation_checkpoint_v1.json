@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "ckp_fixture_001",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sequenceAtCheckpoint": 5,
+  "engineVersion": "0.0.0-phase09",
+  "checksum": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+  "worldState": {
+    "schemaVersion": 1,
+    "status": "running",
+    "simTime": "2026-01-01T00:05:00.000Z",
+    "nextSequence": 6,
+    "assets": [
+      {
+        "id": "asset:svc-api-gateway",
+        "assetType": "service",
+        "status": "normal",
+        "riskScore": 0.2,
+        "criticality": 0.8,
+        "zoneId": "business-unit:core-ops",
+        "revision": 0
+      }
+    ],
+    "relationships": [],
+    "generators": [],
+    "hiddenConditions": [],
+    "selectedBranches": {},
+    "pendingEvents": [],
+    "rngState": {}
+  },
+  "createdAt": "2026-01-01T00:05:00.000Z"
+}
