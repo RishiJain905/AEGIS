@@ -1,0 +1,345 @@
+{
+  "$defs": {
+    "AssetInstanceSnapshotV1": {
+      "additionalProperties": false,
+      "properties": {
+        "assetType": {
+          "minLength": 1,
+          "title": "Assettype",
+          "type": "string"
+        },
+        "criticality": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Criticality",
+          "type": "number"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "riskScore": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Riskscore",
+          "type": "number"
+        },
+        "status": {
+          "minLength": 1,
+          "title": "Status",
+          "type": "string"
+        },
+        "zoneId": {
+          "minLength": 1,
+          "title": "Zoneid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "assetType",
+        "status",
+        "riskScore",
+        "criticality",
+        "zoneId",
+        "revision"
+      ],
+      "title": "AssetInstanceSnapshotV1",
+      "type": "object"
+    },
+    "GeneratorStateSnapshotV1": {
+      "additionalProperties": false,
+      "properties": {
+        "config": {
+          "additionalProperties": true,
+          "title": "Config",
+          "type": "object"
+        },
+        "generatorId": {
+          "minLength": 1,
+          "title": "Generatorid",
+          "type": "string"
+        },
+        "intervalSimSeconds": {
+          "minimum": 1,
+          "title": "Intervalsimseconds",
+          "type": "integer"
+        },
+        "jitterSimSeconds": {
+          "minimum": 0,
+          "title": "Jittersimseconds",
+          "type": "integer"
+        },
+        "nextSimTime": {
+          "title": "Nextsimtime",
+          "type": "string"
+        },
+        "pluginId": {
+          "minLength": 1,
+          "title": "Pluginid",
+          "type": "string"
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "generatorId",
+        "targetAssetId",
+        "pluginId",
+        "nextSimTime",
+        "intervalSimSeconds",
+        "jitterSimSeconds"
+      ],
+      "title": "GeneratorStateSnapshotV1",
+      "type": "object"
+    },
+    "HiddenConditionStateSnapshotV1": {
+      "additionalProperties": false,
+      "properties": {
+        "conditionId": {
+          "minLength": 1,
+          "title": "Conditionid",
+          "type": "string"
+        },
+        "revealed": {
+          "title": "Revealed",
+          "type": "boolean"
+        },
+        "triggered": {
+          "title": "Triggered",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "conditionId",
+        "revealed",
+        "triggered"
+      ],
+      "title": "HiddenConditionStateSnapshotV1",
+      "type": "object"
+    },
+    "RelationshipInstanceSnapshotV1": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "relationshipType": {
+          "minLength": 1,
+          "title": "Relationshiptype",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "riskContribution": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Riskcontribution",
+          "type": "number"
+        },
+        "sourceId": {
+          "title": "Sourceid",
+          "type": "string"
+        },
+        "targetId": {
+          "title": "Targetid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "sourceId",
+        "targetId",
+        "relationshipType",
+        "confidence",
+        "riskContribution",
+        "revision"
+      ],
+      "title": "RelationshipInstanceSnapshotV1",
+      "type": "object"
+    },
+    "ScheduledEventSourceType": {
+      "enum": [
+        "scheduled",
+        "generator"
+      ],
+      "title": "ScheduledEventSourceType",
+      "type": "string"
+    },
+    "ScheduledEventV1": {
+      "additionalProperties": false,
+      "properties": {
+        "config": {
+          "additionalProperties": true,
+          "title": "Config",
+          "type": "object"
+        },
+        "eventId": {
+          "minLength": 1,
+          "title": "Eventid",
+          "type": "string"
+        },
+        "pluginId": {
+          "minLength": 1,
+          "title": "Pluginid",
+          "type": "string"
+        },
+        "priority": {
+          "minimum": 0,
+          "title": "Priority",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "simTime": {
+          "title": "Simtime",
+          "type": "string"
+        },
+        "sourceType": {
+          "$ref": "#/$defs/ScheduledEventSourceType"
+        },
+        "targetAssetId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetassetid"
+        },
+        "tieBreaker": {
+          "minimum": 0,
+          "title": "Tiebreaker",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "eventId",
+        "simTime",
+        "priority",
+        "tieBreaker",
+        "sourceType",
+        "pluginId"
+      ],
+      "title": "ScheduledEventV1",
+      "type": "object"
+    },
+    "SimulationRunStatus": {
+      "enum": [
+        "created",
+        "running",
+        "paused",
+        "stopped"
+      ],
+      "title": "SimulationRunStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assets": {
+      "items": {
+        "$ref": "#/$defs/AssetInstanceSnapshotV1"
+      },
+      "title": "Assets",
+      "type": "array"
+    },
+    "generators": {
+      "items": {
+        "$ref": "#/$defs/GeneratorStateSnapshotV1"
+      },
+      "title": "Generators",
+      "type": "array"
+    },
+    "hiddenConditions": {
+      "items": {
+        "$ref": "#/$defs/HiddenConditionStateSnapshotV1"
+      },
+      "title": "Hiddenconditions",
+      "type": "array"
+    },
+    "nextSequence": {
+      "minimum": 0,
+      "title": "Nextsequence",
+      "type": "integer"
+    },
+    "pendingEvents": {
+      "items": {
+        "$ref": "#/$defs/ScheduledEventV1"
+      },
+      "title": "Pendingevents",
+      "type": "array"
+    },
+    "relationships": {
+      "items": {
+        "$ref": "#/$defs/RelationshipInstanceSnapshotV1"
+      },
+      "title": "Relationships",
+      "type": "array"
+    },
+    "rngState": {
+      "additionalProperties": {
+        "items": {
+          "type": "integer"
+        },
+        "type": "array"
+      },
+      "title": "Rngstate",
+      "type": "object"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "selectedBranches": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Selectedbranches",
+      "type": "object"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/SimulationRunStatus"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "status",
+    "simTime",
+    "nextSequence",
+    "assets",
+    "relationships",
+    "generators"
+  ],
+  "title": "WorldStateSnapshotV1",
+  "type": "object"
+}

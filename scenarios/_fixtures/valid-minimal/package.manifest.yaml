@@ -1,0 +1,8 @@
+schemaVersion: 1
+scenarioId: scenario:fixture-valid-minimal
+version: 1.0.0-fixture
+requiredPlatformVersion: 0.0.0-phase08
+files:
+- path: manifest.yaml
+  checksum: sha256:218c94decbb0f8ace0c015a74f37c2cd7f8ed4f2d24b4be6f9a93a7dbd8cdda9
+packageChecksum: sha256:7f4e9e0418bd59b3a88059cbd8709637267d9c19bc424d047145841d10283255

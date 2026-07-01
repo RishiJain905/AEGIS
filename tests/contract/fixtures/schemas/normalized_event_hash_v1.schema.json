@@ -1,0 +1,43 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "engineVersion": {
+      "minLength": 1,
+      "title": "Engineversion",
+      "type": "string"
+    },
+    "eventCount": {
+      "minimum": 0,
+      "title": "Eventcount",
+      "type": "integer"
+    },
+    "hash": {
+      "minLength": 1,
+      "title": "Hash",
+      "type": "string"
+    },
+    "scenarioVersionId": {
+      "title": "Scenarioversionid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "seed": {
+      "title": "Seed",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "scenarioVersionId",
+    "seed",
+    "engineVersion",
+    "hash",
+    "eventCount"
+  ],
+  "title": "NormalizedEventHashV1",
+  "type": "object"
+}

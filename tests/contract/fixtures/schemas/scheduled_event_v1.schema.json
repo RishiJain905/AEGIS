@@ -1,0 +1,75 @@
+{
+  "$defs": {
+    "ScheduledEventSourceType": {
+      "enum": [
+        "scheduled",
+        "generator"
+      ],
+      "title": "ScheduledEventSourceType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "config": {
+      "additionalProperties": true,
+      "title": "Config",
+      "type": "object"
+    },
+    "eventId": {
+      "minLength": 1,
+      "title": "Eventid",
+      "type": "string"
+    },
+    "pluginId": {
+      "minLength": 1,
+      "title": "Pluginid",
+      "type": "string"
+    },
+    "priority": {
+      "minimum": 0,
+      "title": "Priority",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "sourceType": {
+      "$ref": "#/$defs/ScheduledEventSourceType"
+    },
+    "targetAssetId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Targetassetid"
+    },
+    "tieBreaker": {
+      "minimum": 0,
+      "title": "Tiebreaker",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "simTime",
+    "priority",
+    "tieBreaker",
+    "sourceType",
+    "pluginId"
+  ],
+  "title": "ScheduledEventV1",
+  "type": "object"
+}

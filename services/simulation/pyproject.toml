@@ -2,10 +2,18 @@
 name = "aegis-simulation"
 version = "0.0.0"
 requires-python = ">=3.12,<3.13"
-dependencies = ["aegis-contracts"]
+dependencies = [
+    "aegis-contracts",
+    "aegis-persistence",
+    "aegis-scenario-sdk",
+    "aegis-simulation-domain",
+]
 
 [tool.uv.sources]
 aegis-contracts = { workspace = true }
+aegis-persistence = { workspace = true }
+aegis-scenario-sdk = { workspace = true }
+aegis-simulation-domain = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

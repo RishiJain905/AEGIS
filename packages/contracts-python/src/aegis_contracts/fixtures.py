@@ -31,6 +31,14 @@ from aegis_contracts.graph import (
     GraphSnapshotV1,
 )
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
+from aegis_contracts.simulation import (
+    NormalizedEventHashV1,
+    RunConfigurationV1,
+    ScheduledEventV1,
+    SimulationCheckpointV1,
+    SimulationCommandV1,
+    WorldStateSnapshotV1,
+)
 
 FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "event_envelope_v1": DomainEventEnvelopeV1,
@@ -58,4 +66,10 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "executed_action_v1": ExecutedActionV1,
     "model_manifest_v1": ModelManifestV1,
     "model_score_v1": ModelScoreV1,
+    "run_configuration_v1": RunConfigurationV1,
+    "scheduled_event_v1": ScheduledEventV1,
+    "simulation_command_v1": SimulationCommandV1,
+    "simulation_checkpoint_v1": SimulationCheckpointV1,
+    "world_state_snapshot_v1": WorldStateSnapshotV1,
+    "normalized_event_hash_v1": NormalizedEventHashV1,
 }

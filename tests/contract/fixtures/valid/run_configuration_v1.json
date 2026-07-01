@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "scenarioVersionId": "scenario-version:fixture-valid-minimal-1.0.0",
+  "seed": 42,
+  "engineVersion": "0.0.0-phase09",
+  "initialSimTime": "2026-01-01T00:00:00.000Z",
+  "recordedAtEpoch": "2026-01-01T00:00:00.000Z",
+  "maxSteps": 100
+}

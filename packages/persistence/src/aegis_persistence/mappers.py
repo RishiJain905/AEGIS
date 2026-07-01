@@ -20,6 +20,7 @@ from aegis_contracts import (
     RunV1,
     ScenarioV1,
     ScenarioVersionV1,
+    SimulationCheckpointV1,
     parse_contract,
 )
 
@@ -40,6 +41,7 @@ from aegis_persistence.orm.tables import (
     RunRow,
     ScenarioRow,
     ScenarioVersionRow,
+    SimulationCheckpointRow,
     StoredObjectRow,
 )
 
@@ -54,6 +56,10 @@ def scenario_version_to_domain(row: ScenarioVersionRow) -> ScenarioVersionV1:
 
 def run_to_domain(row: RunRow) -> RunV1:
     return parse_contract(RunV1, row.payload)
+
+
+def checkpoint_to_domain(row: SimulationCheckpointRow) -> SimulationCheckpointV1:
+    return parse_contract(SimulationCheckpointV1, row.payload)
 
 
 def incident_to_domain(row: IncidentRow) -> IncidentV1:

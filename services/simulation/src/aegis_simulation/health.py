@@ -8,5 +8,5 @@ class ServiceHealth:
     version: str
 
 
-def get_health(service: str, version: str = "0.0.0-phase00") -> ServiceHealth:
+def get_health(service: str, version: str = "0.0.0-phase09") -> ServiceHealth:
     return ServiceHealth(status="ok", service=service, version=version)

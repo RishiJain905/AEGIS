@@ -8,6 +8,7 @@ from aegis_contracts import AegisSettings, DomainEventEnvelopeV1
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from aegis_persistence.repositories.postgres import (
+    PostgresCheckpointRepository,
     PostgresEventRepository,
     PostgresIdempotencyRepository,
     PostgresIncidentRepository,
@@ -42,6 +43,7 @@ class PostgresUnitOfWork:
         self._incidents = PostgresIncidentRepository(self._session)
         self._idempotency = PostgresIdempotencyRepository(self._session)
         self._objects = PostgresObjectRepository(self._session)
+        self._checkpoints = PostgresCheckpointRepository(self._session)
         return self
 
     async def __aexit__(
@@ -89,6 +91,10 @@ class PostgresUnitOfWork:
     @property
     def objects(self) -> PostgresObjectRepository:
         return self._objects
+
+    @property
+    def checkpoints(self) -> PostgresCheckpointRepository:
+        return self._checkpoints
 
     @property
     def session(self) -> AsyncSession:

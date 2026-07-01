@@ -20,6 +20,14 @@ import {
 import { apiErrorEnvelopeSchema } from './errors';
 import { domainEventEnvelopeSchema } from './events';
 import {
+  normalizedEventHashSchema,
+  runConfigurationSchema,
+  scheduledEventSchema,
+  simulationCheckpointSchema,
+  simulationCommandSchema,
+  worldStateSnapshotSchema,
+} from './simulation';
+import {
   graphDeltaSchema,
   graphEdgeSchema,
   graphNodeSchema,
@@ -32,7 +40,8 @@ export { WORKSPACE_VERSION, SUPPORTED_SCHEMA_VERSIONS } from './versioning';
 export * from './versioning';
 export * from './errors';
 export * from './primitives';
-export * from './events';
+export * from './simulation';
+export { domainEventEnvelopeSchema } from './events';
 export * from './graph';
 export * from './entities';
 export * from './api';
@@ -92,4 +101,10 @@ export const FIXTURE_SCHEMA_MAP = {
   executed_action_v1: executedActionSchema,
   model_manifest_v1: modelManifestSchema,
   model_score_v1: modelScoreSchema,
+  run_configuration_v1: runConfigurationSchema,
+  scheduled_event_v1: scheduledEventSchema,
+  simulation_command_v1: simulationCommandSchema,
+  simulation_checkpoint_v1: simulationCheckpointSchema,
+  world_state_snapshot_v1: worldStateSnapshotSchema,
+  normalized_event_hash_v1: normalizedEventHashSchema,
 } as const;

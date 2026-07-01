@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "eventId": "evt-status-shift",
+  "simTime": "2026-01-01T00:10:00.000Z",
+  "priority": 1,
+  "tieBreaker": 0,
+  "sourceType": "scheduled",
+  "pluginId": "effect.set_asset_status",
+  "config": {
+    "status": "suspicious"
+  },
+  "targetAssetId": "asset:svc-auth-service"
+}

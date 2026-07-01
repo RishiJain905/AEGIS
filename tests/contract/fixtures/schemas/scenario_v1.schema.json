@@ -25,7 +25,12 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "id", "name", "createdAt"],
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "createdAt"
+  ],
   "title": "ScenarioV1",
   "type": "object"
 }

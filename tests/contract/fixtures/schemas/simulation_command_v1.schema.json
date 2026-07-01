@@ -1,0 +1,96 @@
+{
+  "$defs": {
+    "ActorRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/ActorType"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "title": "ActorRef",
+      "type": "object"
+    },
+    "ActorType": {
+      "enum": [
+        "asset",
+        "agent",
+        "system",
+        "operator"
+      ],
+      "title": "ActorType",
+      "type": "string"
+    },
+    "SimulationCommandType": {
+      "enum": [
+        "start",
+        "step",
+        "advance",
+        "pause",
+        "resume",
+        "stop",
+        "checkpoint",
+        "restore",
+        "execute"
+      ],
+      "title": "SimulationCommandType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actor": {
+      "$ref": "#/$defs/ActorRef"
+    },
+    "authorizationToken": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Authorizationtoken"
+    },
+    "commandId": {
+      "minLength": 1,
+      "title": "Commandid",
+      "type": "string"
+    },
+    "commandType": {
+      "$ref": "#/$defs/SimulationCommandType"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "commandId",
+    "commandType",
+    "runId",
+    "actor"
+  ],
+  "title": "SimulationCommandV1",
+  "type": "object"
+}

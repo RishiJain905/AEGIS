@@ -12,6 +12,7 @@ from aegis_contracts import (
     RunV1,
     ScenarioV1,
     ScenarioVersionV1,
+    SimulationCheckpointV1,
 )
 
 
@@ -76,6 +77,14 @@ class ObjectRepository(Protocol):
     async def add(self, reference: ObjectMetadataReferenceV1) -> ObjectMetadataReferenceV1: ...
 
 
+class CheckpointRepository(Protocol):
+    async def get_by_id(self, checkpoint_id: str) -> SimulationCheckpointV1 | None: ...
+
+    async def get_latest_for_run(self, run_id: str) -> SimulationCheckpointV1 | None: ...
+
+    async def add(self, checkpoint: SimulationCheckpointV1) -> SimulationCheckpointV1: ...
+
+
 class UnitOfWork(Protocol):
   @property
   def scenarios(self) -> ScenarioRepository: ...
@@ -97,6 +106,9 @@ class UnitOfWork(Protocol):
 
   @property
   def objects(self) -> ObjectRepository: ...
+
+  @property
+  def checkpoints(self) -> CheckpointRepository: ...
 
   async def append_event(self, envelope: DomainEventEnvelopeV1) -> DomainEventEnvelopeV1: ...
 

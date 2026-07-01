@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "status": "running",
+  "simTime": "2026-01-01T00:05:00.000Z",
+  "nextSequence": 3,
+  "assets": [
+    {
+      "id": "asset:svc-api-gateway",
+      "assetType": "service",
+      "status": "normal",
+      "riskScore": 0.2,
+      "criticality": 0.8,
+      "zoneId": "business-unit:core-ops",
+      "revision": 0
+    }
+  ],
+  "relationships": [
+    {
+      "id": "edge:device-to-gateway",
+      "sourceId": "asset:device-laptop-01",
+      "targetId": "asset:svc-api-gateway",
+      "relationshipType": "COMMUNICATED_WITH",
+      "confidence": 1.0,
+      "riskContribution": 0.1,
+      "revision": 0
+    }
+  ],
+  "generators": [
+    {
+      "generatorId": "gen-auth-logs",
+      "targetAssetId": "asset:svc-auth-service",
+      "pluginId": "telemetry.auth_attempt",
+      "config": {
+        "failureRate": 0.05,
+        "successRate": 0.95
+      },
+      "nextSimTime": "2026-01-01T00:00:30.000Z",
+      "intervalSimSeconds": 30,
+      "jitterSimSeconds": 0
+    }
+  ],
+  "hiddenConditions": [
+    {
+      "conditionId": "hidden-cause-01",
+      "revealed": false,
+      "triggered": false
+    }
+  ],
+  "selectedBranches": {},
+  "pendingEvents": [],
+  "rngState": {
+    "telemetry.auth_attempt:gen-auth-logs": [12345, 67890]
+  }
+}

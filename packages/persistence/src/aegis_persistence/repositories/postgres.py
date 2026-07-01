@@ -10,6 +10,7 @@ from aegis_contracts import (
     RunV1,
     ScenarioV1,
     ScenarioVersionV1,
+    SimulationCheckpointV1,
 )
 from sqlalchemy import CursorResult, select, update
 from sqlalchemy.exc import IntegrityError
@@ -21,6 +22,7 @@ from aegis_persistence.errors import (
     StaleRevisionError,
 )
 from aegis_persistence.mappers import (
+    checkpoint_to_domain,
     domain_to_payload,
     event_to_domain,
     event_to_outbox_payload,
@@ -39,6 +41,7 @@ from aegis_persistence.orm.tables import (
     RunRow,
     ScenarioRow,
     ScenarioVersionRow,
+    SimulationCheckpointRow,
     StoredObjectRow,
 )
 
@@ -280,6 +283,40 @@ class PostgresObjectRepository:
         self._session.add(row)
         await self._session.flush()
         return reference
+
+
+class PostgresCheckpointRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_id(self, checkpoint_id: str) -> SimulationCheckpointV1 | None:
+        row = await self._session.get(SimulationCheckpointRow, checkpoint_id)
+        return checkpoint_to_domain(row) if row else None
+
+    async def get_latest_for_run(self, run_id: str) -> SimulationCheckpointV1 | None:
+        result = await self._session.execute(
+            select(SimulationCheckpointRow)
+            .where(SimulationCheckpointRow.run_id == run_id)
+            .order_by(SimulationCheckpointRow.sequence_at_checkpoint.desc())
+            .limit(1)
+        )
+        row = result.scalar_one_or_none()
+        return checkpoint_to_domain(row) if row else None
+
+    async def add(self, checkpoint: SimulationCheckpointV1) -> SimulationCheckpointV1:
+        payload = domain_to_payload(checkpoint)
+        row = SimulationCheckpointRow(
+            id=checkpoint.id,
+            run_id=checkpoint.run_id,
+            sequence_at_checkpoint=checkpoint.sequence_at_checkpoint,
+            engine_version=checkpoint.engine_version,
+            checksum=checkpoint.checksum,
+            payload=payload,
+            created_at=checkpoint.created_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return checkpoint
 
 
 def create_outbox_row(envelope: DomainEventEnvelopeV1) -> OutboxRow:
