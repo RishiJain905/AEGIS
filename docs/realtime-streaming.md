@@ -90,6 +90,7 @@ uv run pytest tests/integration/streaming -q
 
 ## Phase 12–13 constraints
 
-- Phase 12 WebSocket gateway must consume `RealtimeMessageEnvelopeV1` and use backfill for reconnect gaps.
+- Phase 12 WebSocket gateway: see [websocket-protocol.md](./websocket-protocol.md).
+- Phase 12 consumes `RealtimeMessageEnvelopeV1` and uses PostgreSQL for reconnect gaps.
 - Phase 13 live frontend reducers must treat PostgreSQL/backfill as authoritative; do not treat Redis as sole source of truth.
 - Do not hold database transactions open across Redis or WebSocket I/O.

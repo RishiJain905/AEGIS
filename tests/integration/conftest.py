@@ -7,8 +7,10 @@ from collections.abc import AsyncIterator, Iterator
 
 import pytest
 from aegis_contracts import AegisSettings, load_settings
+from aegis_event_streaming.redis_client import create_redis_client
 from aegis_persistence.engine import create_engine, dispose_engine, get_session_maker
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
+from redis.asyncio import Redis
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
@@ -114,3 +116,30 @@ async def unit_of_work(
     _ = db_session
     async with PostgresUnitOfWork(session_maker) as uow:
         yield uow
+
+
+def _redis_available(settings: AegisSettings) -> bool:
+    try:
+        import redis as redis_sync
+
+        client = redis_sync.Redis.from_url(str(settings.REDIS_URL), decode_responses=True)
+        client.ping()
+        client.close()
+        return True
+    except Exception:
+        return False
+
+
+@pytest.fixture(scope="session")
+def redis_available(settings: AegisSettings) -> None:
+    if not _redis_available(settings):
+        pytest.skip("Redis is not available — run docker compose up -d redis")
+
+
+@pytest.fixture
+async def redis_client(settings: AegisSettings, redis_available: None) -> AsyncIterator[Redis]:
+    client = create_redis_client(settings)
+    await client.flushdb()
+    yield client
+    await client.flushdb()
+    await client.aclose()

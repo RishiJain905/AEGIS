@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase11",
+  "workspaceVersion": "0.0.0-phase12",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",
@@ -355,6 +355,16 @@
     {
       "path": "tests/contract/fixtures/valid/simulation_command_v1.json",
       "sha256": "27b95e7d60ba24f8048aef1559814849cb0409259bec0411336cc65b0cd4829f",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/websocket_frame_v1.schema.json",
+      "sha256": "a6cf794344c99f34cad8fa68055d6eef163a9f8c4aa65dba2f345fe928770948",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/websocket_frame_v1.json",
+      "sha256": "8129e493c6b511663cddf9c322d4a92251b64a9be8e1d246614c3706979b8c19",
       "schemaVersion": 1
     },
     {

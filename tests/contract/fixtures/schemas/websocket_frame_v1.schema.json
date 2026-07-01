@@ -1,0 +1,55 @@
+{
+  "$defs": {
+    "WebSocketMessageType": {
+      "enum": [
+        "hello",
+        "hello_ack",
+        "subscribe",
+        "unsubscribe",
+        "pong",
+        "subscribed",
+        "event",
+        "warning",
+        "error",
+        "snapshot_required",
+        "ping",
+        "resync_complete"
+      ],
+      "title": "WebSocketMessageType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Versioned WebSocket wire frame.",
+  "properties": {
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "protocolVersion": {
+      "minimum": 1,
+      "title": "Protocolversion",
+      "type": "integer"
+    },
+    "messageType": {
+      "$ref": "#/$defs/WebSocketMessageType"
+    },
+    "traceId": {
+      "title": "Traceid",
+      "type": "string"
+    },
+    "sentAt": {
+      "title": "Sentat",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    }
+  },
+  "required": ["schemaVersion", "protocolVersion", "messageType", "traceId", "sentAt", "payload"],
+  "title": "WebSocketFrameV1",
+  "type": "object"
+}
