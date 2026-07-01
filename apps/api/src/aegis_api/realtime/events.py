@@ -36,4 +36,4 @@ async def list_run_events(
             to_sequence=to_sequence,
             limit=limit,
         )
-    return RunEventsResponse(runId=run_id, eventCount=len(events), events=events)
+    return RunEventsResponse(run_id=run_id, event_count=len(events), events=events)

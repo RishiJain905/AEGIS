@@ -64,13 +64,13 @@ async def streaming_status(request: Request) -> StreamingStatusResponse:
     GLOBAL_METRICS.update_dlq_count(dlq_count)
 
     return StreamingStatusResponse(
-        outboxUnpublished=unpublished,
-        outboxOldestAgeSeconds=oldest_age,
-        streamLength=stream_length,
-        streamKey=DOMAIN_EVENTS_STREAM,
-        consumerGroup=DOMAIN_EVENTS_CONSUMER_GROUP,
-        pendingMessages=pending,
-        dlqStreamLength=dlq_stream_length,
-        dlqCount=dlq_count,
+        outbox_unpublished=unpublished,
+        outbox_oldest_age_seconds=oldest_age,
+        stream_length=stream_length,
+        stream_key=DOMAIN_EVENTS_STREAM,
+        consumer_group=DOMAIN_EVENTS_CONSUMER_GROUP,
+        pending_messages=pending,
+        dlq_stream_length=dlq_stream_length,
+        dlq_count=dlq_count,
         metrics=GLOBAL_METRICS.snapshot(),
     )

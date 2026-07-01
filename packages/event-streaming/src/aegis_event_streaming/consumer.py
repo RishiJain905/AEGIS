@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
+from typing import Any, cast
 
 from aegis_contracts import (
     ConsumerCursorV1,
@@ -42,6 +43,11 @@ from aegis_event_streaming.stream_names import (
 logger = logging.getLogger(__name__)
 
 MessageHandler = Callable[[RealtimeMessageEnvelopeV1], Awaitable[None]]
+StreamReadResponse = list[tuple[str, list[tuple[str, dict[str, Any]]]]]
+
+
+def _coerce_redis_fields(fields: dict[str, Any]) -> dict[str, str]:
+    return {str(key): str(value) for key, value in fields.items()}
 
 
 class IdempotentStreamConsumer:
@@ -95,9 +101,10 @@ class IdempotentStreamConsumer:
             return 0
 
         processed = 0
-        for _stream, messages in response:
-            for message_id, fields in messages:
-                if await self._process_message(message_id, fields):
+        for _stream, messages in cast(StreamReadResponse, response):
+            for message_id, raw_fields in messages:
+                fields = _coerce_redis_fields(raw_fields)
+                if await self._process_message(str(message_id), fields):
                     processed += 1
         await self._refresh_consumer_metrics()
         return processed
@@ -114,9 +121,12 @@ class IdempotentStreamConsumer:
         )
         reclaimed = 0
         if result and len(result) >= 2:
-            messages = result[1]
-            for message_id, fields in messages:
-                if fields and await self._process_message(message_id, fields):
+            messages = cast(list[tuple[str, dict[str, Any]]], result[1])
+            for message_id, raw_fields in messages:
+                if raw_fields and await self._process_message(
+                    str(message_id),
+                    _coerce_redis_fields(raw_fields),
+                ):
                     reclaimed += 1
         await self._refresh_consumer_metrics()
         return reclaimed
@@ -212,14 +222,15 @@ class IdempotentStreamConsumer:
             stream_message_id=message_id,
             published_at=now,
         )
+        dlq_fields: dict[str, str] = {
+            **envelope_to_redis_fields(dlq_envelope),
+            "errorCode": record.error_code,
+            "errorMessage": record.error_message,
+            "attemptCount": str(attempts),
+        }
         await self._redis.xadd(
             self._dlq_stream_key,
-            {
-                **envelope_to_redis_fields(dlq_envelope),
-                "errorCode": record.error_code,
-                "errorMessage": record.error_message,
-                "attemptCount": str(attempts),
-            },
+            cast(dict[Any, Any], dlq_fields),
             maxlen=self._config.stream_maxlen,
             approximate=True,
         )

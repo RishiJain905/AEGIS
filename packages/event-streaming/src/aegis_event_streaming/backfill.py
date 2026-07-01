@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from typing import Any, cast
 
 from aegis_contracts import BackfillRequestV1, BackfillResultV1
 from aegis_contracts.versioning import BACKFILL_RESULT_SCHEMA_VERSION
@@ -57,7 +58,7 @@ class PostgresBackfillService:
             envelope = build_realtime_envelope(event)
             await self._redis.xadd(
                 stream_key,
-                envelope_to_redis_fields(envelope),
+                cast(dict[Any, Any], envelope_to_redis_fields(envelope)),
                 maxlen=self._config.stream_maxlen,
                 approximate=True,
             )
@@ -86,10 +87,12 @@ class PostgresBackfillService:
             for message_id, fields in entries:
                 if message_id == last_id and last_id != "-":
                     continue
+                if fields is None:
+                    continue
                 event_id = fields.get("eventId")
-                if event_id:
-                    event_ids.add(event_id)
-                last_id = message_id
+                if event_id is not None:
+                    event_ids.add(str(event_id))
+                last_id = str(message_id)
             if len(entries) < 100:
                 break
         return event_ids

@@ -6,8 +6,9 @@ import logging
 import time
 import uuid
 from datetime import UTC, datetime
+from typing import Any, cast
 
-from aegis_persistence.repositories.streaming import PostgresOutboxRepository
+from aegis_persistence.repositories.streaming import OutboxClaim, PostgresOutboxRepository
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -37,7 +38,7 @@ class PostgresOutboxRelay:
         self._claim_owner = f"relay-{uuid.uuid4().hex[:12]}"
 
     async def publish_batch(self) -> int:
-        claims: list = []
+        claims: list[OutboxClaim] = []
         async with self._session_maker() as session:
             outbox = PostgresOutboxRepository(session)
             claims = await outbox.claim_batch(
@@ -58,7 +59,7 @@ class PostgresOutboxRelay:
                 envelope = build_realtime_envelope(claim.envelope, channel=claim.channel)
                 message_id = await self._redis.xadd(
                     self._stream_key,
-                    envelope_to_redis_fields(envelope),
+                    cast(dict[Any, Any], envelope_to_redis_fields(envelope)),
                     maxlen=self._config.stream_maxlen,
                     approximate=True,
                 )
@@ -67,7 +68,7 @@ class PostgresOutboxRelay:
                     outbox = PostgresOutboxRepository(session)
                     await outbox.mark_published(
                         outbox_id=claim.outbox_id,
-                        redis_message_id=message_id,
+                        redis_message_id=str(message_id),
                         published_at=published_at,
                     )
                     await session.commit()
