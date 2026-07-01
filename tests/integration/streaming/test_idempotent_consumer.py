@@ -8,7 +8,8 @@ from aegis_event_streaming.envelope import build_realtime_envelope, envelope_to_
 from aegis_event_streaming.relay import PostgresOutboxRelay
 from aegis_event_streaming.stream_names import DOMAIN_EVENTS_STREAM
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
-from tests.integration.streaming.helpers import make_test_event, seed_run, sample_event_id
+
+from tests.integration.streaming.helpers import make_test_event, sample_event_id, seed_run
 
 
 @pytest.mark.asyncio

@@ -22,32 +22,32 @@ Phase 11 deliverables per `docs/AEGIS-v1.0-Agent-Specs/realtime-platform/11-even
 
 ## Files added
 
-| Area | Key paths |
-|------|-----------|
-| Contracts | `packages/contracts-python/src/aegis_contracts/realtime.py`, `packages/contracts-ts/src/realtime.ts` |
-| Migration | `migrations/versions/003_event_streaming.py` |
-| Event streaming | `packages/event-streaming/**` |
-| Persistence repos | `packages/persistence/src/aegis_persistence/repositories/streaming.py` |
-| Worker | `services/workers/src/aegis_workers/outbox/**` |
-| API | `apps/api/src/aegis_api/realtime/**` |
-| Tests | `tests/integration/streaming/**`, `tests/unit/streaming/**` |
-| Scripts | `scripts/publish-outbox-once.py`, `scripts/capture-event-streaming-demo.mjs`, `apps/web/scripts/capture-event-streaming-demo.mjs` |
-| Docs/ADR | `docs/realtime-streaming.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0012-event-persistence-and-streaming.md` |
+| Area              | Key paths                                                                                                                         |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Contracts         | `packages/contracts-python/src/aegis_contracts/realtime.py`, `packages/contracts-ts/src/realtime.ts`                              |
+| Migration         | `migrations/versions/003_event_streaming.py`                                                                                      |
+| Event streaming   | `packages/event-streaming/**`                                                                                                     |
+| Persistence repos | `packages/persistence/src/aegis_persistence/repositories/streaming.py`                                                            |
+| Worker            | `services/workers/src/aegis_workers/outbox/**`                                                                                    |
+| API               | `apps/api/src/aegis_api/realtime/**`                                                                                              |
+| Tests             | `tests/integration/streaming/**`, `tests/unit/streaming/**`                                                                       |
+| Scripts           | `scripts/publish-outbox-once.py`, `scripts/capture-event-streaming-demo.mjs`, `apps/web/scripts/capture-event-streaming-demo.mjs` |
+| Docs/ADR          | `docs/realtime-streaming.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0012-event-persistence-and-streaming.md`                          |
 
 ## Files modified
 
-| File | Reason |
-|------|--------|
-| `pyproject.toml` | Workspace member, import-linter, pytest pythonpath |
-| `packages/contracts-python/**`, `packages/contracts-ts/**` | Streaming contracts, WORKSPACE_VERSION |
-| `packages/persistence/src/aegis_persistence/orm/tables.py` | Outbox + streaming tables |
-| `services/workers/**` | Outbox relay mode |
-| `services/simulation/src/aegis_simulation/runner.py` | `run-persisted` CLI |
-| `apps/api/**` | Realtime routes |
-| `tests/integration/conftest.py` | Truncate streaming tables |
-| `.github/workflows/ci.yml` | Redis service for integration job |
-| `docs/database.md`, `docs/engineering-standards.md` | Phase 11 references |
-| `tests/contract/fixtures/compatibility-manifest.json` | New artifact hashes |
+| File                                                       | Reason                                             |
+| ---------------------------------------------------------- | -------------------------------------------------- |
+| `pyproject.toml`                                           | Workspace member, import-linter, pytest pythonpath |
+| `packages/contracts-python/**`, `packages/contracts-ts/**` | Streaming contracts, WORKSPACE_VERSION             |
+| `packages/persistence/src/aegis_persistence/orm/tables.py` | Outbox + streaming tables                          |
+| `services/workers/**`                                      | Outbox relay mode                                  |
+| `services/simulation/src/aegis_simulation/runner.py`       | `run-persisted` CLI                                |
+| `apps/api/**`                                              | Realtime routes                                    |
+| `tests/integration/conftest.py`                            | Truncate streaming tables                          |
+| `.github/workflows/ci.yml`                                 | Redis service for integration job                  |
+| `docs/database.md`, `docs/engineering-standards.md`        | Phase 11 references                                |
+| `tests/contract/fixtures/compatibility-manifest.json`      | New artifact hashes                                |
 
 ## Files removed
 
@@ -55,19 +55,19 @@ None.
 
 ## Contracts introduced or changed
 
-| Contract | Version | Description |
-|----------|---------|-------------|
-| `RealtimeMessageEnvelopeV1` | schema v1 | Redis/WebSocket wire envelope |
-| `ConsumerCursorV1` | schema v1 | Consumer offset state |
-| `DeadLetterRecordV1` | schema v1 | Poison message diagnostics |
-| `BackfillRequestV1` / `BackfillResultV1` | schema v1 | PG → Redis republication |
-| `StreamingErrorCode` | v1 | Stable streaming error codes |
-| `WORKSPACE_VERSION` | `0.0.0-phase11` | Workspace parity bump |
+| Contract                                 | Version         | Description                   |
+| ---------------------------------------- | --------------- | ----------------------------- |
+| `RealtimeMessageEnvelopeV1`              | schema v1       | Redis/WebSocket wire envelope |
+| `ConsumerCursorV1`                       | schema v1       | Consumer offset state         |
+| `DeadLetterRecordV1`                     | schema v1       | Poison message diagnostics    |
+| `BackfillRequestV1` / `BackfillResultV1` | schema v1       | PG → Redis republication      |
+| `StreamingErrorCode`                     | v1              | Stable streaming error codes  |
+| `WORKSPACE_VERSION`                      | `0.0.0-phase11` | Workspace parity bump         |
 
 ## Database migrations
 
-| Revision | Description |
-|----------|-------------|
+| Revision              | Description                                                             |
+| --------------------- | ----------------------------------------------------------------------- |
 | `003_event_streaming` | Outbox relay columns; consumer_receipts, consumer_cursors, dead_letters |
 
 ## Environment and configuration changes
@@ -92,33 +92,33 @@ Optional streaming env vars (defaults in `StreamingConfig.from_env()`):
 
 ## Tests added
 
-| Test | Proves |
-|------|--------|
-| `test_outbox_relay.py` | Events reach Redis; ordering preserved |
-| `test_idempotent_consumer.py` | Duplicate delivery does not double effects |
-| `test_relay_crash_recovery.py` | Stale claims republished; events not lost |
-| `test_stale_pending_recovery.py` | `XAUTOCLAIM` reclaims pending messages |
-| `test_dead_letter.py` | Poison messages → `dead_letters` + DLQ stream |
-| `test_redis_rebuild.py` | Redis rebuilt from PostgreSQL via backfill |
-| `test_silent_relay_streaming.py` | End-to-end persisted simulation streaming |
-| `test_envelope.py` | Envelope mapping round-trip |
+| Test                             | Proves                                        |
+| -------------------------------- | --------------------------------------------- |
+| `test_outbox_relay.py`           | Events reach Redis; ordering preserved        |
+| `test_idempotent_consumer.py`    | Duplicate delivery does not double effects    |
+| `test_relay_crash_recovery.py`   | Stale claims republished; events not lost     |
+| `test_stale_pending_recovery.py` | `XAUTOCLAIM` reclaims pending messages        |
+| `test_dead_letter.py`            | Poison messages → `dead_letters` + DLQ stream |
+| `test_redis_rebuild.py`          | Redis rebuilt from PostgreSQL via backfill    |
+| `test_silent_relay_streaming.py` | End-to-end persisted simulation streaming     |
+| `test_envelope.py`               | Envelope mapping round-trip                   |
 
 ## Commands executed and results
 
-| Command | Result |
-|---------|--------|
-| `uv run ruff check .` | **PASS** |
-| `uv run mypy apps services packages` | **BLOCKED** — pre-existing `aegis_api.db.session` duplicate module path |
-| `uv run pytest -q` | **PASS** — 257 passed |
-| `sudo service postgresql start && sudo service redis-server start` | **PASS** (Docker unavailable in VM; local services used) |
-| `uv run alembic upgrade head` | **PASS** |
-| `uv run pytest tests/integration -q` | **PASS** — 21 passed |
-| `uv run pytest tests/integration/streaming -q` | **PASS** — 7 passed |
-| `pnpm check-contracts` | **PASS** |
-| `uv run lint-imports` | **PASS** |
-| `uv run aegis-simulator run-persisted --scenario scenarios/operation-silent-relay --seed 1000 --steps 50` | **PASS** — 51 events, `persisted: true` |
-| `uv run python scripts/publish-outbox-once.py` | **PASS** — `published: 51` |
-| `pnpm --filter @aegis/web exec node scripts/capture-event-streaming-demo.mjs` | **PASS** — 5 screenshots |
+| Command                                                                                                   | Result                                                                  |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `uv run ruff check .`                                                                                     | **PASS**                                                                |
+| `uv run mypy apps services packages`                                                                      | **BLOCKED** — pre-existing `aegis_api.db.session` duplicate module path |
+| `uv run pytest -q`                                                                                        | **PASS** — 257 passed                                                   |
+| `sudo service postgresql start && sudo service redis-server start`                                        | **PASS** (Docker unavailable in VM; local services used)                |
+| `uv run alembic upgrade head`                                                                             | **PASS**                                                                |
+| `uv run pytest tests/integration -q`                                                                      | **PASS** — 21 passed                                                    |
+| `uv run pytest tests/integration/streaming -q`                                                            | **PASS** — 7 passed                                                     |
+| `pnpm check-contracts`                                                                                    | **PASS**                                                                |
+| `uv run lint-imports`                                                                                     | **PASS**                                                                |
+| `uv run aegis-simulator run-persisted --scenario scenarios/operation-silent-relay --seed 1000 --steps 50` | **PASS** — 51 events, `persisted: true`                                 |
+| `uv run python scripts/publish-outbox-once.py`                                                            | **PASS** — `published: 51`                                              |
+| `pnpm --filter @aegis/web exec node scripts/capture-event-streaming-demo.mjs`                             | **PASS** — 5 screenshots                                                |
 
 ## Architecture decisions and ADRs
 

@@ -98,7 +98,9 @@ await page.screenshot({ path: `${OUT}/11-idempotency-dlq-recovery-evidence.png`,
 console.log(`wrote ${OUT}/11-idempotency-dlq-recovery-evidence.png`);
 
 const webPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-await webPage.goto(`${WEB_BASE}/scenarios`, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
+await webPage
+  .goto(`${WEB_BASE}/scenarios`, { waitUntil: 'domcontentloaded', timeout: 60000 })
+  .catch(() => {});
 await webPage.waitForTimeout(2000);
 await webPage.screenshot({ path: `${OUT}/11-command-centre-frontend.png`, fullPage: true });
 console.log(`wrote ${OUT}/11-command-centre-frontend.png`);
