@@ -73,6 +73,8 @@ export const scheduledEventSchema = z
     pluginId: z.string().min(1),
     config: z.record(z.unknown()).default({}),
     targetAssetId: authoredIdSchema.nullable().optional(),
+    branchGateGroup: z.string().nullable().optional(),
+    branchGateBranchId: z.string().nullable().optional(),
   })
   .strict()
   .superRefine((value, ctx) => {
@@ -155,6 +157,7 @@ const hiddenConditionStateSnapshotSchema = z
     conditionId: z.string().min(1),
     revealed: z.boolean(),
     triggered: z.boolean(),
+    triggerCount: z.number().int().min(0).default(0),
   })
   .strict();
 

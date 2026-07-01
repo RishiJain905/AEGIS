@@ -104,6 +104,12 @@
           "title": "Revealed",
           "type": "boolean"
         },
+        "triggerCount": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Triggercount",
+          "type": "integer"
+        },
         "triggered": {
           "title": "Triggered",
           "type": "boolean"
@@ -171,6 +177,30 @@
     "ScheduledEventV1": {
       "additionalProperties": false,
       "properties": {
+        "branchGateBranchId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Branchgatebranchid"
+        },
+        "branchGateGroup": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Branchgategroup"
+        },
         "config": {
           "additionalProperties": true,
           "title": "Config",

@@ -1,0 +1,82 @@
+schemaVersion: 1
+causes:
+  hidden-cause-compromised-credentials:
+    label: Compromised service account credentials
+    supportingEvidence:
+      - eventType: telemetry.authentication.failed
+        assetId: asset:svc-identity-broker
+        description: Elevated authentication failures on identity broker
+      - eventType: telemetry.authentication.succeeded
+        assetId: asset:svc-logistics-api
+        description: Lateral authentication success on logistics API
+    contradictsFalseHypotheses:
+      - falseHypothesis: Defective deployment
+        contradictingSignal:
+          eventType: telemetry.api.request
+          assetId: asset:svc-logistics-api
+          note: Error spike absent until credentials path active; deployment errors differ in timing
+      - falseHypothesis: Routine patch window
+        contradictingSignal:
+          eventType: telemetry.auth_attempt
+          assetId: asset:svc-sso-broker
+          note: Distractor patch auth on SSO does not produce logistics lateral success pattern
+  hidden-cause-undocumented-maintenance:
+    label: Approved undocumented maintenance window
+    supportingEvidence:
+      - eventType: telemetry.deployment.event
+        assetId: asset:svc-cicd-pipeline
+        description: Off-window deployment activity with elevated failure rate
+      - eventType: telemetry.health.check
+        assetId: asset:svc-comms-gateway
+        description: Communications gateway health degradation
+    contradictsFalseHypotheses:
+      - falseHypothesis: Benign CI build
+        contradictingSignal:
+          eventType: telemetry.deployment.event
+          assetId: asset:svc-container-registry
+          note: Registry distractor deployments lack paired comms health flap
+      - falseHypothesis: Compromised credentials
+        contradictingSignal:
+          eventType: telemetry.authentication.failed
+          assetId: asset:svc-identity-broker
+          note: No elevated identity broker failure burst on maintenance path
+  hidden-cause-defective-deployment:
+    label: Defective container deployment release
+    supportingEvidence:
+      - eventType: telemetry.api.request
+        assetId: asset:svc-logistics-api
+        description: API error rate spike on logistics routing API
+      - eventType: telemetry.health.check
+        assetId: asset:svc-logistics-api
+        description: Failed health checks on logistics API
+    contradictsFalseHypotheses:
+      - falseHypothesis: Internal misuse
+        contradictingSignal:
+          eventType: telemetry.database.query
+          assetId: asset:database-customer-pii
+          note: No anomalous PII query volume on deployment path
+      - falseHypothesis: Network exfiltration
+        contradictingSignal:
+          eventType: telemetry.network.connection
+          assetId: asset:device-ops-jumphost
+          note: No large outbound flow pattern from jumphost
+  hidden-cause-internal-misuse:
+    label: Internal privileged misuse and data exfiltration
+    supportingEvidence:
+      - eventType: telemetry.database.query
+        assetId: asset:database-customer-pii
+        description: Anomalous query volume against customer PII database
+      - eventType: telemetry.network.connection
+        assetId: asset:device-ops-jumphost
+        description: Large outbound network flow from operations jumphost
+    contradictsFalseHypotheses:
+      - falseHypothesis: Legitimate analytics batch
+        contradictingSignal:
+          eventType: telemetry.database.query
+          assetId: asset:database-analytics-warehouse
+          note: Analytics distractor lacks paired jumphost exfil network signature
+      - falseHypothesis: Defective deployment
+        contradictingSignal:
+          eventType: telemetry.health.check
+          assetId: asset:svc-logistics-api
+          note: Logistics API health remains nominal on misuse path until later response effects

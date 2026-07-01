@@ -139,12 +139,12 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/scheduled_event_v1.schema.json",
-      "sha256": "ed59cf45db467db5ab47a87141b22251656132168c348039510c58d71c1e4045",
+      "sha256": "9a186332712014fd119f637f3b9a4b1f98cdea38835dcd61cb3f2061fc18692b",
       "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/simulation_checkpoint_v1.schema.json",
-      "sha256": "d4cedf573e0642bbc7d70418eb357eb69fc3b4df425367fff7c385d658e157f2",
+      "sha256": "2b9b7bf04a2eda0146bba8173c3c11570c56d660b9e84823e38419668859bd09",
       "schemaVersion": 1
     },
     {
@@ -154,7 +154,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/world_state_snapshot_v1.schema.json",
-      "sha256": "5cb8225731563f368625c5f7ffdf48e836a4625ba5b938234ad73e9d4cdaeb01",
+      "sha256": "ec00a355145a4feb2b0c96bfc9e4e7f4a953b93854b4a4b227d7ad13fc01b324",
       "schemaVersion": 1
     },
     {

@@ -88,6 +88,8 @@ class ScheduledEventV1(BaseModel):
     plugin_id: str = Field(alias="pluginId", min_length=1)
     config: dict[str, Any] = Field(default_factory=dict)
     target_asset_id: AssetId | None = Field(default=None, alias="targetAssetId")
+    branch_gate_group: str | None = Field(default=None, alias="branchGateGroup")
+    branch_gate_branch_id: str | None = Field(default=None, alias="branchGateBranchId")
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> ScheduledEventV1:
@@ -166,6 +168,7 @@ class HiddenConditionStateSnapshotV1(BaseModel):
     condition_id: str = Field(alias="conditionId", min_length=1)
     revealed: bool
     triggered: bool
+    trigger_count: int = Field(default=0, alias="triggerCount", ge=0)
 
 
 class WorldStateSnapshotV1(BaseModel):

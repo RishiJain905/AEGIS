@@ -1,144 +1,1061 @@
 schemaVersion: 1
 metadata:
   scenarioId: scenario:operation-silent-relay
-  name: Operation Silent Relay Skeleton
-  description: Minimal structural package scaffold for Phase 08 validation. Phase 10 replaces this content.
-  version: 0.0.0-skeleton
-  requiredPlatformVersion: 0.0.0-phase08
+  name: Operation Silent Relay
+  description: 'Flagship AEGIS scenario: multi-cause logistics compromise with seed-selected
+    root causes and operator response branches.'
+  version: 1.0.0
+  requiredPlatformVersion: 0.0.0-phase10
 zones:
-  - id: business-unit:logistics
-    label: Logistics Operations
-    securityLevel: standard
-  - id: business-unit:communications
-    label: Communications
-    securityLevel: elevated
+- id: business-unit:logistics
+  label: Logistics Operations
+  securityLevel: standard
+- id: business-unit:communications
+  label: Communications
+  securityLevel: elevated
+- id: business-unit:identity
+  label: Identity and Access
+  securityLevel: elevated
+- id: business-unit:cloud
+  label: Cloud Platform
+  securityLevel: standard
+- id: business-unit:endpoints
+  label: Endpoints
+  securityLevel: standard
+- id: business-unit:data-platform
+  label: Data Platform
+  securityLevel: elevated
+- id: business-unit:security-ops
+  label: Security Operations
+  securityLevel: restricted
+- id: business-unit:ai-ops
+  label: AI Operations
+  securityLevel: elevated
 assets:
-  - id: asset:svc-logistics-api
-    assetType: service
-    label: Logistics API
-    zoneId: business-unit:logistics
-    criticality: 0.91
-    initialRiskScore: 0.1
-    initialStatus: normal
-  - id: asset:svc-comms-gateway
-    assetType: service
-    label: Communications Gateway
-    zoneId: business-unit:communications
-    criticality: 0.88
-    initialRiskScore: 0.1
-    initialStatus: normal
-  - id: asset:svc-identity-broker
-    assetType: service
-    label: Identity Broker
-    zoneId: business-unit:communications
-    criticality: 0.95
-    initialRiskScore: 0.05
-    initialStatus: normal
-  - id: asset:device-analyst-01
-    assetType: device
-    label: Analyst Workstation
-    zoneId: business-unit:logistics
-    criticality: 0.5
-    initialRiskScore: 0.0
-    initialStatus: normal
-  - id: asset:database-audit-store
-    assetType: database
-    label: Audit Store
-    zoneId: business-unit:logistics
-    criticality: 0.85
-    initialRiskScore: 0.05
-    initialStatus: normal
+- id: asset:svc-logistics-api
+  assetType: service
+  label: Logistics Routing API
+  zoneId: business-unit:logistics
+  criticality: 0.93
+  initialRiskScore: 0.12
+  initialStatus: normal
+- id: asset:svc-fleet-coordinator
+  assetType: service
+  label: Fleet Coordinator
+  zoneId: business-unit:logistics
+  criticality: 0.85
+  initialRiskScore: 0.1
+  initialStatus: normal
+- id: asset:svc-shipment-scheduler
+  assetType: service
+  label: Shipment Scheduler
+  zoneId: business-unit:logistics
+  criticality: 0.82
+  initialRiskScore: 0.08
+  initialStatus: normal
+- id: asset:svc-route-optimizer
+  assetType: service
+  label: Route Optimizer
+  zoneId: business-unit:logistics
+  criticality: 0.8
+  initialRiskScore: 0.07
+  initialStatus: normal
+- id: asset:device-dispatch-terminal
+  assetType: device
+  label: Dispatch Terminal
+  zoneId: business-unit:logistics
+  criticality: 0.55
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:svc-comms-gateway
+  assetType: service
+  label: Communications Gateway
+  zoneId: business-unit:communications
+  criticality: 0.9
+  initialRiskScore: 0.1
+  initialStatus: normal
+- id: asset:svc-message-bus
+  assetType: service
+  label: Message Bus
+  zoneId: business-unit:communications
+  criticality: 0.78
+  initialRiskScore: 0.08
+  initialStatus: normal
+- id: asset:svc-notification-service
+  assetType: service
+  label: Notification Service
+  zoneId: business-unit:communications
+  criticality: 0.7
+  initialRiskScore: 0.06
+  initialStatus: normal
+- id: asset:svc-email-relay
+  assetType: service
+  label: Email Relay
+  zoneId: business-unit:communications
+  criticality: 0.65
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:svc-identity-broker
+  assetType: service
+  label: Identity Broker
+  zoneId: business-unit:identity
+  criticality: 0.96
+  initialRiskScore: 0.08
+  initialStatus: normal
+- id: asset:svc-sso-broker
+  assetType: service
+  label: SSO Broker
+  zoneId: business-unit:identity
+  criticality: 0.92
+  initialRiskScore: 0.07
+  initialStatus: normal
+- id: asset:svc-service-account-vault
+  assetType: service
+  label: Service Account Vault
+  zoneId: business-unit:identity
+  criticality: 0.94
+  initialRiskScore: 0.06
+  initialStatus: normal
+- id: asset:identity-svc-logistics-bot
+  assetType: identity
+  label: Logistics Service Bot
+  zoneId: business-unit:identity
+  criticality: 0.75
+  initialRiskScore: 0.15
+  initialStatus: normal
+- id: asset:svc-k8s-control-plane
+  assetType: service
+  label: Kubernetes Control Plane
+  zoneId: business-unit:cloud
+  criticality: 0.95
+  initialRiskScore: 0.1
+  initialStatus: normal
+- id: asset:svc-cicd-pipeline
+  assetType: service
+  label: CI/CD Pipeline
+  zoneId: business-unit:cloud
+  criticality: 0.88
+  initialRiskScore: 0.09
+  initialStatus: normal
+- id: asset:svc-container-registry
+  assetType: service
+  label: Container Registry
+  zoneId: business-unit:cloud
+  criticality: 0.86
+  initialRiskScore: 0.08
+  initialStatus: normal
+- id: asset:svc-cloud-config
+  assetType: service
+  label: Cloud Config Service
+  zoneId: business-unit:cloud
+  criticality: 0.8
+  initialRiskScore: 0.07
+  initialStatus: normal
+- id: asset:svc-secrets-manager
+  assetType: service
+  label: Secrets Manager
+  zoneId: business-unit:cloud
+  criticality: 0.91
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:device-analyst-01
+  assetType: device
+  label: SOC Analyst Workstation
+  zoneId: business-unit:endpoints
+  criticality: 0.5
+  initialRiskScore: 0.02
+  initialStatus: normal
+- id: asset:device-field-tablet-02
+  assetType: device
+  label: Field Operations Tablet
+  zoneId: business-unit:endpoints
+  criticality: 0.45
+  initialRiskScore: 0.03
+  initialStatus: normal
+- id: asset:device-vendor-vpn-03
+  assetType: device
+  label: Vendor VPN Client
+  zoneId: business-unit:endpoints
+  criticality: 0.6
+  initialRiskScore: 0.2
+  initialStatus: normal
+- id: asset:device-ops-jumphost
+  assetType: device
+  label: Operations Jumphost
+  zoneId: business-unit:endpoints
+  criticality: 0.7
+  initialRiskScore: 0.1
+  initialStatus: normal
+- id: asset:database-audit-store
+  assetType: database
+  label: Audit Store
+  zoneId: business-unit:data-platform
+  criticality: 0.88
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:database-customer-pii
+  assetType: database
+  label: Customer PII Database
+  zoneId: business-unit:data-platform
+  criticality: 0.94
+  initialRiskScore: 0.08
+  initialStatus: normal
+- id: asset:database-analytics-warehouse
+  assetType: database
+  label: Analytics Warehouse
+  zoneId: business-unit:data-platform
+  criticality: 0.8
+  initialRiskScore: 0.06
+  initialStatus: normal
+- id: asset:database-shipment-records
+  assetType: database
+  label: Shipment Records DB
+  zoneId: business-unit:data-platform
+  criticality: 0.85
+  initialRiskScore: 0.07
+  initialStatus: normal
+- id: asset:svc-siem-forwarder
+  assetType: service
+  label: SIEM Forwarder
+  zoneId: business-unit:security-ops
+  criticality: 0.87
+  initialRiskScore: 0.04
+  initialStatus: normal
+- id: asset:svc-edr-console
+  assetType: service
+  label: EDR Console
+  zoneId: business-unit:security-ops
+  criticality: 0.83
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:svc-vuln-scanner
+  assetType: service
+  label: Vulnerability Scanner
+  zoneId: business-unit:security-ops
+  criticality: 0.7
+  initialRiskScore: 0.03
+  initialStatus: normal
+- id: asset:control-soc-playbook-runner
+  assetType: control
+  label: SOC Playbook Runner
+  zoneId: business-unit:security-ops
+  criticality: 0.75
+  initialRiskScore: 0.04
+  initialStatus: normal
+- id: asset:svc-routing-inference-gateway
+  assetType: service
+  label: Routing Inference Gateway
+  zoneId: business-unit:ai-ops
+  criticality: 0.84
+  initialRiskScore: 0.09
+  initialStatus: normal
+- id: asset:svc-model-registry
+  assetType: service
+  label: Model Registry
+  zoneId: business-unit:ai-ops
+  criticality: 0.78
+  initialRiskScore: 0.06
+  initialStatus: normal
+- id: asset:svc-feature-store
+  assetType: service
+  label: Feature Store
+  zoneId: business-unit:ai-ops
+  criticality: 0.76
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:ai-model-logistics-router
+  assetType: ai_model
+  label: Logistics Router Model
+  zoneId: business-unit:ai-ops
+  criticality: 0.82
+  initialRiskScore: 0.08
+  initialStatus: normal
+- id: asset:user-ciso
+  assetType: user
+  label: Chief Information Security Officer
+  zoneId: business-unit:security-ops
+  criticality: 0.4
+  initialRiskScore: 0.0
+  initialStatus: normal
+- id: asset:user-logistics-admin
+  assetType: user
+  label: Logistics Administrator
+  zoneId: business-unit:logistics
+  criticality: 0.5
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:user-devops-lead
+  assetType: user
+  label: DevOps Lead
+  zoneId: business-unit:cloud
+  criticality: 0.55
+  initialRiskScore: 0.04
+  initialStatus: normal
+- id: asset:user-contractor-analyst
+  assetType: user
+  label: Contractor Analyst
+  zoneId: business-unit:endpoints
+  criticality: 0.35
+  initialRiskScore: 0.12
+  initialStatus: normal
 relationships:
-  - id: edge:analyst-to-logistics
-    source: asset:device-analyst-01
-    target: asset:svc-logistics-api
-    relationshipType: COMMUNICATED_WITH
-    directed: true
-    confidence: 1.0
-    riskContribution: 0.1
-  - id: edge:logistics-to-comms
-    source: asset:svc-logistics-api
-    target: asset:svc-comms-gateway
-    relationshipType: DEPENDS_ON
-    directed: true
-    confidence: 1.0
-    riskContribution: 0.2
-  - id: edge:comms-to-identity
-    source: asset:svc-comms-gateway
-    target: asset:svc-identity-broker
-    relationshipType: AUTHENTICATED_TO
-    directed: true
-    confidence: 1.0
-    riskContribution: 0.15
-  - id: edge:logistics-to-audit
-    source: asset:svc-logistics-api
-    target: asset:database-audit-store
-    relationshipType: DEPENDS_ON
-    directed: true
-    confidence: 1.0
-    riskContribution: 0.25
+- id: edge:analyst-to-logistics
+  source: asset:device-analyst-01
+  target: asset:svc-logistics-api
+  relationshipType: COMMUNICATED_WITH
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.1
+- id: edge:logistics-to-comms
+  source: asset:svc-logistics-api
+  target: asset:svc-comms-gateway
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.2
+- id: edge:comms-to-identity
+  source: asset:svc-comms-gateway
+  target: asset:svc-identity-broker
+  relationshipType: AUTHENTICATED_TO
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.18
+- id: edge:logistics-to-audit
+  source: asset:svc-logistics-api
+  target: asset:database-audit-store
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.22
+- id: edge:logistics-to-pii
+  source: asset:svc-logistics-api
+  target: asset:database-customer-pii
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.25
+- id: edge:logistics-to-shipment-db
+  source: asset:svc-shipment-scheduler
+  target: asset:database-shipment-records
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.2
+- id: edge:fleet-to-logistics
+  source: asset:svc-fleet-coordinator
+  target: asset:svc-logistics-api
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.15
+- id: edge:route-opt-to-logistics
+  source: asset:svc-route-optimizer
+  target: asset:svc-logistics-api
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.12
+- id: edge:dispatch-to-logistics
+  source: asset:device-dispatch-terminal
+  target: asset:svc-logistics-api
+  relationshipType: COMMUNICATED_WITH
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.1
+- id: edge:comms-to-message-bus
+  source: asset:svc-comms-gateway
+  target: asset:svc-message-bus
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.15
+- id: edge:notifications-to-comms
+  source: asset:svc-notification-service
+  target: asset:svc-comms-gateway
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.1
+- id: edge:identity-to-sso
+  source: asset:svc-identity-broker
+  target: asset:svc-sso-broker
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.2
+- id: edge:identity-to-vault
+  source: asset:svc-identity-broker
+  target: asset:svc-service-account-vault
+  relationshipType: ADMINISTERS
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.25
+- id: edge:bot-to-identity
+  source: asset:identity-svc-logistics-bot
+  target: asset:svc-identity-broker
+  relationshipType: AUTHENTICATED_TO
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.3
+- id: edge:bot-to-logistics
+  source: asset:identity-svc-logistics-bot
+  target: asset:svc-logistics-api
+  relationshipType: COMMUNICATED_WITH
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.28
+- id: edge:cicd-to-k8s
+  source: asset:svc-cicd-pipeline
+  target: asset:svc-k8s-control-plane
+  relationshipType: ADMINISTERS
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.3
+- id: edge:cicd-to-registry
+  source: asset:svc-cicd-pipeline
+  target: asset:svc-container-registry
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.2
+- id: edge:k8s-to-logistics
+  source: asset:svc-k8s-control-plane
+  target: asset:svc-logistics-api
+  relationshipType: HOSTS
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.22
+- id: edge:secrets-to-identity
+  source: asset:svc-secrets-manager
+  target: asset:svc-identity-broker
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.18
+- id: edge:field-tablet-to-comms
+  source: asset:device-field-tablet-02
+  target: asset:svc-comms-gateway
+  relationshipType: COMMUNICATED_WITH
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.12
+- id: edge:vendor-vpn-to-jumphost
+  source: asset:device-vendor-vpn-03
+  target: asset:device-ops-jumphost
+  relationshipType: COMMUNICATED_WITH
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.2
+- id: edge:jumphost-to-k8s
+  source: asset:device-ops-jumphost
+  target: asset:svc-k8s-control-plane
+  relationshipType: ADMINISTERS
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.25
+- id: edge:analytics-to-pii
+  source: asset:database-analytics-warehouse
+  target: asset:database-customer-pii
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.15
+- id: edge:siem-to-logistics
+  source: asset:svc-siem-forwarder
+  target: asset:svc-logistics-api
+  relationshipType: COMMUNICATED_WITH
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.08
+- id: edge:edr-to-endpoints
+  source: asset:svc-edr-console
+  target: asset:device-analyst-01
+  relationshipType: ADMINISTERS
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.1
+- id: edge:inference-to-model
+  source: asset:svc-routing-inference-gateway
+  target: asset:ai-model-logistics-router
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.2
+- id: edge:inference-to-logistics
+  source: asset:svc-routing-inference-gateway
+  target: asset:svc-logistics-api
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.18
+- id: edge:feature-store-to-inference
+  source: asset:svc-feature-store
+  target: asset:svc-routing-inference-gateway
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.12
+- id: edge:contractor-to-jumphost
+  source: asset:user-contractor-analyst
+  target: asset:device-ops-jumphost
+  relationshipType: COMMUNICATED_WITH
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.15
+- id: edge:devops-to-cicd
+  source: asset:user-devops-lead
+  target: asset:svc-cicd-pipeline
+  relationshipType: ADMINISTERS
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.2
 generators:
-  - id: gen-api-traffic
-    targetAssetId: asset:svc-logistics-api
-    plugin:
-      pluginId: telemetry.api_request
-      config:
-        requestsPerInterval: 20
-        errorRate: 0.02
-    schedule:
-      intervalSimSeconds: 15
-      jitterSimSeconds: 2
-  - id: gen-auth-traffic
-    targetAssetId: asset:svc-identity-broker
-    plugin:
-      pluginId: telemetry.auth_attempt
-      config:
-        failureRate: 0.03
-        successRate: 0.97
+- id: gen-baseline-auth
+  targetAssetId: asset:svc-identity-broker
+  plugin:
+    pluginId: telemetry.auth_attempt
+    config:
+      failureRate: 0.03
+      successRate: 0.97
+  schedule:
+    intervalSimSeconds: 20
+    jitterSimSeconds: 2
+- id: gen-baseline-api-logistics
+  targetAssetId: asset:svc-logistics-api
+  plugin:
+    pluginId: telemetry.api_request
+    config:
+      requestsPerInterval: 25
+      errorRate: 0.02
+  schedule:
+    intervalSimSeconds: 15
+    jitterSimSeconds: 1
+- id: gen-baseline-api-comms
+  targetAssetId: asset:svc-comms-gateway
+  plugin:
+    pluginId: telemetry.api_request
+    config:
+      requestsPerInterval: 18
+      errorRate: 0.02
+  schedule:
+    intervalSimSeconds: 18
+    jitterSimSeconds: 1
+- id: gen-baseline-db-audit
+  targetAssetId: asset:database-audit-store
+  plugin:
+    pluginId: telemetry.database_query
+    config:
+      queriesPerInterval: 8
+      anomalyRate: 0.01
+  schedule:
+    intervalSimSeconds: 25
+    jitterSimSeconds: 2
+- id: gen-baseline-db-pii
+  targetAssetId: asset:database-customer-pii
+  plugin:
+    pluginId: telemetry.database_query
+    config:
+      queriesPerInterval: 6
+      anomalyRate: 0.01
+  schedule:
+    intervalSimSeconds: 30
+    jitterSimSeconds: 2
+- id: gen-baseline-network-comms
+  targetAssetId: asset:svc-comms-gateway
+  plugin:
+    pluginId: telemetry.network_flow
+    config:
+      bytesPerInterval: 2048
+      protocol: tcp
+  schedule:
+    intervalSimSeconds: 12
+    jitterSimSeconds: 1
+- id: gen-baseline-deploy-cicd
+  targetAssetId: asset:svc-cicd-pipeline
+  plugin:
+    pluginId: telemetry.deployment_event
+    config:
+      deploymentsPerInterval: 1
+      failureRate: 0.02
+  schedule:
+    intervalSimSeconds: 60
+    jitterSimSeconds: 5
+- id: gen-baseline-health-logistics
+  targetAssetId: asset:svc-logistics-api
+  plugin:
+    pluginId: telemetry.health_check
+    config:
+      healthyProbability: 0.97
+  schedule:
+    intervalSimSeconds: 20
+    jitterSimSeconds: 1
+- id: gen-baseline-health-comms
+  targetAssetId: asset:svc-comms-gateway
+  plugin:
+    pluginId: telemetry.health_check
+    config:
+      healthyProbability: 0.96
+  schedule:
+    intervalSimSeconds: 20
+    jitterSimSeconds: 1
+- id: gen-baseline-process-analyst
+  targetAssetId: asset:device-analyst-01
+  plugin:
+    pluginId: telemetry.process_activity
+    config:
+      eventsPerInterval: 12
+      suspiciousRate: 0.02
+  schedule:
+    intervalSimSeconds: 22
+    jitterSimSeconds: 2
+- id: gen-baseline-process-jumphost
+  targetAssetId: asset:device-ops-jumphost
+  plugin:
+    pluginId: telemetry.process_activity
+    config:
+      eventsPerInterval: 8
+      suspiciousRate: 0.02
+  schedule:
+    intervalSimSeconds: 25
+    jitterSimSeconds: 2
+- id: gen-baseline-ai-inference
+  targetAssetId: asset:svc-routing-inference-gateway
+  plugin:
+    pluginId: telemetry.ai_inference
+    config:
+      inferencesPerInterval: 10
+      anomalyRate: 0.01
+  schedule:
+    intervalSimSeconds: 16
+    jitterSimSeconds: 1
+- id: gen-distractor-patch-auth
+  targetAssetId: asset:svc-sso-broker
+  plugin:
+    pluginId: telemetry.auth_attempt
+    config:
+      failureRate: 0.08
+      successRate: 0.92
+  schedule:
+    intervalSimSeconds: 45
+    jitterSimSeconds: 3
+- id: gen-distractor-ci-deploy
+  targetAssetId: asset:svc-container-registry
+  plugin:
+    pluginId: telemetry.deployment_event
+    config:
+      deploymentsPerInterval: 1
+      failureRate: 0.01
+  schedule:
+    intervalSimSeconds: 90
+    jitterSimSeconds: 5
+- id: gen-distractor-analytics-batch
+  targetAssetId: asset:database-analytics-warehouse
+  plugin:
+    pluginId: telemetry.database_query
+    config:
+      queriesPerInterval: 15
+      anomalyRate: 0.03
+  schedule:
+    intervalSimSeconds: 40
+    jitterSimSeconds: 3
 hiddenConditions:
-  - id: hidden-placeholder-cause
-    causeLabel: Placeholder hidden cause
-    triggerRefs:
-      - gen-auth-traffic
-    effectRefs:
-      - evt-placeholder-shift
-    visibility:
-      mode: hidden_until_triggered
+- id: hidden-cause-compromised-credentials
+  causeLabel: Compromised service account credentials
+  triggerRefs:
+  - evt-signal-credentials-auth
+  - evt-signal-credentials-lateral
+  effectRefs:
+  - evt-effect-credentials-status
+  visibility:
+    mode: hidden_until_triggered
+    revealAfterSimSeconds: 600
+  triggerThreshold: 1
+- id: hidden-cause-undocumented-maintenance
+  causeLabel: Approved undocumented maintenance window
+  triggerRefs:
+  - evt-signal-maintenance-deploy
+  - evt-signal-maintenance-health
+  effectRefs:
+  - evt-effect-maintenance-status
+  visibility:
+    mode: hidden_until_triggered
+    revealAfterSimSeconds: 720
+  triggerThreshold: 1
+- id: hidden-cause-defective-deployment
+  causeLabel: Defective container deployment release
+  triggerRefs:
+  - evt-signal-deployment-api
+  - evt-signal-deployment-health
+  effectRefs:
+  - evt-effect-deployment-status
+  visibility:
+    mode: hidden_until_triggered
+    revealAfterSimSeconds: 540
+  triggerThreshold: 1
+- id: hidden-cause-internal-misuse
+  causeLabel: Internal privileged misuse and data exfiltration
+  triggerRefs:
+  - evt-signal-misuse-db
+  - evt-signal-misuse-network
+  effectRefs:
+  - evt-effect-misuse-status
+  visibility:
+    mode: hidden_until_triggered
+    revealAfterSimSeconds: 660
+  triggerThreshold: 1
 scheduledEvents:
-  - id: evt-placeholder-shift
-    simTime: '2026-01-01T00:30:00.000Z'
-    priority: 1
-    tieBreaker: 0
-    action:
-      pluginId: effect.set_asset_status
-      config:
-        status: suspicious
+- id: evt-select-root-cause
+  simTime: '2026-01-01T00:00:00.000Z'
+  priority: 0
+  tieBreaker: 0
+  action:
+    pluginId: branch.seed_selector
+    config:
+      branchGroup: root-cause
+- id: evt-select-response-path
+  simTime: '2026-01-01T00:00:00.001Z'
+  priority: 0
+  tieBreaker: 1
+  action:
+    pluginId: branch.seed_selector
+    config:
+      branchGroup: response-path
+- id: evt-signal-credentials-auth
+  simTime: '2026-01-01T00:05:00.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-identity-broker
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-credentials
+  action:
+    pluginId: telemetry.auth_attempt
+    config:
+      failureRate: 0.65
+      successRate: 0.35
+- id: evt-signal-credentials-lateral
+  simTime: '2026-01-01T00:08:00.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-logistics-api
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-credentials
+  action:
+    pluginId: telemetry.auth_attempt
+    config:
+      failureRate: 0.1
+      successRate: 0.9
+- id: evt-effect-credentials-status
+  simTime: '2026-01-01T00:15:00.000Z'
+  priority: 3
+  tieBreaker: 0
+  targetAssetId: asset:identity-svc-logistics-bot
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-credentials
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: compromised
+- id: evt-signal-maintenance-deploy
+  simTime: '2026-01-01T00:06:00.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-cicd-pipeline
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-maintenance
+  action:
+    pluginId: telemetry.deployment_event
+    config:
+      deploymentsPerInterval: 2
+      failureRate: 0.4
+- id: evt-signal-maintenance-health
+  simTime: '2026-01-01T00:09:00.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-comms-gateway
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-maintenance
+  action:
+    pluginId: telemetry.health_check
+    config:
+      healthyProbability: 0.35
+- id: evt-effect-maintenance-status
+  simTime: '2026-01-01T00:15:00.000Z'
+  priority: 3
+  tieBreaker: 0
+  targetAssetId: asset:svc-comms-gateway
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-maintenance
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: suspicious
+- id: evt-signal-deployment-api
+  simTime: '2026-01-01T00:07:00.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-logistics-api
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-deployment
+  action:
+    pluginId: telemetry.api_request
+    config:
+      requestsPerInterval: 40
+      errorRate: 0.55
+- id: evt-signal-deployment-health
+  simTime: '2026-01-01T00:10:00.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-logistics-api
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-deployment
+  action:
+    pluginId: telemetry.health_check
+    config:
+      healthyProbability: 0.2
+- id: evt-effect-deployment-status
+  simTime: '2026-01-01T00:15:00.000Z'
+  priority: 3
+  tieBreaker: 0
+  targetAssetId: asset:svc-logistics-api
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-deployment
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: suspicious
+- id: evt-signal-misuse-db
+  simTime: '2026-01-01T00:06:30.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:database-customer-pii
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-misuse
+  action:
+    pluginId: telemetry.database_query
+    config:
+      queriesPerInterval: 50
+      anomalyRate: 0.85
+- id: evt-signal-misuse-network
+  simTime: '2026-01-01T00:09:30.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:device-ops-jumphost
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-misuse
+  action:
+    pluginId: telemetry.network_flow
+    config:
+      bytesPerInterval: 65536
+      protocol: tcp
+- id: evt-effect-misuse-status
+  simTime: '2026-01-01T00:15:00.000Z'
+  priority: 3
+  tieBreaker: 0
+  targetAssetId: asset:database-customer-pii
+  branchGate:
+    branchGroup: root-cause
+    branchId: branch-cause-misuse
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: under_investigation
+- id: evt-consequence-contain
+  simTime: '2026-01-01T00:20:00.000Z'
+  priority: 4
+  tieBreaker: 0
+  targetAssetId: asset:svc-logistics-api
+  branchGate:
+    branchGroup: response-path
+    branchId: branch-response-contain
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: contained
+- id: evt-consequence-contain-edge
+  simTime: '2026-01-01T00:21:00.000Z'
+  priority: 4
+  tieBreaker: 1
+  branchGate:
+    branchGroup: response-path
+    branchId: branch-response-contain
+  action:
+    pluginId: effect.adjust_relationship_confidence
+    config:
+      edgeId: edge:logistics-to-comms
+      delta: -0.4
+- id: evt-consequence-investigate
+  simTime: '2026-01-01T00:20:00.000Z'
+  priority: 4
+  tieBreaker: 0
+  targetAssetId: asset:svc-logistics-api
+  branchGate:
+    branchGroup: response-path
+    branchId: branch-response-investigate
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: under_investigation
+- id: evt-consequence-investigate-edge
+  simTime: '2026-01-01T00:21:00.000Z'
+  priority: 4
+  tieBreaker: 1
+  branchGate:
+    branchGroup: response-path
+    branchId: branch-response-investigate
+  action:
+    pluginId: effect.adjust_relationship_confidence
+    config:
+      edgeId: edge:bot-to-logistics
+      delta: -0.15
+- id: evt-consequence-remediate
+  simTime: '2026-01-01T00:20:00.000Z'
+  priority: 4
+  tieBreaker: 0
+  targetAssetId: asset:svc-cicd-pipeline
+  branchGate:
+    branchGroup: response-path
+    branchId: branch-response-remediate
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: under_investigation
+- id: evt-consequence-remediate-edge
+  simTime: '2026-01-01T00:21:00.000Z'
+  priority: 4
+  tieBreaker: 1
+  branchGate:
+    branchGroup: response-path
+    branchId: branch-response-remediate
+  action:
+    pluginId: effect.adjust_relationship_confidence
+    config:
+      edgeId: edge:cicd-to-k8s
+      delta: 0.1
 branches:
-  - id: branch-placeholder-a
-    label: Placeholder branch A
-    weight: 0.5
-    triggerCondition: placeholder_signal_a
-    outcomes:
-      - targetRef: hidden-placeholder-cause
-        description: Placeholder outcome
-  - id: branch-placeholder-b
-    label: Placeholder branch B
-    weight: 0.5
-    triggerCondition: placeholder_signal_b
-    outcomes:
-      - targetRef: evt-placeholder-shift
-        description: Placeholder alternate outcome
+- id: branch-cause-credentials
+  label: Compromised credentials path
+  weight: 0.25
+  branchGroup: root-cause
+  triggerCondition: elevated_auth_failures_and_lateral_movement
+  outcomes:
+  - targetRef: hidden-cause-compromised-credentials
+    description: Service account compromise drives logistics API access
+- id: branch-cause-maintenance
+  label: Undocumented maintenance path
+  weight: 0.25
+  branchGroup: root-cause
+  triggerCondition: off_window_deployment_and_health_flap
+  outcomes:
+  - targetRef: hidden-cause-undocumented-maintenance
+    description: Approved maintenance executed outside declared window
+- id: branch-cause-deployment
+  label: Defective deployment path
+  weight: 0.25
+  branchGroup: root-cause
+  triggerCondition: api_error_spike_and_failed_health_checks
+  outcomes:
+  - targetRef: hidden-cause-defective-deployment
+    description: Bad container release degrades logistics API
+- id: branch-cause-misuse
+  label: Internal misuse path
+  weight: 0.25
+  branchGroup: root-cause
+  triggerCondition: privileged_db_anomaly_and_exfil_network
+  outcomes:
+  - targetRef: hidden-cause-internal-misuse
+    description: Privileged user exfiltrates customer data
+- id: branch-response-contain
+  label: Aggressive containment
+  weight: 0.34
+  branchGroup: response-path
+  triggerCondition: operator_isolates_suspected_assets
+  outcomes:
+  - targetRef: evt-consequence-contain
+    description: Fast isolation with higher service impact
+- id: branch-response-investigate
+  label: Methodical investigation
+  weight: 0.33
+  branchGroup: response-path
+  triggerCondition: operator_preserves_evidence_first
+  outcomes:
+  - targetRef: evt-consequence-investigate
+    description: Slower containment with richer evidence
+- id: branch-response-remediate
+  label: Root-cause remediation
+  weight: 0.33
+  branchGroup: response-path
+  triggerCondition: operator_patches_underlying_fault
+  outcomes:
+  - targetRef: evt-consequence-remediate
+    description: Fix deployment or credential root with moderate risk
 objectives:
-  - id: objective-placeholder
-    label: Placeholder objective
-    successCriteria: structural validation only
-    failureCriteria: invalid package structure
+- id: objective-detect-cause
+  label: Identify the true root cause
+  successCriteria: Correct hidden cause identified with supporting evidence
+  failureCriteria: Incorrect cause attribution or missed detection window
+- id: objective-proportionate-response
+  label: Execute a proportionate response
+  successCriteria: Response matches threat severity without excessive service impact
+  failureCriteria: Over-containment or failure to contain active threat
+- id: objective-preserve-evidence
+  label: Preserve investigation evidence
+  successCriteria: Key telemetry and access paths retained for replay
+  failureCriteria: Evidence destroyed by premature aggressive containment
 scoring:
   maxScore: 100
   criteria:
-    - id: criterion-structure
-      label: Structural validity
-      weight: 1.0
-      description: Package validates against Scenario SDK schema
-  rubric: Skeleton rubric for Phase 08 only
-media: []
+  - id: criterion-detection-speed
+    label: Detection speed
+    weight: 0.15
+    description: Time to first credible alert on true cause
+  - id: criterion-evidence-coverage
+    label: Evidence coverage
+    weight: 0.15
+    description: Fraction of expected evidence chain reviewed
+  - id: criterion-hypothesis-quality
+    label: Hypothesis quality
+    weight: 0.15
+    description: Accuracy of root-cause hypothesis vs distractors
+  - id: criterion-false-positive-cost
+    label: False-positive cost
+    weight: 0.1
+    description: Penalty for containment based on distractor signals
+  - id: criterion-response-proportionality
+    label: Response proportionality
+    weight: 0.15
+    description: Alignment of response branch with threat severity
+  - id: criterion-service-impact
+    label: Service impact
+    weight: 0.15
+    description: Operational disruption from containment actions
+  - id: criterion-recurrence
+    label: Recurrence handling
+    weight: 0.1
+    description: Whether repeated signals are addressed without regression
+  - id: criterion-objectives
+    label: Objectives completion
+    weight: 0.05
+    description: Success against declared scenario objectives
+  rubric: Operation Silent Relay scoring rewards correct cause identification using
+    overlapping signals, penalises false hypotheses supported only by distractor telemetry,
+    and balances response speed against service impact.
+media:
+- id: media-briefing
+  path: briefing.md
+  contentType: text/markdown
+  description: Operator briefing document
+- id: media-overview
+  path: presentation/overview.md
+  contentType: text/markdown
+  description: Narrative overview for cinematic phases

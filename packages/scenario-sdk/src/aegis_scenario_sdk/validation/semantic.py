@@ -87,6 +87,18 @@ def validate_semantics(manifest: ScenarioManifestV1) -> list[ValidationDiagnosti
         track(event.id, f"scheduledEvents[{index}].id")
         local_ids.add(event.id)
         _validate_plugin(diagnostics, event.action, f"scheduledEvents[{index}].action")
+        if event.branch_gate is not None:
+            gate = event.branch_gate
+            branch_ids = {branch.id for branch in manifest.branches}
+            if gate.branch_id not in branch_ids:
+                diagnostics.append(
+                    ValidationDiagnostic(
+                        code=ScenarioErrorCode.DANGLING_REFERENCE,
+                        path=f"scheduledEvents[{index}].branchGate.branchId",
+                        message=f"Unknown branch gate reference: {gate.branch_id}",
+                        details={"branchId": gate.branch_id},
+                    )
+                )
 
     for index, condition in enumerate(manifest.hidden_conditions):
         track(condition.id, f"hiddenConditions[{index}].id")
@@ -112,11 +124,12 @@ def validate_semantics(manifest: ScenarioManifestV1) -> list[ValidationDiagnosti
                     )
                 )
 
-    branch_weight_total = 0.0
+    branch_weight_by_group: dict[str, float] = {}
     for index, branch in enumerate(manifest.branches):
         track(branch.id, f"branches[{index}].id")
         local_ids.add(branch.id)
-        branch_weight_total += branch.weight
+        group = branch.branch_group or "__default__"
+        branch_weight_by_group[group] = branch_weight_by_group.get(group, 0.0) + branch.weight
         if branch.weight < 0.0 or branch.weight > 1.0:
             diagnostics.append(
                 ValidationDiagnostic(
@@ -137,15 +150,18 @@ def validate_semantics(manifest: ScenarioManifestV1) -> list[ValidationDiagnosti
                     )
                 )
 
-    if manifest.branches and branch_weight_total > 1.0 + 1e-9:
-        diagnostics.append(
-            ValidationDiagnostic(
-                code=ScenarioErrorCode.INVALID_BRANCH_WEIGHT,
-                path="branches",
-                message="Branch weights must not exceed 1.0 in aggregate",
-                details={"totalWeight": branch_weight_total},
+    for group, total_weight in branch_weight_by_group.items():
+        if total_weight > 1.0 + 1e-9:
+            diagnostics.append(
+                ValidationDiagnostic(
+                    code=ScenarioErrorCode.INVALID_BRANCH_WEIGHT,
+                    path="branches",
+                    message=(
+                        f"Branch weights for group {group!r} must not exceed 1.0 in aggregate"
+                    ),
+                    details={"branchGroup": group, "totalWeight": total_weight},
+                )
             )
-        )
 
     for index, objective in enumerate(manifest.objectives):
         track(objective.id, f"objectives[{index}].id")

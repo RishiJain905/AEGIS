@@ -1,0 +1,7 @@
+{
+  "scenario": "scenarios/operation-silent-relay",
+  "seed": 1006,
+  "steps": 300,
+  "engineVersion": "0.0.0-phase10",
+  "normalizedHash": "sha256:390e21f3e466b0a8bea66232a6c987478aa8e302ea0cb7a13ae88abff94b66f6"
+}

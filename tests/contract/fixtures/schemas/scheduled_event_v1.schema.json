@@ -8,6 +8,30 @@
   },
   "additionalProperties": false,
   "properties": {
+    "branchGateBranchId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Branchgatebranchid"
+    },
+    "branchGateGroup": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Branchgategroup"
+    },
     "config": {
       "additionalProperties": true,
       "title": "Config",

@@ -1,0 +1,18 @@
+schemaVersion: 1
+scenarioId: scenario:operation-silent-relay
+version: 1.0.0
+requiredPlatformVersion: 0.0.0-phase10
+files:
+- path: README.md
+  checksum: sha256:1a8768bd23711fbdb31b170fff74e2e027bfd0f6bd97b5203ba34f8d478e49e2
+- path: briefing.md
+  checksum: sha256:231196a75e6ef57c08402b0d3f8dbd719cc67c6f7a1058f2dbfd2f54f2d77ec3
+- path: expected-evidence.yaml
+  checksum: sha256:7d565422d4d4b3e28528c08348c4e074002ac3219344b9d72131931a90948ab3
+- path: golden-seeds.yaml
+  checksum: sha256:5b009957efdb13288d51707874bb726200225e43f0ee922dbb96d9d5c8f7a36f
+- path: manifest.yaml
+  checksum: sha256:9d1db834811ccf33af9c46403d0c4a445cc2aa318eddaf1a7e1c4dfeb09971e8
+- path: presentation/overview.md
+  checksum: sha256:9ba5a5269723985c50bdf47b75c7fc3a401a71c44891e8a8a55d07251364a4bd
+packageChecksum: sha256:2b1038d13003561a0edede184523e17b9a2e1fe06e22e33bfecd29bdc2a64a1c

@@ -32,7 +32,7 @@ from aegis_simulation_domain.normalized_hash import checkpoint_checksum
 from aegis_simulation_domain.random_streams import SeededRandomStreams
 from aegis_simulation_domain.world_state import WorldState
 
-SIMULATION_ENGINE_VERSION = "0.0.0-phase09"
+SIMULATION_ENGINE_VERSION = "0.0.0-phase10"
 
 
 @dataclass
@@ -214,6 +214,7 @@ class SimulationRuntime:
                 sim_time=self.clock.sim_time,
                 recorded_at_epoch=self.configuration.recorded_at_epoch,
                 rng=self.rng,
+                manifest=self.manifest,
             )
             for event in result.events:
                 self._record_event(event)
@@ -241,6 +242,10 @@ class SimulationRuntime:
         return emitted
 
     def _process_scheduled_event(self, scheduled: ScheduledEventV1) -> list[DomainEventEnvelopeV1]:
+        if scheduled.branch_gate_group is not None and scheduled.branch_gate_branch_id is not None:
+            selected = self.world.selected_branches.get(scheduled.branch_gate_group)
+            if selected != scheduled.branch_gate_branch_id:
+                return []
         self.clock.advance_to(scheduled.sim_time)
         generator = None
         if scheduled.source_type == ScheduledEventSourceType.GENERATOR:
@@ -265,11 +270,21 @@ class SimulationRuntime:
             recorded_at_epoch=self.configuration.recorded_at_epoch,
             rng=self.rng,
             generator=generator,
+            manifest=self.manifest,
         )
         emitted: list[DomainEventEnvelopeV1] = []
+        trigger_source_id = (
+            generator.generator_id if generator is not None else scheduled.event_id
+        )
         for event in result.events:
             self._record_event(event)
             emitted.append(event)
+            trigger_events = self._process_hidden_condition_triggers(
+                event,
+                trigger_source_id,
+            )
+            emitted.extend(trigger_events)
+        emitted.extend(self._process_hidden_condition_reveals())
         if result.reschedule is not None and generator is not None:
             self.queue.enqueue(
                 ScheduledEventV1(
@@ -282,6 +297,56 @@ class SimulationRuntime:
                     plugin_id=generator.plugin_id,
                     config=dict(generator.config),
                     target_asset_id=generator.target_asset_id,
+                )
+            )
+        return emitted
+
+    def _process_hidden_condition_triggers(
+        self,
+        event: DomainEventEnvelopeV1,
+        trigger_source_id: str,
+    ) -> list[DomainEventEnvelopeV1]:
+        if not event.type.startswith("telemetry."):
+            return []
+        emitted: list[DomainEventEnvelopeV1] = []
+        for definition in self.manifest.hidden_conditions:
+            if trigger_source_id not in definition.trigger_refs:
+                continue
+            state = self.world.hidden_conditions.get(definition.id)
+            if state is None or state.triggered:
+                continue
+            state.trigger_count += 1
+            if state.trigger_count < definition.trigger_threshold:
+                continue
+            state.triggered = True
+            emitted.append(
+                self._lifecycle_event(
+                    "sim.hidden_condition.triggered",
+                    payload={"conditionId": definition.id},
+                )
+            )
+        return emitted
+
+    def _process_hidden_condition_reveals(self) -> list[DomainEventEnvelopeV1]:
+        elapsed_seconds = (
+            self.clock.sim_time - self.configuration.initial_sim_time
+        ).total_seconds()
+        emitted: list[DomainEventEnvelopeV1] = []
+        for definition in self.manifest.hidden_conditions:
+            state = self.world.hidden_conditions.get(definition.id)
+            if state is None or state.revealed:
+                continue
+            timed_reveal = definition.visibility.reveal_after_sim_seconds
+            should_reveal = state.triggered or (
+                timed_reveal is not None and elapsed_seconds >= timed_reveal
+            )
+            if not should_reveal:
+                continue
+            state.revealed = True
+            emitted.append(
+                self._lifecycle_event(
+                    "sim.hidden_condition.revealed",
+                    payload={"conditionId": definition.id},
                 )
             )
         return emitted

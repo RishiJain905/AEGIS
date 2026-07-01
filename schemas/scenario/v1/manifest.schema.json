@@ -87,6 +87,26 @@
       "title": "BehaviorPluginConfigV1",
       "type": "object"
     },
+    "BranchGateDefinitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "branchGroup": {
+          "minLength": 1,
+          "title": "Branchgroup",
+          "type": "string"
+        },
+        "branchId": {
+          "title": "Branchid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "branchGroup",
+        "branchId"
+      ],
+      "title": "BranchGateDefinitionV1",
+      "type": "object"
+    },
     "BranchOutcomeV1": {
       "additionalProperties": false,
       "properties": {
@@ -186,6 +206,12 @@
           },
           "title": "Triggerrefs",
           "type": "array"
+        },
+        "triggerThreshold": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Triggerthreshold",
+          "type": "integer"
         },
         "visibility": {
           "$ref": "#/$defs/HiddenConditionVisibilityV1"
@@ -302,6 +328,18 @@
     "OutcomeBranchDefinitionV1": {
       "additionalProperties": false,
       "properties": {
+        "branchGroup": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Branchgroup"
+        },
         "id": {
           "title": "Id",
           "type": "string"
@@ -442,6 +480,17 @@
         "action": {
           "$ref": "#/$defs/BehaviorPluginConfigV1"
         },
+        "branchGate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BranchGateDefinitionV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "id": {
           "title": "Id",
           "type": "string"
@@ -454,6 +503,18 @@
         "simTime": {
           "title": "Simtime",
           "type": "string"
+        },
+        "targetAssetId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetassetid"
         },
         "tieBreaker": {
           "minimum": 0,

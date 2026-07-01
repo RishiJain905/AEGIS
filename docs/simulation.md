@@ -51,11 +51,14 @@ Golden replay hashes canonicalize event envelopes sorted by `sequence`, excludin
 
 ```bash
 uv run aegis-simulator run --scenario scenarios/_fixtures/valid-minimal --seed 42 --steps 30
-uv run aegis-simulator determinism-check --scenario scenarios/_fixtures/valid-minimal --seed 42 --steps 30
+uv run aegis-simulator run --scenario scenarios/operation-silent-relay --seed 1000 --steps 300
+uv run aegis-simulator determinism-check --scenario scenarios/operation-silent-relay --seed 1000 --steps 300
 uv run aegis-simulator checkpoint-recovery-check --scenario scenarios/_fixtures/valid-minimal --seed 42 --steps 30 --checkpoint-at 10
-uv run aegis-simulator seed-divergence-check --scenario scenarios/_fixtures/valid-minimal --seed-a 42 --seed-b 99 --steps 30
+uv run aegis-simulator seed-divergence-check --scenario scenarios/operation-silent-relay --seed-a 1000 --seed-b 1007 --steps 300
 uv run aegis-simulator invalid-command-demo
 ```
+
+Engine version: `0.0.0-phase10`. Branch-gated scheduled events and weighted `branch.seed_selector` use manifest `branchGroup` definitions. Hidden conditions emit `sim.hidden_condition.triggered` and `sim.hidden_condition.revealed` when thresholds or reveal timers are met.
 
 ## Constraints for later phases
 

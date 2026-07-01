@@ -10,8 +10,13 @@ describe('fixture client', () => {
   it('loads and validates the shell dataset', () => {
     resetShellDatasetCache();
     const dataset = loadShellDataset();
-    expect(dataset.scenarios).toHaveLength(1);
+    expect(dataset.scenarios).toHaveLength(2);
+    expect(dataset.scenarios.map((scenario) => scenario.id)).toEqual([
+      'scenario:scenario-synthetic-01',
+      'scenario:operation-silent-relay',
+    ]);
     expect(dataset.runs[0]?.id).toBe('run_01ARZ3NDEKTSV4RRFFQ69G5FAV');
+    expect(dataset.runs.some((run) => run.id === 'run_01ARZ3NDEKTSV4RRFFQ69G5FB0')).toBe(true);
   });
 
   it('returns validated scenarios from the fixture provider', async () => {

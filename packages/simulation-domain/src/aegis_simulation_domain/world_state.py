@@ -64,6 +64,7 @@ class HiddenConditionState:
     condition_id: str
     revealed: bool = False
     triggered: bool = False
+    trigger_count: int = 0
 
 
 @dataclass
@@ -119,8 +120,8 @@ class WorldState:
         scheduled: list[ScheduledEventV1] = []
         for event in manifest.scheduled_events:
             config = dict(event.action.config)
-            target_asset_id = None
-            if event.action.plugin_id == "effect.set_asset_status":
+            target_asset_id = event.target_asset_id
+            if target_asset_id is None and event.action.plugin_id == "effect.set_asset_status":
                 if "assetId" in config:
                     target_asset_id = str(config["assetId"])
                 else:
@@ -142,6 +143,12 @@ class WorldState:
                     plugin_id=event.action.plugin_id,
                     config=config,
                     target_asset_id=target_asset_id,
+                    branch_gate_group=(
+                        event.branch_gate.branch_group if event.branch_gate is not None else None
+                    ),
+                    branch_gate_branch_id=(
+                        event.branch_gate.branch_id if event.branch_gate is not None else None
+                    ),
                 )
             )
         for generator in self.generators.values():
@@ -215,6 +222,7 @@ class WorldState:
                     condition_id=condition.condition_id,
                     revealed=condition.revealed,
                     triggered=condition.triggered,
+                    trigger_count=condition.trigger_count,
                 )
                 for condition in sorted(
                     self.hidden_conditions.values(),
@@ -270,6 +278,7 @@ class WorldState:
                 condition_id=condition.condition_id,
                 revealed=condition.revealed,
                 triggered=condition.triggered,
+                trigger_count=condition.trigger_count,
             )
             for condition in snapshot.hidden_conditions
         }
