@@ -57,7 +57,7 @@ export const runConfigurationSchema = z
     if (value.schemaVersion !== RUN_CONFIGURATION_SCHEMA_VERSION) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Unsupported run configuration schema version: ${value.schemaVersion}`,
+        message: `Unsupported run configuration schema version: ${String(value.schemaVersion)}`,
       });
     }
   });
@@ -79,7 +79,7 @@ export const scheduledEventSchema = z
     if (value.schemaVersion !== SCHEDULED_EVENT_SCHEMA_VERSION) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Unsupported scheduled event schema version: ${value.schemaVersion}`,
+        message: `Unsupported scheduled event schema version: ${String(value.schemaVersion)}`,
       });
     }
   });
@@ -109,7 +109,7 @@ export const simulationCommandSchema = z
     if (value.schemaVersion !== SIMULATION_COMMAND_SCHEMA_VERSION) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Unsupported simulation command schema version: ${value.schemaVersion}`,
+        message: `Unsupported simulation command schema version: ${String(value.schemaVersion)}`,
       });
     }
   });
@@ -177,7 +177,7 @@ export const worldStateSnapshotSchema = z
     if (value.schemaVersion !== WORLD_STATE_SNAPSHOT_SCHEMA_VERSION) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Unsupported world state snapshot schema version: ${value.schemaVersion}`,
+        message: `Unsupported world state snapshot schema version: ${String(value.schemaVersion)}`,
       });
     }
   });
@@ -198,7 +198,7 @@ export const simulationCheckpointSchema = z
     if (value.schemaVersion !== SIMULATION_CHECKPOINT_SCHEMA_VERSION) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Unsupported simulation checkpoint schema version: ${value.schemaVersion}`,
+        message: `Unsupported simulation checkpoint schema version: ${String(value.schemaVersion)}`,
       });
     }
   });
@@ -217,7 +217,7 @@ export const normalizedEventHashSchema = z
     if (value.schemaVersion !== NORMALIZED_EVENT_HASH_SCHEMA_VERSION) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Unsupported normalized event hash schema version: ${value.schemaVersion}`,
+        message: `Unsupported normalized event hash schema version: ${String(value.schemaVersion)}`,
       });
     }
   });
@@ -249,7 +249,7 @@ export function assertSimulationSchemaVersion(contractName: string, schemaVersio
   if (schemaVersion !== expected) {
     throw new ContractValidationError({
       code: ContractErrorCode.SCHEMA_VERSION_UNSUPPORTED,
-      message: `Unsupported schema version ${schemaVersion} for contract ${contractName}`,
+      message: `Unsupported schema version ${String(schemaVersion)} for contract ${contractName}`,
       details: { contractName, schemaVersion, supportedVersions: [expected] },
     });
   }
