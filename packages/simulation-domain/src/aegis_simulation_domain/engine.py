@@ -6,6 +6,7 @@ from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
 
+from aegis_contracts import DomainEventEnvelopeV1
 from aegis_contracts.simulation import (
     NormalizedEventHashV1,
     RunConfigurationV1,
@@ -63,7 +64,11 @@ class SimulationEngine:
         )
 
     @staticmethod
-    def run_to_completion(runtime: SimulationRuntime, *, max_steps: int) -> list:
+    def run_to_completion(
+        runtime: SimulationRuntime,
+        *,
+        max_steps: int,
+    ) -> list[DomainEventEnvelopeV1]:
         runtime.start()
         return runtime.run_steps(max_steps)
 
@@ -89,6 +94,8 @@ class SimulationEngine:
         return deepcopy(runtime)
 
     @staticmethod
-    def handle_command(runtime: SimulationRuntime, command: SimulationCommandV1) -> list:
-        emitted = runtime.execute_command(command)
-        return emitted
+    def handle_command(
+        runtime: SimulationRuntime,
+        command: SimulationCommandV1,
+    ) -> list[DomainEventEnvelopeV1]:
+        return runtime.execute_command(command)

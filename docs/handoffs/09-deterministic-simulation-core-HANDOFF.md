@@ -20,43 +20,43 @@ Phase 09 deliverables per `docs/AEGIS-v1.0-Agent-Specs/scenario-and-simulation/0
 
 ## Files added
 
-| Area | Key paths |
-|------|-----------|
-| Domain package | `packages/simulation-domain/**` |
-| Contracts | `packages/contracts-python/src/aegis_contracts/simulation.py`, `packages/contracts-ts/src/simulation.ts` |
-| Persistence | `migrations/versions/002_simulation_checkpoints.py`, checkpoint repository in `aegis_persistence` |
-| Service | `services/simulation/src/aegis_simulation/application.py`, updated `runner.py` |
-| Tests | `tests/unit/simulation/**`, `tests/integration/simulation/**`, `tests/golden-replays/minimal/**` |
-| Fixtures | `tests/contract/fixtures/valid/*simulation*`, generated schemas |
-| Docs/ADR | `docs/simulation.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0010-deterministic-simulation-core.md` |
-| Evidence | `apps/web/scripts/capture-simulation-demo.mjs`, `scripts/capture-simulation-demo.mjs` |
+| Area           | Key paths                                                                                                |
+| -------------- | -------------------------------------------------------------------------------------------------------- |
+| Domain package | `packages/simulation-domain/**`                                                                          |
+| Contracts      | `packages/contracts-python/src/aegis_contracts/simulation.py`, `packages/contracts-ts/src/simulation.ts` |
+| Persistence    | `migrations/versions/002_simulation_checkpoints.py`, checkpoint repository in `aegis_persistence`        |
+| Service        | `services/simulation/src/aegis_simulation/application.py`, updated `runner.py`                           |
+| Tests          | `tests/unit/simulation/**`, `tests/integration/simulation/**`, `tests/golden-replays/minimal/**`         |
+| Fixtures       | `tests/contract/fixtures/valid/*simulation*`, generated schemas                                          |
+| Docs/ADR       | `docs/simulation.md`, `docs/AEGIS-v1.0-Agent-Specs/adrs/0010-deterministic-simulation-core.md`           |
+| Evidence       | `apps/web/scripts/capture-simulation-demo.mjs`, `scripts/capture-simulation-demo.mjs`                    |
 
 ## Files modified
 
-| File | Reason |
-|------|--------|
-| `pyproject.toml` | Workspace member, import-linter roots |
-| `packages/contracts-python/src/aegis_contracts/{events,versioning,__init__,fixtures}.py` | Simulation contracts and event types |
-| `packages/contracts-ts/src/{events,versioning,index}.ts` | TS parity |
-| `packages/persistence/src/aegis_persistence/**` | Checkpoint ORM, repository, UoW |
-| `packages/scenario-sdk/src/aegis_scenario_sdk/compatibility.py` | PhaseNN version comparison |
-| `services/simulation/pyproject.toml`, `health.py` | Dependencies and version |
-| `tests/integration/conftest.py` | Truncate `simulation_checkpoints` |
-| `tests/contract/fixtures/compatibility-manifest.json` | New artifact hashes |
-| `scenarios/_fixtures/valid-minimal/manifest.yaml` | Unchanged platform version (compatible via SDK fix) |
+| File                                                                                     | Reason                                              |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `pyproject.toml`                                                                         | Workspace member, import-linter roots               |
+| `packages/contracts-python/src/aegis_contracts/{events,versioning,__init__,fixtures}.py` | Simulation contracts and event types                |
+| `packages/contracts-ts/src/{events,versioning,index}.ts`                                 | TS parity                                           |
+| `packages/persistence/src/aegis_persistence/**`                                          | Checkpoint ORM, repository, UoW                     |
+| `packages/scenario-sdk/src/aegis_scenario_sdk/compatibility.py`                          | PhaseNN version comparison                          |
+| `services/simulation/pyproject.toml`, `health.py`                                        | Dependencies and version                            |
+| `tests/integration/conftest.py`                                                          | Truncate `simulation_checkpoints`                   |
+| `tests/contract/fixtures/compatibility-manifest.json`                                    | New artifact hashes                                 |
+| `scenarios/_fixtures/valid-minimal/manifest.yaml`                                        | Unchanged platform version (compatible via SDK fix) |
 
 ## Contracts introduced or changed
 
-| Contract | Version | Description |
-|----------|---------|-------------|
-| `RunConfigurationV1` | schema v1 | Run seed, engine version, clock epochs |
-| `ScheduledEventV1` | schema v1 | Runtime queue item (distinct from authoring definition) |
-| `SimulationCommandV1` | schema v1 | Idempotent command envelope with authorization |
-| `SimulationCheckpointV1` | schema v1 | Checkpoint metadata + embedded world snapshot |
-| `WorldStateSnapshotV1` | schema v1 | Serializable simulation state |
-| `NormalizedEventHashV1` | schema v1 | Golden replay hash artifact |
-| `WORKSPACE_VERSION` | `0.0.0-phase09` | Workspace metadata parity bump |
-| Simulation event types | payload v1 | `sim.run.*`, telemetry extensions |
+| Contract                 | Version         | Description                                             |
+| ------------------------ | --------------- | ------------------------------------------------------- |
+| `RunConfigurationV1`     | schema v1       | Run seed, engine version, clock epochs                  |
+| `ScheduledEventV1`       | schema v1       | Runtime queue item (distinct from authoring definition) |
+| `SimulationCommandV1`    | schema v1       | Idempotent command envelope with authorization          |
+| `SimulationCheckpointV1` | schema v1       | Checkpoint metadata + embedded world snapshot           |
+| `WorldStateSnapshotV1`   | schema v1       | Serializable simulation state                           |
+| `NormalizedEventHashV1`  | schema v1       | Golden replay hash artifact                             |
+| `WORKSPACE_VERSION`      | `0.0.0-phase09` | Workspace metadata parity bump                          |
+| Simulation event types   | payload v1      | `sim.run.*`, telemetry extensions                       |
 
 ## Database migrations
 
@@ -74,31 +74,31 @@ None.
 
 ## Tests added
 
-| Test | Proves |
-|------|--------|
-| `tests/unit/simulation/test_primitives.py` | Clock, queue ordering, RNG determinism |
-| `tests/unit/simulation/test_runtime.py` | Determinism, checkpoint recovery, authorization rejection |
-| `tests/unit/simulation/test_simulation_acceptance_criteria.py` | Maps to spec §18 |
-| `tests/integration/simulation/test_simulation_persistence.py` | PostgreSQL run/event/checkpoint/idempotency (skipped without DB) |
-| `tests/golden-replays/minimal/test_minimal_fixture_replay.py` | Stable golden hash + seed divergence |
+| Test                                                           | Proves                                                           |
+| -------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `tests/unit/simulation/test_primitives.py`                     | Clock, queue ordering, RNG determinism                           |
+| `tests/unit/simulation/test_runtime.py`                        | Determinism, checkpoint recovery, authorization rejection        |
+| `tests/unit/simulation/test_simulation_acceptance_criteria.py` | Maps to spec §18                                                 |
+| `tests/integration/simulation/test_simulation_persistence.py`  | PostgreSQL run/event/checkpoint/idempotency (skipped without DB) |
+| `tests/golden-replays/minimal/test_minimal_fixture_replay.py`  | Stable golden hash + seed divergence                             |
 
 ## Commands executed and results
 
-| Command | Result |
-|---------|--------|
-| `uv run ruff check .` | **PASS** |
-| `uv run mypy apps services packages` | **BLOCKED** — pre-existing `apps/api/src/aegis_api/db/session.py` duplicate module path error (not introduced by Phase 09) |
-| `uv run pytest -q` | **PASS** — 193 passed, 14 skipped |
-| `docker compose up -d postgres redis object-storage` | **BLOCKED** — `docker` not available in validation environment |
-| `uv run pytest tests/integration -q` | **PASS** — 14 skipped (no PostgreSQL) |
-| `uv run pytest tests/golden-replays -q` | **PASS** — 2 passed |
-| `pnpm check-contracts` | **PASS** |
-| `uv run lint-imports` | **PASS** |
-| `uv run aegis-simulator determinism-check --scenario scenarios/_fixtures/valid-minimal --seed 42 --steps 30` | **PASS** (`deterministic: true`) |
-| `uv run aegis-simulator checkpoint-recovery-check --scenario scenarios/_fixtures/valid-minimal --seed 42 --steps 30 --checkpoint-at 10` | **PASS** (`recoveryMatches: true`) |
-| `uv run aegis-simulator seed-divergence-check --scenario scenarios/_fixtures/valid-minimal --seed-a 42 --seed-b 99 --steps 30` | **PASS** (`different: true`) |
-| `uv run aegis-simulator invalid-command-demo` | **PASS** (`rejected: true`, `SIMULATION_UNAUTHORIZED`) |
-| `pnpm --filter @aegis/web exec node scripts/capture-simulation-demo.mjs` | **PASS** — 4 screenshots captured |
+| Command                                                                                                                                 | Result                                                                                                                     |
+| --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `uv run ruff check .`                                                                                                                   | **PASS**                                                                                                                   |
+| `uv run mypy apps services packages`                                                                                                    | **BLOCKED** — pre-existing `apps/api/src/aegis_api/db/session.py` duplicate module path error (not introduced by Phase 09) |
+| `uv run pytest -q`                                                                                                                      | **PASS** — 193 passed, 14 skipped                                                                                          |
+| `docker compose up -d postgres redis object-storage`                                                                                    | **BLOCKED** — `docker` not available in validation environment                                                             |
+| `uv run pytest tests/integration -q`                                                                                                    | **PASS** — 14 skipped (no PostgreSQL)                                                                                      |
+| `uv run pytest tests/golden-replays -q`                                                                                                 | **PASS** — 2 passed                                                                                                        |
+| `pnpm check-contracts`                                                                                                                  | **PASS**                                                                                                                   |
+| `uv run lint-imports`                                                                                                                   | **PASS**                                                                                                                   |
+| `uv run aegis-simulator determinism-check --scenario scenarios/_fixtures/valid-minimal --seed 42 --steps 30`                            | **PASS** (`deterministic: true`)                                                                                           |
+| `uv run aegis-simulator checkpoint-recovery-check --scenario scenarios/_fixtures/valid-minimal --seed 42 --steps 30 --checkpoint-at 10` | **PASS** (`recoveryMatches: true`)                                                                                         |
+| `uv run aegis-simulator seed-divergence-check --scenario scenarios/_fixtures/valid-minimal --seed-a 42 --seed-b 99 --steps 30`          | **PASS** (`different: true`)                                                                                               |
+| `uv run aegis-simulator invalid-command-demo`                                                                                           | **PASS** (`rejected: true`, `SIMULATION_UNAUTHORIZED`)                                                                     |
+| `pnpm --filter @aegis/web exec node scripts/capture-simulation-demo.mjs`                                                                | **PASS** — 4 screenshots captured                                                                                          |
 
 ## Architecture decisions and ADRs
 

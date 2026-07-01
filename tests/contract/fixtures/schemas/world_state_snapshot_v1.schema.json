@@ -40,15 +40,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "id",
-        "assetType",
-        "status",
-        "riskScore",
-        "criticality",
-        "zoneId",
-        "revision"
-      ],
+      "required": ["id", "assetType", "status", "riskScore", "criticality", "zoneId", "revision"],
       "title": "AssetInstanceSnapshotV1",
       "type": "object"
     },
@@ -117,11 +109,7 @@
           "type": "boolean"
         }
       },
-      "required": [
-        "conditionId",
-        "revealed",
-        "triggered"
-      ],
+      "required": ["conditionId", "revealed", "triggered"],
       "title": "HiddenConditionStateSnapshotV1",
       "type": "object"
     },
@@ -176,10 +164,7 @@
       "type": "object"
     },
     "ScheduledEventSourceType": {
-      "enum": [
-        "scheduled",
-        "generator"
-      ],
+      "enum": ["scheduled", "generator"],
       "title": "ScheduledEventSourceType",
       "type": "string"
     },
@@ -249,12 +234,7 @@
       "type": "object"
     },
     "SimulationRunStatus": {
-      "enum": [
-        "created",
-        "running",
-        "paused",
-        "stopped"
-      ],
+      "enum": ["created", "running", "paused", "stopped"],
       "title": "SimulationRunStatus",
       "type": "string"
     }

@@ -2,7 +2,13 @@ import { z } from 'zod';
 
 import { ContractErrorCode, ContractValidationError } from './errors';
 import { actorRefSchema } from './events';
-import { authoredIdSchema, runIdSchema, sequenceSchema, simTimestampSchema, utcTimestampSchema } from './primitives';
+import {
+  authoredIdSchema,
+  runIdSchema,
+  sequenceSchema,
+  simTimestampSchema,
+  utcTimestampSchema,
+} from './primitives';
 import {
   NORMALIZED_EVENT_HASH_SCHEMA_VERSION,
   RUN_CONFIGURATION_SCHEMA_VERSION,

@@ -98,15 +98,18 @@ class WorldState:
                 risk_contribution=relationship.risk_contribution,
             )
         for generator in manifest.generators:
+            if generator.schedule is None:
+                continue
+            schedule = generator.schedule
             world.generators[generator.id] = GeneratorState(
                 generator_id=generator.id,
                 target_asset_id=generator.target_asset_id,
                 plugin_id=generator.plugin.plugin_id,
                 config=dict(generator.plugin.config),
                 next_sim_time=clock.sim_time
-                + timedelta(seconds=generator.schedule.interval_sim_seconds),
-                interval_sim_seconds=generator.schedule.interval_sim_seconds,
-                jitter_sim_seconds=generator.schedule.jitter_sim_seconds,
+                + timedelta(seconds=schedule.interval_sim_seconds),
+                interval_sim_seconds=int(schedule.interval_sim_seconds),
+                jitter_sim_seconds=int(schedule.jitter_sim_seconds),
             )
         for condition in manifest.hidden_conditions:
             world.hidden_conditions[condition.id] = HiddenConditionState(condition_id=condition.id)
