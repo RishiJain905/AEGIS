@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-import { assetIdSchema, eventIdSchema, modelIdSchema, runIdSchema, simTimestampSchema, utcTimestampSchema } from './primitives';
+import {
+  assetIdSchema,
+  eventIdSchema,
+  modelIdSchema,
+  runIdSchema,
+  simTimestampSchema,
+  utcTimestampSchema,
+} from './primitives';
 import {
   ANOMALY_EXPLANATION_SCHEMA_VERSION,
   MODEL_ARTIFACT_REFERENCE_SCHEMA_VERSION,

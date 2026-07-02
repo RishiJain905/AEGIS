@@ -32,7 +32,7 @@ def build_explanation(
         if z > 0.01:
             contributions[name] = round(z, 4)
 
-    top_features = sorted(contributions, key=contributions.get, reverse=True)[:5]
+    top_features = sorted(contributions, key=lambda name: contributions[name], reverse=True)[:5]
     if not top_features:
         top_features = list(FEATURE_NAMES[:3])
 
@@ -71,7 +71,7 @@ def build_explanation(
             sim_time_start=vector.provenance.sim_time_start,
             sim_time_end=vector.provenance.sim_time_end,
         ),
-        model_version_id=model_version_id,  # type: ignore[arg-type]
+        model_version_id=model_version_id,
         model_semantic_version=model_semantic_version,
         comparison_baseline=comparison,
     )

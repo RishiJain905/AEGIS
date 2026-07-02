@@ -83,21 +83,32 @@ async function shot(name, url, fn = async () => {}) {
 }
 
 await shot('16-silent-relay-command-centre', `${WEB_BASE}/scenarios`);
-await shot('16-isolation-forest-anomaly-inspector', `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB1`, async () => {
-  await page.getByTestId('inspector-panel').waitFor({ state: 'visible' });
-  const details = page.locator('details summary');
-  if (await details.count()) {
-    await details.first().click();
-  }
-});
-await shot('16-anomaly-score-threshold-model-version', `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB1`);
+await shot(
+  '16-isolation-forest-anomaly-inspector',
+  `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB1`,
+  async () => {
+    await page.getByTestId('inspector-panel').waitFor({ state: 'visible' });
+    const details = page.locator('details summary');
+    if (await details.count()) {
+      await details.first().click();
+    }
+  },
+);
+await shot(
+  '16-anomaly-score-threshold-model-version',
+  `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB1`,
+);
 await shot('16-model-vs-baseline-comparison', `${API_BASE}/models/observability`);
-await shot('16-evaluation-metrics-score-distribution', `${API_BASE}/models/observability`, async () => {
-  await page.evaluate(async (base) => {
-    const res = await fetch(`${base}/api/v1/detection/baselines`);
-    window.__baseline = res.ok ? await res.json() : null;
-  }, API_BASE);
-});
+await shot(
+  '16-evaluation-metrics-score-distribution',
+  `${API_BASE}/models/observability`,
+  async () => {
+    await page.evaluate(async (base) => {
+      const res = await fetch(`${base}/api/v1/detection/baselines`);
+      window.__baseline = res.ok ? await res.json() : null;
+    }, API_BASE);
+  },
+);
 await shot('16-manifest-checksum-validation', `${API_BASE}/models/observability`, async () => {
   await page.getByRole('button', { name: 'Verify checksum + schema' }).click();
   await page.waitForTimeout(800);

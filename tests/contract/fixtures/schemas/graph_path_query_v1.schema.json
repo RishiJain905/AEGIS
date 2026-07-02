@@ -1,13 +1,7 @@
 {
   "$defs": {
     "RelationshipType": {
-      "enum": [
-        "COMMUNICATED_WITH",
-        "AUTHENTICATED_TO",
-        "DEPENDS_ON",
-        "ADMINISTERS",
-        "HOSTS"
-      ],
+      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
       "title": "RelationshipType",
       "type": "string"
     }
@@ -50,13 +44,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId",
-    "sourceId",
-    "targetId",
-    "maxHops"
-  ],
+  "required": ["schemaVersion", "runId", "sourceId", "targetId", "maxHops"],
   "title": "GraphPathQueryV1",
   "type": "object"
 }

@@ -42,10 +42,7 @@
       "title": "Tosequence"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId"
-  ],
+  "required": ["schemaVersion", "runId"],
   "title": "ModelScoreRequestV1",
   "type": "object"
 }

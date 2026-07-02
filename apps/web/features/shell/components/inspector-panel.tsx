@@ -190,8 +190,8 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                             )?.toFixed?.(2)}{' '}
                             / threshold{' '}
                             {(
-                              (alert.anomalyExplanation as { threshold?: number }).threshold
-                            )?.toFixed?.(2)}
+                              alert.anomalyExplanation as { threshold?: number }
+                            ).threshold?.toFixed?.(2)}
                           </p>
                           {'modelVersionId' in alert && alert.modelVersionId ? (
                             <p className="mt-1 font-mono text-[10px] text-[var(--aegis-text-muted)]">

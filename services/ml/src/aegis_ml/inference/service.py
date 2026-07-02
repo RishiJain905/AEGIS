@@ -7,11 +7,8 @@ import json
 from dataclasses import dataclass, field
 
 from aegis_contracts.events import DomainEventEnvelopeV1
-from aegis_contracts.models import (
-    MODEL_EVALUATE_RESPONSE_SCHEMA_VERSION,
-    ModelInferenceResultV1,
-    ModelScoreResponseV1,
-)
+from aegis_contracts.models import ModelInferenceResultV1, ModelScoreResponseV1
+from aegis_contracts.versioning import MODEL_EVALUATE_RESPONSE_SCHEMA_VERSION
 from aegis_ml.features import compute_features_from_events
 from aegis_ml.inference.batch import score_vectors
 from aegis_ml.inference.fallback import FallbackState, fallback_from_exception

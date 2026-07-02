@@ -6,14 +6,11 @@ from datetime import UTC, datetime
 
 import sklearn
 from aegis_contracts.entities import ModelManifestV1
-from aegis_contracts.models import (
-    TRAINING_RUN_MANIFEST_SCHEMA_VERSION,
-    ModelApprovalStatus,
-    TrainingRunManifestV1,
-)
+from aegis_contracts.models import ModelApprovalStatus, TrainingRunManifestV1
 from aegis_contracts.versioning import (
     FEATURE_SCHEMA_VERSION,
     MODEL_MANIFEST_SCHEMA_VERSION,
+    TRAINING_RUN_MANIFEST_SCHEMA_VERSION,
     WORKSPACE_VERSION,
 )
 from aegis_ml.baselines.splits import HOLDOUT_SEEDS, SILENT_RELAY_SCENARIO_ID, TRAINING_SEEDS
@@ -58,7 +55,7 @@ def build_model_manifest(
 ) -> ModelManifestV1:
     return ModelManifestV1(
         schema_version=MODEL_MANIFEST_SCHEMA_VERSION,
-        id=MODEL_ID,  # type: ignore[arg-type]
+        id=MODEL_ID,
         semantic_version=SEMANTIC_VERSION,
         algorithm="isolation_forest",
         feature_schema_version=FEATURE_SCHEMA_VERSION,

@@ -8,12 +8,14 @@ from pathlib import Path
 
 from aegis_contracts.entities import ModelManifestV1
 from aegis_contracts.models import (
-    MODEL_VERIFY_ARTIFACT_RESPONSE_SCHEMA_VERSION,
     ModelApprovalStatus,
     ModelVerifyArtifactResponseV1,
     TrainingRunManifestV1,
 )
-from aegis_contracts.versioning import FEATURE_SCHEMA_VERSION
+from aegis_contracts.versioning import (
+    FEATURE_SCHEMA_VERSION,
+    MODEL_VERIFY_ARTIFACT_RESPONSE_SCHEMA_VERSION,
+)
 from aegis_ml.models.errors import ModelErrorCode
 from aegis_ml.models.isolation_forest.serialize import artifact_checksum, load_pipeline
 from aegis_ml.models.isolation_forest.threshold import ThresholdCalibration

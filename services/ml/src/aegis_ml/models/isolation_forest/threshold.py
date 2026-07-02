@@ -24,7 +24,8 @@ class ThresholdCalibration:
 
 def raw_decision_scores(pipeline: Pipeline, matrix: np.ndarray) -> np.ndarray:
     scaled = pipeline.named_steps["scaler"].transform(matrix)
-    return pipeline.named_steps["model"].decision_function(scaled)
+    scores = pipeline.named_steps["model"].decision_function(scaled)
+    return np.asarray(scores, dtype=np.float64)
 
 
 def normalize_scores(

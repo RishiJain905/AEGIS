@@ -23,34 +23,34 @@ Phase 16 deliverables per `docs/AEGIS-v1.0-Agent-Specs/detection-and-machine-lea
 
 ## Files added
 
-| Area | Key paths |
-|------|-----------|
-| Contracts | `packages/contracts-python/src/aegis_contracts/models.py`, `packages/contracts-ts/src/models.ts` |
-| ML training | `services/ml/src/aegis_ml/models/**`, `services/ml/src/aegis_ml/training/simulation_helpers.py` |
-| ML inference | `services/ml/src/aegis_ml/inference/**` |
-| ML evaluation | `services/ml/src/aegis_ml/evaluation/model_evaluation.py` |
-| Incidents | `services/incidents/src/aegis_incidents/model_pipeline.py`, `model_promotion.py` |
-| Persistence | `PostgresModelRepository` in `packages/persistence/.../postgres.py` |
-| API | `apps/api/src/aegis_api/models/router.py`, `observability.py` |
-| Scripts | `scripts/train_isolation_forest.py`, `evaluate_model.py`, `run_anomaly_detection.py` |
-| Artifacts | `models/manifests/isolation-forest-v1/**`, `models/evaluation/isolation-forest/holdout-v1/**` |
-| Tests | `tests/ml/models/**` |
-| Docs | `docs/ml/anomaly-model.md`, ADR `0017-anomaly-model.md` |
-| Demo | `apps/web/scripts/capture-anomaly-model-demo.mjs` |
+| Area          | Key paths                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------------ |
+| Contracts     | `packages/contracts-python/src/aegis_contracts/models.py`, `packages/contracts-ts/src/models.ts` |
+| ML training   | `services/ml/src/aegis_ml/models/**`, `services/ml/src/aegis_ml/training/simulation_helpers.py`  |
+| ML inference  | `services/ml/src/aegis_ml/inference/**`                                                          |
+| ML evaluation | `services/ml/src/aegis_ml/evaluation/model_evaluation.py`                                        |
+| Incidents     | `services/incidents/src/aegis_incidents/model_pipeline.py`, `model_promotion.py`                 |
+| Persistence   | `PostgresModelRepository` in `packages/persistence/.../postgres.py`                              |
+| API           | `apps/api/src/aegis_api/models/router.py`, `observability.py`                                    |
+| Scripts       | `scripts/train_isolation_forest.py`, `evaluate_model.py`, `run_anomaly_detection.py`             |
+| Artifacts     | `models/manifests/isolation-forest-v1/**`, `models/evaluation/isolation-forest/holdout-v1/**`    |
+| Tests         | `tests/ml/models/**`                                                                             |
+| Docs          | `docs/ml/anomaly-model.md`, ADR `0017-anomaly-model.md`                                          |
+| Demo          | `apps/web/scripts/capture-anomaly-model-demo.mjs`                                                |
 
 ## Files modified
 
-| File | Reason |
-|------|--------|
-| `packages/contracts-python/src/aegis_contracts/entities.py` | Additive ModelManifestV1 + AlertV1 fields |
-| `packages/contracts-*/versioning.*` | Phase 16 schema constants, `WORKSPACE_VERSION=0.0.0-phase16` |
-| `services/ml/pyproject.toml` | sklearn, joblib, simulation-domain deps |
-| `apps/api/src/aegis_api/main.py` | Register models routes |
-| `apps/web/features/shell/components/inspector-panel.tsx` | Anomaly explanation UI |
-| `apps/web/lib/realtime/event-projector.ts` | `model.score.` timeline prefix |
-| `apps/web/features/live-run/live-run-provider.tsx` | Invalidate on model score events |
-| `apps/web/fixtures/shell-dataset.json` | Isolation Forest fixture alert |
-| `tests/contract/fixtures/compatibility-manifest.json` | Phase 16 hashes |
+| File                                                        | Reason                                                       |
+| ----------------------------------------------------------- | ------------------------------------------------------------ |
+| `packages/contracts-python/src/aegis_contracts/entities.py` | Additive ModelManifestV1 + AlertV1 fields                    |
+| `packages/contracts-*/versioning.*`                         | Phase 16 schema constants, `WORKSPACE_VERSION=0.0.0-phase16` |
+| `services/ml/pyproject.toml`                                | sklearn, joblib, simulation-domain deps                      |
+| `apps/api/src/aegis_api/main.py`                            | Register models routes                                       |
+| `apps/web/features/shell/components/inspector-panel.tsx`    | Anomaly explanation UI                                       |
+| `apps/web/lib/realtime/event-projector.ts`                  | `model.score.` timeline prefix                               |
+| `apps/web/features/live-run/live-run-provider.tsx`          | Invalidate on model score events                             |
+| `apps/web/fixtures/shell-dataset.json`                      | Isolation Forest fixture alert                               |
+| `tests/contract/fixtures/compatibility-manifest.json`       | Phase 16 hashes                                              |
 
 ## Files removed
 
@@ -58,17 +58,17 @@ None.
 
 ## Contracts introduced or changed
 
-| Contract | Version | Notes |
-|----------|---------|-------|
-| `AnomalyExplanationV1` | schema v1 | Structured model explanation |
-| `TrainingRunManifestV1` | schema v1 | Training provenance |
-| `ModelArtifactReferenceV1` | schema v1 | Artifact metadata |
-| `ModelScoreRequestV1` / `ModelScoreResponseV1` | schema v1 | Scoring API |
-| `ModelInferenceResultV1` | schema v1 | Score + dedup key |
-| `ModelVerifyArtifactRequestV1` / `ResponseV1` | schema v1 | Verification API |
-| `ModelManifestV1` | schema v1 | Additive optional training/threshold fields |
-| `AlertV1` | schema v1 | Additive `anomalyExplanation`, `modelVersionId` |
-| `WORKSPACE_VERSION` | `0.0.0-phase16` | Compatibility bump |
+| Contract                                       | Version         | Notes                                           |
+| ---------------------------------------------- | --------------- | ----------------------------------------------- |
+| `AnomalyExplanationV1`                         | schema v1       | Structured model explanation                    |
+| `TrainingRunManifestV1`                        | schema v1       | Training provenance                             |
+| `ModelArtifactReferenceV1`                     | schema v1       | Artifact metadata                               |
+| `ModelScoreRequestV1` / `ModelScoreResponseV1` | schema v1       | Scoring API                                     |
+| `ModelInferenceResultV1`                       | schema v1       | Score + dedup key                               |
+| `ModelVerifyArtifactRequestV1` / `ResponseV1`  | schema v1       | Verification API                                |
+| `ModelManifestV1`                              | schema v1       | Additive optional training/threshold fields     |
+| `AlertV1`                                      | schema v1       | Additive `anomalyExplanation`, `modelVersionId` |
+| `WORKSPACE_VERSION`                            | `0.0.0-phase16` | Compatibility bump                              |
 
 ## Database migrations
 
@@ -87,28 +87,28 @@ Uses existing `.env.example` PostgreSQL/Redis settings. No new required variable
 
 ## Tests added
 
-| Test | Proves |
-|------|--------|
-| `test_training_reproducibility.py` | Deterministic artifact checksum |
-| `test_offline_online_parity.py` | Batch/single scorer agreement |
-| `test_artifact_verification.py` | Corrupt/missing artifact rejection |
-| `test_fallback.py` | Model outage → empty scores, no crash |
-| `test_holdout_evaluation.py` | Training/holdout seed disjointness |
-| `test_hidden_truth_leakage.py` | Evaluation labels not in runtime modules |
-| `test_contracts.py` | Contract round-trip |
+| Test                               | Proves                                   |
+| ---------------------------------- | ---------------------------------------- |
+| `test_training_reproducibility.py` | Deterministic artifact checksum          |
+| `test_offline_online_parity.py`    | Batch/single scorer agreement            |
+| `test_artifact_verification.py`    | Corrupt/missing artifact rejection       |
+| `test_fallback.py`                 | Model outage → empty scores, no crash    |
+| `test_holdout_evaluation.py`       | Training/holdout seed disjointness       |
+| `test_hidden_truth_leakage.py`     | Evaluation labels not in runtime modules |
+| `test_contracts.py`                | Contract round-trip                      |
 
 ## Commands executed and results
 
-| Command | Result |
-|---------|--------|
-| `uv run ruff check .` | **PASS** |
-| `uv run pytest -q` | **PASS** — 376 passed, 32 skipped |
-| `uv run pytest tests/ml/models -q` | **PASS** — 11 passed |
-| `pnpm check-contracts` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `uv run python scripts/train_isolation_forest.py --steps 300` | **PASS** — 36 training vectors, threshold 0.752 |
-| `uv run python scripts/evaluate_model.py --steps 300` | **PASS** — holdout metrics written |
-| `pnpm --filter @aegis/web exec node scripts/capture-anomaly-model-demo.mjs` | **PASS** — 10 screenshots |
+| Command                                                                     | Result                                          |
+| --------------------------------------------------------------------------- | ----------------------------------------------- |
+| `uv run ruff check .`                                                       | **PASS**                                        |
+| `uv run pytest -q`                                                          | **PASS** — 376 passed, 32 skipped               |
+| `uv run pytest tests/ml/models -q`                                          | **PASS** — 11 passed                            |
+| `pnpm check-contracts`                                                      | **PASS**                                        |
+| `pnpm typecheck`                                                            | **PASS**                                        |
+| `uv run python scripts/train_isolation_forest.py --steps 300`               | **PASS** — 36 training vectors, threshold 0.752 |
+| `uv run python scripts/evaluate_model.py --steps 300`                       | **PASS** — holdout metrics written              |
+| `pnpm --filter @aegis/web exec node scripts/capture-anomaly-model-demo.mjs` | **PASS** — 10 screenshots                       |
 
 ## Architecture decisions and ADRs
 

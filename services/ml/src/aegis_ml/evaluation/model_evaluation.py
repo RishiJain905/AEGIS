@@ -114,7 +114,10 @@ def load_rules_evaluation() -> dict[str, Any] | None:
     path = Path("models/evaluation/rules/holdout-v1/evaluation_run.json")
     if not path.exists():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        return None
+    return raw
 
 
 def run_model_holdout_evaluation(*, steps: int = 300) -> dict[str, Any]:

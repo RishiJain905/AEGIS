@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from aegis_contracts.features import FeatureVectorV1
-from aegis_contracts.models import MODEL_INFERENCE_RESULT_SCHEMA_VERSION, ModelInferenceResultV1
+from aegis_contracts.models import ModelInferenceResultV1
+from aegis_contracts.versioning import MODEL_INFERENCE_RESULT_SCHEMA_VERSION
 from aegis_ml.models.artifact_store import LoadedModelArtifact
 from aegis_ml.models.isolation_forest.explain import build_explanation, risk_band_for_score
 from aegis_ml.models.isolation_forest.threshold import normalize_single_score, raw_decision_scores
@@ -43,7 +44,7 @@ def score_vector(
     source_event_id = source_ids[-1] if source_ids else None
     return ModelInferenceResultV1(
         schema_version=MODEL_INFERENCE_RESULT_SCHEMA_VERSION,
-        entity_id=vector.entity_id,  # type: ignore[arg-type]
+        entity_id=vector.entity_id,
         score=normalized,
         threshold=threshold,
         risk_band=risk_band,

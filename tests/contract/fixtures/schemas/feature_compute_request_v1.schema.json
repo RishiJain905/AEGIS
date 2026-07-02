@@ -16,10 +16,7 @@
     },
     "mode": {
       "default": "full",
-      "enum": [
-        "incremental",
-        "full"
-      ],
+      "enum": ["incremental", "full"],
       "title": "Mode",
       "type": "string"
     },
@@ -46,10 +43,7 @@
       "title": "Tosequence"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId"
-  ],
+  "required": ["schemaVersion", "runId"],
   "title": "FeatureComputeRequestV1",
   "type": "object"
 }
