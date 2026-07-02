@@ -16,9 +16,9 @@ from aegis_contracts.versioning import (
     RUN_COMMAND_RESPONSE_SCHEMA_VERSION,
     SNAPSHOT_BOOTSTRAP_SCHEMA_VERSION,
 )
-from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
+from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_simulation_domain import SimulationEngine, SimulationError, SimulationErrorCode
 from aegis_simulation_domain.runtime import SimulationRuntime
 
@@ -235,7 +235,9 @@ class RunCommandService:
             last_applied_sequence=last_sequence,
         )
 
-    async def _get_or_restore_runtime(self, uow: PostgresUnitOfWork, run_id: str) -> SimulationRuntime:
+    async def _get_or_restore_runtime(
+        self, uow: PostgresUnitOfWork, run_id: str
+    ) -> SimulationRuntime:
         cached = self.runtime_cache.get(run_id)
         if cached is not None:
             return cached.runtime
