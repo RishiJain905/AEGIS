@@ -13,6 +13,7 @@ from aegis_graph_risk import (
     normalize_alert_to_risk_input,
 )
 from aegis_ml.risk.service import compute_graph_risk
+from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 from aegis_incidents.risk_promotion import (
@@ -58,7 +59,12 @@ async def run_risk_propagation_for_run(
 
     events_persisted = 0
     if not dry_run:
-        next_sequence = computed_at_sequence
+        existing_events = await PostgresEventQueryRepository(uow.session).list_by_run(
+            run_id,
+            limit=100000,
+        )
+        max_sequence = max((event.sequence for event in existing_events), default=0)
+        next_sequence = max(computed_at_sequence, max_sequence + 1)
         for score in result.scores:
             dedup = risk_dedup_key(run_id, score.asset_id, next_sequence)
             if await uow.risk_scores.exists_by_dedup_key(run_id, dedup):
