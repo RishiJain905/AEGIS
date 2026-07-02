@@ -76,6 +76,7 @@ export * from './api';
 export * from './persistence';
 export * from './realtime';
 export * from './features';
+export * from './detection';
 export * from './websocket';
 export * from './live-run';
 export * from './parsing';

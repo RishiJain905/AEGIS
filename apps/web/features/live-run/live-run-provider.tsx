@@ -22,6 +22,9 @@ import type {
 import { ConnectionHealthState } from '@aegis/contracts-ts';
 import { createGraphStore, type GraphStore } from '@aegis/graph-domain';
 import { RealtimeTransport } from '@aegis/realtime-client';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { queryKeys } from '@/lib/api/query-keys';
 
 import { fetchMissingEvents } from '@/lib/realtime/catch-up';
 import {
@@ -65,6 +68,7 @@ interface LiveRunProviderProps {
 
 export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
   const isLiveMode = isLiveDataSource();
+  const queryClient = useQueryClient();
   const graphStoreRef = useRef(createGraphStore());
   const knownNodesRef = useRef(new Map<string, GraphSnapshotV1['nodes'][number]>());
   const [bootstrapSnapshot, setBootstrapSnapshot] = useState<GraphSnapshotV1 | null>(null);
@@ -117,9 +121,12 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         return;
       }
       applyEventToGraph(envelope.event);
+      if (envelope.event.type.startsWith('alert.')) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.runs.alerts(runId) });
+      }
       saveStoredCursor(runId, envelope.event.sequence);
     },
-    [applyEventToGraph, runId, state.locallyPaused],
+    [applyEventToGraph, queryClient, runId, state.locallyPaused],
   );
 
   const performResync = useCallback(async () => {

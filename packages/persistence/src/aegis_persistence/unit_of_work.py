@@ -8,6 +8,7 @@ from aegis_contracts import AegisSettings, DomainEventEnvelopeV1
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from aegis_persistence.repositories.postgres import (
+    PostgresAlertRepository,
     PostgresCheckpointRepository,
     PostgresEventRepository,
     PostgresIdempotencyRepository,
@@ -41,6 +42,7 @@ class PostgresUnitOfWork:
         self._runs = PostgresRunRepository(self._session)
         self._events = PostgresEventRepository(self._session)
         self._incidents = PostgresIncidentRepository(self._session)
+        self._alerts = PostgresAlertRepository(self._session)
         self._idempotency = PostgresIdempotencyRepository(self._session)
         self._objects = PostgresObjectRepository(self._session)
         self._checkpoints = PostgresCheckpointRepository(self._session)
@@ -79,6 +81,10 @@ class PostgresUnitOfWork:
     @property
     def events(self) -> EventRepositoryProxy:
         return EventRepositoryProxy(self._events)
+
+    @property
+    def alerts(self) -> PostgresAlertRepository:
+        return self._alerts
 
     @property
     def incidents(self) -> PostgresIncidentRepository:

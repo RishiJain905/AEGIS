@@ -8,6 +8,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from aegis_api.db.session import init_db, shutdown_db
+from aegis_api.detection.observability import router as detection_observability_router
+from aegis_api.detection.router import router as detection_router
 from aegis_api.features.observability import router as feature_observability_router
 from aegis_api.features.router import router as features_router
 from aegis_api.realtime.backfill import router as backfill_router
@@ -82,6 +84,8 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.include_router(runs_router)
     app.include_router(features_router)
     app.include_router(feature_observability_router)
+    app.include_router(detection_router)
+    app.include_router(detection_observability_router)
     app.include_router(create_websocket_router(gateway))
     app.include_router(websocket_demo_router)
 

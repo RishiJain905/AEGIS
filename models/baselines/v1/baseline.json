@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "baselineVersion": "1.0.0",
+  "method": "rolling_mean_std",
+  "trainingSeeds": [
+    1,
+    11,
+    1006
+  ],
+  "featureSchemaVersion": 1,
+  "entries": [
+    {
+      "featureName": "db_query_count",
+      "entityId": null,
+      "mean": 20.583333333333332,
+      "std": 37.19421624691428,
+      "sampleCount": 36,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:database-analytics-warehouse",
+      "mean": 105.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:database-audit-store",
+      "mean": 88.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:database-customer-pii",
+      "mean": 54.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:device-analyst-01",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:device-ops-jumphost",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:svc-cicd-pipeline",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:svc-comms-gateway",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:svc-container-registry",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:svc-identity-broker",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:svc-logistics-api",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:svc-routing-inference-gateway",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "db_query_count",
+      "entityId": "asset:svc-sso-broker",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": null,
+      "mean": 4096.0,
+      "std": 13584.895141295718,
+      "sampleCount": 36,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:database-analytics-warehouse",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:database-audit-store",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:database-customer-pii",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:device-analyst-01",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:device-ops-jumphost",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:svc-cicd-pipeline",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:svc-comms-gateway",
+      "mean": 49152.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:svc-container-registry",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:svc-identity-broker",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:svc-logistics-api",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:svc-routing-inference-gateway",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    },
+    {
+      "featureName": "net_bytes_total",
+      "entityId": "asset:svc-sso-broker",
+      "mean": 0.0,
+      "std": 0.0,
+      "sampleCount": 3,
+      "zScoreThreshold": 3.0
+    }
+  ],
+  "createdAt": "1970-01-01T00:16:58Z"
+}
