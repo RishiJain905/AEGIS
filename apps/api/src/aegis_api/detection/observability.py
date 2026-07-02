@@ -17,10 +17,19 @@ async def detection_observability_page(request: Request) -> HTMLResponse:
   <meta charset="utf-8" />
   <title>AEGIS Detection Observability</title>
   <style>
-    body {{ font-family: system-ui, sans-serif; margin: 2rem; background: #0b1220; color: #e8eefc; }}
+    body {{
+      font-family: system-ui, sans-serif; margin: 2rem;
+      background: #0b1220; color: #e8eefc;
+    }}
     h1, h2 {{ color: #9ec5ff; }}
-    section {{ margin-bottom: 2rem; padding: 1rem 1.25rem; border: 1px solid #2a3a5c; border-radius: 8px; }}
-    pre {{ background: #111a2e; padding: 1rem; overflow: auto; border-radius: 6px; max-height: 28rem; }}
+    section {{
+      margin-bottom: 2rem; padding: 1rem 1.25rem;
+      border: 1px solid #2a3a5c; border-radius: 8px;
+    }}
+    pre {{
+      background: #111a2e; padding: 1rem; overflow: auto;
+      border-radius: 6px; max-height: 28rem;
+    }}
     input {{ width: 24rem; padding: 0.4rem; margin-right: 0.5rem; }}
     button {{ padding: 0.45rem 0.9rem; cursor: pointer; }}
     .note {{ color: #a8b3cf; font-size: 0.95rem; }}

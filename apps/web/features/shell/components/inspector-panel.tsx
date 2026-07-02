@@ -163,7 +163,9 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                         <details className="mt-2 text-xs text-[var(--aegis-text-secondary)]">
                           <summary className="cursor-pointer">Explanation</summary>
                           <p className="mt-1">{alert.explanation.summary}</p>
-                          <p className="mt-1 font-mono text-[10px]">{alert.explanation.comparison}</p>
+                          <p className="mt-1 font-mono text-[10px]">
+                            {alert.explanation.comparison}
+                          </p>
                           {alert.evidence ? (
                             <p className="mt-1 text-[var(--aegis-text-muted)]">
                               Window: {alert.evidence.windowKey}

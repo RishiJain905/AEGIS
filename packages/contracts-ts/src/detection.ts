@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-import { assetIdSchema, authoredIdSchema, eventIdSchema, runIdSchema, simTimestampSchema, utcTimestampSchema } from './primitives';
+import {
+  assetIdSchema,
+  authoredIdSchema,
+  eventIdSchema,
+  runIdSchema,
+  simTimestampSchema,
+  utcTimestampSchema,
+} from './primitives';
 import {
   ALERT_CANDIDATE_SCHEMA_VERSION,
   DETECTION_RULE_REGISTRY_SCHEMA_VERSION,
@@ -14,7 +21,12 @@ import {
   STATISTICAL_BASELINE_SCHEMA_VERSION,
 } from './versioning';
 
-const schemaVersionCheck = (expected: number) => z.number().int().min(1).refine((v) => v === expected);
+const schemaVersionCheck = (expected: number) =>
+  z
+    .number()
+    .int()
+    .min(1)
+    .refine((v) => v === expected);
 
 export const DetectorType = {
   DETERMINISTIC: 'deterministic',

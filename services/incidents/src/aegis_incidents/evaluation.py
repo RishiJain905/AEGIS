@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import yaml
 from aegis_contracts.detection import (
@@ -51,8 +52,12 @@ class SeedEvaluation:
     expected_rules: set[str]
 
 
-def load_expected_evidence() -> dict[str, object]:
-    return yaml.safe_load(EVIDENCE_PATH.read_text(encoding="utf-8"))
+def load_expected_evidence() -> dict[str, Any]:
+    raw = yaml.safe_load(EVIDENCE_PATH.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        msg = "Invalid expected evidence configuration"
+        raise ValueError(msg)
+    return raw
 
 
 def evaluate_seed(seed: int, *, steps: int = 300) -> SeedEvaluation:
@@ -81,8 +86,10 @@ def seed_metrics(result: SeedEvaluation) -> EvaluationSeedMetricsV1:
     true_positives = len(result.fired_rules & result.expected_rules)
     false_positives = len(result.fired_rules - result.expected_rules)
     false_negatives = len(result.expected_rules - result.fired_rules)
-    precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) else 1.0
-    recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) else 1.0
+    positive_denominator = true_positives + false_positives
+    precision = true_positives / positive_denominator if positive_denominator else 1.0
+    negative_denominator = true_positives + false_negatives
+    recall = true_positives / negative_denominator if negative_denominator else 1.0
     false_positive_rate = false_positives / max(false_positives + (true_positives or 1), 1)
     cause_coverage = true_positives / len(result.expected_rules) if result.expected_rules else 1.0
     return EvaluationSeedMetricsV1(

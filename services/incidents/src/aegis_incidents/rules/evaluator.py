@@ -113,7 +113,11 @@ def _build_candidate(
         explanation=explanation,
         evidence=AlertEvidenceV1(
             feature_schema_version=FEATURE_SCHEMA_VERSION,
-            feature_values={name: features[name] for name in rule.input_features if name in features},
+            feature_values={
+                name: features[name]
+                for name in rule.input_features
+                if name in features
+            },
             source_event_ids=list(vector.provenance.source_event_ids),
             window_key=vector.window_key,
             sequence_start=vector.provenance.sequence_start,
@@ -146,7 +150,10 @@ def _evaluate_unusual_login(
         observed=rate,
         baseline=None,
         threshold=rate_threshold,
-        comparison=f"auth_failure_rate {rate:.3f} >= {rate_threshold} AND auth_failed_count {failed:.0f} >= {count_threshold}",
+        comparison=(
+            f"auth_failure_rate {rate:.3f} >= {rate_threshold} "
+            f"AND auth_failed_count {failed:.0f} >= {count_threshold}"
+        ),
         condition="auth_failure_rate >= threshold AND auth_failed_count >= min_count",
         summary=f"Authentication failure rate {rate:.1%} with {failed:.0f} failed attempts",
         features=features,
@@ -213,7 +220,10 @@ def _evaluate_service_account_misuse(
         observed=api_count,
         baseline=None,
         threshold=api_threshold,
-        comparison=f"auth_failure_rate {rate:.3f} with api_request_count {api_count:.0f} >= {api_threshold}",
+        comparison=(
+            f"auth_failure_rate {rate:.3f} with api_request_count "
+            f"{api_count:.0f} >= {api_threshold}"
+        ),
         condition="service asset auth stress with sustained API requests",
         summary=f"Service asset {vector.entity_id} shows misuse-like auth/API pattern",
         features=features,
@@ -241,7 +251,10 @@ def _evaluate_unusual_paths(
         observed=rate,
         baseline=None,
         threshold=rate_threshold,
-        comparison=f"proc_suspicious_rate {rate:.3f} >= {rate_threshold} AND proc_event_count {count:.0f} >= {count_threshold}",
+        comparison=(
+            f"proc_suspicious_rate {rate:.3f} >= {rate_threshold} "
+            f"AND proc_event_count {count:.0f} >= {count_threshold}"
+        ),
         condition="proc_suspicious_rate >= threshold with minimum process events",
         summary=f"Suspicious process rate {rate:.1%} across {count:.0f} events",
         features=features,

@@ -265,7 +265,9 @@ class PostgresAlertRepository:
         return deduplication_key in keys
 
     async def list_dedup_keys_for_run(self, run_id: str) -> set[str]:
-        result = await self._session.execute(select(AlertRow.payload).where(AlertRow.run_id == run_id))
+        result = await self._session.execute(
+            select(AlertRow.payload).where(AlertRow.run_id == run_id)
+        )
         keys: set[str] = set()
         for payload in result.scalars().all():
             if isinstance(payload, dict):

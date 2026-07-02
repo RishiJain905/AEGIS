@@ -12,11 +12,12 @@ from aegis_persistence.repositories.streaming import PostgresEventQueryRepositor
 
 SILENT_RELAY = Path("scenarios/operation-silent-relay")
 BASELINE_PATH = Path("models/baselines/v1/baseline.json")
+BASELINE_AVAILABLE = BASELINE_PATH.is_file()
 
 
 @pytest.mark.asyncio
 async def test_detection_persists_alerts_and_events(unit_of_work) -> None:
-    if not BASELINE_PATH.exists():
+    if not BASELINE_AVAILABLE:
         pytest.skip("Baselines not calibrated")
     run_id, events = run_scenario_events(scenario_path=SILENT_RELAY, seed=1000, steps=120)
     service = __import__(

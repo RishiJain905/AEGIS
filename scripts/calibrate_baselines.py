@@ -15,7 +15,9 @@ from aegis_ml.features import compute_features_from_events
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Calibrate detection baselines from training seeds")
+    parser = argparse.ArgumentParser(
+        description="Calibrate detection baselines from training seeds"
+    )
     parser.add_argument(
         "--output",
         type=Path,

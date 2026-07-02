@@ -23,45 +23,45 @@ Phase 15 deliverables per `docs/AEGIS-v1.0-Agent-Specs/detection-and-machine-lea
 
 ## Files added
 
-| Area | Key paths |
-|------|-----------|
-| Contracts | `packages/contracts-python/src/aegis_contracts/detection.py`, `packages/contracts-ts/src/detection.ts` |
-| Rules | `services/incidents/src/aegis_incidents/rules/**` |
-| Baselines | `services/ml/src/aegis_ml/baselines/**` |
-| Pipeline | `services/incidents/src/aegis_incidents/pipeline.py`, `promotion.py`, `evaluation.py` |
-| Persistence | `PostgresAlertRepository` in `packages/persistence/.../postgres.py` |
-| API | `apps/api/src/aegis_api/detection/**` |
-| Scripts | `scripts/calibrate_baselines.py`, `run_detection.py`, `evaluate_rules.py` |
-| Tests | `tests/ml/rules/**`, `tests/integration/detection/**` |
-| Artifacts | `models/baselines/v1/**`, `models/evaluation/rules/holdout-v1/**` |
-| Docs | `docs/ml/rule-baselines.md`, ADR 0016, `apps/web/scripts/capture-detection-demo.mjs` |
+| Area        | Key paths                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| Contracts   | `packages/contracts-python/src/aegis_contracts/detection.py`, `packages/contracts-ts/src/detection.ts` |
+| Rules       | `services/incidents/src/aegis_incidents/rules/**`                                                      |
+| Baselines   | `services/ml/src/aegis_ml/baselines/**`                                                                |
+| Pipeline    | `services/incidents/src/aegis_incidents/pipeline.py`, `promotion.py`, `evaluation.py`                  |
+| Persistence | `PostgresAlertRepository` in `packages/persistence/.../postgres.py`                                    |
+| API         | `apps/api/src/aegis_api/detection/**`                                                                  |
+| Scripts     | `scripts/calibrate_baselines.py`, `run_detection.py`, `evaluate_rules.py`                              |
+| Tests       | `tests/ml/rules/**`, `tests/integration/detection/**`                                                  |
+| Artifacts   | `models/baselines/v1/**`, `models/evaluation/rules/holdout-v1/**`                                      |
+| Docs        | `docs/ml/rule-baselines.md`, ADR 0016, `apps/web/scripts/capture-detection-demo.mjs`                   |
 
 ## Files modified
 
-| File | Reason |
-|------|--------|
-| `packages/contracts-python/src/aegis_contracts/entities.py` | Additive `AlertV1` fields |
-| `packages/contracts-ts/src/entities.ts` | TS alert schema parity |
-| `packages/contracts-*/versioning.*` | `WORKSPACE_VERSION=0.0.0-phase15`, detection schema constants |
-| `packages/persistence/**` | Alert repository + UoW wiring |
-| `apps/api/src/aegis_api/runs/router.py` | Real alert/incident list endpoints |
-| `apps/web/features/shell/components/inspector-panel.tsx` | Alert explanation UI |
-| `apps/web/features/live-run/live-run-provider.tsx` | Invalidate alerts on `alert.created` |
-| `apps/web/fixtures/shell-dataset.json` | Enriched fixture alerts |
-| `tests/contract/fixtures/compatibility-manifest.json` | Phase 15 workspace + schema hashes |
-| `services/incidents/pyproject.toml`, `apps/api/pyproject.toml` | Package wiring |
+| File                                                           | Reason                                                        |
+| -------------------------------------------------------------- | ------------------------------------------------------------- |
+| `packages/contracts-python/src/aegis_contracts/entities.py`    | Additive `AlertV1` fields                                     |
+| `packages/contracts-ts/src/entities.ts`                        | TS alert schema parity                                        |
+| `packages/contracts-*/versioning.*`                            | `WORKSPACE_VERSION=0.0.0-phase15`, detection schema constants |
+| `packages/persistence/**`                                      | Alert repository + UoW wiring                                 |
+| `apps/api/src/aegis_api/runs/router.py`                        | Real alert/incident list endpoints                            |
+| `apps/web/features/shell/components/inspector-panel.tsx`       | Alert explanation UI                                          |
+| `apps/web/features/live-run/live-run-provider.tsx`             | Invalidate alerts on `alert.created`                          |
+| `apps/web/fixtures/shell-dataset.json`                         | Enriched fixture alerts                                       |
+| `tests/contract/fixtures/compatibility-manifest.json`          | Phase 15 workspace + schema hashes                            |
+| `services/incidents/pyproject.toml`, `apps/api/pyproject.toml` | Package wiring                                                |
 
 ## Contracts introduced or changed
 
-| Contract | Version | Notes |
-|----------|---------|-------|
-| `DetectionRuleV1` / registry | schema v1 | Seven rules, versioned thresholds |
-| `AlertCandidateV1` | schema v1 | Observed/baseline/threshold/explanation |
-| `RuleExplanationV1` | schema v1 | Structured only |
-| `StatisticalBaselineV1` / manifest | schema v1 | Training-seed calibration |
-| `EvaluationRunV1` / `MetricReportV1` | schema v1 | Holdout evaluation |
-| `AlertV1` | schema v1 | Additive optional detection fields |
-| `WORKSPACE_VERSION` | `0.0.0-phase15` | Compatibility bump |
+| Contract                             | Version         | Notes                                   |
+| ------------------------------------ | --------------- | --------------------------------------- |
+| `DetectionRuleV1` / registry         | schema v1       | Seven rules, versioned thresholds       |
+| `AlertCandidateV1`                   | schema v1       | Observed/baseline/threshold/explanation |
+| `RuleExplanationV1`                  | schema v1       | Structured only                         |
+| `StatisticalBaselineV1` / manifest   | schema v1       | Training-seed calibration               |
+| `EvaluationRunV1` / `MetricReportV1` | schema v1       | Holdout evaluation                      |
+| `AlertV1`                            | schema v1       | Additive optional detection fields      |
+| `WORKSPACE_VERSION`                  | `0.0.0-phase15` | Compatibility bump                      |
 
 ## Database migrations
 
@@ -79,31 +79,31 @@ None required beyond existing PostgreSQL/Redis stack.
 
 ## Tests added
 
-| Test | Proves |
-|------|--------|
-| `test_rule_registry.py` | Seven versioned rules |
-| `test_deterministic_rules.py` | Conditional firing |
-| `test_baselines.py` | Deterministic calibration + z-score |
-| `test_dedup_suppression.py` | Dedup key stability |
-| `test_pipeline_isolation.py` | Rule failures isolated |
-| `test_determinism.py` | Identical checksum on repeat |
-| `test_hidden_truth_leakage.py` | No expected-evidence in runtime modules |
-| `test_evaluation_holdout.py` | Disjoint train/holdout seeds |
+| Test                            | Proves                                     |
+| ------------------------------- | ------------------------------------------ |
+| `test_rule_registry.py`         | Seven versioned rules                      |
+| `test_deterministic_rules.py`   | Conditional firing                         |
+| `test_baselines.py`             | Deterministic calibration + z-score        |
+| `test_dedup_suppression.py`     | Dedup key stability                        |
+| `test_pipeline_isolation.py`    | Rule failures isolated                     |
+| `test_determinism.py`           | Identical checksum on repeat               |
+| `test_hidden_truth_leakage.py`  | No expected-evidence in runtime modules    |
+| `test_evaluation_holdout.py`    | Disjoint train/holdout seeds               |
 | `test_detection_persistence.py` | PG alert + event path (skipped without PG) |
 
 ## Commands executed and results
 
-| Command | Result |
-|---------|--------|
-| `uv run ruff check .` | PASS (after `--fix` on new modules) |
-| `uv run mypy apps services packages` | Not re-run — pre-existing session path issue from Phase 14 |
-| `uv run pytest -q` | **PASS** — 341 passed, 32 skipped |
-| `uv run pytest tests/ml/rules -q` | **PASS** — 14 passed |
-| `pnpm check-contracts` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `uv run python scripts/calibrate_baselines.py` | **PASS** |
-| `uv run python scripts/evaluate_rules.py` | **PASS** — metrics artifact written |
-| `pnpm --filter @aegis/web exec node scripts/capture-detection-demo.mjs` | **PASS** — 9 screenshots |
+| Command                                                                 | Result                                                     |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `uv run ruff check .`                                                   | PASS (after `--fix` on new modules)                        |
+| `uv run mypy apps services packages`                                    | Not re-run — pre-existing session path issue from Phase 14 |
+| `uv run pytest -q`                                                      | **PASS** — 341 passed, 32 skipped                          |
+| `uv run pytest tests/ml/rules -q`                                       | **PASS** — 14 passed                                       |
+| `pnpm check-contracts`                                                  | **PASS**                                                   |
+| `pnpm typecheck`                                                        | **PASS**                                                   |
+| `uv run python scripts/calibrate_baselines.py`                          | **PASS**                                                   |
+| `uv run python scripts/evaluate_rules.py`                               | **PASS** — metrics artifact written                        |
+| `pnpm --filter @aegis/web exec node scripts/capture-detection-demo.mjs` | **PASS** — 9 screenshots                                   |
 
 ### Stack startup (fixture demo)
 

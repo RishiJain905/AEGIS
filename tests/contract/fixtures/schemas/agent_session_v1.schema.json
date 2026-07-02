@@ -1,14 +1,7 @@
 {
   "$defs": {
     "AgentRole": {
-      "enum": [
-        "WATCHTOWER",
-        "TRACE",
-        "ORACLE",
-        "BASTION",
-        "WARDEN",
-        "SCRIBE"
-      ],
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
       "title": "AgentRole",
       "type": "string"
     },

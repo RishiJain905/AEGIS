@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
-import {
-  alertEvidenceSchema,
-  ruleExplanationSchema,
-} from './detection';
+import { alertEvidenceSchema, ruleExplanationSchema } from './detection';
 import {
   actionIdSchema,
   agentSessionIdSchema,

@@ -55,19 +55,31 @@ async function shot(name, url, fn = async () => {}) {
 }
 
 await shot('15-silent-relay-command-centre', `${WEB_BASE}/scenarios`);
-await shot('15-deterministic-rule-inspector', `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0`, async () => {
-  await page.getByTestId('inspector-panel').waitFor({ state: 'visible' });
-});
-await shot('15-statistical-baseline-alert', `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB1`, async () => {
-  await page.getByTestId('alerts-panel').waitFor({ state: 'visible' });
-});
+await shot(
+  '15-deterministic-rule-inspector',
+  `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0`,
+  async () => {
+    await page.getByTestId('inspector-panel').waitFor({ state: 'visible' });
+  },
+);
+await shot(
+  '15-statistical-baseline-alert',
+  `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB1`,
+  async () => {
+    await page.getByTestId('alerts-panel').waitFor({ state: 'visible' });
+  },
+);
 await shot('15-alerts-in-inspector', `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0`);
-await shot('15-alert-detail-explanation', `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0`, async () => {
-  const details = page.locator('details summary');
-  if (await details.count()) {
-    await details.first().click();
-  }
-});
+await shot(
+  '15-alert-detail-explanation',
+  `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FB0`,
+  async () => {
+    const details = page.locator('details summary');
+    if (await details.count()) {
+      await details.first().click();
+    }
+  },
+);
 await shot('15-dedup-suppression-note', `${API_BASE}/detection/observability`);
 await shot('15-normal-no-alert-run', `${WEB_BASE}/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FAV`);
 await shot('15-evaluation-metrics', `${API_BASE}/detection/observability`, async () => {

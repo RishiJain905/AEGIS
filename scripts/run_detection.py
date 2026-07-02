@@ -24,7 +24,8 @@ async def _run(*, run_id: str, dry_run: bool) -> dict[str, object]:
         baselines = load_baseline()
     try:
         async with session_maker() as session:
-            events = await PostgresEventQueryRepository(session).list_by_run(run_id, limit=1_000_000)
+            repo = PostgresEventQueryRepository(session)
+            events = await repo.list_by_run(run_id, limit=1_000_000)
         if not events:
             raise SystemExit(f"No events found for run: {run_id}")
         async with PostgresUnitOfWork(session_maker, settings=settings) as uow:

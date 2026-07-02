@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 from aegis_contracts.detection import (
@@ -24,7 +25,12 @@ from aegis_incidents.rules import RULE_REGISTRY_VERSION
 THRESHOLDS_PATH = Path(__file__).resolve().parent / "config" / "thresholds_v1.yaml"
 
 
-def _threshold(feature_name: str, operator: str, value: float, min_count: float | None = None) -> RuleThresholdV1:
+def _threshold(
+    feature_name: str,
+    operator: str,
+    value: float,
+    min_count: float | None = None,
+) -> RuleThresholdV1:
     return RuleThresholdV1(
         schema_version=RULE_THRESHOLD_SCHEMA_VERSION,
         feature_name=feature_name,
@@ -34,7 +40,7 @@ def _threshold(feature_name: str, operator: str, value: float, min_count: float 
     )
 
 
-def load_threshold_config() -> dict[str, object]:
+def load_threshold_config() -> dict[str, Any]:
     raw = yaml.safe_load(THRESHOLDS_PATH.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         msg = "Invalid threshold configuration"
@@ -105,7 +111,9 @@ def build_detection_rule_registry() -> DetectionRuleRegistryV1:
             rule_version=RULE_REGISTRY_VERSION,
             detector_type=DetectorType.DETERMINISTIC,
             title="Service account misuse pattern",
-            description="Authentication stress followed by sustained API activity on service assets",
+            description=(
+                "Authentication stress followed by sustained API activity on service assets"
+            ),
             input_features=["auth_failure_rate", "auth_event_count", "api_request_count"],
             thresholds=[
                 _threshold("auth_failure_rate", "gte", float(misuse["auth_failure_rate"])),
@@ -200,7 +208,9 @@ def build_detection_rule_registry() -> DetectionRuleRegistryV1:
     return DetectionRuleRegistryV1(
         schema_version=DETECTION_RULE_REGISTRY_SCHEMA_VERSION,
         registry_version=RULE_REGISTRY_VERSION,
-        threshold_config_version=str(config.get("thresholdConfigVersion", THRESHOLD_CONFIG_VERSION)),
+        threshold_config_version=str(
+            config.get("thresholdConfigVersion", THRESHOLD_CONFIG_VERSION)
+        ),
         rules=rules,
     )
 

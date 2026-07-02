@@ -22,7 +22,11 @@ DEFAULT_BASELINE_DIR = Path("models/baselines/v1")
 
 
 def canonical_baseline_json(baseline: StatisticalBaselineV1) -> str:
-    return json.dumps(baseline.model_dump(mode="json", by_alias=True), sort_keys=True, separators=(",", ":"))
+    return json.dumps(
+        baseline.model_dump(mode="json", by_alias=True),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
 
 
 def baseline_checksum(baseline: StatisticalBaselineV1) -> str:
@@ -67,7 +71,9 @@ def load_baseline(*, baseline_dir: Path = DEFAULT_BASELINE_DIR) -> StatisticalBa
     return StatisticalBaselineV1.model_validate(raw)
 
 
-def load_baseline_manifest(*, baseline_dir: Path = DEFAULT_BASELINE_DIR) -> StatisticalBaselineManifestV1:
+def load_baseline_manifest(
+    *, baseline_dir: Path = DEFAULT_BASELINE_DIR
+) -> StatisticalBaselineManifestV1:
     manifest_path = baseline_dir / "manifest.json"
     raw = json.loads(manifest_path.read_text(encoding="utf-8"))
     return StatisticalBaselineManifestV1.model_validate(raw)
