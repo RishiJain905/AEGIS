@@ -4,6 +4,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY apps/api/pyproject.toml apps/api/
+COPY services/ml/pyproject.toml services/ml/
 COPY services/simulation/pyproject.toml services/simulation/
 COPY packages/contracts-python/pyproject.toml packages/contracts-python/
 COPY packages/persistence/pyproject.toml packages/persistence/
@@ -15,6 +16,7 @@ COPY packages/persistence/src packages/persistence/src
 COPY packages/event-streaming/src packages/event-streaming/src
 COPY packages/scenario-sdk/src packages/scenario-sdk/src
 COPY packages/simulation-domain/src packages/simulation-domain/src
+COPY services/ml/src services/ml/src
 COPY services/simulation/src services/simulation/src
 RUN uv sync --frozen --no-dev --package aegis-api
 
@@ -23,6 +25,7 @@ WORKDIR /app
 RUN groupadd -r aegis && useradd -r -g aegis aegis
 COPY --from=builder /app/.venv /app/.venv
 COPY apps/api/src apps/api/src
+COPY services/ml/src services/ml/src
 COPY services/simulation/src services/simulation/src
 COPY packages/contracts-python/src packages/contracts-python/src
 COPY packages/persistence/src packages/persistence/src

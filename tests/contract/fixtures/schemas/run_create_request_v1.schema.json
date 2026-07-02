@@ -26,11 +26,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "scenarioPackagePath",
-    "seed"
-  ],
+  "required": ["schemaVersion", "scenarioPackagePath", "seed"],
   "title": "RunCreateRequestV1",
   "type": "object"
 }

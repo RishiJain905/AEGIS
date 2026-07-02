@@ -41,7 +41,9 @@ const simRun = run(
   `uv run aegis-simulator run --scenario ${SCENARIO} --seed ${SEED} --steps ${STEPS}`,
 );
 const featureEvidence = run('uv run python scripts/render_feature_pipeline_evidence.py');
-const parityTests = run('uv run pytest tests/ml/features/test_offline_online_parity.py tests/ml/features/test_determinism.py -q');
+const parityTests = run(
+  'uv run pytest tests/ml/features/test_offline_online_parity.py tests/ml/features/test_determinism.py -q',
+);
 const rejectionTests = run(
   'uv run pytest tests/ml/features/test_input_guard.py tests/ml/features/test_ordering.py tests/ml/features/test_hidden_truth_leakage.py -q',
 );

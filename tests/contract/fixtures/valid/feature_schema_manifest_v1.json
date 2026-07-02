@@ -145,11 +145,7 @@
       "maxValue": 1.0,
       "missingSentinel": -1.0,
       "categoricalMappingVersion": 1,
-      "categoricalValues": [
-        "tcp",
-        "udp",
-        "__MISSING__"
-      ]
+      "categoricalValues": ["tcp", "udp", "__MISSING__"]
     },
     {
       "name": "net_protocol_udp",
@@ -160,11 +156,7 @@
       "maxValue": 1.0,
       "missingSentinel": -1.0,
       "categoricalMappingVersion": 1,
-      "categoricalValues": [
-        "tcp",
-        "udp",
-        "__MISSING__"
-      ]
+      "categoricalValues": ["tcp", "udp", "__MISSING__"]
     },
     {
       "name": "net_protocol_missing",
@@ -175,11 +167,7 @@
       "maxValue": 1.0,
       "missingSentinel": -1.0,
       "categoricalMappingVersion": 1,
-      "categoricalValues": [
-        "tcp",
-        "udp",
-        "__MISSING__"
-      ]
+      "categoricalValues": ["tcp", "udp", "__MISSING__"]
     },
     {
       "name": "proc_event_count",
