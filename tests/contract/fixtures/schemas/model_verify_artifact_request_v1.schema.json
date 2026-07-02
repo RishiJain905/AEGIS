@@ -1,0 +1,30 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "artifactPath": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Artifactpath"
+    },
+    "manifestPath": {
+      "minLength": 1,
+      "title": "Manifestpath",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "manifestPath"],
+  "title": "ModelVerifyArtifactRequestV1",
+  "type": "object"
+}

@@ -173,6 +173,44 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                           ) : null}
                         </details>
                       ) : null}
+                      {'anomalyExplanation' in alert && alert.anomalyExplanation ? (
+                        <details
+                          className="mt-2 text-xs text-[var(--aegis-text-secondary)]"
+                          open={alert.detectorId === 'isolation-forest'}
+                        >
+                          <summary className="cursor-pointer">Anomaly model</summary>
+                          <p className="mt-1">
+                            {(alert.anomalyExplanation as { summary?: string }).summary}
+                          </p>
+                          <p className="mt-1 font-mono text-[10px]">
+                            Score:{' '}
+                            {(
+                              (alert.anomalyExplanation as { observedScore?: number })
+                                .observedScore ??
+                              alert.confidence ??
+                              0
+                            ).toFixed(2)}{' '}
+                            / threshold{' '}
+                            {(
+                              alert.anomalyExplanation as { threshold?: number }
+                            ).threshold?.toFixed(2)}
+                          </p>
+                          {'modelVersionId' in alert && alert.modelVersionId ? (
+                            <p className="mt-1 font-mono text-[10px] text-[var(--aegis-text-muted)]">
+                              Model: {String(alert.modelVersionId)}
+                            </p>
+                          ) : null}
+                          {(alert.anomalyExplanation as { topFeatures?: string[] }).topFeatures ? (
+                            <p className="mt-1 text-[var(--aegis-text-muted)]">
+                              Top features:{' '}
+                              {(
+                                (alert.anomalyExplanation as { topFeatures?: string[] })
+                                  .topFeatures ?? []
+                              ).join(', ')}
+                            </p>
+                          ) : null}
+                        </details>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

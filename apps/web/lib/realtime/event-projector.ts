@@ -9,6 +9,7 @@ import {
 const TIMELINE_EVENT_PREFIXES = [
   'telemetry.',
   'alert.',
+  'model.score.',
   'incident.',
   'sim.asset.',
   'sim.branch.',

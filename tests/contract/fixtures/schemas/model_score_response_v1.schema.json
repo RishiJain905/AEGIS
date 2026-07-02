@@ -1,0 +1,304 @@
+{
+  "$defs": {
+    "AnomalyExplanationV1": {
+      "additionalProperties": false,
+      "properties": {
+        "comparisonBaseline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BaselineComparisonV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "featureContributions": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Featurecontributions",
+          "type": "object"
+        },
+        "modelSemanticVersion": {
+          "minLength": 1,
+          "title": "Modelsemanticversion",
+          "type": "string"
+        },
+        "modelVersionId": {
+          "title": "Modelversionid",
+          "type": "string"
+        },
+        "observedScore": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Observedscore",
+          "type": "number"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sourceWindow": {
+          "$ref": "#/$defs/SourceWindowV1"
+        },
+        "summary": {
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "threshold": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Threshold",
+          "type": "number"
+        },
+        "topFeatures": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Topfeatures",
+          "type": "array"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "summary",
+        "topFeatures",
+        "featureContributions",
+        "threshold",
+        "observedScore",
+        "sourceWindow",
+        "modelVersionId",
+        "modelSemanticVersion"
+      ],
+      "title": "AnomalyExplanationV1",
+      "type": "object"
+    },
+    "AnomalyRiskBand": {
+      "enum": ["normal", "elevated", "high"],
+      "title": "AnomalyRiskBand",
+      "type": "string"
+    },
+    "BaselineComparisonV1": {
+      "additionalProperties": false,
+      "properties": {
+        "baselineMean": {
+          "title": "Baselinemean",
+          "type": "number"
+        },
+        "baselineStd": {
+          "minimum": 0.0,
+          "title": "Baselinestd",
+          "type": "number"
+        },
+        "baselineVersion": {
+          "minLength": 1,
+          "title": "Baselineversion",
+          "type": "string"
+        },
+        "featureName": {
+          "minLength": 1,
+          "title": "Featurename",
+          "type": "string"
+        },
+        "observedValue": {
+          "title": "Observedvalue",
+          "type": "number"
+        },
+        "zScore": {
+          "title": "Zscore",
+          "type": "number"
+        }
+      },
+      "required": [
+        "baselineVersion",
+        "featureName",
+        "observedValue",
+        "baselineMean",
+        "baselineStd",
+        "zScore"
+      ],
+      "title": "BaselineComparisonV1",
+      "type": "object"
+    },
+    "ModelInferenceResultV1": {
+      "additionalProperties": false,
+      "properties": {
+        "deduplicationKey": {
+          "minLength": 1,
+          "title": "Deduplicationkey",
+          "type": "string"
+        },
+        "entityId": {
+          "title": "Entityid",
+          "type": "string"
+        },
+        "explanation": {
+          "$ref": "#/$defs/AnomalyExplanationV1"
+        },
+        "isAnomaly": {
+          "title": "Isanomaly",
+          "type": "boolean"
+        },
+        "riskBand": {
+          "$ref": "#/$defs/AnomalyRiskBand"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "sourceEventId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourceeventid"
+        },
+        "threshold": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Threshold",
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "entityId",
+        "score",
+        "threshold",
+        "riskBand",
+        "explanation",
+        "deduplicationKey",
+        "isAnomaly"
+      ],
+      "title": "ModelInferenceResultV1",
+      "type": "object"
+    },
+    "SourceWindowV1": {
+      "additionalProperties": false,
+      "properties": {
+        "simTimeEnd": {
+          "title": "Simtimeend",
+          "type": "string"
+        },
+        "simTimeStart": {
+          "title": "Simtimestart",
+          "type": "string"
+        },
+        "windowEndEpoch": {
+          "minimum": 0,
+          "title": "Windowendepoch",
+          "type": "integer"
+        },
+        "windowStartEpoch": {
+          "minimum": 0,
+          "title": "Windowstartepoch",
+          "type": "integer"
+        }
+      },
+      "required": ["windowStartEpoch", "windowEndEpoch", "simTimeStart", "simTimeEnd"],
+      "title": "SourceWindowV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "alertsPersisted": {
+      "minimum": 0,
+      "title": "Alertspersisted",
+      "type": "integer"
+    },
+    "anomaliesDetected": {
+      "minimum": 0,
+      "title": "Anomaliesdetected",
+      "type": "integer"
+    },
+    "deterministicChecksum": {
+      "minLength": 1,
+      "title": "Deterministicchecksum",
+      "type": "string"
+    },
+    "fallbackActive": {
+      "title": "Fallbackactive",
+      "type": "boolean"
+    },
+    "fallbackReason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fallbackreason"
+    },
+    "modelVersionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Modelversionid"
+    },
+    "results": {
+      "items": {
+        "$ref": "#/$defs/ModelInferenceResultV1"
+      },
+      "title": "Results",
+      "type": "array"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "scoresComputed": {
+      "minimum": 0,
+      "title": "Scorescomputed",
+      "type": "integer"
+    },
+    "scoresSuppressed": {
+      "minimum": 0,
+      "title": "Scoressuppressed",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "scoresComputed",
+    "anomaliesDetected",
+    "alertsPersisted",
+    "scoresSuppressed",
+    "fallbackActive",
+    "deterministicChecksum"
+  ],
+  "title": "ModelScoreResponseV1",
+  "type": "object"
+}

@@ -6,6 +6,18 @@
       "title": "Algorithm",
       "type": "string"
     },
+    "approvalStatus": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approvalstatus"
+    },
     "artifactChecksum": {
       "minLength": 1,
       "title": "Artifactchecksum",
@@ -16,9 +28,36 @@
       "title": "Artifactobjectkey",
       "type": "string"
     },
+    "codeRevision": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Coderevision"
+    },
     "createdAt": {
       "title": "Createdat",
       "type": "string"
+    },
+    "datasetIds": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Datasetids"
     },
     "evaluationMetrics": {
       "additionalProperties": true,
@@ -29,6 +68,19 @@
       "minimum": 1,
       "title": "Featureschemaversion",
       "type": "integer"
+    },
+    "hyperparameters": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hyperparameters"
     },
     "id": {
       "title": "Id",
@@ -41,15 +93,92 @@
       "title": "Knownlimitations",
       "type": "array"
     },
+    "predecessorModelId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Predecessormodelid"
+    },
+    "riskBandThresholds": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Riskbandthresholds"
+    },
     "schemaVersion": {
       "minimum": 1,
       "title": "Schemaversion",
       "type": "integer"
     },
+    "scoreSemantics": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Scoresemantics"
+    },
     "semanticVersion": {
       "minLength": 1,
       "title": "Semanticversion",
       "type": "string"
+    },
+    "sklearnVersion": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sklearnversion"
+    },
+    "threshold": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Threshold"
+    },
+    "trainingRunId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trainingrunid"
     }
   },
   "required": [

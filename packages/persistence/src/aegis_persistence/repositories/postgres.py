@@ -8,6 +8,8 @@ from aegis_contracts import (
     GraphSnapshotV1,
     IdempotencyRecordV1,
     IncidentV1,
+    ModelManifestV1,
+    ModelScoreV1,
     ObjectMetadataReferenceV1,
     RunV1,
     ScenarioV1,
@@ -32,6 +34,8 @@ from aegis_persistence.mappers import (
     graph_snapshot_to_domain,
     idempotency_record_to_domain,
     incident_to_domain,
+    model_manifest_to_domain,
+    model_score_to_domain,
     object_metadata_to_domain,
     run_to_domain,
     scenario_to_domain,
@@ -43,6 +47,8 @@ from aegis_persistence.orm.tables import (
     GraphSnapshotRow,
     IdempotencyRecordRow,
     IncidentRow,
+    ModelManifestRow,
+    ModelScoreRow,
     OutboxRow,
     RunRow,
     ScenarioRow,
@@ -389,6 +395,65 @@ class PostgresObjectRepository:
         self._session.add(row)
         await self._session.flush()
         return reference
+
+
+class PostgresModelRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_manifest_by_id(self, model_id: str) -> ModelManifestV1 | None:
+        row = await self._session.get(ModelManifestRow, model_id)
+        return model_manifest_to_domain(row) if row else None
+
+    async def add_manifest(self, manifest: ModelManifestV1) -> ModelManifestV1:
+        payload = domain_to_payload(manifest)
+        row = ModelManifestRow(
+            id=manifest.id,
+            artifact_object_key=manifest.artifact_object_key,
+            artifact_checksum=manifest.artifact_checksum,
+            payload=payload,
+            created_at=manifest.created_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return manifest
+
+    async def add_score(self, score: ModelScoreV1, *, deduplication_key: str) -> ModelScoreV1:
+        payload = domain_to_payload(score)
+        payload["deduplicationKey"] = deduplication_key
+        row = ModelScoreRow(
+            model_version_id=score.model_version_id,
+            entity_id=score.entity_id,
+            score=score.score,
+            payload=payload,
+            scored_at=score.scored_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return score
+
+    async def score_exists(self, deduplication_key: str) -> bool:
+        result = await self._session.execute(select(ModelScoreRow.payload))
+        for payload in result.scalars().all():
+            if isinstance(payload, dict) and payload.get("deduplicationKey") == deduplication_key:
+                return True
+        return False
+
+    async def list_scores_for_run_entity(
+        self,
+        *,
+        model_version_id: str,
+        entity_id: str,
+    ) -> list[ModelScoreV1]:
+        result = await self._session.execute(
+            select(ModelScoreRow)
+            .where(
+                ModelScoreRow.model_version_id == model_version_id,
+                ModelScoreRow.entity_id == entity_id,
+            )
+            .order_by(ModelScoreRow.scored_at)
+        )
+        return [model_score_to_domain(row) for row in result.scalars().all()]
 
 
 class PostgresCheckpointRepository:

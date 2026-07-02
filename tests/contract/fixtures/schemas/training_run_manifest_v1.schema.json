@@ -1,0 +1,98 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "codeRevision": {
+      "minLength": 1,
+      "title": "Coderevision",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "datasetIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Datasetids",
+      "type": "array"
+    },
+    "featureSchemaVersion": {
+      "minimum": 1,
+      "title": "Featureschemaversion",
+      "type": "integer"
+    },
+    "holdoutSeeds": {
+      "items": {
+        "type": "integer"
+      },
+      "minItems": 1,
+      "title": "Holdoutseeds",
+      "type": "array"
+    },
+    "hyperparameters": {
+      "additionalProperties": true,
+      "title": "Hyperparameters",
+      "type": "object"
+    },
+    "randomSeed": {
+      "minimum": 0,
+      "title": "Randomseed",
+      "type": "integer"
+    },
+    "scenarioId": {
+      "minLength": 1,
+      "title": "Scenarioid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sklearnVersion": {
+      "minLength": 1,
+      "title": "Sklearnversion",
+      "type": "string"
+    },
+    "splitPolicy": {
+      "minLength": 1,
+      "title": "Splitpolicy",
+      "type": "string"
+    },
+    "trainingRunId": {
+      "minLength": 1,
+      "title": "Trainingrunid",
+      "type": "string"
+    },
+    "trainingSeeds": {
+      "items": {
+        "type": "integer"
+      },
+      "minItems": 1,
+      "title": "Trainingseeds",
+      "type": "array"
+    },
+    "vectorCount": {
+      "minimum": 0,
+      "title": "Vectorcount",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "trainingRunId",
+    "scenarioId",
+    "trainingSeeds",
+    "holdoutSeeds",
+    "featureSchemaVersion",
+    "randomSeed",
+    "codeRevision",
+    "sklearnVersion",
+    "vectorCount",
+    "splitPolicy",
+    "createdAt"
+  ],
+  "title": "TrainingRunManifestV1",
+  "type": "object"
+}

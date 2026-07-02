@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "objectKey": "models/manifests/isolation-forest-v1/artifact.joblib",
+  "checksum": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "contentType": "application/octet-stream",
+  "sizeBytes": 4096,
+  "serializationFormat": "joblib"
+}

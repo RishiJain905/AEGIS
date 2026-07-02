@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase15"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase16"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -76,6 +76,14 @@ METRIC_REPORT_SCHEMA_VERSION: Final[int] = 1
 EVALUATION_RUN_SCHEMA_VERSION: Final[int] = 1
 DETECTION_EVALUATE_REQUEST_SCHEMA_VERSION: Final[int] = 1
 DETECTION_EVALUATE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+ANOMALY_EXPLANATION_SCHEMA_VERSION: Final[int] = 1
+MODEL_ARTIFACT_REFERENCE_SCHEMA_VERSION: Final[int] = 1
+TRAINING_RUN_MANIFEST_SCHEMA_VERSION: Final[int] = 1
+MODEL_INFERENCE_RESULT_SCHEMA_VERSION: Final[int] = 1
+MODEL_EVALUATE_REQUEST_SCHEMA_VERSION: Final[int] = 1
+MODEL_EVALUATE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+MODEL_VERIFY_ARTIFACT_REQUEST_SCHEMA_VERSION: Final[int] = 1
+MODEL_VERIFY_ARTIFACT_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -137,6 +145,14 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "rule_evaluation": frozenset({RULE_EVALUATION_SCHEMA_VERSION}),
     "metric_report": frozenset({METRIC_REPORT_SCHEMA_VERSION}),
     "evaluation_run": frozenset({EVALUATION_RUN_SCHEMA_VERSION}),
+    "anomaly_explanation": frozenset({ANOMALY_EXPLANATION_SCHEMA_VERSION}),
+    "model_artifact_reference": frozenset({MODEL_ARTIFACT_REFERENCE_SCHEMA_VERSION}),
+    "training_run_manifest": frozenset({TRAINING_RUN_MANIFEST_SCHEMA_VERSION}),
+    "model_inference_result": frozenset({MODEL_INFERENCE_RESULT_SCHEMA_VERSION}),
+    "model_evaluate_request": frozenset({MODEL_EVALUATE_REQUEST_SCHEMA_VERSION}),
+    "model_evaluate_response": frozenset({MODEL_EVALUATE_RESPONSE_SCHEMA_VERSION}),
+    "model_verify_artifact_request": frozenset({MODEL_VERIFY_ARTIFACT_REQUEST_SCHEMA_VERSION}),
+    "model_verify_artifact_response": frozenset({MODEL_VERIFY_ARTIFACT_RESPONSE_SCHEMA_VERSION}),
 }
 
 

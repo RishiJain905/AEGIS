@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "modelVersionId": "mdl_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+  "scoresComputed": 12,
+  "anomaliesDetected": 2,
+  "alertsPersisted": 2,
+  "scoresSuppressed": 0,
+  "fallbackActive": false,
+  "results": [],
+  "deterministicChecksum": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+}

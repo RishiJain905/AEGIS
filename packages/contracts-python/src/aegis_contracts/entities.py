@@ -185,6 +185,8 @@ class AlertV1(BaseModel):
     rule_id: str | None = Field(default=None, alias="ruleId")
     rule_version: str | None = Field(default=None, alias="ruleVersion")
     explanation: RuleExplanationV1 | None = None
+    anomaly_explanation: dict[str, Any] | None = Field(default=None, alias="anomalyExplanation")
+    model_version_id: ModelId | None = Field(default=None, alias="modelVersionId")
     evidence: AlertEvidenceV1 | None = None
     deduplication_key: str | None = Field(default=None, alias="deduplicationKey")
 
@@ -384,6 +386,19 @@ class ModelManifestV1(BaseModel):
     )
     known_limitations: list[str] = Field(default_factory=list, alias="knownLimitations")
     created_at: UtcTimestamp = Field(alias="createdAt")
+    hyperparameters: dict[str, Any] | None = None
+    threshold: float | None = Field(default=None, ge=0.0, le=1.0)
+    risk_band_thresholds: dict[str, float] | None = Field(
+        default=None,
+        alias="riskBandThresholds",
+    )
+    training_run_id: str | None = Field(default=None, alias="trainingRunId")
+    code_revision: str | None = Field(default=None, alias="codeRevision")
+    sklearn_version: str | None = Field(default=None, alias="sklearnVersion")
+    dataset_ids: list[str] | None = Field(default=None, alias="datasetIds")
+    approval_status: str | None = Field(default=None, alias="approvalStatus")
+    predecessor_model_id: ModelId | None = Field(default=None, alias="predecessorModelId")
+    score_semantics: str | None = Field(default=None, alias="scoreSemantics")
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> ModelManifestV1:

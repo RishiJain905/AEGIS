@@ -276,6 +276,49 @@
         "windowKey": "run_01ARZ3NDEKTSV4RRFFQ69G5FB1:asset:database-customer-pii:600",
         "detectorType": "statistical_baseline"
       }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "alert:alt_if_silent_relay_001",
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+      "title": "Isolation Forest anomaly on asset:svc-api-gateway",
+      "severity": "high",
+      "sourceEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "assetId": "asset:svc-api-gateway",
+      "createdAt": "2026-06-30T12:03:00.000Z",
+      "confidence": 0.87,
+      "detectorId": "isolation-forest",
+      "detectorVersion": "1.0.0",
+      "modelVersionId": "mdl_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+      "anomalyExplanation": {
+        "schemaVersion": 1,
+        "summary": "Isolation Forest score 0.87 exceeds threshold 0.72; top deviations: auth_failed_count, net_bytes_total, auth_failure_rate",
+        "topFeatures": ["auth_failed_count", "net_bytes_total", "auth_failure_rate"],
+        "featureContributions": {
+          "auth_failed_count": 2.41,
+          "net_bytes_total": 1.87,
+          "auth_failure_rate": 1.52
+        },
+        "threshold": 0.72,
+        "observedScore": 0.87,
+        "sourceWindow": {
+          "windowStartEpoch": 0,
+          "windowEndEpoch": 300,
+          "simTimeStart": "2026-06-30T02:00:00.000Z",
+          "simTimeEnd": "2026-06-30T02:05:00.000Z"
+        },
+        "modelVersionId": "mdl_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+        "modelSemanticVersion": "1.0.0",
+        "comparisonBaseline": {
+          "baselineVersion": "1.0.0",
+          "featureName": "net_bytes_total",
+          "observedValue": 125000,
+          "baselineMean": 42000,
+          "baselineStd": 8500,
+          "zScore": 9.76
+        }
+      },
+      "deduplicationKey": "run_01ARZ3NDEKTSV4RRFFQ69G5FB1:isolation-forest:asset:svc-api-gateway:0"
     }
   ],
   "graphSnapshots": [

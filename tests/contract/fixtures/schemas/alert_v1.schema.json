@@ -138,6 +138,19 @@
   },
   "additionalProperties": false,
   "properties": {
+    "anomalyExplanation": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Anomalyexplanation"
+    },
     "assetId": {
       "title": "Assetid",
       "type": "string"
@@ -221,6 +234,18 @@
     "id": {
       "title": "Id",
       "type": "string"
+    },
+    "modelVersionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Modelversionid"
     },
     "ruleId": {
       "anyOf": [

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "entityId": "asset:svc-api-gateway",
+  "score": 0.87,
+  "threshold": 0.72,
+  "riskBand": "high",
+  "explanation": {
+    "schemaVersion": 1,
+    "summary": "Isolation Forest flagged elevated auth failure rate and network volume",
+    "topFeatures": ["auth_failed_count", "net_bytes_total", "auth_failure_rate"],
+    "featureContributions": {
+      "auth_failed_count": 2.41,
+      "net_bytes_total": 1.87,
+      "auth_failure_rate": 1.52
+    },
+    "threshold": 0.72,
+    "observedScore": 0.87,
+    "sourceWindow": {
+      "windowStartEpoch": 0,
+      "windowEndEpoch": 300,
+      "simTimeStart": "2026-06-30T02:00:00.000Z",
+      "simTimeEnd": "2026-06-30T02:05:00.000Z"
+    },
+    "modelVersionId": "mdl_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+    "modelSemanticVersion": "1.0.0"
+  },
+  "deduplicationKey": "run_01ARZ3NDEKTSV4RRFFQ69G5FB0:isolation-forest:asset:svc-api-gateway:0",
+  "sourceEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "isAnomaly": true
+}
