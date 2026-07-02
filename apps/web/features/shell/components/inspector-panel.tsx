@@ -186,7 +186,9 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                             Score:{' '}
                             {(
                               (alert.anomalyExplanation as { observedScore?: number })
-                                .observedScore ?? alert.confidence
+                                .observedScore ??
+                              alert.confidence ??
+                              0
                             ).toFixed(2)}{' '}
                             / threshold{' '}
                             {(
