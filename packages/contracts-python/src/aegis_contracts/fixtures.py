@@ -22,6 +22,16 @@ from aegis_contracts.entities import (
 )
 from aegis_contracts.errors import ApiErrorEnvelopeV1
 from aegis_contracts.events import DomainEventEnvelopeV1
+from aegis_contracts.features import (
+    DatasetManifestV1,
+    FeatureComputeRequestV1,
+    FeatureComputeResponseV1,
+    FeatureParityCheckResponseV1,
+    FeatureSchemaManifestV1,
+    FeatureVectorV1,
+    FeatureWindowV1,
+    OnlineFeatureUpdateV1,
+)
 from aegis_contracts.graph import (
     GraphDeltaV1,
     GraphEdgeV1,
@@ -100,4 +110,12 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "run_create_request_v1": RunCreateRequestV1,
     "run_command_response_v1": RunCommandResponseV1,
     "connection_health_v1": ConnectionHealthSnapshotV1,
+    "feature_schema_manifest_v1": FeatureSchemaManifestV1,
+    "feature_vector_v1": FeatureVectorV1,
+    "feature_window_v1": FeatureWindowV1,
+    "dataset_manifest_v1": DatasetManifestV1,
+    "online_feature_update_v1": OnlineFeatureUpdateV1,
+    "feature_compute_request_v1": FeatureComputeRequestV1,
+    "feature_compute_response_v1": FeatureComputeResponseV1,
+    "feature_parity_check_response_v1": FeatureParityCheckResponseV1,
 }

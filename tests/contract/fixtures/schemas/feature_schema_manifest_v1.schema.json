@@ -1,0 +1,133 @@
+{
+  "$defs": {
+    "FeatureDataType": {
+      "enum": ["float", "int", "categorical"],
+      "title": "FeatureDataType",
+      "type": "string"
+    },
+    "FeatureDefinitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "categoricalMappingVersion": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Categoricalmappingversion"
+        },
+        "categoricalValues": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Categoricalvalues"
+        },
+        "dtype": {
+          "$ref": "#/$defs/FeatureDataType"
+        },
+        "maxValue": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxvalue"
+        },
+        "minValue": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minvalue"
+        },
+        "missingSentinel": {
+          "title": "Missingsentinel",
+          "type": "number"
+        },
+        "name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "orderIndex": {
+          "minimum": 0,
+          "title": "Orderindex",
+          "type": "integer"
+        },
+        "unit": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": ["name", "orderIndex", "dtype", "unit", "missingSentinel"],
+      "title": "FeatureDefinitionV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "featureSchemaVersion": {
+      "minimum": 1,
+      "title": "Featureschemaversion",
+      "type": "integer"
+    },
+    "features": {
+      "items": {
+        "$ref": "#/$defs/FeatureDefinitionV1"
+      },
+      "minItems": 1,
+      "title": "Features",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "transformVersion": {
+      "minLength": 1,
+      "title": "Transformversion",
+      "type": "string"
+    },
+    "windowDurationSimSeconds": {
+      "minimum": 1,
+      "title": "Windowdurationsimseconds",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "featureSchemaVersion",
+    "transformVersion",
+    "windowDurationSimSeconds",
+    "features"
+  ],
+  "title": "FeatureSchemaManifestV1",
+  "type": "object"
+}

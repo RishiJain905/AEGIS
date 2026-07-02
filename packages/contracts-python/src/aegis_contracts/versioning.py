@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase13"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase14"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -54,6 +54,16 @@ RUN_CREATE_REQUEST_SCHEMA_VERSION: Final[int] = 1
 RUN_COMMAND_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 CONNECTION_HEALTH_SCHEMA_VERSION: Final[int] = 1
 REALTIME_REDUCER_ACTION_SCHEMA_VERSION: Final[int] = 1
+FEATURE_SCHEMA_MANIFEST_SCHEMA_VERSION: Final[int] = 1
+FEATURE_VECTOR_SCHEMA_VERSION: Final[int] = 1
+FEATURE_WINDOW_SCHEMA_VERSION: Final[int] = 1
+FEATURE_PROVENANCE_SCHEMA_VERSION: Final[int] = 1
+DATASET_MANIFEST_SCHEMA_VERSION: Final[int] = 1
+ONLINE_FEATURE_UPDATE_SCHEMA_VERSION: Final[int] = 1
+FEATURE_COMPUTE_REQUEST_SCHEMA_VERSION: Final[int] = 1
+FEATURE_COMPUTE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+FEATURE_PARITY_CHECK_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+FEATURE_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -99,6 +109,12 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "run_create_request": frozenset({RUN_CREATE_REQUEST_SCHEMA_VERSION}),
     "run_command_response": frozenset({RUN_COMMAND_RESPONSE_SCHEMA_VERSION}),
     "connection_health": frozenset({CONNECTION_HEALTH_SCHEMA_VERSION}),
+    "feature_schema_manifest": frozenset({FEATURE_SCHEMA_MANIFEST_SCHEMA_VERSION}),
+    "feature_vector": frozenset({FEATURE_VECTOR_SCHEMA_VERSION}),
+    "feature_window": frozenset({FEATURE_WINDOW_SCHEMA_VERSION}),
+    "feature_provenance": frozenset({FEATURE_PROVENANCE_SCHEMA_VERSION}),
+    "dataset_manifest": frozenset({DATASET_MANIFEST_SCHEMA_VERSION}),
+    "online_feature_update": frozenset({ONLINE_FEATURE_UPDATE_SCHEMA_VERSION}),
 }
 
 

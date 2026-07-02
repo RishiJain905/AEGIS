@@ -29,6 +29,20 @@ from aegis_contracts.entities import (
 )
 from aegis_contracts.errors import ApiErrorEnvelopeV1, ContractErrorCode, ContractValidationError
 from aegis_contracts.events import ActorRef, ActorType, DomainEventEnvelopeV1, EventTypeRegistry
+from aegis_contracts.features import (
+    TRANSFORM_VERSION,
+    DatasetManifestV1,
+    FeatureComputeRequestV1,
+    FeatureComputeResponseV1,
+    FeatureErrorCode,
+    FeatureParityCheckResponseV1,
+    FeatureProvenanceV1,
+    FeatureRejectionV1,
+    FeatureSchemaManifestV1,
+    FeatureVectorV1,
+    FeatureWindowV1,
+    OnlineFeatureUpdateV1,
+)
 from aegis_contracts.graph import (
     AssetType,
     EntityType,
@@ -165,6 +179,18 @@ __all__ = [
     "RunReplicatedState",
     "SnapshotBootstrapPayloadV1",
     "TimelineEntryV1",
+    "DatasetManifestV1",
+    "FeatureComputeRequestV1",
+    "FeatureComputeResponseV1",
+    "FeatureErrorCode",
+    "FeatureParityCheckResponseV1",
+    "FeatureProvenanceV1",
+    "FeatureRejectionV1",
+    "FeatureSchemaManifestV1",
+    "FeatureVectorV1",
+    "FeatureWindowV1",
+    "OnlineFeatureUpdateV1",
+    "TRANSFORM_VERSION",
     "WebSocketDeliveryMode",
     "WebSocketErrorCode",
     "WebSocketFrameV1",

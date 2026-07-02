@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "featureSchemaVersion": 1,
+  "windowKey": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV:asset:svc-api-gateway:1767268800",
+  "entityId": "asset:svc-api-gateway",
+  "values": [
+    2.0, 1.0, 0.5, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0,
+    0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0
+  ],
+  "provenance": {
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "entityId": "asset:svc-api-gateway",
+    "sequenceStart": 1,
+    "sequenceEnd": 2,
+    "simTimeStart": "2026-01-01T12:00:10Z",
+    "simTimeEnd": "2026-01-01T12:00:20Z",
+    "featureSchemaVersion": 1,
+    "transformVersion": "0.0.0-phase14",
+    "sourceEventIds": ["evt_10000000000000000000000000", "evt_20000000000000000000000000"]
+  }
+}

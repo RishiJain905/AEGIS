@@ -1,0 +1,92 @@
+{
+  "$defs": {
+    "DatasetSourceRunV1": {
+      "additionalProperties": false,
+      "properties": {
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "scenarioVersionId": {
+          "title": "Scenarioversionid",
+          "type": "string"
+        },
+        "seed": {
+          "title": "Seed",
+          "type": "integer"
+        }
+      },
+      "required": ["runId", "seed", "scenarioVersionId"],
+      "title": "DatasetSourceRunV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "compatibilityMetadata": {
+      "additionalProperties": true,
+      "title": "Compatibilitymetadata",
+      "type": "object"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "datasetChecksum": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Datasetchecksum",
+      "type": "string"
+    },
+    "featureSchemaVersion": {
+      "minimum": 1,
+      "title": "Featureschemaversion",
+      "type": "integer"
+    },
+    "rowCount": {
+      "minimum": 0,
+      "title": "Rowcount",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sourceRuns": {
+      "items": {
+        "$ref": "#/$defs/DatasetSourceRunV1"
+      },
+      "minItems": 1,
+      "title": "Sourceruns",
+      "type": "array"
+    },
+    "transformVersion": {
+      "minLength": 1,
+      "title": "Transformversion",
+      "type": "string"
+    },
+    "windowDurationSimSeconds": {
+      "minimum": 1,
+      "title": "Windowdurationsimseconds",
+      "type": "integer"
+    },
+    "workspaceVersion": {
+      "minLength": 1,
+      "title": "Workspaceversion",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "datasetChecksum",
+    "featureSchemaVersion",
+    "transformVersion",
+    "rowCount",
+    "sourceRuns",
+    "windowDurationSimSeconds",
+    "createdAt",
+    "workspaceVersion"
+  ],
+  "title": "DatasetManifestV1",
+  "type": "object"
+}

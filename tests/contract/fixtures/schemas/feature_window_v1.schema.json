@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "entityId": {
+      "title": "Entityid",
+      "type": "string"
+    },
+    "isClosed": {
+      "title": "Isclosed",
+      "type": "boolean"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "watermarkSequence": {
+      "minimum": 0,
+      "title": "Watermarksequence",
+      "type": "integer"
+    },
+    "windowEndSimTime": {
+      "title": "Windowendsimtime",
+      "type": "string"
+    },
+    "windowKey": {
+      "minLength": 1,
+      "title": "Windowkey",
+      "type": "string"
+    },
+    "windowStartSimTime": {
+      "title": "Windowstartsimtime",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "windowKey",
+    "runId",
+    "entityId",
+    "windowStartSimTime",
+    "windowEndSimTime",
+    "isClosed",
+    "watermarkSequence"
+  ],
+  "title": "FeatureWindowV1",
+  "type": "object"
+}

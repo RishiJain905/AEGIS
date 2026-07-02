@@ -76,6 +76,7 @@ source = { editable = "apps/api" }
 dependencies = [
     { name = "aegis-contracts" },
     { name = "aegis-event-streaming" },
+    { name = "aegis-ml" },
     { name = "aegis-persistence" },
     { name = "aegis-simulation" },
     { name = "fastapi" },
@@ -86,6 +87,7 @@ dependencies = [
 requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
     { name = "aegis-event-streaming", editable = "packages/event-streaming" },
+    { name = "aegis-ml", editable = "services/ml" },
     { name = "aegis-persistence", editable = "packages/persistence" },
     { name = "aegis-simulation", editable = "services/simulation" },
     { name = "fastapi", specifier = ">=0.115" },
@@ -152,10 +154,14 @@ version = "0.0.0"
 source = { editable = "services/ml" }
 dependencies = [
     { name = "aegis-contracts" },
+    { name = "aegis-persistence" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "aegis-contracts", editable = "packages/contracts-python" }]
+requires-dist = [
+    { name = "aegis-contracts", editable = "packages/contracts-python" },
+    { name = "aegis-persistence", editable = "packages/persistence" },
+]
 
 [[package]]
 name = "aegis-observability"
