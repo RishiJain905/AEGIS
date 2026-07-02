@@ -7,6 +7,14 @@ import {
   deadLetterRecordSchema,
   realtimeMessageEnvelopeSchema,
 } from './realtime';
+import {
+  connectionHealthSnapshotSchema,
+  runCommandResponseSchema,
+  runCreateRequestSchema,
+  runReplicatedStateSchema,
+  snapshotBootstrapPayloadSchema,
+  timelineEntrySchema,
+} from './live-run';
 import { websocketFrameSchema } from './websocket';
 
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
@@ -51,12 +59,14 @@ export * from './errors';
 export * from './primitives';
 export * from './simulation';
 export { domainEventEnvelopeSchema } from './events';
+export type { DomainEventEnvelopeV1 } from './events';
 export * from './graph';
 export * from './entities';
 export * from './api';
 export * from './persistence';
 export * from './realtime';
 export * from './websocket';
+export * from './live-run';
 export * from './parsing';
 
 export const aegisEnvironmentSchema = z.object({
@@ -124,4 +134,10 @@ export const FIXTURE_SCHEMA_MAP = {
   backfill_request_v1: backfillRequestSchema,
   backfill_result_v1: backfillResultSchema,
   websocket_frame_v1: websocketFrameSchema,
+  live_run_v1: runReplicatedStateSchema,
+  timeline_entry_v1: timelineEntrySchema,
+  snapshot_bootstrap_v1: snapshotBootstrapPayloadSchema,
+  run_create_request_v1: runCreateRequestSchema,
+  run_command_response_v1: runCommandResponseSchema,
+  connection_health_v1: connectionHealthSnapshotSchema,
 } as const;

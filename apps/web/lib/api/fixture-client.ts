@@ -208,7 +208,10 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
       }
       if (runId === STRESS_GRAPH_RUN_ID) {
         return applyProfile(
-          { snapshot: buildStressGraphSnapshot(), partial: false } satisfies RunGraphResult,
+          {
+            snapshot: buildStressGraphSnapshot(),
+            partial: false,
+          } satisfies RunGraphResult,
           signal,
         );
       }

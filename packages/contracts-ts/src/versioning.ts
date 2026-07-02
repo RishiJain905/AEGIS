@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase12' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase13' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -39,6 +39,13 @@ export const DEAD_LETTER_RECORD_SCHEMA_VERSION = 1;
 export const BACKFILL_REQUEST_SCHEMA_VERSION = 1;
 export const BACKFILL_RESULT_SCHEMA_VERSION = 1;
 export const WEBSOCKET_FRAME_SCHEMA_VERSION = 1;
+export const LIVE_RUN_SCHEMA_VERSION = 1;
+export const TIMELINE_ENTRY_SCHEMA_VERSION = 1;
+export const SNAPSHOT_BOOTSTRAP_SCHEMA_VERSION = 1;
+export const RUN_CREATE_REQUEST_SCHEMA_VERSION = 1;
+export const RUN_COMMAND_RESPONSE_SCHEMA_VERSION = 1;
+export const CONNECTION_HEALTH_SCHEMA_VERSION = 1;
+export const REALTIME_REDUCER_ACTION_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -78,4 +85,10 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   backfill_request: [BACKFILL_REQUEST_SCHEMA_VERSION],
   backfill_result: [BACKFILL_RESULT_SCHEMA_VERSION],
   websocket_frame: [WEBSOCKET_FRAME_SCHEMA_VERSION],
+  live_run: [LIVE_RUN_SCHEMA_VERSION],
+  timeline_entry: [TIMELINE_ENTRY_SCHEMA_VERSION],
+  snapshot_bootstrap: [SNAPSHOT_BOOTSTRAP_SCHEMA_VERSION],
+  run_create_request: [RUN_CREATE_REQUEST_SCHEMA_VERSION],
+  run_command_response: [RUN_COMMAND_RESPONSE_SCHEMA_VERSION],
+  connection_health: [CONNECTION_HEALTH_SCHEMA_VERSION],
 };

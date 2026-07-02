@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase12"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase13"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -47,6 +47,13 @@ DEAD_LETTER_RECORD_SCHEMA_VERSION: Final[int] = 1
 BACKFILL_REQUEST_SCHEMA_VERSION: Final[int] = 1
 BACKFILL_RESULT_SCHEMA_VERSION: Final[int] = 1
 WEBSOCKET_FRAME_SCHEMA_VERSION: Final[int] = 1
+LIVE_RUN_SCHEMA_VERSION: Final[int] = 1
+TIMELINE_ENTRY_SCHEMA_VERSION: Final[int] = 1
+SNAPSHOT_BOOTSTRAP_SCHEMA_VERSION: Final[int] = 1
+RUN_CREATE_REQUEST_SCHEMA_VERSION: Final[int] = 1
+RUN_COMMAND_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+CONNECTION_HEALTH_SCHEMA_VERSION: Final[int] = 1
+REALTIME_REDUCER_ACTION_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -86,6 +93,12 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "backfill_request": frozenset({BACKFILL_REQUEST_SCHEMA_VERSION}),
     "backfill_result": frozenset({BACKFILL_RESULT_SCHEMA_VERSION}),
     "websocket_frame": frozenset({WEBSOCKET_FRAME_SCHEMA_VERSION}),
+    "live_run": frozenset({LIVE_RUN_SCHEMA_VERSION}),
+    "timeline_entry": frozenset({TIMELINE_ENTRY_SCHEMA_VERSION}),
+    "snapshot_bootstrap": frozenset({SNAPSHOT_BOOTSTRAP_SCHEMA_VERSION}),
+    "run_create_request": frozenset({RUN_CREATE_REQUEST_SCHEMA_VERSION}),
+    "run_command_response": frozenset({RUN_COMMAND_RESPONSE_SCHEMA_VERSION}),
+    "connection_health": frozenset({CONNECTION_HEALTH_SCHEMA_VERSION}),
 }
 
 

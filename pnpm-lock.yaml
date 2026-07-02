@@ -53,6 +53,9 @@ importers:
       '@aegis/graph-domain':
         specifier: workspace:*
         version: link:../../packages/graph-domain
+      '@aegis/realtime-client':
+        specifier: workspace:*
+        version: link:../../packages/realtime-client
       '@aegis/ui':
         specifier: workspace:*
         version: link:../../packages/ui

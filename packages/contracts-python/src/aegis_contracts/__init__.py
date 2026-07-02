@@ -43,6 +43,15 @@ from aegis_contracts.graph import (
     NodeStatus,
     RelationshipType,
 )
+from aegis_contracts.live_run import (
+    ConnectionHealthSnapshotV1,
+    ConnectionHealthState,
+    RunCommandResponseV1,
+    RunCreateRequestV1,
+    RunReplicatedState,
+    SnapshotBootstrapPayloadV1,
+    TimelineEntryV1,
+)
 from aegis_contracts.parsing import parse_contract
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
 from aegis_contracts.realtime import (
@@ -149,6 +158,13 @@ __all__ = [
     "SimulationCommandV1",
     "SimulationRunStatus",
     "StreamingErrorCode",
+    "ConnectionHealthSnapshotV1",
+    "ConnectionHealthState",
+    "RunCommandResponseV1",
+    "RunCreateRequestV1",
+    "RunReplicatedState",
+    "SnapshotBootstrapPayloadV1",
+    "TimelineEntryV1",
     "WebSocketDeliveryMode",
     "WebSocketErrorCode",
     "WebSocketFrameV1",

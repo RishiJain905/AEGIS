@@ -56,6 +56,8 @@ describe('fixture client', () => {
 
   it('throws not found for unknown run', async () => {
     const client = createFixtureProvider();
-    await expect(client.getRun('run_missing')).rejects.toMatchObject({ status: 404 });
+    await expect(client.getRun('run_missing')).rejects.toMatchObject({
+      status: 404,
+    });
   });
 });

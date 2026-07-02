@@ -49,7 +49,11 @@ import {
 const tableData = [
   { asset: 'asset:svc-api-gateway', status: 'suspicious', risk: 'High' },
   { asset: 'asset:svc-logistics-api', status: 'normal', risk: 'Low' },
-  { asset: 'asset:db-customer-records', status: 'under_investigation', risk: 'Medium' },
+  {
+    asset: 'asset:db-customer-records',
+    status: 'under_investigation',
+    risk: 'Medium',
+  },
 ];
 
 export function DesignSystemShowcase() {

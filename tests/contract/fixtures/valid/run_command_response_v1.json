@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "run": {
+    "schemaVersion": 1,
+    "id": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "scenarioVersionId": "scenario-version:v1.0.0-synthetic",
+    "seed": 424242,
+    "status": "running",
+    "startedAt": "2026-06-30T02:00:00.000Z",
+    "simTime": "2026-01-01T18:42:03.420Z",
+    "revision": 1
+  },
+  "eventsEmitted": 1,
+  "idempotency": {
+    "schemaVersion": 1,
+    "idempotencyKey": "cmd-start-1000",
+    "replayed": false
+  }
+}

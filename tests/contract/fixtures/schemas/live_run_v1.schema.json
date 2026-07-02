@@ -1,0 +1,129 @@
+{
+  "$defs": {
+    "ConnectionHealthState": {
+      "enum": [
+        "connected",
+        "disconnected",
+        "reconnecting",
+        "catching_up",
+        "gap",
+        "snapshot_resync",
+        "simulator_paused",
+        "locally_paused",
+        "stale"
+      ],
+      "title": "ConnectionHealthState",
+      "type": "string"
+    },
+    "TimelineEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "eventId": {
+          "title": "Eventid",
+          "type": "string"
+        },
+        "eventType": {
+          "title": "Eventtype",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "sequence",
+        "eventId",
+        "eventType",
+        "label",
+        "timestamp",
+        "status"
+      ],
+      "title": "TimelineEntryV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "connectionHealth": {
+      "$ref": "#/$defs/ConnectionHealthState"
+    },
+    "graphRevision": {
+      "title": "Graphrevision",
+      "type": "integer"
+    },
+    "isStale": {
+      "title": "Isstale",
+      "type": "boolean"
+    },
+    "lastAppliedSequence": {
+      "title": "Lastappliedsequence",
+      "type": "integer"
+    },
+    "locallyPaused": {
+      "title": "Locallypaused",
+      "type": "boolean"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "runStatus": {
+      "title": "Runstatus",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "seenEventIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Seeneventids",
+      "type": "array"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "timelineEntries": {
+      "items": {
+        "$ref": "#/$defs/TimelineEntryV1"
+      },
+      "title": "Timelineentries",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "lastAppliedSequence",
+    "runStatus",
+    "simTime",
+    "graphRevision",
+    "timelineEntries",
+    "connectionHealth",
+    "isStale",
+    "locallyPaused"
+  ],
+  "title": "RunReplicatedState",
+  "type": "object"
+}
