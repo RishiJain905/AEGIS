@@ -3,11 +3,13 @@
 import { Badge, Button, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
 import { GraphEntityInspector, IncidentContextInspector } from '@/features/inspector';
+import { RiskExplanationPanel } from '@/features/risk';
 import {
   useIncident,
   useRunAlerts,
   useRunGraph,
   useRunIncidents,
+  useRunRiskScores,
 } from '@/features/shell/hooks/use-shell-queries';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
@@ -27,6 +29,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
   const incidentQuery = useIncident(incidentId ?? '');
   const incidentsQuery = useRunIncidents(runId ?? '');
   const alertsQuery = useRunAlerts(runId ?? '');
+  const riskScoresQuery = useRunRiskScores(runId ?? '');
   const graphQuery = useRunGraph(runId ?? '');
 
   if (collapsed) {
@@ -49,12 +52,15 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
   const isLoading =
     (incidentId && incidentQuery.isPending) ||
-    (runId && (incidentsQuery.isPending || alertsQuery.isPending || graphQuery.isPending));
+    (runId && (incidentsQuery.isPending || alertsQuery.isPending || riskScoresQuery.isPending || graphQuery.isPending));
   const isError =
     (incidentId && incidentQuery.isError) ||
-    (runId && (incidentsQuery.isError || alertsQuery.isError || graphQuery.isError));
+    (runId && (incidentsQuery.isError || alertsQuery.isError || riskScoresQuery.isError || graphQuery.isError));
 
   const snapshot = graphQuery.data?.snapshot ?? null;
+  const selectedRiskScore =
+    riskScoresQuery.data?.find((score) => score.assetId === selectedEntityId) ?? null;
+  const selectedAlert = alertsQuery.data?.find((alert) => alert.assetId === selectedEntityId);
 
   return (
     <aside
@@ -86,6 +92,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
               void incidentQuery.refetch();
               void incidentsQuery.refetch();
               void alertsQuery.refetch();
+              void riskScoresQuery.refetch();
               void graphQuery.refetch();
             }}
           />
@@ -94,8 +101,17 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
         {!isLoading && !isError ? (
           <div className="flex flex-col gap-4">
             {snapshot ? (
-              <GraphEntityInspector snapshot={snapshot} selectedEntityId={selectedEntityId} />
+              <GraphEntityInspector
+                snapshot={snapshot}
+                selectedEntityId={selectedEntityId}
+                riskScore={selectedRiskScore}
+              />
             ) : null}
+
+            <RiskExplanationPanel
+              riskScore={selectedRiskScore}
+              directDetectionScore={selectedAlert?.confidence ?? null}
+            />
 
             {incidentsQuery.data && alertsQuery.data ? (
               <IncidentContextInspector

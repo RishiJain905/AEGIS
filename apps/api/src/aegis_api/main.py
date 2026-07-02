@@ -18,6 +18,8 @@ from aegis_api.realtime.backfill import router as backfill_router
 from aegis_api.realtime.events import router as events_router
 from aegis_api.realtime.observability import router as observability_router
 from aegis_api.realtime.status import router as status_router
+from aegis_api.risk.observability import router as risk_observability_router
+from aegis_api.risk.router import router as risk_router
 from aegis_api.runs.router import router as runs_router
 from aegis_api.websocket.demo import router as websocket_demo_router
 from aegis_api.websocket.manager import WebSocketGatewayManager
@@ -90,6 +92,8 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.include_router(detection_observability_router)
     app.include_router(models_router)
     app.include_router(models_observability_router)
+    app.include_router(risk_router)
+    app.include_router(risk_observability_router)
     app.include_router(create_websocket_router(gateway))
     app.include_router(websocket_demo_router)
 

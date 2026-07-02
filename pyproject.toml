@@ -15,6 +15,7 @@ members = [
     "packages/scenario-sdk",
     "packages/simulation-domain",
     "packages/graph-domain",
+    "packages/graph-risk",
     "packages/policy",
     "packages/observability",
     "services/simulation",

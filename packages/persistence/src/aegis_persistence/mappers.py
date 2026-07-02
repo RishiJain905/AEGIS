@@ -7,6 +7,7 @@ from aegis_contracts import (
     AgentSessionV1,
     AlertV1,
     ApprovalV1,
+    AssetRiskScoreV1,
     DomainEventEnvelopeV1,
     EvidenceV1,
     ExecutedActionV1,
@@ -29,6 +30,7 @@ from aegis_persistence.orm.tables import (
     AgentSessionRow,
     AlertRow,
     ApprovalRow,
+    AssetRiskScoreRow,
     DomainEventRow,
     EvidenceRow,
     ExecutedActionRow,
@@ -100,6 +102,10 @@ def model_manifest_to_domain(row: ModelManifestRow) -> ModelManifestV1:
 
 def model_score_to_domain(row: ModelScoreRow) -> ModelScoreV1:
     return parse_contract(ModelScoreV1, row.payload)
+
+
+def asset_risk_score_to_domain(row: AssetRiskScoreRow) -> AssetRiskScoreV1:
+    return parse_contract(AssetRiskScoreV1, row.payload)
 
 
 def event_to_domain(row: DomainEventRow) -> DomainEventEnvelopeV1:

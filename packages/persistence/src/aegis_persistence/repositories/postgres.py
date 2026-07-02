@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from aegis_contracts import (
     AlertV1,
+    AssetRiskScoreV1,
     DomainEventEnvelopeV1,
     GraphSnapshotV1,
     IdempotencyRecordV1,
@@ -27,6 +28,7 @@ from aegis_persistence.errors import (
 )
 from aegis_persistence.mappers import (
     alert_to_domain,
+    asset_risk_score_to_domain,
     checkpoint_to_domain,
     domain_to_payload,
     event_to_domain,
@@ -43,6 +45,7 @@ from aegis_persistence.mappers import (
 )
 from aegis_persistence.orm.tables import (
     AlertRow,
+    AssetRiskScoreRow,
     DomainEventRow,
     GraphSnapshotRow,
     IdempotencyRecordRow,
@@ -454,6 +457,58 @@ class PostgresModelRepository:
             .order_by(ModelScoreRow.scored_at)
         )
         return [model_score_to_domain(row) for row in result.scalars().all()]
+
+
+class PostgresRiskScoreRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(
+        self,
+        score: AssetRiskScoreV1,
+        *,
+        deduplication_key: str | None = None,
+    ) -> AssetRiskScoreV1:
+        from datetime import UTC, datetime
+
+        payload = domain_to_payload(score)
+        row = AssetRiskScoreRow(
+            run_id=score.run_id,
+            asset_id=score.asset_id,
+            sequence=score.computed_at_sequence,
+            deduplication_key=deduplication_key,
+            payload=payload,
+            scored_at=datetime.now(tz=UTC),
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return score
+
+    async def list_by_run(self, run_id: str) -> list[AssetRiskScoreV1]:
+        result = await self._session.execute(
+            select(AssetRiskScoreRow)
+            .where(AssetRiskScoreRow.run_id == run_id)
+            .order_by(AssetRiskScoreRow.sequence, AssetRiskScoreRow.asset_id)
+        )
+        return [asset_risk_score_to_domain(row) for row in result.scalars().all()]
+
+    async def exists_by_dedup_key(self, run_id: str, deduplication_key: str) -> bool:
+        result = await self._session.execute(
+            select(AssetRiskScoreRow.id).where(
+                AssetRiskScoreRow.run_id == run_id,
+                AssetRiskScoreRow.deduplication_key == deduplication_key,
+            )
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def list_latest_by_run(self, run_id: str) -> list[AssetRiskScoreV1]:
+        rows = await self.list_by_run(run_id)
+        latest_by_asset: dict[str, AssetRiskScoreV1] = {}
+        for row in rows:
+            current = latest_by_asset.get(row.asset_id)
+            if current is None or row.computed_at_sequence >= current.computed_at_sequence:
+                latest_by_asset[row.asset_id] = row
+        return sorted(latest_by_asset.values(), key=lambda item: item.asset_id)
 
 
 class PostgresCheckpointRepository:

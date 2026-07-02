@@ -10,6 +10,7 @@ const TIMELINE_EVENT_PREFIXES = [
   'telemetry.',
   'alert.',
   'model.score.',
+  'risk.',
   'incident.',
   'sim.asset.',
   'sim.branch.',
@@ -58,6 +59,10 @@ function timelineLabelForEvent(event: DomainEventEnvelopeV1): string {
       return `API request on ${formatPayloadString(payload.assetId, subjectId)}`;
     case 'alert.created':
       return `Alert: ${formatPayloadString(payload.title, 'created')}`;
+    case 'risk.score.computed':
+      return `Graph risk updated on ${formatPayloadString(payload.assetId, subjectId)}`;
+    case 'risk.projection.updated':
+      return 'Graph risk projection updated';
     case 'incident.created':
       return `Incident: ${formatPayloadString(payload.title, 'created')}`;
     default:
@@ -75,6 +80,47 @@ function buildTimelineEntry(event: DomainEventEnvelopeV1): TimelineEntryV1 {
     timestamp: event.simTime,
     status: timelineStatusForEvent(event.type, event.payload),
   };
+}
+
+function buildNodeDeltasFromRiskProjection(
+  event: DomainEventEnvelopeV1,
+  knownNodes: Map<string, GraphSnapshotV1['nodes'][number]>,
+): GraphDeltaV1[] {
+  if (event.type !== 'risk.projection.updated') {
+    return [];
+  }
+  const payload = event.payload;
+  const nodeUpdates = Array.isArray(payload.nodeUpdates) ? payload.nodeUpdates : [];
+  const deltas: GraphDeltaV1[] = [];
+  for (const update of nodeUpdates) {
+    if (!update || typeof update !== 'object') {
+      continue;
+    }
+    const record = update as Record<string, unknown>;
+    const assetId = typeof record.assetId === 'string' ? record.assetId : null;
+    const riskScore = typeof record.riskScore === 'number' ? record.riskScore : null;
+    const revision = typeof record.revision === 'number' ? record.revision : null;
+    if (!assetId || riskScore === null || revision === null) {
+      continue;
+    }
+    const knownNode = knownNodes.get(assetId);
+    if (knownNode === undefined) {
+      continue;
+    }
+    deltas.push({
+      schemaVersion: GRAPH_DELTA_SCHEMA_VERSION,
+      runId: event.runId,
+      sequence: event.sequence,
+      revision,
+      operation: 'upsert_node',
+      node: {
+        ...knownNode,
+        riskScore,
+        revision,
+      },
+    });
+  }
+  return deltas;
 }
 
 function buildNodeDeltaFromStatusChange(
@@ -172,6 +218,13 @@ export function projectDomainEventToActions(
     actions.push({ type: 'apply_graph_delta', delta: nodeDelta });
     if (nodeDelta.node) {
       options.knownNodes.set(nodeDelta.node.id, nodeDelta.node);
+    }
+  }
+
+  for (const riskDelta of buildNodeDeltasFromRiskProjection(event, options.knownNodes)) {
+    actions.push({ type: 'apply_graph_delta', delta: riskDelta });
+    if (riskDelta.node) {
+      options.knownNodes.set(riskDelta.node.id, riskDelta.node);
     }
   }
 

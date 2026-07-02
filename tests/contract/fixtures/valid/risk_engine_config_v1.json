@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "algorithmVersion": "graph-risk-v1",
+  "globalCap": 1.0,
+  "maxHops": 4,
+  "distanceDecayFactor": 0.65,
+  "temporalDecayFactor": 0.5,
+  "temporalHalfLifeSeconds": 3600,
+  "criticalityAmplifier": 0.25,
+  "minExplanationContribution": 0.01,
+  "relationshipTypeWeights": {
+    "COMMUNICATED_WITH": 1.0,
+    "AUTHENTICATED_TO": 0.9,
+    "DEPENDS_ON": 0.85,
+    "ADMINISTERS": 0.95,
+    "HOSTS": 0.8
+  },
+  "eligibleRelationshipTypes": [
+    "COMMUNICATED_WITH",
+    "AUTHENTICATED_TO",
+    "DEPENDS_ON",
+    "ADMINISTERS",
+    "HOSTS"
+  ],
+  "topExplanationPaths": 5
+}

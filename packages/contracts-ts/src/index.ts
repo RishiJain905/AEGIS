@@ -35,6 +35,17 @@ import {
   modelVerifyArtifactResponseSchema,
   trainingRunManifestSchema,
 } from './models';
+import {
+  assetRiskScoreSchema,
+  riskComputeRequestSchema,
+  riskComputeResponseSchema,
+  riskContributionSchema,
+  riskEngineConfigSchema,
+  riskExplanationPathSchema,
+  riskInputSchema,
+  riskProjectionDeltaSchema,
+  riskScoresListResponseSchema,
+} from './risk';
 import { websocketFrameSchema } from './websocket';
 
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
@@ -88,6 +99,7 @@ export * from './realtime';
 export * from './features';
 export * from './detection';
 export * from './models';
+export * from './risk';
 export * from './websocket';
 export * from './live-run';
 export * from './parsing';
@@ -179,4 +191,13 @@ export const FIXTURE_SCHEMA_MAP = {
   model_score_response_v1: modelScoreResponseSchema,
   model_verify_artifact_request_v1: modelVerifyArtifactRequestSchema,
   model_verify_artifact_response_v1: modelVerifyArtifactResponseSchema,
+  risk_input_v1: riskInputSchema,
+  risk_engine_config_v1: riskEngineConfigSchema,
+  risk_explanation_path_v1: riskExplanationPathSchema,
+  risk_contribution_v1: riskContributionSchema,
+  asset_risk_score_v1: assetRiskScoreSchema,
+  risk_projection_delta_v1: riskProjectionDeltaSchema,
+  risk_compute_request_v1: riskComputeRequestSchema,
+  risk_compute_response_v1: riskComputeResponseSchema,
+  risk_scores_list_response_v1: riskScoresListResponseSchema,
 } as const;

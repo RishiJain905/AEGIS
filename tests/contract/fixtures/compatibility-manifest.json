@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase16",
+  "workspaceVersion": "0.0.0-phase17",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",

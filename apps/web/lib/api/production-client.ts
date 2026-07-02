@@ -1,4 +1,4 @@
-import { apiErrorEnvelopeSchema, graphSnapshotSchema, parseContract } from '@aegis/contracts-ts';
+import { apiErrorEnvelopeSchema, graphSnapshotSchema, parseContract, riskScoresListResponseSchema } from '@aegis/contracts-ts';
 
 import type { AegisApiClient, ConnectionStatus, RunGraphResult } from '@/lib/api/types';
 import { ApiClientError } from '@/lib/api/types';
@@ -52,6 +52,12 @@ export function createProductionClient(): AegisApiClient {
     listIncidents: (runId, signal) => fetchJson(`/api/v1/runs/${runId}/incidents`, signal),
     getIncident: (incidentId, signal) => fetchJson(`/api/v1/incidents/${incidentId}`, signal),
     listAlerts: (runId, signal) => fetchJson(`/api/v1/runs/${runId}/alerts`, signal),
+    listRiskScores: async (runId, signal) => {
+      const response = await fetchJson(`/api/v1/risk/scores/${runId}`, signal, (data) =>
+        parseContract(riskScoresListResponseSchema, data),
+      );
+      return response.scores;
+    },
     getRunGraph: async (runId, signal): Promise<RunGraphResult> => {
       try {
         const snapshot = await fetchJson(`/api/v1/runs/${runId}/graph`, signal, (data) =>

@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase16' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase17' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -76,6 +76,15 @@ export const MODEL_EVALUATE_REQUEST_SCHEMA_VERSION = 1;
 export const MODEL_EVALUATE_RESPONSE_SCHEMA_VERSION = 1;
 export const MODEL_VERIFY_ARTIFACT_REQUEST_SCHEMA_VERSION = 1;
 export const MODEL_VERIFY_ARTIFACT_RESPONSE_SCHEMA_VERSION = 1;
+export const RISK_INPUT_SCHEMA_VERSION = 1;
+export const RISK_ENGINE_CONFIG_SCHEMA_VERSION = 1;
+export const RISK_EXPLANATION_PATH_SCHEMA_VERSION = 1;
+export const RISK_CONTRIBUTION_SCHEMA_VERSION = 1;
+export const ASSET_RISK_SCORE_SCHEMA_VERSION = 1;
+export const RISK_PROJECTION_DELTA_SCHEMA_VERSION = 1;
+export const RISK_COMPUTE_REQUEST_SCHEMA_VERSION = 1;
+export const RISK_COMPUTE_RESPONSE_SCHEMA_VERSION = 1;
+export const RISK_SCORES_LIST_RESPONSE_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -137,4 +146,23 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   rule_evaluation: [RULE_EVALUATION_SCHEMA_VERSION],
   metric_report: [METRIC_REPORT_SCHEMA_VERSION],
   evaluation_run: [EVALUATION_RUN_SCHEMA_VERSION],
+  detection_evaluate_request: [DETECTION_EVALUATE_REQUEST_SCHEMA_VERSION],
+  detection_evaluate_response: [DETECTION_EVALUATE_RESPONSE_SCHEMA_VERSION],
+  anomaly_explanation: [ANOMALY_EXPLANATION_SCHEMA_VERSION],
+  model_artifact_reference: [MODEL_ARTIFACT_REFERENCE_SCHEMA_VERSION],
+  training_run_manifest: [TRAINING_RUN_MANIFEST_SCHEMA_VERSION],
+  model_inference_result: [MODEL_INFERENCE_RESULT_SCHEMA_VERSION],
+  model_evaluate_request: [MODEL_EVALUATE_REQUEST_SCHEMA_VERSION],
+  model_evaluate_response: [MODEL_EVALUATE_RESPONSE_SCHEMA_VERSION],
+  model_verify_artifact_request: [MODEL_VERIFY_ARTIFACT_REQUEST_SCHEMA_VERSION],
+  model_verify_artifact_response: [MODEL_VERIFY_ARTIFACT_RESPONSE_SCHEMA_VERSION],
+  risk_input: [RISK_INPUT_SCHEMA_VERSION],
+  risk_engine_config: [RISK_ENGINE_CONFIG_SCHEMA_VERSION],
+  risk_explanation_path: [RISK_EXPLANATION_PATH_SCHEMA_VERSION],
+  risk_contribution: [RISK_CONTRIBUTION_SCHEMA_VERSION],
+  asset_risk_score: [ASSET_RISK_SCORE_SCHEMA_VERSION],
+  risk_projection_delta: [RISK_PROJECTION_DELTA_SCHEMA_VERSION],
+  risk_compute_request: [RISK_COMPUTE_REQUEST_SCHEMA_VERSION],
+  risk_compute_response: [RISK_COMPUTE_RESPONSE_SCHEMA_VERSION],
+  risk_scores_list_response: [RISK_SCORES_LIST_RESPONSE_SCHEMA_VERSION],
 };

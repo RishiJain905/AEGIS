@@ -4,6 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "aegis-contracts",
+    "aegis-graph-risk",
     "aegis-ml",
     "aegis-persistence",
     "aegis-simulation-domain",
@@ -12,6 +13,7 @@ dependencies = [
 
 [tool.uv.sources]
 aegis-contracts = { workspace = true }
+aegis-graph-risk = { workspace = true }
 aegis-ml = { workspace = true }
 aegis-persistence = { workspace = true }
 aegis-simulation-domain = { workspace = true }

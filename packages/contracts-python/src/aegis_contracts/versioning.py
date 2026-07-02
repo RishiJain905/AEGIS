@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase16"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase17"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -84,6 +84,15 @@ MODEL_EVALUATE_REQUEST_SCHEMA_VERSION: Final[int] = 1
 MODEL_EVALUATE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 MODEL_VERIFY_ARTIFACT_REQUEST_SCHEMA_VERSION: Final[int] = 1
 MODEL_VERIFY_ARTIFACT_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+RISK_INPUT_SCHEMA_VERSION: Final[int] = 1
+RISK_ENGINE_CONFIG_SCHEMA_VERSION: Final[int] = 1
+RISK_EXPLANATION_PATH_SCHEMA_VERSION: Final[int] = 1
+RISK_CONTRIBUTION_SCHEMA_VERSION: Final[int] = 1
+ASSET_RISK_SCORE_SCHEMA_VERSION: Final[int] = 1
+RISK_PROJECTION_DELTA_SCHEMA_VERSION: Final[int] = 1
+RISK_COMPUTE_REQUEST_SCHEMA_VERSION: Final[int] = 1
+RISK_COMPUTE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+RISK_SCORES_LIST_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -153,6 +162,15 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "model_evaluate_response": frozenset({MODEL_EVALUATE_RESPONSE_SCHEMA_VERSION}),
     "model_verify_artifact_request": frozenset({MODEL_VERIFY_ARTIFACT_REQUEST_SCHEMA_VERSION}),
     "model_verify_artifact_response": frozenset({MODEL_VERIFY_ARTIFACT_RESPONSE_SCHEMA_VERSION}),
+    "risk_input": frozenset({RISK_INPUT_SCHEMA_VERSION}),
+    "risk_engine_config": frozenset({RISK_ENGINE_CONFIG_SCHEMA_VERSION}),
+    "risk_explanation_path": frozenset({RISK_EXPLANATION_PATH_SCHEMA_VERSION}),
+    "risk_contribution": frozenset({RISK_CONTRIBUTION_SCHEMA_VERSION}),
+    "asset_risk_score": frozenset({ASSET_RISK_SCORE_SCHEMA_VERSION}),
+    "risk_projection_delta": frozenset({RISK_PROJECTION_DELTA_SCHEMA_VERSION}),
+    "risk_compute_request": frozenset({RISK_COMPUTE_REQUEST_SCHEMA_VERSION}),
+    "risk_compute_response": frozenset({RISK_COMPUTE_RESPONSE_SCHEMA_VERSION}),
+    "risk_scores_list_response": frozenset({RISK_SCORES_LIST_RESPONSE_SCHEMA_VERSION}),
 }
 
 

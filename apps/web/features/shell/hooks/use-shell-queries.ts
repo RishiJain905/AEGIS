@@ -92,3 +92,12 @@ export function useRunAlerts(runId: string) {
     enabled: Boolean(runId),
   });
 }
+
+export function useRunRiskScores(runId: string) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.runs.riskScores(runId),
+    queryFn: ({ signal }) => client.listRiskScores(runId, signal),
+    enabled: Boolean(runId),
+  });
+}

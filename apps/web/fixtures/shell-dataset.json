@@ -198,6 +198,33 @@
     },
     {
       "schemaVersion": 1,
+      "id": "alert:alt_synthetic_risk_001",
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "title": "Lateral authentication success on logistics API",
+      "severity": "medium",
+      "sourceEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAZ",
+      "assetId": "asset:svc-logistics-api",
+      "createdAt": "2026-06-30T02:05:00.000Z",
+      "confidence": 0.82,
+      "detectorId": "rule-service-account-misuse",
+      "detectorVersion": "1.0.0",
+      "ruleId": "rule-service-account-misuse",
+      "ruleVersion": "1.0.0",
+      "explanation": {
+        "schemaVersion": 1,
+        "summary": "Service asset shows misuse-like auth/API pattern",
+        "condition": "service asset auth stress with sustained API requests",
+        "featureName": "api_request_count",
+        "observed": 24,
+        "baseline": null,
+        "threshold": 10,
+        "comparison": "auth_failure_rate 0.250 with api_request_count 24 >= 10",
+        "windowKey": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV:asset:svc-logistics-api:300",
+        "detectorType": "deterministic"
+      }
+    },
+    {
+      "schemaVersion": 1,
       "id": "alert:alt_silent_relay_001",
       "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FB0",
       "title": "Elevated authentication failures on identity broker",
@@ -383,7 +410,7 @@
           "assetType": "service",
           "label": "Logistics API",
           "clusterId": "business-unit:bu-logistics",
-          "riskScore": 0.52,
+          "riskScore": 0.82,
           "criticality": 0.72,
           "status": "suspicious",
           "revision": 20
@@ -395,7 +422,7 @@
           "assetType": "database",
           "label": "Customer Records DB",
           "clusterId": "business-unit:bu-logistics",
-          "riskScore": 0.28,
+          "riskScore": 0.41,
           "criticality": 0.95,
           "status": "normal",
           "revision": 11

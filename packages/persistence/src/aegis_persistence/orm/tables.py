@@ -393,6 +393,33 @@ class StoredObjectRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class AssetRiskScoreRow(Base):
+    __tablename__ = "asset_risk_scores"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    asset_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    deduplication_key: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    scored_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "asset_id",
+            "sequence",
+            name="uq_asset_risk_scores_run_asset_sequence",
+        ),
+        Index("ix_asset_risk_scores_run_id", "run_id"),
+        Index("ix_asset_risk_scores_dedup", "run_id", "deduplication_key"),
+    )
+
+
 class GraphSnapshotRow(Base):
     __tablename__ = "graph_snapshots"
 

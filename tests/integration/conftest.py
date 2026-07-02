@@ -84,6 +84,7 @@ async def db_session(
             "domain_events",
             "idempotency_records",
             "graph_snapshots",
+            "asset_risk_scores",
             "model_scores",
             "model_manifests",
             "executed_actions",

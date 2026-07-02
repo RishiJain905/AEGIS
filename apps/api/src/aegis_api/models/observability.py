@@ -56,9 +56,10 @@ async def models_observability_page(request: Request) -> HTMLResponse:
     <pre id="baselines">Loading…</pre>
   </section>
   <section class="phase17">
-    <h2>Phase 17 deferred — graph-risk propagation</h2>
-    <p class="note">Graph neural network risk propagation is intentionally not implemented.
-      Phase 16 scores are entity/window tabular anomalies only.</p>
+    <h2>Phase 17 — graph-risk propagation</h2>
+    <p class="note">Graph risk propagation is implemented in Phase 17. See
+    <a href="/risk/observability">/risk/observability</a> for the dedicated observability page.
+    Isolation Forest scores remain tabular per-entity anomalies; graph risk is additive.</p>
   </section>
   <script>
     async function loadManifest() {{

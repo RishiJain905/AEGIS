@@ -127,6 +127,10 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       if (envelope.event.type.startsWith('model.score.')) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.runs.alerts(runId) });
       }
+      if (envelope.event.type.startsWith('risk.')) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.runs.riskScores(runId) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.runs.graph(runId) });
+      }
       saveStoredCursor(runId, envelope.event.sequence);
     },
     [applyEventToGraph, queryClient, runId, state.locallyPaused],
