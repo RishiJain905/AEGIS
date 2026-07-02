@@ -1,0 +1,189 @@
+{
+  "$defs": {
+    "FeatureErrorCode": {
+      "enum": [
+        "FEATURE_VALIDATION_FAILED",
+        "FEATURE_UNSUPPORTED_EVENT",
+        "FEATURE_DUPLICATE_EVENT",
+        "FEATURE_OUT_OF_ORDER",
+        "FEATURE_LATE_EVENT",
+        "FEATURE_HIDDEN_TRUTH_BLOCKED",
+        "FEATURE_SCHEMA_MISMATCH",
+        "FEATURE_MALFORMED_PAYLOAD"
+      ],
+      "title": "FeatureErrorCode",
+      "type": "string"
+    },
+    "FeatureProvenanceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "entityId": {
+          "title": "Entityid",
+          "type": "string"
+        },
+        "featureSchemaVersion": {
+          "minimum": 1,
+          "title": "Featureschemaversion",
+          "type": "integer"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "sequenceEnd": {
+          "minimum": 0,
+          "title": "Sequenceend",
+          "type": "integer"
+        },
+        "sequenceStart": {
+          "minimum": 0,
+          "title": "Sequencestart",
+          "type": "integer"
+        },
+        "simTimeEnd": {
+          "title": "Simtimeend",
+          "type": "string"
+        },
+        "simTimeStart": {
+          "title": "Simtimestart",
+          "type": "string"
+        },
+        "sourceEventIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sourceeventids",
+          "type": "array"
+        },
+        "transformVersion": {
+          "minLength": 1,
+          "title": "Transformversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "runId",
+        "entityId",
+        "sequenceStart",
+        "sequenceEnd",
+        "simTimeStart",
+        "simTimeEnd",
+        "featureSchemaVersion",
+        "transformVersion",
+        "sourceEventIds"
+      ],
+      "title": "FeatureProvenanceV1",
+      "type": "object"
+    },
+    "FeatureRejectionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/FeatureErrorCode"
+        },
+        "eventId": {
+          "title": "Eventid",
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "eventId",
+        "sequence",
+        "code",
+        "message"
+      ],
+      "title": "FeatureRejectionV1",
+      "type": "object"
+    },
+    "FeatureVectorV1": {
+      "additionalProperties": false,
+      "properties": {
+        "entityId": {
+          "title": "Entityid",
+          "type": "string"
+        },
+        "featureSchemaVersion": {
+          "minimum": 1,
+          "title": "Featureschemaversion",
+          "type": "integer"
+        },
+        "provenance": {
+          "$ref": "#/$defs/FeatureProvenanceV1"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "values": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Values",
+          "type": "array"
+        },
+        "windowKey": {
+          "minLength": 1,
+          "title": "Windowkey",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "featureSchemaVersion",
+        "windowKey",
+        "entityId",
+        "values",
+        "provenance"
+      ],
+      "title": "FeatureVectorV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "lastProcessedSequence": {
+      "minimum": 0,
+      "title": "Lastprocessedsequence",
+      "type": "integer"
+    },
+    "rejections": {
+      "items": {
+        "$ref": "#/$defs/FeatureRejectionV1"
+      },
+      "title": "Rejections",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "vector": {
+      "$ref": "#/$defs/FeatureVectorV1"
+    },
+    "windowKey": {
+      "minLength": 1,
+      "title": "Windowkey",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "windowKey",
+    "vector",
+    "lastProcessedSequence"
+  ],
+  "title": "OnlineFeatureUpdateV1",
+  "type": "object"
+}

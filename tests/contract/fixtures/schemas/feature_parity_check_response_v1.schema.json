@@ -1,0 +1,44 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "matching": {
+      "title": "Matching",
+      "type": "boolean"
+    },
+    "offlineChecksum": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Offlinechecksum",
+      "type": "string"
+    },
+    "onlineChecksum": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Onlinechecksum",
+      "type": "string"
+    },
+    "rejectionCount": {
+      "minimum": 0,
+      "title": "Rejectioncount",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "vectorCount": {
+      "minimum": 0,
+      "title": "Vectorcount",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "matching",
+    "offlineChecksum",
+    "onlineChecksum",
+    "vectorCount",
+    "rejectionCount"
+  ],
+  "title": "FeatureParityCheckResponseV1",
+  "type": "object"
+}

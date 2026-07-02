@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase13' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase14' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -46,6 +46,16 @@ export const RUN_CREATE_REQUEST_SCHEMA_VERSION = 1;
 export const RUN_COMMAND_RESPONSE_SCHEMA_VERSION = 1;
 export const CONNECTION_HEALTH_SCHEMA_VERSION = 1;
 export const REALTIME_REDUCER_ACTION_SCHEMA_VERSION = 1;
+export const FEATURE_SCHEMA_MANIFEST_SCHEMA_VERSION = 1;
+export const FEATURE_VECTOR_SCHEMA_VERSION = 1;
+export const FEATURE_WINDOW_SCHEMA_VERSION = 1;
+export const FEATURE_PROVENANCE_SCHEMA_VERSION = 1;
+export const DATASET_MANIFEST_SCHEMA_VERSION = 1;
+export const ONLINE_FEATURE_UPDATE_SCHEMA_VERSION = 1;
+export const FEATURE_COMPUTE_REQUEST_SCHEMA_VERSION = 1;
+export const FEATURE_COMPUTE_RESPONSE_SCHEMA_VERSION = 1;
+export const FEATURE_PARITY_CHECK_RESPONSE_SCHEMA_VERSION = 1;
+export const FEATURE_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -91,4 +101,10 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   run_create_request: [RUN_CREATE_REQUEST_SCHEMA_VERSION],
   run_command_response: [RUN_COMMAND_RESPONSE_SCHEMA_VERSION],
   connection_health: [CONNECTION_HEALTH_SCHEMA_VERSION],
+  feature_schema_manifest: [FEATURE_SCHEMA_MANIFEST_SCHEMA_VERSION],
+  feature_vector: [FEATURE_VECTOR_SCHEMA_VERSION],
+  feature_window: [FEATURE_WINDOW_SCHEMA_VERSION],
+  feature_provenance: [FEATURE_PROVENANCE_SCHEMA_VERSION],
+  dataset_manifest: [DATASET_MANIFEST_SCHEMA_VERSION],
+  online_feature_update: [ONLINE_FEATURE_UPDATE_SCHEMA_VERSION],
 };

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "datasetChecksum": "sha256:70276b22260deba4d57fdc0fc645715f8b8efe96e0bf703f92245c0dcd4480a8",
+  "featureSchemaVersion": 1,
+  "transformVersion": "0.0.0-phase14",
+  "rowCount": 1,
+  "sourceRuns": [
+    {
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "seed": 1000,
+      "scenarioVersionId": "scenario-version:v1.0.0-synthetic"
+    }
+  ],
+  "windowDurationSimSeconds": 300,
+  "createdAt": "2026-07-02T11:27:42.820016Z",
+  "workspaceVersion": "0.0.0-phase14",
+  "compatibilityMetadata": {
+    "rejectionCount": 0,
+    "lastProcessedSequence": 2
+  }
+}

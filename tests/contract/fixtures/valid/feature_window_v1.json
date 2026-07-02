@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "windowKey": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV:asset:svc-api-gateway:1767268800",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "entityId": "asset:svc-api-gateway",
+  "windowStartSimTime": "2026-01-01T12:00:00Z",
+  "windowEndSimTime": "2026-01-01T12:05:00Z",
+  "isClosed": true,
+  "watermarkSequence": 2
+}

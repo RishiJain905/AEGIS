@@ -1,0 +1,107 @@
+{
+  "$defs": {
+    "FeatureProvenanceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "entityId": {
+          "title": "Entityid",
+          "type": "string"
+        },
+        "featureSchemaVersion": {
+          "minimum": 1,
+          "title": "Featureschemaversion",
+          "type": "integer"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "sequenceEnd": {
+          "minimum": 0,
+          "title": "Sequenceend",
+          "type": "integer"
+        },
+        "sequenceStart": {
+          "minimum": 0,
+          "title": "Sequencestart",
+          "type": "integer"
+        },
+        "simTimeEnd": {
+          "title": "Simtimeend",
+          "type": "string"
+        },
+        "simTimeStart": {
+          "title": "Simtimestart",
+          "type": "string"
+        },
+        "sourceEventIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sourceeventids",
+          "type": "array"
+        },
+        "transformVersion": {
+          "minLength": 1,
+          "title": "Transformversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "runId",
+        "entityId",
+        "sequenceStart",
+        "sequenceEnd",
+        "simTimeStart",
+        "simTimeEnd",
+        "featureSchemaVersion",
+        "transformVersion",
+        "sourceEventIds"
+      ],
+      "title": "FeatureProvenanceV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "entityId": {
+      "title": "Entityid",
+      "type": "string"
+    },
+    "featureSchemaVersion": {
+      "minimum": 1,
+      "title": "Featureschemaversion",
+      "type": "integer"
+    },
+    "provenance": {
+      "$ref": "#/$defs/FeatureProvenanceV1"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "values": {
+      "items": {
+        "type": "number"
+      },
+      "title": "Values",
+      "type": "array"
+    },
+    "windowKey": {
+      "minLength": 1,
+      "title": "Windowkey",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "featureSchemaVersion",
+    "windowKey",
+    "entityId",
+    "values",
+    "provenance"
+  ],
+  "title": "FeatureVectorV1",
+  "type": "object"
+}

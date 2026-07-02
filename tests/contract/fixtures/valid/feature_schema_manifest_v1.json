@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "featureSchemaVersion": 1,
+  "transformVersion": "0.0.0-phase14",
+  "windowDurationSimSeconds": 300,
+  "features": [
+    {
+      "name": "auth_event_count",
+      "orderIndex": 0,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "auth_failed_count",
+      "orderIndex": 1,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "auth_failure_rate",
+      "orderIndex": 2,
+      "dtype": "float",
+      "unit": "ratio",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "api_request_count",
+      "orderIndex": 3,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "api_error_count",
+      "orderIndex": 4,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "api_error_rate",
+      "orderIndex": 5,
+      "dtype": "float",
+      "unit": "ratio",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "db_query_count",
+      "orderIndex": 6,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "db_anomalous_count",
+      "orderIndex": 7,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "db_anomalous_rate",
+      "orderIndex": 8,
+      "dtype": "float",
+      "unit": "ratio",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "net_connection_count",
+      "orderIndex": 9,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "net_bytes_total",
+      "orderIndex": 10,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "net_bytes_mean",
+      "orderIndex": 11,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "net_protocol_tcp",
+      "orderIndex": 12,
+      "dtype": "categorical",
+      "unit": "one_hot",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": 1,
+      "categoricalValues": [
+        "tcp",
+        "udp",
+        "__MISSING__"
+      ]
+    },
+    {
+      "name": "net_protocol_udp",
+      "orderIndex": 13,
+      "dtype": "categorical",
+      "unit": "one_hot",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": 1,
+      "categoricalValues": [
+        "tcp",
+        "udp",
+        "__MISSING__"
+      ]
+    },
+    {
+      "name": "net_protocol_missing",
+      "orderIndex": 14,
+      "dtype": "categorical",
+      "unit": "one_hot",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": 1,
+      "categoricalValues": [
+        "tcp",
+        "udp",
+        "__MISSING__"
+      ]
+    },
+    {
+      "name": "proc_event_count",
+      "orderIndex": 15,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "proc_suspicious_count",
+      "orderIndex": 16,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "proc_suspicious_rate",
+      "orderIndex": 17,
+      "dtype": "float",
+      "unit": "ratio",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "deploy_count",
+      "orderIndex": 18,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "deploy_failed_count",
+      "orderIndex": 19,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "deploy_failure_rate",
+      "orderIndex": 20,
+      "dtype": "float",
+      "unit": "ratio",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "health_check_count",
+      "orderIndex": 21,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "health_unhealthy_count",
+      "orderIndex": 22,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "health_unhealthy_rate",
+      "orderIndex": 23,
+      "dtype": "float",
+      "unit": "ratio",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "ai_inference_count",
+      "orderIndex": 24,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "ai_anomalous_count",
+      "orderIndex": 25,
+      "dtype": "float",
+      "unit": "count",
+      "minValue": 0.0,
+      "maxValue": null,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    },
+    {
+      "name": "ai_anomalous_rate",
+      "orderIndex": 26,
+      "dtype": "float",
+      "unit": "ratio",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "missingSentinel": -1.0,
+      "categoricalMappingVersion": null,
+      "categoricalValues": null
+    }
+  ]
+}

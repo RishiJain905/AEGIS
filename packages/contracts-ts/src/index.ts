@@ -15,6 +15,16 @@ import {
   snapshotBootstrapPayloadSchema,
   timelineEntrySchema,
 } from './live-run';
+import {
+  datasetManifestSchema,
+  featureComputeRequestSchema,
+  featureComputeResponseSchema,
+  featureParityCheckResponseSchema,
+  featureSchemaManifestSchema,
+  featureVectorSchema,
+  featureWindowSchema,
+  onlineFeatureUpdateSchema,
+} from './features';
 import { websocketFrameSchema } from './websocket';
 
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
@@ -65,6 +75,7 @@ export * from './entities';
 export * from './api';
 export * from './persistence';
 export * from './realtime';
+export * from './features';
 export * from './websocket';
 export * from './live-run';
 export * from './parsing';
@@ -140,4 +151,12 @@ export const FIXTURE_SCHEMA_MAP = {
   run_create_request_v1: runCreateRequestSchema,
   run_command_response_v1: runCommandResponseSchema,
   connection_health_v1: connectionHealthSnapshotSchema,
+  feature_schema_manifest_v1: featureSchemaManifestSchema,
+  feature_vector_v1: featureVectorSchema,
+  feature_window_v1: featureWindowSchema,
+  dataset_manifest_v1: datasetManifestSchema,
+  online_feature_update_v1: onlineFeatureUpdateSchema,
+  feature_compute_request_v1: featureComputeRequestSchema,
+  feature_compute_response_v1: featureComputeResponseSchema,
+  feature_parity_check_response_v1: featureParityCheckResponseSchema,
 } as const;
