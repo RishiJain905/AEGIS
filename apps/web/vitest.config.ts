@@ -21,14 +21,26 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      { find: '@/features', replacement: path.resolve(__dirname, './features') },
+      {
+        find: '@/features',
+        replacement: path.resolve(__dirname, './features'),
+      },
       { find: '@/workers', replacement: path.resolve(__dirname, './workers') },
       { find: '@/lib', replacement: path.resolve(__dirname, './lib') },
       { find: '@/stores', replacement: path.resolve(__dirname, './stores') },
-      { find: '@/fixtures', replacement: path.resolve(__dirname, './fixtures') },
-      { find: '@/components', replacement: path.resolve(__dirname, './components') },
+      {
+        find: '@/fixtures',
+        replacement: path.resolve(__dirname, './fixtures'),
+      },
+      {
+        find: '@/components',
+        replacement: path.resolve(__dirname, './components'),
+      },
       { find: '@', replacement: path.resolve(__dirname, './src') },
-      { find: '@aegis/ui', replacement: path.resolve(__dirname, '../../packages/ui/src/index.ts') },
+      {
+        find: '@aegis/ui',
+        replacement: path.resolve(__dirname, '../../packages/ui/src/index.ts'),
+      },
       {
         find: '@aegis/contracts-ts',
         replacement: path.resolve(__dirname, '../../packages/contracts-ts/src/index.ts'),

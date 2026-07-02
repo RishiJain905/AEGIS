@@ -1,0 +1,36 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "title": "Eventid",
+      "type": "string"
+    },
+    "eventType": {
+      "title": "Eventtype",
+      "type": "string"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "sequence", "eventId", "eventType", "label", "timestamp", "status"],
+  "title": "TimelineEntryV1",
+  "type": "object"
+}

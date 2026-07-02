@@ -66,12 +66,12 @@ export function useIncident(incidentId: string) {
   });
 }
 
-export function useRunGraph(runId: string) {
+export function useRunGraph(runId: string, options?: { enabled?: boolean }) {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.runs.graph(runId),
     queryFn: ({ signal }) => client.getRunGraph(runId, signal),
-    enabled: Boolean(runId),
+    enabled: options?.enabled ?? Boolean(runId),
   });
 }
 

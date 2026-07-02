@@ -30,6 +30,14 @@ from aegis_contracts.graph import (
     GraphPathResultV1,
     GraphSnapshotV1,
 )
+from aegis_contracts.live_run import (
+    ConnectionHealthSnapshotV1,
+    RunCommandResponseV1,
+    RunCreateRequestV1,
+    RunReplicatedState,
+    SnapshotBootstrapPayloadV1,
+    TimelineEntryV1,
+)
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
 from aegis_contracts.realtime import (
     BackfillRequestV1,
@@ -86,4 +94,10 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "backfill_request_v1": BackfillRequestV1,
     "backfill_result_v1": BackfillResultV1,
     "websocket_frame_v1": WebSocketFrameV1,
+    "live_run_v1": RunReplicatedState,
+    "timeline_entry_v1": TimelineEntryV1,
+    "snapshot_bootstrap_v1": SnapshotBootstrapPayloadV1,
+    "run_create_request_v1": RunCreateRequestV1,
+    "run_command_response_v1": RunCommandResponseV1,
+    "connection_health_v1": ConnectionHealthSnapshotV1,
 }

@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 
 import { Alert, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
+import { useLiveRun } from '@/features/live-run';
 import { useRunGraph } from '@/features/shell/hooks/use-shell-queries';
 
 const OperationalGraphView = dynamic(
@@ -29,7 +30,27 @@ interface VisualizationSlotProps {
 }
 
 export function VisualizationSlot({ runId }: VisualizationSlotProps) {
-  const graphQuery = useRunGraph(runId);
+  const liveRun = useLiveRun();
+  const graphQuery = useRunGraph(runId, {
+    enabled: liveRun?.isLiveMode !== true,
+  });
+
+  if (liveRun?.isLiveMode && liveRun.bootstrapSnapshot) {
+    return (
+      <Panel
+        title="Operational graph"
+        description="Live Sigma.js operational investigation graph"
+        data-testid="visualization-slot"
+      >
+        <OperationalGraphView
+          runId={runId}
+          snapshot={liveRun.bootstrapSnapshot}
+          graphStore={liveRun.graphStore}
+          graphRevision={liveRun.graphRevision}
+        />
+      </Panel>
+    );
+  }
 
   if (graphQuery.isPending) {
     return (
@@ -78,19 +99,8 @@ export function VisualizationSlot({ runId }: VisualizationSlotProps) {
       title="Operational graph"
       description="Sigma.js operational investigation graph"
       data-testid="visualization-slot"
-      className="min-h-[20rem] flex-1"
     >
-      {partial ? (
-        <Alert
-          variant="warning"
-          title="Partial graph data"
-          className="mb-4"
-          data-testid="partial-graph-alert"
-        >
-          Graph snapshot is incomplete. Additional nodes and edges arrive in later phases.
-        </Alert>
-      ) : null}
-      <OperationalGraphView snapshot={snapshot} runId={runId} />
+      <OperationalGraphView runId={runId} snapshot={snapshot} />
     </Panel>
   );
 }

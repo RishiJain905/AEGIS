@@ -1,0 +1,55 @@
+{
+  "$defs": {
+    "ConnectionHealthState": {
+      "enum": [
+        "connected",
+        "disconnected",
+        "reconnecting",
+        "catching_up",
+        "gap",
+        "snapshot_resync",
+        "simulator_paused",
+        "locally_paused",
+        "stale"
+      ],
+      "title": "ConnectionHealthState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "connectionHealth": {
+      "$ref": "#/$defs/ConnectionHealthState"
+    },
+    "isStale": {
+      "title": "Isstale",
+      "type": "boolean"
+    },
+    "lastAppliedSequence": {
+      "title": "Lastappliedsequence",
+      "type": "integer"
+    },
+    "locallyPaused": {
+      "title": "Locallypaused",
+      "type": "boolean"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "connectionHealth",
+    "lastAppliedSequence",
+    "isStale",
+    "locallyPaused"
+  ],
+  "title": "ConnectionHealthSnapshotV1",
+  "type": "object"
+}

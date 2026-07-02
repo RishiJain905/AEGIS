@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "lastAppliedSequence": 42,
+  "runStatus": "running",
+  "simTime": "2026-01-01T18:42:03.420Z",
+  "graphRevision": 12,
+  "timelineEntries": [
+    {
+      "schemaVersion": 1,
+      "sequence": 1,
+      "eventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "eventType": "sim.run.started",
+      "label": "Run started",
+      "timestamp": "2026-01-01T18:00:00.000Z",
+      "status": "normal"
+    }
+  ],
+  "connectionHealth": "connected",
+  "isStale": false,
+  "locallyPaused": false,
+  "seenEventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAW"]
+}

@@ -1,0 +1,32 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Runid"
+    },
+    "scenarioPackagePath": {
+      "title": "Scenariopackagepath",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "seed": {
+      "title": "Seed",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "scenarioPackagePath", "seed"],
+  "title": "RunCreateRequestV1",
+  "type": "object"
+}

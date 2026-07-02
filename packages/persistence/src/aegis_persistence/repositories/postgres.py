@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from aegis_contracts import (
     DomainEventEnvelopeV1,
+    GraphSnapshotV1,
     IdempotencyRecordV1,
     IncidentV1,
     ObjectMetadataReferenceV1,
@@ -26,6 +27,7 @@ from aegis_persistence.mappers import (
     domain_to_payload,
     event_to_domain,
     event_to_outbox_payload,
+    graph_snapshot_to_domain,
     idempotency_record_to_domain,
     incident_to_domain,
     object_metadata_to_domain,
@@ -35,6 +37,7 @@ from aegis_persistence.mappers import (
 )
 from aegis_persistence.orm.tables import (
     DomainEventRow,
+    GraphSnapshotRow,
     IdempotencyRecordRow,
     IncidentRow,
     OutboxRow,
@@ -49,6 +52,10 @@ from aegis_persistence.orm.tables import (
 class PostgresScenarioRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    async def list_all(self) -> list[ScenarioV1]:
+        result = await self._session.execute(select(ScenarioRow).order_by(ScenarioRow.id))
+        return [scenario_to_domain(row) for row in result.scalars().all()]
 
     async def get_by_id(self, scenario_id: str) -> ScenarioV1 | None:
         row = await self._session.get(ScenarioRow, scenario_id)
@@ -71,6 +78,14 @@ class PostgresScenarioVersionRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    async def list_for_scenario(self, scenario_id: str) -> list[ScenarioVersionV1]:
+        result = await self._session.execute(
+            select(ScenarioVersionRow)
+            .where(ScenarioVersionRow.scenario_id == scenario_id)
+            .order_by(ScenarioVersionRow.id)
+        )
+        return [scenario_version_to_domain(row) for row in result.scalars().all()]
+
     async def get_by_id(self, version_id: str) -> ScenarioVersionV1 | None:
         row = await self._session.get(ScenarioVersionRow, version_id)
         return scenario_version_to_domain(row) if row else None
@@ -92,6 +107,10 @@ class PostgresScenarioVersionRepository:
 class PostgresRunRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    async def list_all(self) -> list[RunV1]:
+        result = await self._session.execute(select(RunRow).order_by(RunRow.started_at.desc()))
+        return [run_to_domain(row) for row in result.scalars().all()]
 
     async def get_by_id(self, run_id: str) -> RunV1 | None:
         row = await self._session.get(RunRow, run_id)
@@ -138,6 +157,45 @@ class PostgresRunRepository:
                 expected_revision=expected_revision,
             )
         return run
+
+
+class PostgresGraphSnapshotRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(self, snapshot: GraphSnapshotV1) -> GraphSnapshotV1:
+        from datetime import UTC, datetime
+
+        payload = domain_to_payload(snapshot)
+        row = GraphSnapshotRow(
+            run_id=snapshot.run_id,
+            sequence=snapshot.sequence,
+            payload=payload,
+            created_at=datetime.now(tz=UTC),
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return snapshot
+
+    async def get_latest_for_run(self, run_id: str) -> GraphSnapshotV1 | None:
+        result = await self._session.execute(
+            select(GraphSnapshotRow)
+            .where(GraphSnapshotRow.run_id == run_id)
+            .order_by(GraphSnapshotRow.sequence.desc())
+            .limit(1)
+        )
+        row = result.scalar_one_or_none()
+        return graph_snapshot_to_domain(row) if row else None
+
+    async def get_at_sequence(self, run_id: str, sequence: int) -> GraphSnapshotV1 | None:
+        result = await self._session.execute(
+            select(GraphSnapshotRow).where(
+                GraphSnapshotRow.run_id == run_id,
+                GraphSnapshotRow.sequence == sequence,
+            )
+        )
+        row = result.scalar_one_or_none()
+        return graph_snapshot_to_domain(row) if row else None
 
 
 class PostgresEventRepository:

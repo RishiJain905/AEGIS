@@ -22,31 +22,31 @@
   "additionalProperties": false,
   "description": "Versioned WebSocket wire frame.",
   "properties": {
-    "schemaVersion": {
-      "minimum": 1,
-      "title": "Schemaversion",
-      "type": "integer"
+    "messageType": {
+      "$ref": "#/$defs/WebSocketMessageType"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
     },
     "protocolVersion": {
       "minimum": 1,
       "title": "Protocolversion",
       "type": "integer"
     },
-    "messageType": {
-      "$ref": "#/$defs/WebSocketMessageType"
-    },
-    "traceId": {
-      "title": "Traceid",
-      "type": "string"
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
     },
     "sentAt": {
       "title": "Sentat",
       "type": "string"
     },
-    "payload": {
-      "additionalProperties": true,
-      "title": "Payload",
-      "type": "object"
+    "traceId": {
+      "title": "Traceid",
+      "type": "string"
     }
   },
   "required": ["schemaVersion", "protocolVersion", "messageType", "traceId", "sentAt", "payload"],

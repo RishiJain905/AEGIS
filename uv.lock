@@ -77,6 +77,7 @@ dependencies = [
     { name = "aegis-contracts" },
     { name = "aegis-event-streaming" },
     { name = "aegis-persistence" },
+    { name = "aegis-simulation" },
     { name = "fastapi" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -86,6 +87,7 @@ requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
     { name = "aegis-event-streaming", editable = "packages/event-streaming" },
     { name = "aegis-persistence", editable = "packages/persistence" },
+    { name = "aegis-simulation", editable = "services/simulation" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]

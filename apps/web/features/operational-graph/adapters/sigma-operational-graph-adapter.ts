@@ -312,12 +312,20 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
 
     switch (highlightMode) {
       case GraphHighlightMode.NEIGHBORHOOD: {
-        const result = store.getNeighborhood(selection.primaryNodeId, { hops: 1 });
-        return { highlightedNodeIds: result.nodeIds, highlightedEdgeIds: result.edgeIds };
+        const result = store.getNeighborhood(selection.primaryNodeId, {
+          hops: 1,
+        });
+        return {
+          highlightedNodeIds: result.nodeIds,
+          highlightedEdgeIds: result.edgeIds,
+        };
       }
       case GraphHighlightMode.PATH: {
         if (!selection.secondaryNodeId) {
-          return { highlightedNodeIds: [selection.primaryNodeId], highlightedEdgeIds: [] };
+          return {
+            highlightedNodeIds: [selection.primaryNodeId],
+            highlightedEdgeIds: [],
+          };
         }
         const pathResult = store.queryPaths({
           schemaVersion: 1,
@@ -344,8 +352,13 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
         return { highlightedNodeIds: path, highlightedEdgeIds: edgeIds };
       }
       case GraphHighlightMode.INCIDENT: {
-        const result = store.getIncidentSubgraph([selection.primaryNodeId], { hops: 2 });
-        return { highlightedNodeIds: result.nodeIds, highlightedEdgeIds: result.edgeIds };
+        const result = store.getIncidentSubgraph([selection.primaryNodeId], {
+          hops: 2,
+        });
+        return {
+          highlightedNodeIds: result.nodeIds,
+          highlightedEdgeIds: result.edgeIds,
+        };
       }
       case GraphHighlightMode.DEPENDENCIES: {
         const deps = store.getDependencies(selection.primaryNodeId, 3);

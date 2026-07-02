@@ -3,6 +3,7 @@
 import { NodeStatus } from '@aegis/contracts-ts';
 import { Alert, Badge } from '@aegis/ui';
 
+import { useLiveRun } from '@/features/live-run';
 import {
   useConnectionStatus,
   useRun,
@@ -13,20 +14,39 @@ interface StatusStripProps {
   runId?: string;
 }
 
+const LIVE_HEALTH_LABELS: Record<string, string> = {
+  connected: 'Live',
+  disconnected: 'Offline',
+  reconnecting: 'Reconnecting',
+  catching_up: 'Catching up',
+  gap: 'Gap',
+  snapshot_resync: 'Resyncing',
+  simulator_paused: 'Sim paused',
+  locally_paused: 'Updates paused',
+  stale: 'Stale',
+};
+
 export function StatusStrip({ runId }: StatusStripProps) {
   const connectionQuery = useConnectionStatus();
   const runQuery = useRun(runId ?? '');
   const readOnlyQuery = useRunReadOnly(runId ?? '');
+  const liveRun = useLiveRun();
 
   const connectionStatus = connectionQuery.data ?? 'connected';
   const readOnly = readOnlyQuery.data ?? false;
 
   const connectionLabel =
-    connectionStatus === 'offline'
-      ? 'Offline'
-      : connectionStatus === 'reconnecting'
-        ? 'Reconnecting'
-        : 'Connected';
+    liveRun?.isLiveMode === true
+      ? (LIVE_HEALTH_LABELS[liveRun.state.connectionHealth] ?? liveRun.state.connectionHealth)
+      : connectionStatus === 'offline'
+        ? 'Offline'
+        : connectionStatus === 'reconnecting'
+          ? 'Reconnecting'
+          : 'Connected';
+
+  const runStatus = liveRun?.isLiveMode ? liveRun.state.runStatus : runQuery.data?.status;
+  const simTime = liveRun?.isLiveMode ? liveRun.state.simTime : runQuery.data?.simTime;
+  const sequence = liveRun?.isLiveMode ? liveRun.state.lastAppliedSequence : undefined;
 
   return (
     <div
@@ -36,7 +56,12 @@ export function StatusStrip({ runId }: StatusStripProps) {
       aria-live="polite"
     >
       <Badge
-        nodeStatus={connectionStatus === 'connected' ? NodeStatus.NORMAL : NodeStatus.SUSPICIOUS}
+        nodeStatus={
+          connectionLabel === 'Live' || connectionLabel === 'Connected'
+            ? NodeStatus.NORMAL
+            : NodeStatus.SUSPICIOUS
+        }
+        data-testid="connection-status-badge"
       >
         {connectionLabel}
       </Badge>
@@ -48,19 +73,34 @@ export function StatusStrip({ runId }: StatusStripProps) {
       {runId ? (
         <span className="font-mono text-xs text-[var(--aegis-text-secondary)]">Run: {runId}</span>
       ) : null}
-      {runQuery.data ? (
-        <span className="text-xs text-[var(--aegis-text-secondary)]">
-          Sim time: {runQuery.data.simTime}
+      {runStatus ? (
+        <span className="text-xs text-[var(--aegis-text-secondary)]" data-testid="run-status">
+          Status: {runStatus}
         </span>
       ) : null}
-      {connectionStatus === 'offline' ? (
+      {simTime ? (
+        <span className="text-xs text-[var(--aegis-text-secondary)]" data-testid="sim-time">
+          Sim time: {simTime}
+        </span>
+      ) : null}
+      {sequence !== undefined ? (
+        <span className="text-xs text-[var(--aegis-text-secondary)]" data-testid="applied-sequence">
+          Sequence: {sequence}
+        </span>
+      ) : null}
+      {!liveRun?.isLiveMode && connectionStatus === 'offline' ? (
         <Alert variant="warning" title="Connection offline" className="ml-auto max-w-md">
           Realtime updates are unavailable. Showing last known fixture data.
         </Alert>
       ) : null}
-      {connectionStatus === 'reconnecting' ? (
+      {!liveRun?.isLiveMode && connectionStatus === 'reconnecting' ? (
         <Alert variant="default" title="Reconnecting" className="ml-auto max-w-md">
           Attempting to restore realtime connection…
+        </Alert>
+      ) : null}
+      {liveRun?.isLiveMode && liveRun.state.isStale ? (
+        <Alert variant="warning" title="State may be stale" className="ml-auto max-w-md">
+          Event delivery is interrupted. Recovery is required before trusting the live view.
         </Alert>
       ) : null}
     </div>

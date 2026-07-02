@@ -53,16 +53,20 @@ const LEGEND_ITEMS = [
 export interface OperationalGraphViewProps {
   snapshot: GraphSnapshotV1;
   runId: string;
+  graphStore?: import('@aegis/graph-domain').GraphStore;
+  graphRevision?: number;
 }
 
 function useGraphStoreInstance(
   snapshot: GraphSnapshotV1,
+  externalStore?: import('@aegis/graph-domain').GraphStore,
 ): import('@aegis/graph-domain').GraphStore {
-  return useMemo(() => {
+  const internalStore = useMemo(() => {
     const store = createGraphStore();
     store.loadSnapshot(snapshot);
     return store;
   }, [snapshot.runId, snapshot.sequence, snapshot.revision]);
+  return externalStore ?? internalStore;
 }
 
 function buildVisualStateWithPositions(
@@ -75,8 +79,12 @@ function buildVisualStateWithPositions(
   };
 }
 
-export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
-  const store = useGraphStoreInstance(snapshot);
+export function OperationalGraphView({
+  snapshot,
+  graphStore,
+  graphRevision = 0,
+}: OperationalGraphViewProps) {
+  const store = useGraphStoreInstance(snapshot, graphStore);
   const adapterRef = useRef<SigmaOperationalGraphAdapter | null>(null);
   const layoutCoordinatorRef = useRef<LayoutCoordinator | null>(null);
   const updateBatcherRef = useRef<UpdateBatcher | null>(null);
@@ -220,6 +228,7 @@ export function OperationalGraphView({ snapshot }: OperationalGraphViewProps) {
     collapsedClusterIds,
     snapshot.revision,
     snapshot.sequence,
+    graphRevision,
   ]);
 
   useEffect(() => {

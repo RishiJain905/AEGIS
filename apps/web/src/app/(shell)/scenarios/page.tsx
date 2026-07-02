@@ -14,6 +14,7 @@ import {
 } from '@aegis/ui';
 
 import { CommandCentreShell } from '@/features/shell/components/command-centre-shell';
+import { useCreateRun } from '@/features/live-run';
 import { useRuns, useScenarios } from '@/features/shell/hooks/use-shell-queries';
 
 const SILENT_RELAY_SCENARIO_ID = 'scenario:operation-silent-relay';
@@ -42,10 +43,32 @@ export default function ScenariosPage() {
   const router = useRouter();
   const scenariosQuery = useScenarios();
   const runsQuery = useRuns();
+  const createRun = useCreateRun();
+  const isLiveMode = process.env.NEXT_PUBLIC_AEGIS_DATA_SOURCE === 'api';
 
   return (
     <CommandCentreShell>
       <Panel title="Scenario selection" description="Choose a scenario to start or resume a run">
+        {isLiveMode ? (
+          <div className="mb-4">
+            <Button
+              data-testid="start-silent-relay"
+              disabled={createRun.isPending}
+              onClick={() => {
+                void createRun
+                  .mutateAsync({
+                    scenarioPackagePath: 'scenarios/operation-silent-relay',
+                    seed: 1000,
+                  })
+                  .then((result) => {
+                    router.push(`/runs/${result.run.id}`);
+                  });
+              }}
+            >
+              Start Operation Silent Relay
+            </Button>
+          </div>
+        ) : null}
         {scenariosQuery.isPending || runsQuery.isPending ? (
           <LoadingState message="Loading scenarios…" />
         ) : null}

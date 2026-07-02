@@ -7,6 +7,7 @@ dependencies = [
     "aegis-contracts",
     "aegis-persistence",
     "aegis-event-streaming",
+    "aegis-simulation",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
 ]
@@ -15,6 +16,7 @@ dependencies = [
 aegis-contracts = { workspace = true }
 aegis-persistence = { workspace = true }
 aegis-event-streaming = { workspace = true }
+aegis-simulation = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
