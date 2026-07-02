@@ -8,7 +8,15 @@ import type {
   ScenarioVersionV1,
 } from '@aegis/contracts-ts';
 
-export type { AlertV1, AssetRiskScoreV1, GraphSnapshotV1, IncidentV1, RunV1, ScenarioV1, ScenarioVersionV1 };
+export type {
+  AlertV1,
+  AssetRiskScoreV1,
+  GraphSnapshotV1,
+  IncidentV1,
+  RunV1,
+  ScenarioV1,
+  ScenarioVersionV1,
+};
 
 export type ConnectionStatus = 'connected' | 'reconnecting' | 'offline';
 

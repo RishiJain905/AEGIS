@@ -55,7 +55,7 @@ def _temporal_decay(
         return 0.0
     age_seconds = max(0.0, (current_sim_time - signal.sim_time).total_seconds())
     exponent = age_seconds / config.temporal_half_life_seconds
-    return config.temporal_decay_factor**exponent
+    return float(config.temporal_decay_factor**exponent)
 
 
 def _criticality_factor(node_criticality: float, config: RiskEngineConfigV1) -> float:

@@ -52,10 +52,18 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
   const isLoading =
     (incidentId && incidentQuery.isPending) ||
-    (runId && (incidentsQuery.isPending || alertsQuery.isPending || riskScoresQuery.isPending || graphQuery.isPending));
+    (runId &&
+      (incidentsQuery.isPending ||
+        alertsQuery.isPending ||
+        riskScoresQuery.isPending ||
+        graphQuery.isPending));
   const isError =
     (incidentId && incidentQuery.isError) ||
-    (runId && (incidentsQuery.isError || alertsQuery.isError || riskScoresQuery.isError || graphQuery.isError));
+    (runId &&
+      (incidentsQuery.isError ||
+        alertsQuery.isError ||
+        riskScoresQuery.isError ||
+        graphQuery.isError));
 
   const snapshot = graphQuery.data?.snapshot ?? null;
   const selectedRiskScore =

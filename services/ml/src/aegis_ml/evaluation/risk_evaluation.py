@@ -22,9 +22,10 @@ from aegis_ml.baselines.splits import HOLDOUT_SEEDS, SILENT_RELAY_SCENARIO_ID, T
 from aegis_ml.baselines.store import DEFAULT_BASELINE_DIR, baseline_checksum, load_baseline
 from aegis_simulation.graph_projection import build_graph_snapshot_from_runtime
 from aegis_simulation_domain import SimulationEngine
+from aegis_simulation_domain.runtime import SimulationRuntime
 
 
-def _run_seed_runtime(*, seed: int, steps: int):
+def _run_seed_runtime(*, seed: int, steps: int) -> SimulationRuntime:
     package_dir = Path("scenarios/operation-silent-relay")
     manifest = SimulationEngine.load_manifest(package_dir)
     scenario_version_id = f"scenario-version:{manifest.metadata.version}"

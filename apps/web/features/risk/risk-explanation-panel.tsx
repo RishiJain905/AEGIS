@@ -46,7 +46,9 @@ export function RiskExplanationPanel({
       {directDetectionScore != null ? (
         <div className="mt-2 flex items-center gap-2 text-xs" data-testid="risk-comparison">
           <Badge>Detection {directDetectionScore.toFixed(2)}</Badge>
-          <span className="text-[var(--aegis-text-muted)]">vs graph {riskScore.total.toFixed(2)}</span>
+          <span className="text-[var(--aegis-text-muted)]">
+            vs graph {riskScore.total.toFixed(2)}
+          </span>
         </div>
       ) : null}
 
@@ -57,8 +59,8 @@ export function RiskExplanationPanel({
             {topContribution.explanationPath.nodeIds.join(' → ')}
           </p>
           <p className="mt-2 text-xs text-[var(--aegis-text-muted)]">
-            Source signal {topContribution.signalId} · hops {topContribution.hopCount} · contribution{' '}
-            {topContribution.amount.toFixed(2)}
+            Source signal {topContribution.signalId} · hops {topContribution.hopCount} ·
+            contribution {topContribution.amount.toFixed(2)}
           </p>
           <button
             type="button"

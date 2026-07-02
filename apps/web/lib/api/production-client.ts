@@ -1,4 +1,9 @@
-import { apiErrorEnvelopeSchema, graphSnapshotSchema, parseContract, riskScoresListResponseSchema } from '@aegis/contracts-ts';
+import {
+  apiErrorEnvelopeSchema,
+  graphSnapshotSchema,
+  parseContract,
+  riskScoresListResponseSchema,
+} from '@aegis/contracts-ts';
 
 import type { AegisApiClient, ConnectionStatus, RunGraphResult } from '@/lib/api/types';
 import { ApiClientError } from '@/lib/api/types';

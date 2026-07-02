@@ -13,3 +13,4 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aegis_graph_risk"]
+artifacts = ["src/aegis_graph_risk/py.typed"]

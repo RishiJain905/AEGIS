@@ -13,11 +13,7 @@
     "signalId": "risk-sig-rule-001",
     "originAssetId": "asset:svc-logistics-api",
     "targetAssetId": "asset:db-customer-records",
-    "nodeIds": [
-      "asset:svc-logistics-api",
-      "asset:svc-api-gateway",
-      "asset:db-customer-records"
-    ],
+    "nodeIds": ["asset:svc-logistics-api", "asset:svc-api-gateway", "asset:db-customer-records"],
     "hops": [
       {
         "edgeId": "edge:logistics-gateway",
