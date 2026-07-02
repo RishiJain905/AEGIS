@@ -25,6 +25,8 @@ from aegis_incidents.rules.evaluator import evaluate_vectors
 from aegis_incidents.rules.registry import DETECTION_RULE_REGISTRY_V1
 from aegis_incidents.rules.state import DetectionRunState
 
+DETECTION_PIPELINE_TRACE_ID = "trc_01ARZ3NDEKTSV4RRFFQ69G5FAX"
+
 
 @dataclass
 class DetectionPipelineResult:
@@ -134,7 +136,7 @@ async def run_detection_for_events(
     events: list[DomainEventEnvelopeV1],
     baselines: StatisticalBaselineV1 | None = None,
     dry_run: bool = False,
-    trace_id: str = "trc_detection_pipeline",
+    trace_id: str = DETECTION_PIPELINE_TRACE_ID,
 ) -> DetectionEvaluateResponseV1:
     existing_keys = await uow.alerts.list_dedup_keys_for_run(run_id)
     pipeline_result = evaluate_features_offline(
