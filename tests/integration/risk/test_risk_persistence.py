@@ -2,88 +2,46 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from aegis_contracts.graph import GraphEdgeV1, GraphNodeV1, GraphSnapshotV1
-from aegis_contracts.versioning import (
-    GRAPH_EDGE_SCHEMA_VERSION,
-    GRAPH_NODE_SCHEMA_VERSION,
-    GRAPH_SNAPSHOT_SCHEMA_VERSION,
-)
+from aegis_contracts.graph import GraphSnapshotV1
 from aegis_incidents.risk_pipeline import run_risk_propagation_for_run
 from aegis_incidents.simulation_helpers import run_scenario_events
 from aegis_ml.baselines.store import load_baseline
+from aegis_simulation.graph_projection import build_graph_snapshot_from_runtime
+from aegis_simulation_domain import SimulationEngine
 
 SILENT_RELAY = Path("scenarios/operation-silent-relay")
 BASELINE_PATH = Path("models/baselines/v1/baseline.json")
 BASELINE_AVAILABLE = BASELINE_PATH.is_file()
+STEPS = 60
+SEED = 1000
 
 
-def _minimal_snapshot(run_id: str) -> GraphSnapshotV1:
-    now = datetime.now(tz=UTC)
-    return GraphSnapshotV1(
-        schema_version=GRAPH_SNAPSHOT_SCHEMA_VERSION,
-        run_id=run_id,
-        sequence=10,
-        captured_at=now,
-        nodes=[
-            GraphNodeV1(
-                schema_version=GRAPH_NODE_SCHEMA_VERSION,
-                id="asset:svc-logistics-api",
-                entity_type="asset",
-                asset_type="service",
-                label="Logistics API",
-                cluster_id="business-unit:bu",
-                risk_score=0.1,
-                criticality=0.7,
-                status="normal",
-                revision=1,
-            ),
-            GraphNodeV1(
-                schema_version=GRAPH_NODE_SCHEMA_VERSION,
-                id="asset:db-customer-records",
-                entity_type="asset",
-                asset_type="database",
-                label="Customer Records DB",
-                cluster_id="business-unit:bu",
-                risk_score=0.1,
-                criticality=0.9,
-                status="normal",
-                revision=1,
-            ),
-        ],
-        edges=[
-            GraphEdgeV1(
-                schema_version=GRAPH_EDGE_SCHEMA_VERSION,
-                id="edge:logistics-db",
-                source="asset:svc-logistics-api",
-                target="asset:db-customer-records",
-                relationship_type="AUTHENTICATED_TO",
-                directed=True,
-                confidence=1.0,
-                risk_contribution=0.5,
-                first_seen_at=now,
-                last_seen_at=now,
-                event_count=1,
-                revision=1,
-            ),
-        ],
-        clusters=[],
-        revision=1,
+def _scenario_snapshot(run_id: str) -> GraphSnapshotV1:
+    manifest = SimulationEngine.load_manifest(SILENT_RELAY)
+    scenario_version_id = f"scenario-version:{manifest.metadata.version}"
+    runtime = SimulationEngine.create_runtime(
+        manifest=manifest,
+        seed=SEED,
+        scenario_version_id=scenario_version_id,
     )
+    runtime.start()
+    runtime.run_steps(STEPS)
+    snapshot = build_graph_snapshot_from_runtime(runtime, sequence=STEPS)
+    return snapshot.model_copy(update={"run_id": run_id})
 
 
 @pytest.mark.asyncio
 async def test_risk_persists_scores_and_events(unit_of_work) -> None:
     if not BASELINE_AVAILABLE:
         pytest.skip("Baselines not calibrated")
-    _run_id, events = run_scenario_events(scenario_path=SILENT_RELAY, seed=1000, steps=60)
+    _run_id, events = run_scenario_events(scenario_path=SILENT_RELAY, seed=SEED, steps=STEPS)
     service = __import__(
         "aegis_simulation.application", fromlist=["SimulationApplicationService"]
     ).SimulationApplicationService(unit_of_work)
-    runtime, _manifest = await service.create_run_from_package(SILENT_RELAY, seed=1000)
+    runtime, _manifest = await service.create_run_from_package(SILENT_RELAY, seed=SEED)
     for event in events:
         adapted = event.model_copy(update={"run_id": runtime.run_id})
         await unit_of_work.append_event(adapted)
@@ -104,7 +62,7 @@ async def test_risk_persists_scores_and_events(unit_of_work) -> None:
     )
     await unit_of_work.commit()
 
-    snapshot = _minimal_snapshot(runtime.run_id)
+    snapshot = _scenario_snapshot(runtime.run_id)
     result = await run_risk_propagation_for_run(
         unit_of_work,
         run_id=runtime.run_id,
