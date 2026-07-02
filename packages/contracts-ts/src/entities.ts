@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
 import {
+  alertEvidenceSchema,
+  ruleExplanationSchema,
+} from './detection';
+import {
   actionIdSchema,
   agentSessionIdSchema,
   alertIdSchema,
@@ -148,6 +152,14 @@ export const alertSchema = z
     sourceEventId: eventIdSchema,
     assetId: assetIdSchema,
     createdAt: utcTimestampSchema,
+    confidence: z.number().min(0).max(1).optional(),
+    detectorId: z.string().optional(),
+    detectorVersion: z.string().optional(),
+    ruleId: z.string().optional(),
+    ruleVersion: z.string().optional(),
+    explanation: ruleExplanationSchema.optional(),
+    evidence: alertEvidenceSchema.optional(),
+    deduplicationKey: z.string().optional(),
   })
   .strict();
 

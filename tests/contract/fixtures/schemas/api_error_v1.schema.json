@@ -32,7 +32,11 @@
       "title": "Traceid"
     }
   },
-  "required": ["schemaVersion", "code", "message"],
+  "required": [
+    "schemaVersion",
+    "code",
+    "message"
+  ],
   "title": "ApiErrorEnvelopeV1",
   "type": "object"
 }

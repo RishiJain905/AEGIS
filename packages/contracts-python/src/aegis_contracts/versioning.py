@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase14"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase15"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -64,6 +64,18 @@ FEATURE_COMPUTE_REQUEST_SCHEMA_VERSION: Final[int] = 1
 FEATURE_COMPUTE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 FEATURE_PARITY_CHECK_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 FEATURE_SCHEMA_VERSION: Final[int] = 1
+DETECTION_RULE_SCHEMA_VERSION: Final[int] = 1
+DETECTION_RULE_REGISTRY_SCHEMA_VERSION: Final[int] = 1
+RULE_THRESHOLD_SCHEMA_VERSION: Final[int] = 1
+STATISTICAL_BASELINE_SCHEMA_VERSION: Final[int] = 1
+STATISTICAL_BASELINE_MANIFEST_SCHEMA_VERSION: Final[int] = 1
+RULE_EXPLANATION_SCHEMA_VERSION: Final[int] = 1
+ALERT_CANDIDATE_SCHEMA_VERSION: Final[int] = 1
+RULE_EVALUATION_SCHEMA_VERSION: Final[int] = 1
+METRIC_REPORT_SCHEMA_VERSION: Final[int] = 1
+EVALUATION_RUN_SCHEMA_VERSION: Final[int] = 1
+DETECTION_EVALUATE_REQUEST_SCHEMA_VERSION: Final[int] = 1
+DETECTION_EVALUATE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -115,6 +127,16 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "feature_provenance": frozenset({FEATURE_PROVENANCE_SCHEMA_VERSION}),
     "dataset_manifest": frozenset({DATASET_MANIFEST_SCHEMA_VERSION}),
     "online_feature_update": frozenset({ONLINE_FEATURE_UPDATE_SCHEMA_VERSION}),
+    "detection_rule": frozenset({DETECTION_RULE_SCHEMA_VERSION}),
+    "detection_rule_registry": frozenset({DETECTION_RULE_REGISTRY_SCHEMA_VERSION}),
+    "rule_threshold": frozenset({RULE_THRESHOLD_SCHEMA_VERSION}),
+    "statistical_baseline": frozenset({STATISTICAL_BASELINE_SCHEMA_VERSION}),
+    "statistical_baseline_manifest": frozenset({STATISTICAL_BASELINE_MANIFEST_SCHEMA_VERSION}),
+    "rule_explanation": frozenset({RULE_EXPLANATION_SCHEMA_VERSION}),
+    "alert_candidate": frozenset({ALERT_CANDIDATE_SCHEMA_VERSION}),
+    "rule_evaluation": frozenset({RULE_EVALUATION_SCHEMA_VERSION}),
+    "metric_report": frozenset({METRIC_REPORT_SCHEMA_VERSION}),
+    "evaluation_run": frozenset({EVALUATION_RUN_SCHEMA_VERSION}),
 }
 
 

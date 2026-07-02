@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from aegis_contracts.detection import AlertEvidenceV1, RuleExplanationV1
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 from aegis_contracts.primitives import (
     ActionId,
@@ -178,6 +179,14 @@ class AlertV1(BaseModel):
     source_event_id: EventId = Field(alias="sourceEventId")
     asset_id: AssetId = Field(alias="assetId")
     created_at: UtcTimestamp = Field(alias="createdAt")
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    detector_id: str | None = Field(default=None, alias="detectorId")
+    detector_version: str | None = Field(default=None, alias="detectorVersion")
+    rule_id: str | None = Field(default=None, alias="ruleId")
+    rule_version: str | None = Field(default=None, alias="ruleVersion")
+    explanation: RuleExplanationV1 | None = None
+    evidence: AlertEvidenceV1 | None = None
+    deduplication_key: str | None = Field(default=None, alias="deduplicationKey")
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> AlertV1:

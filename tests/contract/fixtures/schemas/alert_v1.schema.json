@@ -1,17 +1,253 @@
 {
+  "$defs": {
+    "AlertEvidenceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "featureSchemaVersion": {
+          "minimum": 1,
+          "title": "Featureschemaversion",
+          "type": "integer"
+        },
+        "featureValues": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Featurevalues",
+          "type": "object"
+        },
+        "sequenceEnd": {
+          "minimum": 0,
+          "title": "Sequenceend",
+          "type": "integer"
+        },
+        "sequenceStart": {
+          "minimum": 0,
+          "title": "Sequencestart",
+          "type": "integer"
+        },
+        "simTimeEnd": {
+          "title": "Simtimeend",
+          "type": "string"
+        },
+        "simTimeStart": {
+          "title": "Simtimestart",
+          "type": "string"
+        },
+        "sourceEventIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sourceeventids",
+          "type": "array"
+        },
+        "windowKey": {
+          "minLength": 1,
+          "title": "Windowkey",
+          "type": "string"
+        }
+      },
+      "required": [
+        "featureSchemaVersion",
+        "featureValues",
+        "sourceEventIds",
+        "windowKey",
+        "sequenceStart",
+        "sequenceEnd",
+        "simTimeStart",
+        "simTimeEnd"
+      ],
+      "title": "AlertEvidenceV1",
+      "type": "object"
+    },
+    "DetectorType": {
+      "enum": [
+        "deterministic",
+        "statistical_baseline"
+      ],
+      "title": "DetectorType",
+      "type": "string"
+    },
+    "RuleExplanationV1": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Baseline"
+        },
+        "comparison": {
+          "minLength": 1,
+          "title": "Comparison",
+          "type": "string"
+        },
+        "condition": {
+          "minLength": 1,
+          "title": "Condition",
+          "type": "string"
+        },
+        "detectorType": {
+          "$ref": "#/$defs/DetectorType"
+        },
+        "featureName": {
+          "minLength": 1,
+          "title": "Featurename",
+          "type": "string"
+        },
+        "observed": {
+          "title": "Observed",
+          "type": "number"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "summary": {
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "threshold": {
+          "title": "Threshold",
+          "type": "number"
+        },
+        "windowKey": {
+          "minLength": 1,
+          "title": "Windowkey",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "summary",
+        "condition",
+        "featureName",
+        "observed",
+        "threshold",
+        "comparison",
+        "windowKey",
+        "detectorType"
+      ],
+      "title": "RuleExplanationV1",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "properties": {
     "assetId": {
       "title": "Assetid",
       "type": "string"
     },
+    "confidence": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Confidence"
+    },
     "createdAt": {
       "title": "Createdat",
       "type": "string"
     },
+    "deduplicationKey": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deduplicationkey"
+    },
+    "detectorId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Detectorid"
+    },
+    "detectorVersion": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Detectorversion"
+    },
+    "evidence": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AlertEvidenceV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "explanation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RuleExplanationV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "id": {
       "title": "Id",
       "type": "string"
+    },
+    "ruleId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ruleid"
+    },
+    "ruleVersion": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ruleversion"
     },
     "runId": {
       "title": "Runid",

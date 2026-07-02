@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from aegis_contracts import (
+    AlertV1,
     DomainEventEnvelopeV1,
     GraphSnapshotV1,
     IdempotencyRecordV1,
@@ -23,6 +24,7 @@ from aegis_persistence.errors import (
     StaleRevisionError,
 )
 from aegis_persistence.mappers import (
+    alert_to_domain,
     checkpoint_to_domain,
     domain_to_payload,
     event_to_domain,
@@ -36,6 +38,7 @@ from aegis_persistence.mappers import (
     scenario_version_to_domain,
 )
 from aegis_persistence.orm.tables import (
+    AlertRow,
     DomainEventRow,
     GraphSnapshotRow,
     IdempotencyRecordRow,
@@ -227,6 +230,49 @@ class PostgresEventRepository:
                 event_id=envelope.event_id,
             ) from exc
         return envelope
+
+
+class PostgresAlertRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_id(self, alert_id: str) -> AlertV1 | None:
+        row = await self._session.get(AlertRow, alert_id)
+        return alert_to_domain(row) if row else None
+
+    async def list_by_run(self, run_id: str) -> list[AlertV1]:
+        result = await self._session.execute(
+            select(AlertRow).where(AlertRow.run_id == run_id).order_by(AlertRow.created_at)
+        )
+        return [alert_to_domain(row) for row in result.scalars().all()]
+
+    async def add(self, alert: AlertV1) -> AlertV1:
+        payload = domain_to_payload(alert)
+        row = AlertRow(
+            id=alert.id,
+            run_id=alert.run_id,
+            asset_id=alert.asset_id,
+            source_event_id=alert.source_event_id,
+            created_at=alert.created_at,
+            payload=payload,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return alert
+
+    async def exists_by_dedup_key(self, run_id: str, deduplication_key: str) -> bool:
+        keys = await self.list_dedup_keys_for_run(run_id)
+        return deduplication_key in keys
+
+    async def list_dedup_keys_for_run(self, run_id: str) -> set[str]:
+        result = await self._session.execute(select(AlertRow.payload).where(AlertRow.run_id == run_id))
+        keys: set[str] = set()
+        for payload in result.scalars().all():
+            if isinstance(payload, dict):
+                key = payload.get("deduplicationKey")
+                if isinstance(key, str):
+                    keys.add(key)
+        return keys
 
 
 class PostgresIncidentRepository:

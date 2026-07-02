@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "baselineVersion": "1.0.0",
+  "baselineChecksum": "sha256:0fded8f9d8ddd9ae566799d7c100c58b8b35f6e66094f163c52a4168de9589bc",
+  "trainingSeeds": [
+    1,
+    11,
+    1006
+  ],
+  "holdoutSeeds": [
+    1000,
+    1007,
+    1014
+  ],
+  "featureSchemaVersion": 1,
+  "workspaceVersion": "0.0.0-phase15",
+  "createdAt": "2026-07-02T12:33:46.097737Z"
+}

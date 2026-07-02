@@ -11,12 +11,20 @@
           "$ref": "#/$defs/ActorType"
         }
       },
-      "required": ["type", "id"],
+      "required": [
+        "type",
+        "id"
+      ],
       "title": "ActorRef",
       "type": "object"
     },
     "ActorType": {
-      "enum": ["asset", "agent", "system", "operator"],
+      "enum": [
+        "asset",
+        "agent",
+        "system",
+        "operator"
+      ],
       "title": "ActorType",
       "type": "string"
     }

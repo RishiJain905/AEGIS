@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase14",
+  "workspaceVersion": "0.0.0-phase15",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",
@@ -14,7 +14,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/alert_v1.schema.json",
-      "sha256": "5cd365531a7fc4691d6bffe043c86ccc657f821b722f95c6e50b24705c1b9c76",
+      "sha256": "5afe74ec268d9a8812e3cfb4e438f1db545b565808e8ed2f3ab59faa23d1e301",
       "schemaVersion": 1
     },
     {
@@ -269,7 +269,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/feature_compute_response_v1.json",
-      "sha256": "6aaa3e7330b6338351a37abc2d303e7d0cf4a096a837c54eed97ccd0d9cafd5b",
+      "sha256": "fe01b21f08f17ed765c143ca25f85cbafc382e38d3c4b4094ef14711a25dff4e",
       "schemaVersion": 1
     },
     {
@@ -279,12 +279,12 @@
     },
     {
       "path": "tests/contract/fixtures/valid/feature_schema_manifest_v1.json",
-      "sha256": "f8bb811f2fd747f58a85e41786917098f1db7083d86ce9a155feaa84643a7862",
+      "sha256": "0f7644458ef76ea2be5bed503bf840a5b0a3846ecaca9c0ddada722e88c23d99",
       "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/feature_vector_v1.json",
-      "sha256": "cedad52d5840f1b24c565efe3733c63574b2738160f3d9c483e789970f16b328",
+      "sha256": "e196bc58b5905fd506ad674ba9872f3e661104dc535cef67f4f0805941e48a03",
       "schemaVersion": 1
     },
     {
@@ -294,7 +294,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/online_feature_update_v1.json",
-      "sha256": "c4bb003bd323bfe9792d8a209f7eb80788dd36b6aadda50d1773f8b5b8622115",
+      "sha256": "8c29a93f38e9dcb579d6fe488380a51cf4ea67421461a51d8b9369212ff10a71",
       "schemaVersion": 1
     }
   ]

@@ -1,0 +1,51 @@
+schemaVersion: 1
+thresholdConfigVersion: "1.0.0"
+rules:
+  rule-unusual-login:
+    auth_failure_rate: 0.3
+    auth_failed_count: 5
+    severity: high
+    confidence_base: 0.85
+    cooldown_sim_seconds: 600
+    suppression_group: auth
+  rule-unseen-source:
+    min_activity_count: 2
+    severity: medium
+    confidence_base: 0.75
+    cooldown_sim_seconds: 900
+    suppression_group: auth
+  rule-service-account-misuse:
+    auth_failure_rate: 0.2
+    api_request_count: 10
+    severity: high
+    confidence_base: 0.8
+    cooldown_sim_seconds: 600
+    suppression_group: auth
+  rule-data-volume:
+    z_score_threshold: 3.0
+    min_sample_count: 5
+    severity: critical
+    confidence_base: 0.9
+    cooldown_sim_seconds: 600
+    suppression_group: volume
+  rule-unusual-paths:
+    proc_suspicious_rate: 0.2
+    proc_event_count: 3
+    severity: medium
+    confidence_base: 0.7
+    cooldown_sim_seconds: 600
+    suppression_group: paths
+  rule-deploy-health-correlation:
+    deploy_failure_rate: 0.25
+    health_unhealthy_rate: 0.3
+    severity: high
+    confidence_base: 0.82
+    cooldown_sim_seconds: 600
+    suppression_group: deploy-health
+  rule-alert-flood-drift:
+    max_alerts_per_window: 5
+    window_sim_seconds: 600
+    severity: low
+    confidence_base: 0.65
+    cooldown_sim_seconds: 300
+    suppression_group: meta

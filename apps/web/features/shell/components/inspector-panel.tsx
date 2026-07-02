@@ -137,15 +137,40 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
             ) : null}
 
             {alertsQuery.data && alertsQuery.data.length > 0 ? (
-              <Panel title="Alerts" density="compact">
+              <Panel title="Alerts" density="compact" data-testid="alerts-panel">
                 <ul className="flex flex-col gap-2">
                   {alertsQuery.data.map((alert) => (
                     <li
                       key={alert.id}
                       className="rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-3 py-2 text-sm"
+                      data-testid={`alert-item-${alert.id}`}
                     >
                       <p className="font-medium">{alert.title}</p>
-                      <p className="text-xs text-[var(--aegis-text-secondary)]">{alert.severity}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <Badge>{alert.severity}</Badge>
+                        {alert.confidence != null ? (
+                          <span className="text-xs text-[var(--aegis-text-muted)]">
+                            {Math.round(alert.confidence * 100)}% confidence
+                          </span>
+                        ) : null}
+                        {alert.detectorVersion ? (
+                          <span className="font-mono text-xs text-[var(--aegis-text-muted)]">
+                            {alert.detectorVersion}
+                          </span>
+                        ) : null}
+                      </div>
+                      {alert.explanation ? (
+                        <details className="mt-2 text-xs text-[var(--aegis-text-secondary)]">
+                          <summary className="cursor-pointer">Explanation</summary>
+                          <p className="mt-1">{alert.explanation.summary}</p>
+                          <p className="mt-1 font-mono text-[10px]">{alert.explanation.comparison}</p>
+                          {alert.evidence ? (
+                            <p className="mt-1 text-[var(--aegis-text-muted)]">
+                              Window: {alert.evidence.windowKey}
+                            </p>
+                          ) : null}
+                        </details>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

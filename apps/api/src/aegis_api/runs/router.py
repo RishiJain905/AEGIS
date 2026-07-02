@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from aegis_contracts import (
+    AlertV1,
     ApiErrorEnvelopeV1,
     GraphSnapshotV1,
+    IncidentV1,
     RunCommandResponseV1,
     RunCreateRequestV1,
     RunV1,
@@ -18,6 +20,7 @@ from aegis_contracts import (
 from aegis_contracts.errors import ContractErrorCode
 from aegis_contracts.versioning import RUN_CREATE_REQUEST_SCHEMA_VERSION
 from aegis_persistence.repositories.postgres import (
+    PostgresAlertRepository,
     PostgresGraphSnapshotRepository,
     PostgresRunRepository,
     PostgresScenarioRepository,
@@ -26,11 +29,11 @@ from aegis_persistence.repositories.postgres import (
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_simulation.run_command_service import RunCommandService
 from aegis_simulation_domain.errors import SimulationError, SimulationErrorCode
-from fastapi import APIRouter, Header, Request
+from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from aegis_api.db.session import get_db_session_maker
+from aegis_api.db.session import db_session, get_db_session_maker
 
 router = APIRouter(prefix="/api/v1", tags=["runs"])
 
@@ -266,16 +269,32 @@ async def step_run(
     return await _run_command(request, run_id, SimulationCommandType.STEP, idempotency_key)
 
 
-@router.get("/runs/{run_id}/incidents", response_model=list[dict[str, object]])
-async def list_run_incidents(run_id: str) -> list[dict[str, object]]:
-    _ = run_id
-    return []
+@router.get("/runs/{run_id}/incidents", response_model=list[IncidentV1])
+async def list_run_incidents(run_id: str) -> list[IncidentV1]:
+    async with db_session() as session:
+        from aegis_persistence.mappers import incident_to_domain
+        from aegis_persistence.orm.tables import IncidentRow
+        from sqlalchemy import select
+
+        result = await session.execute(
+            select(IncidentRow).where(IncidentRow.run_id == run_id).order_by(IncidentRow.created_at)
+        )
+        return [incident_to_domain(item) for item in result.scalars().all()]
 
 
-@router.get("/runs/{run_id}/alerts", response_model=list[dict[str, object]])
-async def list_run_alerts(run_id: str) -> list[dict[str, object]]:
-    _ = run_id
-    return []
+@router.get("/runs/{run_id}/alerts", response_model=list[AlertV1])
+async def list_run_alerts(run_id: str) -> list[AlertV1]:
+    async with db_session() as session:
+        return await PostgresAlertRepository(session).list_by_run(run_id)
+
+
+@router.get("/alerts/{alert_id}", response_model=AlertV1)
+async def get_alert(alert_id: str) -> AlertV1:
+    async with db_session() as session:
+        alert = await PostgresAlertRepository(session).get_by_id(alert_id)
+        if alert is None:
+            raise HTTPException(status_code=404, detail=f"Alert not found: {alert_id}")
+        return alert
 
 
 @router.get("/incidents/{incident_id}")

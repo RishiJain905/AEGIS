@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from aegis_contracts import (
+    AlertV1,
     DomainEventEnvelopeV1,
     IdempotencyRecordV1,
     IncidentV1,
@@ -45,6 +46,18 @@ class EventRepository(Protocol):
     async def get_by_id(self, event_id: str) -> DomainEventEnvelopeV1 | None: ...
 
     async def append(self, envelope: DomainEventEnvelopeV1) -> DomainEventEnvelopeV1: ...
+
+
+class AlertRepository(Protocol):
+    async def get_by_id(self, alert_id: str) -> AlertV1 | None: ...
+
+    async def list_by_run(self, run_id: str) -> list[AlertV1]: ...
+
+    async def add(self, alert: AlertV1) -> AlertV1: ...
+
+    async def exists_by_dedup_key(self, run_id: str, deduplication_key: str) -> bool: ...
+
+    async def list_dedup_keys_for_run(self, run_id: str) -> set[str]: ...
 
 
 class IncidentRepository(Protocol):
@@ -97,6 +110,9 @@ class UnitOfWork(Protocol):
 
   @property
   def events(self) -> EventRepository: ...
+
+  @property
+  def alerts(self) -> AlertRepository: ...
 
   @property
   def incidents(self) -> IncidentRepository: ...
