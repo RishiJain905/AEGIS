@@ -9,6 +9,7 @@ export const queryKeys = {
     detail: (runId: string) => ['runs', runId] as const,
     incidents: (runId: string) => ['runs', runId, 'incidents'] as const,
     alerts: (runId: string) => ['runs', runId, 'alerts'] as const,
+    riskScores: (runId: string) => ['runs', runId, 'risk-scores'] as const,
     graph: (runId: string) => ['runs', runId, 'graph'] as const,
     readOnly: (runId: string) => ['runs', runId, 'read-only'] as const,
   },

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "signalId": "risk-sig-rule-001",
+  "originAssetId": "asset:svc-logistics-api",
+  "targetAssetId": "asset:db-customer-records",
+  "nodeIds": ["asset:svc-logistics-api", "asset:svc-api-gateway", "asset:db-customer-records"],
+  "hops": [
+    {
+      "edgeId": "edge:logistics-gateway",
+      "sourceId": "asset:svc-logistics-api",
+      "targetId": "asset:svc-api-gateway",
+      "relationshipType": "DEPENDS_ON",
+      "edgeWeight": 0.43,
+      "hopIndex": 1
+    },
+    {
+      "edgeId": "edge:gateway-db",
+      "sourceId": "asset:svc-api-gateway",
+      "targetId": "asset:db-customer-records",
+      "relationshipType": "AUTHENTICATED_TO",
+      "edgeWeight": 0.38,
+      "hopIndex": 2
+    }
+  ],
+  "hopCount": 2,
+  "distanceDecay": 0.4225,
+  "temporalDecay": 1.0,
+  "criticalityFactor": 1.18,
+  "contribution": 0.14,
+  "algorithmVersion": "graph-risk-v1"
+}

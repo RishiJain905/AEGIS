@@ -59,6 +59,8 @@ export const EVENT_TYPE_REGISTRY: Readonly<Record<string, number>> = {
   'action.executed': 1,
   'graph.snapshot.created': 1,
   'model.score.recorded': 1,
+  'risk.score.computed': 1,
+  'risk.projection.updated': 1,
 };
 
 export function isKnownEventType(eventType: string): boolean {

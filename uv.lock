@@ -10,6 +10,7 @@ members = [
     "aegis-contracts",
     "aegis-event-streaming",
     "aegis-graph-domain",
+    "aegis-graph-risk",
     "aegis-incidents",
     "aegis-ml",
     "aegis-observability",
@@ -140,11 +141,23 @@ dependencies = [
 requires-dist = [{ name = "aegis-contracts", editable = "packages/contracts-python" }]
 
 [[package]]
+name = "aegis-graph-risk"
+version = "0.0.0"
+source = { editable = "packages/graph-risk" }
+dependencies = [
+    { name = "aegis-contracts" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "aegis-contracts", editable = "packages/contracts-python" }]
+
+[[package]]
 name = "aegis-incidents"
 version = "0.0.0"
 source = { editable = "services/incidents" }
 dependencies = [
     { name = "aegis-contracts" },
+    { name = "aegis-graph-risk" },
     { name = "aegis-ml" },
     { name = "aegis-persistence" },
     { name = "aegis-simulation-domain" },
@@ -154,6 +167,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
+    { name = "aegis-graph-risk", editable = "packages/graph-risk" },
     { name = "aegis-ml", editable = "services/ml" },
     { name = "aegis-persistence", editable = "packages/persistence" },
     { name = "aegis-simulation-domain", editable = "packages/simulation-domain" },
@@ -166,7 +180,9 @@ version = "0.0.0"
 source = { editable = "services/ml" }
 dependencies = [
     { name = "aegis-contracts" },
+    { name = "aegis-graph-risk" },
     { name = "aegis-persistence" },
+    { name = "aegis-simulation" },
     { name = "aegis-simulation-domain" },
     { name = "joblib" },
     { name = "numpy" },
@@ -176,7 +192,9 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
+    { name = "aegis-graph-risk", editable = "packages/graph-risk" },
     { name = "aegis-persistence", editable = "packages/persistence" },
+    { name = "aegis-simulation", editable = "services/simulation" },
     { name = "aegis-simulation-domain", editable = "packages/simulation-domain" },
     { name = "joblib", specifier = ">=1.4" },
     { name = "numpy", specifier = ">=2.0" },

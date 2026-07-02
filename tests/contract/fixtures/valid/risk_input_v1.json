@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "signalId": "risk-sig-rule-001",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sourceType": "rule",
+  "assetId": "asset:svc-logistics-api",
+  "strength": 0.82,
+  "confidence": 0.91,
+  "simTime": "2026-06-30T02:05:00Z",
+  "deduplicationKey": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV:rule-auth-failures:asset:svc-logistics-api:300",
+  "status": "active",
+  "provenanceRef": "alert:det-abc123def456",
+  "detectorId": "rule-auth-failures",
+  "ruleId": "rule-auth-failures"
+}

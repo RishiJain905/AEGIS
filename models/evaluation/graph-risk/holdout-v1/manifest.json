@@ -1,0 +1,11 @@
+{
+  "evaluationId": "graph-risk-holdout-v1",
+  "algorithmVersion": "graph-risk-v1",
+  "holdoutSeeds": [
+    1000,
+    1007,
+    1014
+  ],
+  "meanPropagatedReachRatio": 1.0,
+  "checksum": "sha256:150b94fcc27d710f71b3c00a762a1e771db134fe602983029b27be3dc9d2d701"
+}

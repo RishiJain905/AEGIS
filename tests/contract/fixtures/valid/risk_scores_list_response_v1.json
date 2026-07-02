@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "scores": [
+    {
+      "schemaVersion": 1,
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "assetId": "asset:db-customer-records",
+      "total": 0.14,
+      "direct": 0.0,
+      "propagated": 0.14,
+      "algorithmVersion": "graph-risk-v1",
+      "computedAtSequence": 420,
+      "simTime": "2026-06-30T02:05:00.000Z",
+      "topContributions": []
+    }
+  ]
+}

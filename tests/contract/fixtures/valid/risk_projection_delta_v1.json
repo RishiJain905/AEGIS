@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sequence": 421,
+  "algorithmVersion": "graph-risk-v1",
+  "nodeUpdates": [
+    {
+      "assetId": "asset:svc-logistics-api",
+      "riskScore": 0.82,
+      "direct": 0.82,
+      "propagated": 0.0,
+      "revision": 43
+    },
+    {
+      "assetId": "asset:db-customer-records",
+      "riskScore": 0.14,
+      "direct": 0.0,
+      "propagated": 0.14,
+      "revision": 44
+    }
+  ]
+}

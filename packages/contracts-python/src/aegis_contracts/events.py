@@ -125,6 +125,8 @@ class EventTypeRegistry:
         "action.executed": 1,
         "graph.snapshot.created": 1,
         "model.score.recorded": 1,
+        "risk.score.computed": 1,
+        "risk.projection.updated": 1,
     }
 
     @classmethod

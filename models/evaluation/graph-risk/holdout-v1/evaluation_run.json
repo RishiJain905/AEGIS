@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "evaluationId": "graph-risk-holdout-v1",
+  "scenarioId": "scenario:operation-silent-relay",
+  "trainingSeeds": [
+    1,
+    11,
+    1006
+  ],
+  "holdoutSeeds": [
+    1000,
+    1007,
+    1014
+  ],
+  "ruleRegistryVersion": "1.0.0",
+  "thresholdConfigVersion": "1.0.0",
+  "baselineChecksum": "sha256:0fded8f9d8ddd9ae566799d7c100c58b8b35f6e66094f163c52a4168de9589bc",
+  "featureSchemaVersion": 1,
+  "workspaceVersion": "0.0.0-phase17",
+  "createdAt": "2026-07-02T14:43:10.701401Z",
+  "metrics": {
+    "schemaVersion": 1,
+    "precision": 1.0,
+    "recall": 1.0,
+    "falsePositiveRate": 0.0,
+    "meanDetectionDelaySimSeconds": null,
+    "causeCoverage": 1.0,
+    "perSeed": [
+      {
+        "seed": 1000,
+        "runId": "run_TF1XCEJ070B573N60FN6YQZRY6",
+        "precision": 1.0,
+        "recall": 1.0,
+        "falsePositiveRate": 0.0,
+        "detectionDelaySimSeconds": null,
+        "causeCoverage": 1.0,
+        "truePositives": 4,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      },
+      {
+        "seed": 1007,
+        "runId": "run_3QPE78C0EE7ZVW3B647HNXFSK1",
+        "precision": 1.0,
+        "recall": 1.0,
+        "falsePositiveRate": 0.0,
+        "detectionDelaySimSeconds": null,
+        "causeCoverage": 1.0,
+        "truePositives": 4,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      },
+      {
+        "seed": 1014,
+        "runId": "run_S71V00R7EE453XWR6AM7HP8NS7",
+        "precision": 1.0,
+        "recall": 1.0,
+        "falsePositiveRate": 0.0,
+        "detectionDelaySimSeconds": null,
+        "causeCoverage": 1.0,
+        "truePositives": 4,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      }
+    ]
+  }
+}

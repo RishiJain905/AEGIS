@@ -12,11 +12,13 @@ COPY packages/persistence/pyproject.toml packages/persistence/
 COPY packages/event-streaming/pyproject.toml packages/event-streaming/
 COPY packages/scenario-sdk/pyproject.toml packages/scenario-sdk/
 COPY packages/simulation-domain/pyproject.toml packages/simulation-domain/
+COPY packages/graph-risk/pyproject.toml packages/graph-risk/
 COPY packages/contracts-python/src packages/contracts-python/src
 COPY packages/persistence/src packages/persistence/src
 COPY packages/event-streaming/src packages/event-streaming/src
 COPY packages/scenario-sdk/src packages/scenario-sdk/src
 COPY packages/simulation-domain/src packages/simulation-domain/src
+COPY packages/graph-risk/src packages/graph-risk/src
 COPY services/ml/src services/ml/src
 COPY services/incidents/src services/incidents/src
 COPY services/simulation/src services/simulation/src
@@ -35,6 +37,7 @@ COPY packages/persistence/src packages/persistence/src
 COPY packages/event-streaming/src packages/event-streaming/src
 COPY packages/scenario-sdk/src packages/scenario-sdk/src
 COPY packages/simulation-domain/src packages/simulation-domain/src
+COPY packages/graph-risk/src packages/graph-risk/src
 ENV PATH="/app/.venv/bin:$PATH"
 USER aegis
 EXPOSE 8000

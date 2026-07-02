@@ -1,5 +1,6 @@
 import type {
   AlertV1,
+  AssetRiskScoreV1,
   GraphSnapshotV1,
   IncidentV1,
   RunV1,
@@ -7,7 +8,15 @@ import type {
   ScenarioVersionV1,
 } from '@aegis/contracts-ts';
 
-export type { AlertV1, GraphSnapshotV1, IncidentV1, RunV1, ScenarioV1, ScenarioVersionV1 };
+export type {
+  AlertV1,
+  AssetRiskScoreV1,
+  GraphSnapshotV1,
+  IncidentV1,
+  RunV1,
+  ScenarioV1,
+  ScenarioVersionV1,
+};
 
 export type ConnectionStatus = 'connected' | 'reconnecting' | 'offline';
 
@@ -35,6 +44,7 @@ export interface AegisApiClient {
   listIncidents(runId: string, signal?: AbortSignal): Promise<IncidentV1[]>;
   getIncident(incidentId: string, signal?: AbortSignal): Promise<IncidentV1>;
   listAlerts(runId: string, signal?: AbortSignal): Promise<AlertV1[]>;
+  listRiskScores(runId: string, signal?: AbortSignal): Promise<AssetRiskScoreV1[]>;
   getRunGraph(runId: string, signal?: AbortSignal): Promise<RunGraphResult>;
   getConnectionStatus(signal?: AbortSignal): Promise<ConnectionStatus>;
   isReadOnly(runId: string, signal?: AbortSignal): Promise<boolean>;

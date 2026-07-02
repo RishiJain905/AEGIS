@@ -10,6 +10,7 @@ import {
 import { z } from 'zod';
 
 import shellDataset from '@/fixtures/shell-dataset.json';
+import { FIXTURE_RISK_SCORES } from '@/fixtures/risk-scores-fixture';
 import type {
   AegisApiClient,
   ConnectionStatus,
@@ -200,6 +201,11 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
     async listAlerts(runId, signal) {
       const alerts = dataset.alerts.filter((item) => item.runId === runId);
       return applyProfile(alerts, signal);
+    },
+
+    async listRiskScores(runId, signal) {
+      const scores = FIXTURE_RISK_SCORES.filter((item) => item.runId === runId);
+      return applyProfile(scores, signal);
     },
 
     async getRunGraph(runId, signal) {

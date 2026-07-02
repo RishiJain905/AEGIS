@@ -4,7 +4,9 @@ version = "0.0.0"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "aegis-contracts",
+    "aegis-graph-risk",
     "aegis-persistence",
+    "aegis-simulation",
     "aegis-simulation-domain",
     "scikit-learn>=1.6",
     "joblib>=1.4",
@@ -13,7 +15,9 @@ dependencies = [
 
 [tool.uv.sources]
 aegis-contracts = { workspace = true }
+aegis-graph-risk = { workspace = true }
 aegis-persistence = { workspace = true }
+aegis-simulation = { workspace = true }
 aegis-simulation-domain = { workspace = true }
 
 [build-system]

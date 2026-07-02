@@ -1,6 +1,6 @@
 'use client';
 
-import type { GraphSnapshotV1 } from '@aegis/contracts-ts';
+import type { AssetRiskScoreV1, GraphSnapshotV1 } from '@aegis/contracts-ts';
 import { Badge, Panel } from '@aegis/ui';
 
 import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-visual-store';
@@ -8,9 +8,14 @@ import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-v
 export interface GraphEntityInspectorProps {
   snapshot: GraphSnapshotV1;
   selectedEntityId: string | null;
+  riskScore?: AssetRiskScoreV1 | null;
 }
 
-export function GraphEntityInspector({ snapshot, selectedEntityId }: GraphEntityInspectorProps) {
+export function GraphEntityInspector({
+  snapshot,
+  selectedEntityId,
+  riskScore,
+}: GraphEntityInspectorProps) {
   const visualState = useGraphVisualStore((s) => s.visualState);
 
   if (!selectedEntityId) {
@@ -35,8 +40,20 @@ export function GraphEntityInspector({ snapshot, selectedEntityId }: GraphEntity
       <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div>
           <dt className="text-[var(--aegis-text-muted)]">Risk score</dt>
-          <dd className="font-mono">{node.riskScore.toFixed(2)}</dd>
+          <dd className="font-mono">{(riskScore?.total ?? node.riskScore).toFixed(2)}</dd>
         </div>
+        {riskScore ? (
+          <>
+            <div>
+              <dt className="text-[var(--aegis-text-muted)]">Direct</dt>
+              <dd className="font-mono">{riskScore.direct.toFixed(2)}</dd>
+            </div>
+            <div>
+              <dt className="text-[var(--aegis-text-muted)]">Propagated</dt>
+              <dd className="font-mono">{riskScore.propagated.toFixed(2)}</dd>
+            </div>
+          </>
+        ) : null}
         <div>
           <dt className="text-[var(--aegis-text-muted)]">Criticality</dt>
           <dd className="font-mono">{node.criticality.toFixed(2)}</dd>

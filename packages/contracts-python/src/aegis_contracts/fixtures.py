@@ -66,6 +66,17 @@ from aegis_contracts.realtime import (
     DeadLetterRecordV1,
     RealtimeMessageEnvelopeV1,
 )
+from aegis_contracts.risk import (
+    AssetRiskScoreV1,
+    RiskComputeRequestV1,
+    RiskComputeResponseV1,
+    RiskContributionV1,
+    RiskEngineConfigV1,
+    RiskExplanationPathV1,
+    RiskInputV1,
+    RiskProjectionDeltaV1,
+    RiskScoresListResponseV1,
+)
 from aegis_contracts.simulation import (
     NormalizedEventHashV1,
     RunConfigurationV1,
@@ -136,4 +147,13 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "model_score_response_v1": ModelScoreResponseV1,
     "model_verify_artifact_request_v1": ModelVerifyArtifactRequestV1,
     "model_verify_artifact_response_v1": ModelVerifyArtifactResponseV1,
+    "risk_input_v1": RiskInputV1,
+    "risk_engine_config_v1": RiskEngineConfigV1,
+    "risk_explanation_path_v1": RiskExplanationPathV1,
+    "risk_contribution_v1": RiskContributionV1,
+    "asset_risk_score_v1": AssetRiskScoreV1,
+    "risk_projection_delta_v1": RiskProjectionDeltaV1,
+    "risk_compute_request_v1": RiskComputeRequestV1,
+    "risk_compute_response_v1": RiskComputeResponseV1,
+    "risk_scores_list_response_v1": RiskScoresListResponseV1,
 }
