@@ -48,6 +48,16 @@ from aegis_contracts.live_run import (
     SnapshotBootstrapPayloadV1,
     TimelineEntryV1,
 )
+from aegis_contracts.models import (
+    AnomalyExplanationV1,
+    ModelArtifactReferenceV1,
+    ModelInferenceResultV1,
+    ModelScoreRequestV1,
+    ModelScoreResponseV1,
+    ModelVerifyArtifactRequestV1,
+    ModelVerifyArtifactResponseV1,
+    TrainingRunManifestV1,
+)
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
 from aegis_contracts.realtime import (
     BackfillRequestV1,
@@ -118,4 +128,12 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "feature_compute_request_v1": FeatureComputeRequestV1,
     "feature_compute_response_v1": FeatureComputeResponseV1,
     "feature_parity_check_response_v1": FeatureParityCheckResponseV1,
+    "anomaly_explanation_v1": AnomalyExplanationV1,
+    "training_run_manifest_v1": TrainingRunManifestV1,
+    "model_artifact_reference_v1": ModelArtifactReferenceV1,
+    "model_inference_result_v1": ModelInferenceResultV1,
+    "model_score_request_v1": ModelScoreRequestV1,
+    "model_score_response_v1": ModelScoreResponseV1,
+    "model_verify_artifact_request_v1": ModelVerifyArtifactRequestV1,
+    "model_verify_artifact_response_v1": ModelVerifyArtifactResponseV1,
 }

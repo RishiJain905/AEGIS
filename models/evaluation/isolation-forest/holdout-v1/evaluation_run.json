@@ -1,0 +1,170 @@
+{
+  "evaluationRun": {
+    "schemaVersion": 1,
+    "evaluationId": "eval-isolation-forest-holdout-v1",
+    "scenarioId": "scenario:operation-silent-relay",
+    "trainingSeeds": [
+      1,
+      11,
+      1006
+    ],
+    "holdoutSeeds": [
+      1000,
+      1007,
+      1014
+    ],
+    "ruleRegistryVersion": "1.0.0",
+    "thresholdConfigVersion": "0.7518243199461897",
+    "baselineChecksum": "sha256:8007b09f1d331e9338c24dcd9e02c53b278afc09be5b3f4421665ae91ddbf185",
+    "featureSchemaVersion": 1,
+    "workspaceVersion": "0.0.0-phase16",
+    "createdAt": "2026-07-02T14:04:53.048366Z",
+    "metrics": {
+      "schemaVersion": 1,
+      "precision": 0.3333333333333333,
+      "recall": 0.0,
+      "falsePositiveRate": 0.3333333333333333,
+      "meanDetectionDelaySimSeconds": null,
+      "causeCoverage": 0.0,
+      "perSeed": [
+        {
+          "seed": 1000,
+          "runId": "run_TF1XCEJ070B573N60FN6YQZRY6",
+          "precision": 1.0,
+          "recall": 0.0,
+          "falsePositiveRate": 0.0,
+          "detectionDelaySimSeconds": null,
+          "causeCoverage": 0.0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "falseNegatives": 2
+        },
+        {
+          "seed": 1007,
+          "runId": "run_3QPE78C0EE7ZVW3B647HNXFSK1",
+          "precision": 0.0,
+          "recall": 0.0,
+          "falsePositiveRate": 0.5,
+          "detectionDelaySimSeconds": null,
+          "causeCoverage": 0.0,
+          "truePositives": 0,
+          "falsePositives": 1,
+          "falseNegatives": 2
+        },
+        {
+          "seed": 1014,
+          "runId": "run_S71V00R7EE453XWR6AM7HP8NS7",
+          "precision": 0.0,
+          "recall": 0.0,
+          "falsePositiveRate": 0.5,
+          "detectionDelaySimSeconds": null,
+          "causeCoverage": 0.0,
+          "truePositives": 0,
+          "falsePositives": 1,
+          "falseNegatives": 2
+        }
+      ]
+    }
+  },
+  "artifactVerification": {
+    "schemaVersion": 1,
+    "valid": true,
+    "checksumMatch": true,
+    "schemaCompatible": true,
+    "approvalStatus": "approved",
+    "errorCode": null,
+    "errorMessage": null
+  },
+  "scoreDistributions": {
+    "1000": {
+      "min": 0.0,
+      "max": 0.5473749276532855,
+      "mean": 0.10113214608397775,
+      "p95": 0.5430797752421279
+    },
+    "1007": {
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.21989089148648433,
+      "p95": 0.737760853474299
+    },
+    "1014": {
+      "min": 0.0,
+      "max": 0.8032915143869035,
+      "mean": 0.23179871127525478,
+      "p95": 0.6492420349484057
+    }
+  },
+  "inferenceLatencyMs": {
+    "mean": 4.39310522233427
+  },
+  "peakMemoryKb": 148188,
+  "rulesComparison": {
+    "schemaVersion": 1,
+    "evaluationId": "eval-rules-holdout-v1",
+    "scenarioId": "scenario:operation-silent-relay",
+    "trainingSeeds": [
+      1,
+      11,
+      1006
+    ],
+    "holdoutSeeds": [
+      1000,
+      1007,
+      1014
+    ],
+    "ruleRegistryVersion": "1.0.0",
+    "thresholdConfigVersion": "1.0.0",
+    "baselineChecksum": "sha256:0fded8f9d8ddd9ae566799d7c100c58b8b35f6e66094f163c52a4168de9589bc",
+    "featureSchemaVersion": 1,
+    "workspaceVersion": "0.0.0-phase15",
+    "createdAt": "2026-07-02T12:33:47.074579Z",
+    "metrics": {
+      "schemaVersion": 1,
+      "precision": 0.16666666666666666,
+      "recall": 0.16666666666666666,
+      "falsePositiveRate": 0.5555555555555555,
+      "meanDetectionDelaySimSeconds": null,
+      "causeCoverage": 0.16666666666666666,
+      "perSeed": [
+        {
+          "seed": 1000,
+          "runId": "run_TF1XCEJ070B573N60FN6YQZRY6",
+          "precision": 0.0,
+          "recall": 0.0,
+          "falsePositiveRate": 0.5,
+          "detectionDelaySimSeconds": null,
+          "causeCoverage": 0.0,
+          "truePositives": 0,
+          "falsePositives": 1,
+          "falseNegatives": 2
+        },
+        {
+          "seed": 1007,
+          "runId": "run_3QPE78C0EE7ZVW3B647HNXFSK1",
+          "precision": 0.5,
+          "recall": 0.5,
+          "falsePositiveRate": 0.5,
+          "detectionDelaySimSeconds": null,
+          "causeCoverage": 0.5,
+          "truePositives": 1,
+          "falsePositives": 1,
+          "falseNegatives": 1
+        },
+        {
+          "seed": 1014,
+          "runId": "run_S71V00R7EE453XWR6AM7HP8NS7",
+          "precision": 0.0,
+          "recall": 0.0,
+          "falsePositiveRate": 0.6666666666666666,
+          "detectionDelaySimSeconds": null,
+          "causeCoverage": 0.0,
+          "truePositives": 0,
+          "falsePositives": 2,
+          "falseNegatives": 2
+        }
+      ]
+    }
+  },
+  "modelManifestId": "mdl_01ARZ3NDEKTSV4RRFFQ69G5FB1"
+}

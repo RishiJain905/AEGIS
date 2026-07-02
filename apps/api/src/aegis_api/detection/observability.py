@@ -39,7 +39,8 @@ async def detection_observability_page(request: Request) -> HTMLResponse:
 <body>
   <h1>AEGIS Phase 15 — Rules and Statistical Baselines</h1>
   <p class="note">Deterministic rules and calibrated statistical baselines consume Phase 14
-    feature vectors. Phase 16 Isolation Forest anomaly models are intentionally deferred.</p>
+    feature vectors. Phase 16 Isolation Forest scores run in parallel via
+    <a href="/models/observability">models observability</a>.</p>
   <section>
     <h2>Rule registry</h2>
     <pre id="rules">Loading…</pre>
@@ -55,10 +56,11 @@ async def detection_observability_page(request: Request) -> HTMLResponse:
     <button onclick="evaluateRun(true)">Dry run</button>
     <pre id="evaluation">No evaluation yet.</pre>
   </section>
-  <section class="phase16">
-    <h2>Phase 16 deferred</h2>
-    <p class="note">Isolation Forest learned anomaly detection is not implemented in Phase 15.
-      This page shows only transparent rules and statistical baseline deviations.</p>
+  <section>
+    <h2>Phase 16 anomaly model</h2>
+    <p class="note">Isolation Forest learned anomaly detection complements transparent rules.
+      See <a href="/models/observability">/models/observability</a> for model manifest,
+      scoring, and artifact verification.</p>
   </section>
   <script>
     async function loadRules() {{

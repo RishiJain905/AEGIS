@@ -13,6 +13,7 @@ from aegis_persistence.repositories.postgres import (
     PostgresEventRepository,
     PostgresIdempotencyRepository,
     PostgresIncidentRepository,
+    PostgresModelRepository,
     PostgresObjectRepository,
     PostgresRunRepository,
     PostgresScenarioRepository,
@@ -45,6 +46,7 @@ class PostgresUnitOfWork:
         self._alerts = PostgresAlertRepository(self._session)
         self._idempotency = PostgresIdempotencyRepository(self._session)
         self._objects = PostgresObjectRepository(self._session)
+        self._models = PostgresModelRepository(self._session)
         self._checkpoints = PostgresCheckpointRepository(self._session)
         return self
 
@@ -97,6 +99,10 @@ class PostgresUnitOfWork:
     @property
     def objects(self) -> PostgresObjectRepository:
         return self._objects
+
+    @property
+    def models(self) -> PostgresModelRepository:
+        return self._models
 
     @property
     def checkpoints(self) -> PostgresCheckpointRepository:

@@ -80,6 +80,21 @@ from aegis_contracts.live_run import (
     SnapshotBootstrapPayloadV1,
     TimelineEntryV1,
 )
+from aegis_contracts.models import (
+    AnomalyExplanationV1,
+    AnomalyRiskBand,
+    BaselineComparisonV1,
+    ModelApprovalStatus,
+    ModelArtifactReferenceV1,
+    ModelInferenceResultV1,
+    ModelScoreRequestV1,
+    ModelScoreResponseV1,
+    ModelVerifyArtifactRequestV1,
+    ModelVerifyArtifactResponseV1,
+    RiskBandThresholdsV1,
+    SourceWindowV1,
+    TrainingRunManifestV1,
+)
 from aegis_contracts.parsing import parse_contract
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
 from aegis_contracts.realtime import (
@@ -169,6 +184,19 @@ __all__ = [
     "ObjectMetadataReferenceV1",
     "LogLevel",
     "MetricReportV1",
+    "AnomalyExplanationV1",
+    "AnomalyRiskBand",
+    "BaselineComparisonV1",
+    "ModelApprovalStatus",
+    "ModelArtifactReferenceV1",
+    "ModelInferenceResultV1",
+    "ModelScoreRequestV1",
+    "ModelScoreResponseV1",
+    "ModelVerifyArtifactRequestV1",
+    "ModelVerifyArtifactResponseV1",
+    "RiskBandThresholdsV1",
+    "SourceWindowV1",
+    "TrainingRunManifestV1",
     "ModelManifestV1",
     "ModelScoreV1",
     "NormalizedEventHashV1",

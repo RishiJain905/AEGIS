@@ -38,7 +38,13 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "eventsScanned", "eventsPublished", "eventsSkipped", "completedAt"],
+  "required": [
+    "schemaVersion",
+    "eventsScanned",
+    "eventsPublished",
+    "eventsSkipped",
+    "completedAt"
+  ],
   "title": "BackfillResultV1",
   "type": "object"
 }

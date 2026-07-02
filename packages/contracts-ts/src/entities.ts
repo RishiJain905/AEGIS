@@ -155,6 +155,8 @@ export const alertSchema = z
     ruleId: z.string().optional(),
     ruleVersion: z.string().optional(),
     explanation: ruleExplanationSchema.optional(),
+    anomalyExplanation: z.record(z.unknown()).optional(),
+    modelVersionId: modelIdSchema.optional(),
     evidence: alertEvidenceSchema.optional(),
     deduplicationKey: z.string().optional(),
   })
@@ -284,6 +286,16 @@ export const modelManifestSchema = z
     evaluationMetrics: z.record(z.unknown()).default({}),
     knownLimitations: z.array(z.string()).default([]),
     createdAt: utcTimestampSchema,
+    hyperparameters: z.record(z.unknown()).optional(),
+    threshold: z.number().min(0).max(1).optional(),
+    riskBandThresholds: z.record(z.number()).optional(),
+    trainingRunId: z.string().optional(),
+    codeRevision: z.string().optional(),
+    sklearnVersion: z.string().optional(),
+    datasetIds: z.array(z.string()).optional(),
+    approvalStatus: z.string().optional(),
+    predecessorModelId: modelIdSchema.optional(),
+    scoreSemantics: z.string().optional(),
   })
   .strict();
 

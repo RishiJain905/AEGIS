@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "mdl_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+  "semanticVersion": "1.0.0",
+  "algorithm": "isolation_forest",
+  "featureSchemaVersion": 1,
+  "artifactChecksum": "sha256:8007b09f1d331e9338c24dcd9e02c53b278afc09be5b3f4421665ae91ddbf185",
+  "artifactObjectKey": "models/manifests/isolation-forest-v1/artifact.joblib",
+  "evaluationMetrics": {
+    "trainingVectorCount": 36,
+    "threshold": 0.7518243199461897
+  },
+  "knownLimitations": [
+    "Trained on synthetic Operation Silent Relay telemetry only",
+    "Unsupervised; holdout evaluation uses evaluation-only root-cause labels",
+    "Advisory scores only \u2014 no automated containment"
+  ],
+  "createdAt": "2026-07-02T14:04:51.443443Z",
+  "hyperparameters": {
+    "n_estimators": 100,
+    "contamination": 0.05,
+    "random_state": 42
+  },
+  "threshold": 0.7518243199461897,
+  "riskBandThresholds": {
+    "elevated": 0.5679897139766082,
+    "high": 0.7518243199461897
+  },
+  "trainingRunId": "train-isolation-forest-v1",
+  "codeRevision": "0.0.0-phase16",
+  "sklearnVersion": "1.9.0",
+  "datasetIds": [
+    "dataset:seed-1",
+    "dataset:seed-11",
+    "dataset:seed-1006"
+  ],
+  "approvalStatus": "approved",
+  "predecessorModelId": null,
+  "scoreSemantics": "Higher normalized score indicates greater anomaly likelihood. Raw sklearn decision_function is negated and min-max scaled to [0,1] using training-set bounds."
+}

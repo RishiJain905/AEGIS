@@ -1,0 +1,51 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "dryRun": {
+      "default": false,
+      "title": "Dryrun",
+      "type": "boolean"
+    },
+    "fromSequence": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fromsequence"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "toSequence": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tosequence"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId"
+  ],
+  "title": "ModelScoreRequestV1",
+  "type": "object"
+}

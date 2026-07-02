@@ -25,6 +25,16 @@ import {
   featureWindowSchema,
   onlineFeatureUpdateSchema,
 } from './features';
+import {
+  anomalyExplanationSchema,
+  modelArtifactReferenceSchema,
+  modelInferenceResultSchema,
+  modelScoreRequestSchema,
+  modelScoreResponseSchema,
+  modelVerifyArtifactRequestSchema,
+  modelVerifyArtifactResponseSchema,
+  trainingRunManifestSchema,
+} from './models';
 import { websocketFrameSchema } from './websocket';
 
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
@@ -77,6 +87,7 @@ export * from './persistence';
 export * from './realtime';
 export * from './features';
 export * from './detection';
+export * from './models';
 export * from './websocket';
 export * from './live-run';
 export * from './parsing';
@@ -160,4 +171,12 @@ export const FIXTURE_SCHEMA_MAP = {
   feature_compute_request_v1: featureComputeRequestSchema,
   feature_compute_response_v1: featureComputeResponseSchema,
   feature_parity_check_response_v1: featureParityCheckResponseSchema,
+  anomaly_explanation_v1: anomalyExplanationSchema,
+  training_run_manifest_v1: trainingRunManifestSchema,
+  model_artifact_reference_v1: modelArtifactReferenceSchema,
+  model_inference_result_v1: modelInferenceResultSchema,
+  model_score_request_v1: modelScoreRequestSchema,
+  model_score_response_v1: modelScoreResponseSchema,
+  model_verify_artifact_request_v1: modelVerifyArtifactRequestSchema,
+  model_verify_artifact_response_v1: modelVerifyArtifactResponseSchema,
 } as const;

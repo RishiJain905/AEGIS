@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "trainingRunId": "train-isolation-forest-v1",
+  "scenarioId": "scenario:operation-silent-relay",
+  "trainingSeeds": [
+    1,
+    11,
+    1006
+  ],
+  "holdoutSeeds": [
+    1000,
+    1007,
+    1014
+  ],
+  "featureSchemaVersion": 1,
+  "datasetIds": [
+    "dataset:seed-1",
+    "dataset:seed-11",
+    "dataset:seed-1006"
+  ],
+  "hyperparameters": {
+    "n_estimators": 100,
+    "contamination": 0.05,
+    "random_state": 42
+  },
+  "randomSeed": 42,
+  "codeRevision": "0.0.0-phase16",
+  "sklearnVersion": "1.9.0",
+  "vectorCount": 36,
+  "splitPolicy": "scenario-seed-holdout",
+  "createdAt": "2026-07-02T14:04:51.443410Z"
+}
