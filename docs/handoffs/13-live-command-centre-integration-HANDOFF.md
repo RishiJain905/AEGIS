@@ -8,15 +8,15 @@ Live stack demo capture (`capture-live-run-demo.mjs`) requires PostgreSQL + Redi
 
 ## Implemented behavior (Sections 7 and 18)
 
-| Spec requirement | Implementation |
-| ---------------- | -------------- |
-| Thin run start/pause/resume/stop/step APIs with idempotency | `apps/api/src/aegis_api/runs/router.py`, `RunCommandService` |
+| Spec requirement                                               | Implementation                                                                        |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Thin run start/pause/resume/stop/step APIs with idempotency    | `apps/api/src/aegis_api/runs/router.py`, `RunCommandService`                          |
 | Bootstrap from authoritative snapshot + sequence-aware reducer | `GraphProjectionService`, `PostgresGraphSnapshotRepository`, `apps/web/lib/realtime/` |
-| Graph, timeline, run status integration | `LiveRunProvider`, `TimelineView`, `VisualizationSlot`, shared `RunReplicatedState` |
-| Connection health states | `ConnectionHealthState`, `ConnectionHealthBanner`, `StatusStrip` |
-| Gap halt until recovery | `runReplicatedReducer` + catch-up/resync modules |
-| Cursor persistence for reopen | `cursor-storage.ts` (`sessionStorage`) |
-| Silent Relay live topology/activity | Run create + step APIs; graph delta projection from `sim.asset.status_changed` |
+| Graph, timeline, run status integration                        | `LiveRunProvider`, `TimelineView`, `VisualizationSlot`, shared `RunReplicatedState`   |
+| Connection health states                                       | `ConnectionHealthState`, `ConnectionHealthBanner`, `StatusStrip`                      |
+| Gap halt until recovery                                        | `runReplicatedReducer` + catch-up/resync modules                                      |
+| Cursor persistence for reopen                                  | `cursor-storage.ts` (`sessionStorage`)                                                |
+| Silent Relay live topology/activity                            | Run create + step APIs; graph delta projection from `sim.asset.status_changed`        |
 
 ### Acceptance criteria evidence
 
@@ -27,32 +27,32 @@ Live stack demo capture (`capture-live-run-demo.mjs`) requires PostgreSQL + Redi
 
 ## Files added
 
-| Area | Key paths |
-| ---- | --------- |
-| Contracts | `packages/contracts-ts/src/live-run.ts`, `packages/contracts-python/src/aegis_contracts/live_run.py` |
-| Backend | `apps/api/src/aegis_api/runs/`, `services/simulation/src/aegis_simulation/run_command_service.py`, `graph_projection.py` |
-| Frontend realtime | `apps/web/lib/realtime/**` |
-| Frontend features | `apps/web/features/live-run/**`, `apps/web/features/timeline/**` |
-| Tests | `tests/integration/run-api/test_run_commands.py`, `tests/contract/live-run/test_live_run_fixtures.py`, `tests/e2e/live-run.spec.ts`, `apps/web/lib/realtime/run-reducer.test.ts` |
-| Fixtures/schemas | `tests/contract/fixtures/valid/live_run_v1.json`, `snapshot_bootstrap_v1.json`, `connection_health_v1.json`, `run_create_request_v1.json`, `run_command_response_v1.json`, `timeline_entry_v1.json` + matching schemas |
-| Docs/ADR | `docs/AEGIS-v1.0-Agent-Specs/adrs/0014-live-command-centre-integration.md` |
-| Demo script | `apps/web/scripts/capture-live-run-demo.mjs` |
+| Area              | Key paths                                                                                                                                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contracts         | `packages/contracts-ts/src/live-run.ts`, `packages/contracts-python/src/aegis_contracts/live_run.py`                                                                                                                   |
+| Backend           | `apps/api/src/aegis_api/runs/`, `services/simulation/src/aegis_simulation/run_command_service.py`, `graph_projection.py`                                                                                               |
+| Frontend realtime | `apps/web/lib/realtime/**`                                                                                                                                                                                             |
+| Frontend features | `apps/web/features/live-run/**`, `apps/web/features/timeline/**`                                                                                                                                                       |
+| Tests             | `tests/integration/run-api/test_run_commands.py`, `tests/contract/live-run/test_live_run_fixtures.py`, `tests/e2e/live-run.spec.ts`, `apps/web/lib/realtime/run-reducer.test.ts`                                       |
+| Fixtures/schemas  | `tests/contract/fixtures/valid/live_run_v1.json`, `snapshot_bootstrap_v1.json`, `connection_health_v1.json`, `run_create_request_v1.json`, `run_command_response_v1.json`, `timeline_entry_v1.json` + matching schemas |
+| Docs/ADR          | `docs/AEGIS-v1.0-Agent-Specs/adrs/0014-live-command-centre-integration.md`                                                                                                                                             |
+| Demo script       | `apps/web/scripts/capture-live-run-demo.mjs`                                                                                                                                                                           |
 
 ## Files modified
 
-| File | Reason |
-| ---- | ------ |
-| `packages/contracts-ts/src/index.ts`, `packages/contracts-python/src/aegis_contracts/__init__.py`, `fixtures.py` | Export Phase 13 contracts |
-| `packages/contracts-*/src/versioning.*` | `WORKSPACE_VERSION` → `0.0.0-phase13` |
-| `packages/persistence/.../postgres.py` | `PostgresGraphSnapshotRepository`, run/scenario list helpers |
-| `apps/api/src/aegis_api/main.py`, `apps/api/pyproject.toml` | Wire runs router; add simulation dependency |
-| `apps/web/features/shell/components/*` | LiveRunProvider, TimelineView, live status strip |
-| `apps/web/features/operational-graph/components/operational-graph-view.tsx` | External GraphStore + revision sync for live deltas |
-| `apps/web/lib/api/production-client.ts`, `create-client.ts` | Run commands + bootstrap endpoints |
-| `apps/web/src/app/(shell)/scenarios/page.tsx` | Start Silent Relay in live mode |
-| `apps/web/package.json`, `pnpm-lock.yaml` | `@aegis/realtime-client` dependency |
-| `.env.example`, `docker-compose.yml` | Live stack env vars, worker outbox-relay mode |
-| `tests/contract/fixtures/compatibility-manifest.json` | Phase 13 schema hashes |
+| File                                                                                                             | Reason                                                       |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `packages/contracts-ts/src/index.ts`, `packages/contracts-python/src/aegis_contracts/__init__.py`, `fixtures.py` | Export Phase 13 contracts                                    |
+| `packages/contracts-*/src/versioning.*`                                                                          | `WORKSPACE_VERSION` → `0.0.0-phase13`                        |
+| `packages/persistence/.../postgres.py`                                                                           | `PostgresGraphSnapshotRepository`, run/scenario list helpers |
+| `apps/api/src/aegis_api/main.py`, `apps/api/pyproject.toml`                                                      | Wire runs router; add simulation dependency                  |
+| `apps/web/features/shell/components/*`                                                                           | LiveRunProvider, TimelineView, live status strip             |
+| `apps/web/features/operational-graph/components/operational-graph-view.tsx`                                      | External GraphStore + revision sync for live deltas          |
+| `apps/web/lib/api/production-client.ts`, `create-client.ts`                                                      | Run commands + bootstrap endpoints                           |
+| `apps/web/src/app/(shell)/scenarios/page.tsx`                                                                    | Start Silent Relay in live mode                              |
+| `apps/web/package.json`, `pnpm-lock.yaml`                                                                        | `@aegis/realtime-client` dependency                          |
+| `.env.example`, `docker-compose.yml`                                                                             | Live stack env vars, worker outbox-relay mode                |
+| `tests/contract/fixtures/compatibility-manifest.json`                                                            | Phase 13 schema hashes                                       |
 
 ## Files removed
 
@@ -60,15 +60,15 @@ None.
 
 ## Contracts introduced or changed
 
-| Contract | Version | Description |
-| -------- | ------- | ----------- |
-| `ConnectionHealthState` | v1 | Live connection FSM enum |
-| `RunReplicatedState` | v1 | Shared reducer state |
-| `RealtimeReducerAction` | v1 | Discriminated reducer actions |
-| `SnapshotBootstrapPayloadV1` | v1 | Resync bootstrap payload |
-| `RunCreateRequestV1`, `RunCommandResponseV1` | v1 | Run command HTTP contracts |
-| `ConnectionHealthSnapshotV1`, `TimelineEntryV1` | v1 | UI projection contracts |
-| `WORKSPACE_VERSION` | `0.0.0-phase13` | Workspace parity bump |
+| Contract                                        | Version         | Description                   |
+| ----------------------------------------------- | --------------- | ----------------------------- |
+| `ConnectionHealthState`                         | v1              | Live connection FSM enum      |
+| `RunReplicatedState`                            | v1              | Shared reducer state          |
+| `RealtimeReducerAction`                         | v1              | Discriminated reducer actions |
+| `SnapshotBootstrapPayloadV1`                    | v1              | Resync bootstrap payload      |
+| `RunCreateRequestV1`, `RunCommandResponseV1`    | v1              | Run command HTTP contracts    |
+| `ConnectionHealthSnapshotV1`, `TimelineEntryV1` | v1              | UI projection contracts       |
+| `WORKSPACE_VERSION`                             | `0.0.0-phase13` | Workspace parity bump         |
 
 ## Database migrations
 
@@ -89,31 +89,31 @@ See `.env.example` and `docker-compose.yml`:
 
 ## Tests added
 
-| Test | Proves |
-| ---- | ------ |
-| `run-reducer.test.ts` | Shared sequence, gap halt, duplicate suppression |
-| `test_live_run_fixtures.py` | Cross-language Phase 13 fixture parity |
-| `test_run_commands.py` | Create, step, graph bootstrap, idempotency (PG required) |
-| `live-run.spec.ts` | Fixture shell graph + timeline + responsive layout |
+| Test                        | Proves                                                   |
+| --------------------------- | -------------------------------------------------------- |
+| `run-reducer.test.ts`       | Shared sequence, gap halt, duplicate suppression         |
+| `test_live_run_fixtures.py` | Cross-language Phase 13 fixture parity                   |
+| `test_run_commands.py`      | Create, step, graph bootstrap, idempotency (PG required) |
+| `live-run.spec.ts`          | Fixture shell graph + timeline + responsive layout       |
 
 ## Commands executed and results
 
-| Command | Result |
-| ------- | ------ |
-| `pnpm format:check` | **PASS** |
-| `pnpm lint` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `pnpm test` | **PASS** |
-| `pnpm build` | **PASS** |
-| `pnpm check-contracts` | **PASS** |
-| `uv run ruff check .` | **PASS** |
-| `uv run pytest -q` | **PASS** — 274 passed, 31 skipped |
-| `uv run pytest tests/integration -q` | **SKIPPED** — 31 skipped (PostgreSQL/Redis unavailable) |
-| `uv run pytest tests/integration/run-api -q` | **SKIPPED** — 2 skipped (PostgreSQL unavailable) |
-| `uv run mypy apps services packages` | **BLOCKED** — pre-existing `aegis_api.db.session` duplicate module path |
-| `docker compose up -d postgres redis object-storage` | **BLOCKED** — Docker unavailable in VM |
-| `pnpm --filter @aegis/web test:e2e` | **PASS** — 25 passed |
-| `pnpm --filter @aegis/web exec node scripts/capture-live-run-demo.mjs` | **NOT RUN** — requires PostgreSQL/Redis/API stack |
+| Command                                                                | Result                                                                  |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `pnpm format:check`                                                    | **PASS**                                                                |
+| `pnpm lint`                                                            | **PASS**                                                                |
+| `pnpm typecheck`                                                       | **PASS**                                                                |
+| `pnpm test`                                                            | **PASS**                                                                |
+| `pnpm build`                                                           | **PASS**                                                                |
+| `pnpm check-contracts`                                                 | **PASS**                                                                |
+| `uv run ruff check .`                                                  | **PASS**                                                                |
+| `uv run pytest -q`                                                     | **PASS** — 274 passed, 31 skipped                                       |
+| `uv run pytest tests/integration -q`                                   | **SKIPPED** — 31 skipped (PostgreSQL/Redis unavailable)                 |
+| `uv run pytest tests/integration/run-api -q`                           | **SKIPPED** — 2 skipped (PostgreSQL unavailable)                        |
+| `uv run mypy apps services packages`                                   | **BLOCKED** — pre-existing `aegis_api.db.session` duplicate module path |
+| `docker compose up -d postgres redis object-storage`                   | **BLOCKED** — Docker unavailable in VM                                  |
+| `pnpm --filter @aegis/web test:e2e`                                    | **PASS** — 25 passed                                                    |
+| `pnpm --filter @aegis/web exec node scripts/capture-live-run-demo.mjs` | **NOT RUN** — requires PostgreSQL/Redis/API stack                       |
 
 ### Live stack startup (when services available)
 

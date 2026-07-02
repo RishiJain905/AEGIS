@@ -28,6 +28,7 @@ from aegis_simulation.run_command_service import RunCommandService
 from aegis_simulation_domain.errors import SimulationError, SimulationErrorCode
 from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from aegis_api.db.session import get_db_session_maker
 
@@ -54,7 +55,7 @@ def _simulation_error_response(exc: SimulationError) -> JSONResponse:
     return JSONResponse(status_code=status, content=envelope.model_dump(by_alias=True))
 
 
-async def _discover_scenarios(session) -> list[ScenarioV1]:
+async def _discover_scenarios(session: AsyncSession) -> list[ScenarioV1]:
     repo = PostgresScenarioRepository(session)
     existing = {scenario.id: scenario for scenario in await repo.list_all()}
     silent_relay_manifest = (
@@ -265,14 +266,14 @@ async def step_run(
     return await _run_command(request, run_id, SimulationCommandType.STEP, idempotency_key)
 
 
-@router.get("/runs/{run_id}/incidents", response_model=list)
-async def list_run_incidents(run_id: str) -> list:
+@router.get("/runs/{run_id}/incidents", response_model=list[dict[str, object]])
+async def list_run_incidents(run_id: str) -> list[dict[str, object]]:
     _ = run_id
     return []
 
 
-@router.get("/runs/{run_id}/alerts", response_model=list)
-async def list_run_alerts(run_id: str) -> list:
+@router.get("/runs/{run_id}/alerts", response_model=list[dict[str, object]])
+async def list_run_alerts(run_id: str) -> list[dict[str, object]]:
     _ = run_id
     return []
 

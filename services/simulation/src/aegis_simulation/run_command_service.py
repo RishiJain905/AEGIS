@@ -16,7 +16,7 @@ from aegis_contracts.versioning import (
     RUN_COMMAND_RESPONSE_SCHEMA_VERSION,
     SNAPSHOT_BOOTSTRAP_SCHEMA_VERSION,
 )
-from aegis_persistence.protocols import UnitOfWork
+from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from aegis_simulation_domain import SimulationEngine, SimulationError, SimulationErrorCode
@@ -60,7 +60,7 @@ class RunCommandService:
 
     async def create_run(
         self,
-        uow: UnitOfWork,
+        uow: PostgresUnitOfWork,
         request: RunCreateRequestV1,
         *,
         idempotency_key: str | None = None,
@@ -146,7 +146,7 @@ class RunCommandService:
 
     async def execute_lifecycle_command(
         self,
-        uow: UnitOfWork,
+        uow: PostgresUnitOfWork,
         run_id: str,
         command_type: SimulationCommandType,
         *,
@@ -210,7 +210,7 @@ class RunCommandService:
         )
 
     async def get_bootstrap_payload(
-        self, uow: UnitOfWork, run_id: str
+        self, uow: PostgresUnitOfWork, run_id: str
     ) -> SnapshotBootstrapPayloadV1:
         run = await uow.runs.get_by_id(run_id)
         if run is None:
@@ -235,7 +235,7 @@ class RunCommandService:
             last_applied_sequence=last_sequence,
         )
 
-    async def _get_or_restore_runtime(self, uow: UnitOfWork, run_id: str) -> SimulationRuntime:
+    async def _get_or_restore_runtime(self, uow: PostgresUnitOfWork, run_id: str) -> SimulationRuntime:
         cached = self.runtime_cache.get(run_id)
         if cached is not None:
             return cached.runtime

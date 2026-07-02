@@ -89,7 +89,7 @@ await page
 await page.waitForTimeout(1500);
 await shot('live-graph-updates');
 await page
-  .getByTestId("operational-graph-canvas")
+  .getByTestId('operational-graph-canvas')
   .click({ position: { x: 400, y: 300 } })
   .catch(() => undefined);
 await page.waitForTimeout(500);
