@@ -1,0 +1,72 @@
+{
+  "recordedResponseKey": {
+    "schemaVersion": 1,
+    "providerId": "recorded",
+    "modelId": "recorded-v1",
+    "promptVersion": "phase20-trace-v1",
+    "requestHash": "c3d4e5f60718a1b2"
+  },
+  "response": {
+    "schemaVersion": 1,
+    "requestId": "gen_01ARZ3NDEKTSV4RRFFQ69G5FA2",
+    "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "providerId": "recorded",
+    "modelId": "recorded-v1",
+    "promptVersion": "phase20-trace-v1",
+    "structuredData": {
+      "rationale": "Recorded bounded TRACE investigation step",
+      "confidence": 0.89,
+      "evidenceCitations": [
+        {
+          "evidenceId": "evidence:evd_synthetic_001",
+          "rationale": "Grounded authentication evidence"
+        }
+      ],
+      "toolRequests": [
+        {
+          "name": "list_existing_evidence",
+          "arguments": {},
+          "purpose": "Review visible evidence"
+        }
+      ],
+      "seedAssetIds": ["asset:device-workstation-01"],
+      "maxHops": 3,
+      "maxToolCalls": 12,
+      "searchSteps": [
+        {
+          "toolName": "list_existing_evidence",
+          "arguments": {},
+          "purpose": "Review visible evidence"
+        }
+      ],
+      "candidateAssets": [
+        {
+          "assetId": "asset:device-workstation-01",
+          "confidence": 0.82,
+          "evidenceIds": ["evidence:evd_synthetic_001"],
+          "rationale": "Primary alert asset"
+        }
+      ],
+      "evidenceAttachments": [],
+      "graphHighlights": [
+        {
+          "entityId": "asset:device-workstation-01",
+          "entityType": "asset",
+          "highlightKind": "focus"
+        }
+      ],
+      "edgeHighlights": [],
+      "overlayRationale": "Recorded bounded graph overlay"
+    },
+    "finishReason": "stop",
+    "usage": {
+      "schemaVersion": 1,
+      "promptTokens": 220,
+      "completionTokens": 120,
+      "totalTokens": 340,
+      "estimatedCostUsd": 0.0
+    },
+    "latencyMs": 8,
+    "completedAt": "2026-07-05T12:00:01.000Z"
+  }
+}

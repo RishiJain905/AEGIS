@@ -1,7 +1,10 @@
 {
   "$defs": {
     "ApprovalDecision": {
-      "enum": ["approved", "rejected"],
+      "enum": [
+        "approved",
+        "rejected"
+      ],
       "title": "ApprovalDecision",
       "type": "string"
     }

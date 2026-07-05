@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "eatt_synthetic_001",
+  "incidentId": "incident:inc_synthetic_001",
+  "sessionId": "agent-session:ags_synthetic_001",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "provenance": {
+    "sourceType": "existing_evidence",
+    "sourceId": "evidence:evd_synthetic_001",
+    "summary": "Failed login attempt from workstation",
+    "collectedByTool": "attach_evidence",
+    "collectedAtSequence": 120
+  },
+  "evidenceId": "evidence:evd_synthetic_001",
+  "assetId": "asset:device-workstation-01",
+  "isContradiction": false,
+  "confidence": 0.84,
+  "rationale": "Grounded authentication evidence from authoritative store.",
+  "createdAt": "2026-06-30T02:12:00.000Z"
+}

@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "title": "Assetid",
+      "type": "string"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "evidenceIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidenceids",
+      "type": "array"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "incidentId",
+    "assetId",
+    "confidence",
+    "rationale",
+    "createdAt"
+  ],
+  "title": "CandidateAffectedAssetV1",
+  "type": "object"
+}

@@ -29,8 +29,16 @@ async def agents_observability_page(request: Request) -> HTMLResponse:
   </style>
 </head>
 <body>
-  <h1>Phase 19 — Generic Agent Runtime</h1>
-  <p class="note">Shared runtime foundation for Phases 20–23. This is not WATCHTOWER/TRACE/ORACLE/BASTION/WARDEN/SCRIBE.</p>
+  <h1>Phase 19–20 — Agent Runtime &amp; Investigation</h1>
+  <p class="note">Shared runtime foundation (Phase 19) plus WATCHTOWER/TRACE investigation controls (Phase 20).</p>
+
+  <section>
+    <h2>Phase 20 — WATCHTOWER / TRACE</h2>
+    <button onclick="triggerWatchtower()">Trigger WATCHTOWER for harness run</button>
+    <button onclick="loadInvestigationDetail()">Show investigation detail</button>
+    <button onclick="loadTraceSession()">Load TRACE session detail</button>
+    <pre id="watchtower-trace">No WATCHTOWER/TRACE activity yet.</pre>
+  </section>
 
   <section>
     <h2>Agent registry</h2>
@@ -68,6 +76,8 @@ async def agents_observability_page(request: Request) -> HTMLResponse:
     const API = '{base}/api/v1';
     let lastSessionId = null;
     let lastIncidentId = 'incident:inc_runtime_harness_001';
+    let lastRunId = null;
+    let lastTraceSessionId = null;
 
     async function loadRegistry() {{
       const res = await fetch(`${{API}}/agents/registry`);
@@ -80,6 +90,56 @@ async def agents_observability_page(request: Request) -> HTMLResponse:
       const body = await res.json();
       lastIncidentId = body.incidentId ?? lastIncidentId;
       return lastIncidentId;
+    }}
+
+    async function resolveHarnessRunId() {{
+      if (lastRunId) {{
+        return lastRunId;
+      }}
+      const incidentId = await createHarnessIncident();
+      const incidentRes = await fetch(`${{API}}/incidents/${{incidentId}}`);
+      const incident = await incidentRes.json();
+      lastRunId = incident.runId;
+      return lastRunId;
+    }}
+
+    async function triggerWatchtower() {{
+      const runId = await resolveHarnessRunId();
+      const res = await fetch(`${{API}}/runs/${{runId}}/investigation/trigger-watchtower`, {{
+        method: 'POST',
+        headers: {{ 'Content-Type': 'application/json' }},
+        body: JSON.stringify({{
+          schemaVersion: 1,
+          runId,
+          alertIds: [],
+          traceId: 'trc_01ARZ3NDEKTSV4RRFFQ69G5FAV',
+          providerId: 'mock',
+          idempotencyKey: `watchtower-${{Date.now()}}`
+        }})
+      }});
+      const body = await res.json();
+      lastIncidentId = body.incidentId ?? lastIncidentId;
+      lastTraceSessionId = body.traceSessionId ?? null;
+      lastSessionId = body.watchtowerSessionId ?? lastSessionId;
+      document.getElementById('watchtower-trace').textContent = JSON.stringify(body, null, 2);
+    }}
+
+    async function loadInvestigationDetail() {{
+      if (!lastIncidentId) {{
+        document.getElementById('watchtower-trace').textContent = 'Trigger WATCHTOWER or seed harness first.';
+        return;
+      }}
+      const res = await fetch(`${{API}}/incidents/${{lastIncidentId}}/investigation`);
+      document.getElementById('watchtower-trace').textContent = JSON.stringify(await res.json(), null, 2);
+    }}
+
+    async function loadTraceSession() {{
+      if (!lastTraceSessionId) {{
+        document.getElementById('watchtower-trace').textContent = 'Trigger WATCHTOWER first to create TRACE session.';
+        return;
+      }}
+      const res = await fetch(`${{API}}/agent-sessions/${{lastTraceSessionId}}`);
+      document.getElementById('watchtower-trace').textContent = JSON.stringify(await res.json(), null, 2);
     }}
 
     async function runMockTask() {{

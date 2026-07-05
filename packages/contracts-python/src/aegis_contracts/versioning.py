@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase19"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase20"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -117,6 +117,14 @@ AGENT_ARTIFACT_SCHEMA_VERSION: Final[int] = 1
 CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION: Final[int] = 1
 CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION: Final[int] = 1
 AGENT_SESSION_DETAIL_SCHEMA_VERSION: Final[int] = 1
+WATCHTOWER_TRIAGE_RESULT_SCHEMA_VERSION: Final[int] = 1
+TRACE_INVESTIGATION_PLAN_SCHEMA_VERSION: Final[int] = 1
+EVIDENCE_ATTACHMENT_SCHEMA_VERSION: Final[int] = 1
+CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION: Final[int] = 1
+INVESTIGATION_NOTE_SCHEMA_VERSION: Final[int] = 1
+AGENT_GRAPH_OVERLAY_SCHEMA_VERSION: Final[int] = 1
+INVESTIGATION_DETAIL_SCHEMA_VERSION: Final[int] = 1
+TRIGGER_WATCHTOWER_REQUEST_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -219,6 +227,14 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "create_agent_session_request": frozenset({CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION}),
     "create_agent_task_request": frozenset({CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION}),
     "agent_session_detail": frozenset({AGENT_SESSION_DETAIL_SCHEMA_VERSION}),
+    "watchtower_triage_result": frozenset({WATCHTOWER_TRIAGE_RESULT_SCHEMA_VERSION}),
+    "trace_investigation_plan": frozenset({TRACE_INVESTIGATION_PLAN_SCHEMA_VERSION}),
+    "evidence_attachment": frozenset({EVIDENCE_ATTACHMENT_SCHEMA_VERSION}),
+    "candidate_affected_asset": frozenset({CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION}),
+    "investigation_note": frozenset({INVESTIGATION_NOTE_SCHEMA_VERSION}),
+    "agent_graph_overlay": frozenset({AGENT_GRAPH_OVERLAY_SCHEMA_VERSION}),
+    "investigation_detail": frozenset({INVESTIGATION_DETAIL_SCHEMA_VERSION}),
+    "trigger_watchtower_request": frozenset({TRIGGER_WATCHTOWER_REQUEST_SCHEMA_VERSION}),
 }
 
 

@@ -68,6 +68,15 @@ from aegis_contracts.graph import (
     GraphPathResultV1,
     GraphSnapshotV1,
 )
+from aegis_contracts.investigation import (
+    AgentGraphOverlayV1,
+    CandidateAffectedAssetV1,
+    EvidenceAttachmentV1,
+    InvestigationDetailV1,
+    InvestigationNoteV1,
+    TraceInvestigationPlanV1,
+    WatchtowerTriageResultV1,
+)
 from aegis_contracts.live_run import (
     ConnectionHealthSnapshotV1,
     RunCommandResponseV1,
@@ -208,4 +217,11 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "create_agent_session_request_v1": CreateAgentSessionRequestV1,
     "create_agent_task_request_v1": CreateAgentTaskRequestV1,
     "agent_session_detail_v1": AgentSessionDetailV1,
+    "watchtower_triage_result_v1": WatchtowerTriageResultV1,
+    "trace_investigation_plan_v1": TraceInvestigationPlanV1,
+    "evidence_attachment_v1": EvidenceAttachmentV1,
+    "candidate_affected_asset_v1": CandidateAffectedAssetV1,
+    "investigation_note_v1": InvestigationNoteV1,
+    "agent_graph_overlay_v1": AgentGraphOverlayV1,
+    "investigation_detail_v1": InvestigationDetailV1,
 }

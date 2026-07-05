@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "cand_synthetic_001",
+  "incidentId": "incident:inc_synthetic_001",
+  "assetId": "asset:device-workstation-01",
+  "confidence": 0.79,
+  "evidenceIds": ["evidence:evd_synthetic_001"],
+  "rationale": "Primary alert asset selected during bounded TRACE expansion.",
+  "createdAt": "2026-06-30T02:12:30.000Z"
+}

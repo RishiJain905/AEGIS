@@ -1,0 +1,64 @@
+{
+  "recordedResponseKey": {
+    "schemaVersion": 1,
+    "providerId": "recorded",
+    "modelId": "recorded-v1",
+    "promptVersion": "phase20-watchtower-v1",
+    "requestHash": "a1b2c3d4e5f60718"
+  },
+  "response": {
+    "schemaVersion": 1,
+    "requestId": "gen_01ARZ3NDEKTSV4RRFFQ69G5FA1",
+    "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "providerId": "recorded",
+    "modelId": "recorded-v1",
+    "promptVersion": "phase20-watchtower-v1",
+    "structuredData": {
+      "alertSummaries": [
+        {
+          "alertId": "alert:alt_synthetic_001",
+          "title": "Repeated authentication failures",
+          "severity": "high",
+          "assetId": "asset:device-workstation-01",
+          "summary": "Multiple failed logins from workstation"
+        }
+      ],
+      "groupedAlertIds": [],
+      "separatedAlertIds": ["alert:alt_synthetic_001"],
+      "correlationDecisions": [
+        {
+          "alertIds": ["alert:alt_synthetic_001"],
+          "decision": "separate",
+          "rationale": "Isolated alert thread",
+          "factors": ["isolated_alert"]
+        }
+      ],
+      "escalation": "investigate",
+      "escalationRationale": "Authentication anomaly warrants bounded TRACE investigation.",
+      "confidence": 0.86,
+      "evidenceCitations": [
+        {
+          "evidenceId": "evidence:evd_synthetic_001",
+          "rationale": "Failed login evidence"
+        }
+      ],
+      "toolRequests": [
+        {
+          "name": "list_alerts",
+          "arguments": {},
+          "purpose": "Enumerate run alerts"
+        }
+      ]
+    },
+    "finishReason": "stop",
+    "usage": {
+      "schemaVersion": 1,
+      "promptTokens": 180,
+      "completionTokens": 96,
+      "totalTokens": 276,
+      "estimatedCostUsd": 0.0
+    },
+    "latencyMs": 6,
+    "completedAt": "2026-07-05T12:00:00.000Z"
+  }
+}

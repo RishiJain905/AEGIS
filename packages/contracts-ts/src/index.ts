@@ -1,6 +1,16 @@
 import { z } from 'zod';
 
 import {
+  agentGraphOverlaySchema,
+  candidateAffectedAssetSchema,
+  evidenceAttachmentSchema,
+  investigationDetailSchema,
+  investigationNoteSchema,
+  traceInvestigationPlanSchema,
+  watchtowerTriageResultSchema,
+} from './investigation';
+
+import {
   backfillRequestSchema,
   backfillResultSchema,
   consumerCursorSchema,
@@ -161,6 +171,7 @@ export function safeParseAegisEnvironment(env: Record<string, string | undefined
 }
 
 export * from './agent-runtime';
+export * from './investigation';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
@@ -255,4 +266,11 @@ export const FIXTURE_SCHEMA_MAP = {
   create_agent_session_request_v1: createAgentSessionRequestSchema,
   create_agent_task_request_v1: createAgentTaskRequestSchema,
   agent_session_detail_v1: agentSessionDetailSchema,
+  watchtower_triage_result_v1: watchtowerTriageResultSchema,
+  trace_investigation_plan_v1: traceInvestigationPlanSchema,
+  evidence_attachment_v1: evidenceAttachmentSchema,
+  candidate_affected_asset_v1: candidateAffectedAssetSchema,
+  investigation_note_v1: investigationNoteSchema,
+  agent_graph_overlay_v1: agentGraphOverlaySchema,
+  investigation_detail_v1: investigationDetailSchema,
 } as const;

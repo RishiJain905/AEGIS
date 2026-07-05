@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase19' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase20' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -109,6 +109,13 @@ export const AGENT_ARTIFACT_SCHEMA_VERSION = 1;
 export const CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION = 1;
 export const CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION = 1;
 export const AGENT_SESSION_DETAIL_SCHEMA_VERSION = 1;
+export const WATCHTOWER_TRIAGE_RESULT_SCHEMA_VERSION = 1;
+export const TRACE_INVESTIGATION_PLAN_SCHEMA_VERSION = 1;
+export const EVIDENCE_ATTACHMENT_SCHEMA_VERSION = 1;
+export const CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION = 1;
+export const INVESTIGATION_NOTE_SCHEMA_VERSION = 1;
+export const AGENT_GRAPH_OVERLAY_SCHEMA_VERSION = 1;
+export const INVESTIGATION_DETAIL_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -213,4 +220,11 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   create_agent_session_request: [CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION],
   create_agent_task_request: [CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION],
   agent_session_detail: [AGENT_SESSION_DETAIL_SCHEMA_VERSION],
+  watchtower_triage_result: [WATCHTOWER_TRIAGE_RESULT_SCHEMA_VERSION],
+  trace_investigation_plan: [TRACE_INVESTIGATION_PLAN_SCHEMA_VERSION],
+  evidence_attachment: [EVIDENCE_ATTACHMENT_SCHEMA_VERSION],
+  candidate_affected_asset: [CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION],
+  investigation_note: [INVESTIGATION_NOTE_SCHEMA_VERSION],
+  agent_graph_overlay: [AGENT_GRAPH_OVERLAY_SCHEMA_VERSION],
+  investigation_detail: [INVESTIGATION_DETAIL_SCHEMA_VERSION],
 };

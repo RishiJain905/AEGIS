@@ -1,0 +1,10 @@
+{
+  "workflowVersion": 1,
+  "description": "Mock provider TRACE bounded investigation workflow for Phase 20 harness",
+  "providerId": "mock",
+  "role": "TRACE",
+  "promptVersion": "phase20-trace-v1",
+  "expectedToolSequence": ["list_existing_evidence"],
+  "expectedMaxHops": 3,
+  "expectedMaxToolCalls": 12
+}

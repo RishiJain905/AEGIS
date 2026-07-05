@@ -1,0 +1,7 @@
+{
+  "workflowVersion": 1,
+  "description": "Unauthorized execution tool attempt for investigation agents",
+  "toolName": "execute_simulation_command",
+  "role": "TRACE",
+  "expectedErrorCode": "TOOL_UNAUTHORIZED"
+}

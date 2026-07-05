@@ -161,12 +161,22 @@
           "title": "Traceid"
         }
       },
-      "required": ["schemaVersion", "code", "message"],
+      "required": [
+        "schemaVersion",
+        "code",
+        "message"
+      ],
       "title": "ProviderErrorV1",
       "type": "object"
     },
     "ProviderFinishReason": {
-      "enum": ["stop", "length", "tool_calls", "content_filter", "error"],
+      "enum": [
+        "stop",
+        "length",
+        "tool_calls",
+        "content_filter",
+        "error"
+      ],
       "title": "ProviderFinishReason",
       "type": "string"
     },
@@ -207,7 +217,12 @@
           "type": "integer"
         }
       },
-      "required": ["schemaVersion", "promptTokens", "completionTokens", "totalTokens"],
+      "required": [
+        "schemaVersion",
+        "promptTokens",
+        "completionTokens",
+        "totalTokens"
+      ],
       "title": "ProviderUsageV1",
       "type": "object"
     }
@@ -242,7 +257,9 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion"],
+  "required": [
+    "schemaVersion"
+  ],
   "title": "ProviderGenerateResponseV1",
   "type": "object"
 }

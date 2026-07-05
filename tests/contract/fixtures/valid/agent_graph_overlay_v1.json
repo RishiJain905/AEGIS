@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "golv_synthetic_001",
+  "incidentId": "incident:inc_synthetic_001",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sessionId": "agent-session:ags_synthetic_001",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "highlights": [
+    {
+      "entityId": "asset:device-workstation-01",
+      "entityType": "asset",
+      "highlightKind": "focus",
+      "label": "Primary alert asset"
+    }
+  ],
+  "edgeHighlights": [],
+  "rationale": "Bounded overlay highlighting triaged workstation asset.",
+  "createdAt": "2026-06-30T02:12:45.000Z"
+}

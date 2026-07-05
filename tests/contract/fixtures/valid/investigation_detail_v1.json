@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "incidentId": "incident:inc_synthetic_001",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "triageResults": [
+    {
+      "schemaVersion": 1,
+      "id": "wtri_synthetic_001",
+      "incidentId": "incident:inc_synthetic_001",
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "sessionId": "agent-session:ags_synthetic_001",
+      "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "alertSummaries": [],
+      "groupedAlertIds": [],
+      "separatedAlertIds": ["alert:alt_synthetic_001"],
+      "correlationDecisions": [],
+      "escalation": "investigate",
+      "escalationRationale": "Investigation recommended.",
+      "confidence": 0.8,
+      "evidenceIds": ["evidence:evd_synthetic_001"],
+      "idempotencyKey": "triage-demo-001",
+      "createdAt": "2026-06-30T02:05:00.000Z"
+    }
+  ],
+  "plans": [],
+  "evidenceAttachments": [],
+  "notes": [],
+  "candidateAssets": [],
+  "overlays": []
+}

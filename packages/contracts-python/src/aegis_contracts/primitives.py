@@ -17,7 +17,8 @@ AUTHORED_ID_PATTERN = re.compile(
     r"[a-z0-9][a-z0-9._-]{0,126}$"
 )
 RUNTIME_ID_PATTERN = re.compile(
-    r"^(evt|run|trc|inc|alt|evd|ags|prp|apr|act|mdl|scr|hyp|gen|atk|tiv|aaf)"
+    r"^(evt|run|trc|inc|alt|evd|ags|prp|apr|act|mdl|scr|hyp|gen|atk|tiv|aaf|"
+    r"wtr|tip|eat|ino|caa|ovl)"
     r"_[0-9A-HJKMNP-TV-Z]{26}$"
 )
 

@@ -608,3 +608,122 @@ class AgentArtifactRow(Base):
     __table_args__ = (
         Index("ix_agent_artifacts_session_created", "session_id", "created_at"),
     )
+
+
+class WatchtowerTriageResultRow(Base):
+    __tablename__ = "watchtower_triage_results"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("incident_id", "idempotency_key", name="uq_triage_incident_idempotency"),
+        Index("ix_triage_results_incident_created", "incident_id", "created_at"),
+    )
+
+
+class TraceInvestigationPlanRow(Base):
+    __tablename__ = "trace_investigation_plans"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("ix_trace_plans_incident_created", "incident_id", "created_at"),)
+
+
+class EvidenceAttachmentRow(Base):
+    __tablename__ = "evidence_attachments"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_evidence_attachments_incident_created", "incident_id", "created_at"),
+    )
+
+
+class InvestigationNoteRow(Base):
+    __tablename__ = "investigation_notes"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_investigation_notes_incident_created", "incident_id", "created_at"),
+    )
+
+
+class CandidateAffectedAssetRow(Base):
+    __tablename__ = "candidate_affected_assets"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    asset_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("ix_candidate_assets_incident_created", "incident_id", "created_at"),)
+
+
+class AgentGraphOverlayRow(Base):
+    __tablename__ = "agent_graph_overlays"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("ix_graph_overlays_incident_created", "incident_id", "created_at"),)
