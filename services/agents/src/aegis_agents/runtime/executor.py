@@ -417,8 +417,7 @@ class TaskExecutor:
         code: AgentRuntimeErrorCode,
         message: str,
     ) -> None:
-        if not uow.session.is_active:
-            await uow.session.rollback()
+        await uow.session.rollback()
         failed = task.model_copy(
             update={
                 "status": AgentTaskStatus.FAILED
