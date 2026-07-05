@@ -24,10 +24,7 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "schemaVersion",
-    "jsonSchema"
-  ],
+  "required": ["schemaVersion", "jsonSchema"],
   "title": "StructuredOutputSpecV1",
   "type": "object"
 }

@@ -7,14 +7,19 @@ import os
 import signal
 import sys
 
+from aegis_agents.runtime.executor import TaskExecutor
 from aegis_agents.runtime.factory import create_task_executor
 from aegis_agents.runtime.recovery import recover_running_tasks
 from aegis_contracts import load_settings
 from aegis_persistence.engine import create_engine, dispose_engine, get_session_maker
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
-async def _poll_once(session_maker, executor) -> int:
+async def _poll_once(
+    session_maker: async_sessionmaker[AsyncSession],
+    executor: TaskExecutor,
+) -> int:
     processed = 0
     async with PostgresUnitOfWork(session_maker) as uow:
         queued = await uow.agent_tasks.list_queued(limit=10)

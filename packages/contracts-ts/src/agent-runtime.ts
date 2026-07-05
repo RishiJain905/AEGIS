@@ -78,14 +78,7 @@ export const agentBudgetSchema = z
 export const agentDefinitionSchema = z
   .object({
     schemaVersion: schemaVersionCheck(AGENT_DEFINITION_SCHEMA_VERSION),
-    role: z.enum([
-      'WATCHTOWER',
-      'TRACE',
-      'ORACLE',
-      'BASTION',
-      'WARDEN',
-      'SCRIBE',
-    ]),
+    role: z.enum(['WATCHTOWER', 'TRACE', 'ORACLE', 'BASTION', 'WARDEN', 'SCRIBE']),
     definitionId: z.string().min(1).max(128),
     promptVersion: z.string().min(1).max(64),
     providerId: z.string().min(1).max(64),
@@ -104,9 +97,7 @@ export const toolDefinitionSchema = z
     modelVisible: z.boolean(),
     inputSchema: z.record(z.unknown()).default({}),
     outputSchema: z.record(z.unknown()).default({}),
-    allowedRoles: z.array(
-      z.enum(['WATCHTOWER', 'TRACE', 'ORACLE', 'BASTION', 'WARDEN', 'SCRIBE']),
-    ),
+    allowedRoles: z.array(z.enum(['WATCHTOWER', 'TRACE', 'ORACLE', 'BASTION', 'WARDEN', 'SCRIBE'])),
   })
   .strict()
   .superRefine((value, ctx) => {
@@ -226,14 +217,7 @@ export const agentArtifactSchema = z
 export const createAgentSessionRequestSchema = z
   .object({
     schemaVersion: schemaVersionCheck(CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION),
-    role: z.enum([
-      'WATCHTOWER',
-      'TRACE',
-      'ORACLE',
-      'BASTION',
-      'WARDEN',
-      'SCRIBE',
-    ]),
+    role: z.enum(['WATCHTOWER', 'TRACE', 'ORACLE', 'BASTION', 'WARDEN', 'SCRIBE']),
     traceId: traceIdSchema,
     enqueueInitialTask: z.boolean().default(true),
     providerId: z.string().nullable().optional(),

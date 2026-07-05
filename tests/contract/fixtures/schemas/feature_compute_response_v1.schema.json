@@ -96,12 +96,7 @@
           "type": "integer"
         }
       },
-      "required": [
-        "eventId",
-        "sequence",
-        "code",
-        "message"
-      ],
+      "required": ["eventId", "sequence", "code", "message"],
       "title": "FeatureRejectionV1",
       "type": "object"
     },

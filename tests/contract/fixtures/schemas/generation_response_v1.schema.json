@@ -1,13 +1,7 @@
 {
   "$defs": {
     "ProviderFinishReason": {
-      "enum": [
-        "stop",
-        "length",
-        "tool_calls",
-        "content_filter",
-        "error"
-      ],
+      "enum": ["stop", "length", "tool_calls", "content_filter", "error"],
       "title": "ProviderFinishReason",
       "type": "string"
     },
@@ -48,12 +42,7 @@
           "type": "integer"
         }
       },
-      "required": [
-        "schemaVersion",
-        "promptTokens",
-        "completionTokens",
-        "totalTokens"
-      ],
+      "required": ["schemaVersion", "promptTokens", "completionTokens", "totalTokens"],
       "title": "ProviderUsageV1",
       "type": "object"
     }

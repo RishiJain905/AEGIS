@@ -23,28 +23,28 @@ Phase 19 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/19-agent-run
 
 ## Files added
 
-| Area | Key paths |
-|------|-----------|
+| Area      | Key paths                                                                                                      |
+| --------- | -------------------------------------------------------------------------------------------------------------- |
 | Contracts | `packages/contracts-python/src/aegis_contracts/agent_runtime.py`, `packages/contracts-ts/src/agent-runtime.ts` |
-| Migration | `migrations/versions/006_agent_runtime.py` |
-| Runtime | `services/agents/src/aegis_agents/runtime/**` |
-| Tools | `services/agents/src/aegis_agents/tools/**` |
-| API | `apps/api/src/aegis_api/agents/**` |
-| Worker | `services/workers/src/aegis_workers/agent_runtime_runner.py` |
-| Fixtures | `fixtures/agent-workflows/**`, `fixtures/model-responses/recorded/agent-step-v1.json` |
-| Tests | `tests/agents/runtime/**`, `tests/integration/agents/**` |
-| Docs | `docs/agents/runtime.md`, ADR `0020-agent-runtime-foundation.md` |
-| Scripts | `scripts/run_agent_runtime_harness.py`, `apps/web/scripts/capture-agent-runtime-demo.mjs` |
+| Migration | `migrations/versions/006_agent_runtime.py`                                                                     |
+| Runtime   | `services/agents/src/aegis_agents/runtime/**`                                                                  |
+| Tools     | `services/agents/src/aegis_agents/tools/**`                                                                    |
+| API       | `apps/api/src/aegis_api/agents/**`                                                                             |
+| Worker    | `services/workers/src/aegis_workers/agent_runtime_runner.py`                                                   |
+| Fixtures  | `fixtures/agent-workflows/**`, `fixtures/model-responses/recorded/agent-step-v1.json`                          |
+| Tests     | `tests/agents/runtime/**`, `tests/integration/agents/**`                                                       |
+| Docs      | `docs/agents/runtime.md`, ADR `0020-agent-runtime-foundation.md`                                               |
+| Scripts   | `scripts/run_agent_runtime_harness.py`, `apps/web/scripts/capture-agent-runtime-demo.mjs`                      |
 
 ## Contracts introduced or changed
 
-| Contract | Version | Notes |
-|----------|---------|-------|
-| `AgentDefinitionV1` / `AgentTaskV1` / `ToolDefinitionV1` | schema v1 | Core runtime entities |
-| `ToolInvocationV1` / `AgentArtifactV1` | schema v1 | Audited execution records |
-| `AgentSessionDetailV1` | schema v1 | API aggregate DTO |
-| Runtime ID prefixes | — | `atk_`, `tiv_`, `aaf_` |
-| `WORKSPACE_VERSION` | `0.0.0-phase19` | Compatibility bump |
+| Contract                                                 | Version         | Notes                     |
+| -------------------------------------------------------- | --------------- | ------------------------- |
+| `AgentDefinitionV1` / `AgentTaskV1` / `ToolDefinitionV1` | schema v1       | Core runtime entities     |
+| `ToolInvocationV1` / `AgentArtifactV1`                   | schema v1       | Audited execution records |
+| `AgentSessionDetailV1`                                   | schema v1       | API aggregate DTO         |
+| Runtime ID prefixes                                      | —               | `atk_`, `tiv_`, `aaf_`    |
+| `WORKSPACE_VERSION`                                      | `0.0.0-phase19` | Compatibility bump        |
 
 ## Database migrations
 
@@ -52,20 +52,20 @@ Phase 19 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/19-agent-run
 
 ## Commands executed and results
 
-| Command | Result |
-|---------|--------|
-| `uv run ruff check .` | **PASS** |
-| `uv run mypy apps services packages` | **KNOWN ISSUE** — duplicate module path for `aegis_agents.runtime.factory` (services package layout; same class of issue as Phase 18 `db/session.py`) |
-| `uv run pytest -q` | **PASS** — 526 passed, 41 skipped |
-| `uv run pytest tests/agents/runtime -q` | **PASS** — 18 passed |
-| `uv run pytest tests/integration/agents -q` | **SKIPPED** — requires PostgreSQL (unavailable in cloud agent VM) |
-| `uv run lint-imports` | **PASS** — 4 kept, 0 broken |
-| `pnpm check-contracts` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `pnpm lint` | **PASS** |
-| `pnpm test` | **PASS** |
-| `uv run python scripts/run_agent_runtime_harness.py` | **BLOCKED** — requires PostgreSQL |
-| `node apps/web/scripts/capture-agent-runtime-demo.mjs` | **PARTIAL** — command centre captured; agent harness panels require PostgreSQL-backed API |
+| Command                                                | Result                                                                                                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `uv run ruff check .`                                  | **PASS**                                                                                                                                              |
+| `uv run mypy apps services packages`                   | **KNOWN ISSUE** — duplicate module path for `aegis_agents.runtime.factory` (services package layout; same class of issue as Phase 18 `db/session.py`) |
+| `uv run pytest -q`                                     | **PASS** — 526 passed, 41 skipped                                                                                                                     |
+| `uv run pytest tests/agents/runtime -q`                | **PASS** — 18 passed                                                                                                                                  |
+| `uv run pytest tests/integration/agents -q`            | **SKIPPED** — requires PostgreSQL (unavailable in cloud agent VM)                                                                                     |
+| `uv run lint-imports`                                  | **PASS** — 4 kept, 0 broken                                                                                                                           |
+| `pnpm check-contracts`                                 | **PASS**                                                                                                                                              |
+| `pnpm typecheck`                                       | **PASS**                                                                                                                                              |
+| `pnpm lint`                                            | **PASS**                                                                                                                                              |
+| `pnpm test`                                            | **PASS**                                                                                                                                              |
+| `uv run python scripts/run_agent_runtime_harness.py`   | **BLOCKED** — requires PostgreSQL                                                                                                                     |
+| `node apps/web/scripts/capture-agent-runtime-demo.mjs` | **PARTIAL** — command centre captured; agent harness panels require PostgreSQL-backed API                                                             |
 
 ## Architecture decisions and ADRs
 
