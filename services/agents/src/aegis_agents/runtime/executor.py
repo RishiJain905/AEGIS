@@ -19,7 +19,11 @@ from aegis_agents.runtime.events import (
 )
 from aegis_agents.runtime.grounding import validate_citations
 from aegis_agents.runtime.ids import new_runtime_id
-from aegis_agents.runtime.registry import DEFAULT_AGENT_REGISTRY, AgentDefinitionRegistry
+from aegis_agents.runtime.registry import (
+    DEFAULT_AGENT_REGISTRY,
+    AgentDefinitionRegistry,
+    build_definition,
+)
 from aegis_agents.runtime.session_service import AgentSessionService
 from aegis_agents.tools.executor import ToolExecutor
 from aegis_agents.tools.handlers import ToolExecutionContext
@@ -128,9 +132,7 @@ class TaskExecutor:
                 message=f"Incident not found: {task.incident_id}",
                 trace_id=task.trace_id,
             )
-        definition = self._registry.get(session.role).model_copy(
-            update={"provider_id": task.provider_id}
-        )
+        definition = build_definition(session.role, provider_id=task.provider_id)
         budget = await uow.agent_sessions.get_budget(session.id)
         if budget is None:
             budget = definition.default_budget

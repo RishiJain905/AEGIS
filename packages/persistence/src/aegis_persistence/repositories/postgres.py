@@ -723,6 +723,7 @@ class PostgresAgentTaskRepository:
         try:
             await self._session.flush()
         except IntegrityError as exc:
+            await self._session.rollback()
             raise DuplicateIdempotencyKeyError(
                 scope="agent-task",
                 idempotency_key=task.idempotency_key,

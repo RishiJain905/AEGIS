@@ -32,7 +32,6 @@ def _build_executor() -> TaskExecutor:
     )
     return TaskExecutor(generation=AgentGenerationFacade(service))
 
-
 @pytest.mark.asyncio
 async def test_recorded_provider_replay_is_deterministic(unit_of_work) -> None:
     incident_id, _run_id, _evidence_id = await seed_incident_with_evidence(unit_of_work)

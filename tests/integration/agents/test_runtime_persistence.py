@@ -25,14 +25,17 @@ from aegis_model_provider.service import GenerationService
 from tests.agents.runtime.helpers import seed_incident_with_evidence
 
 
-def _build_executor() -> TaskExecutor:
+def _build_executor(*, timeout_seconds: float = 30.0) -> TaskExecutor:
     settings = load_provider_settings()
     service = GenerationService(
         registry=build_provider_registry(settings),
         settings=settings,
         artifact_repository=InMemoryGenerationArtifactRepository(),
     )
-    return TaskExecutor(generation=AgentGenerationFacade(service))
+    return TaskExecutor(
+        generation=AgentGenerationFacade(service),
+        timeout_seconds=timeout_seconds,
+    )
 
 
 @pytest.mark.asyncio

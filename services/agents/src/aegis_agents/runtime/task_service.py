@@ -28,6 +28,12 @@ class AgentTaskService:
         definition = self._registry.get(session.role)
         provider_id = request.provider_id or definition.provider_id
         now = datetime.now(UTC)
+        existing = await uow.agent_tasks.get_by_idempotency(
+            session_id=session.id,
+            idempotency_key=request.idempotency_key,
+        )
+        if existing is not None:
+            return existing
         task = AgentTaskV1(
             schema_version=AGENT_TASK_SCHEMA_VERSION,
             id=new_runtime_id("atk"),
@@ -44,6 +50,7 @@ class AgentTaskService:
         try:
             return await uow.agent_tasks.add(task)
         except DuplicateIdempotencyKeyError:
+            await uow.session.rollback()
             existing = await uow.agent_tasks.get_by_idempotency(
                 session_id=session.id,
                 idempotency_key=request.idempotency_key,
