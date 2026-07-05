@@ -4,6 +4,20 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
+from aegis_contracts.agent_runtime import (
+    AgentArtifactV1,
+    AgentBudgetV1,
+    AgentDefinitionV1,
+    AgentSessionDetailV1,
+    AgentStateTransitionV1,
+    AgentTaskV1,
+    CreateAgentSessionRequestV1,
+    CreateAgentTaskRequestV1,
+    EvidenceCitationV1,
+    ToolDefinitionV1,
+    ToolInvocationV1,
+    ToolResultV1,
+)
 from aegis_contracts.api import CursorPaginationV1, IdempotencyMetadataV1
 from aegis_contracts.entities import (
     ActionProposalV1,
@@ -182,4 +196,16 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "provider_capabilities_v1": ProviderCapabilitiesV1,
     "structured_output_spec_v1": StructuredOutputSpecV1,
     "tool_schema_v1": ToolSchemaV1,
+    "agent_definition_v1": AgentDefinitionV1,
+    "agent_task_v1": AgentTaskV1,
+    "agent_budget_v1": AgentBudgetV1,
+    "agent_state_transition_v1": AgentStateTransitionV1,
+    "tool_definition_v1": ToolDefinitionV1,
+    "tool_invocation_v1": ToolInvocationV1,
+    "tool_result_v1": ToolResultV1,
+    "evidence_citation_v1": EvidenceCitationV1,
+    "agent_artifact_v1": AgentArtifactV1,
+    "create_agent_session_request_v1": CreateAgentSessionRequestV1,
+    "create_agent_task_request_v1": CreateAgentTaskRequestV1,
+    "agent_session_detail_v1": AgentSessionDetailV1,
 }

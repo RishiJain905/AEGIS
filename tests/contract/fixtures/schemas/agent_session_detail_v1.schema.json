@@ -1,0 +1,558 @@
+{
+  "$defs": {
+    "AgentArtifactType": {
+      "enum": [
+        "step_result",
+        "hypothesis",
+        "proposal",
+        "audit"
+      ],
+      "title": "AgentArtifactType",
+      "type": "string"
+    },
+    "AgentArtifactV1": {
+      "additionalProperties": false,
+      "properties": {
+        "artifactType": {
+          "$ref": "#/$defs/AgentArtifactType"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "generationArtifactId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generationartifactid"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "taskId": {
+          "title": "Taskid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "taskId",
+        "sessionId",
+        "artifactType",
+        "createdAt"
+      ],
+      "title": "AgentArtifactV1",
+      "type": "object"
+    },
+    "AgentBudgetV1": {
+      "additionalProperties": false,
+      "properties": {
+        "consumedCostUsd": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Consumedcostusd",
+          "type": "number"
+        },
+        "consumedLatencyMs": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Consumedlatencyms",
+          "type": "integer"
+        },
+        "consumedTokens": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Consumedtokens",
+          "type": "integer"
+        },
+        "maxCostUsd": {
+          "minimum": 0.0,
+          "title": "Maxcostusd",
+          "type": "number"
+        },
+        "maxLatencyMs": {
+          "minimum": 1,
+          "title": "Maxlatencyms",
+          "type": "integer"
+        },
+        "maxTokens": {
+          "minimum": 1,
+          "title": "Maxtokens",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "maxTokens",
+        "maxLatencyMs",
+        "maxCostUsd"
+      ],
+      "title": "AgentBudgetV1",
+      "type": "object"
+    },
+    "AgentRole": {
+      "enum": [
+        "WATCHTOWER",
+        "TRACE",
+        "ORACLE",
+        "BASTION",
+        "WARDEN",
+        "SCRIBE"
+      ],
+      "title": "AgentRole",
+      "type": "string"
+    },
+    "AgentSessionState": {
+      "enum": [
+        "queued",
+        "gathering",
+        "hypothesizing",
+        "verifying",
+        "proposing",
+        "approval_pending",
+        "executing",
+        "completed",
+        "failed",
+        "cancelled"
+      ],
+      "title": "AgentSessionState",
+      "type": "string"
+    },
+    "AgentSessionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/AgentRole"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/$defs/AgentSessionState"
+        },
+        "traceId": {
+          "title": "Traceid",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "incidentId",
+        "role",
+        "state",
+        "traceId",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "AgentSessionV1",
+      "type": "object"
+    },
+    "AgentStateTransitionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "fromState": {
+          "$ref": "#/$defs/AgentSessionState"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "taskId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Taskid"
+        },
+        "toState": {
+          "$ref": "#/$defs/AgentSessionState"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "sessionId",
+        "fromState",
+        "toState",
+        "reason",
+        "createdAt"
+      ],
+      "title": "AgentStateTransitionV1",
+      "type": "object"
+    },
+    "AgentTaskStatus": {
+      "enum": [
+        "queued",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "timed_out"
+      ],
+      "title": "AgentTaskStatus",
+      "type": "string"
+    },
+    "AgentTaskV1": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completedat"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errorcode"
+        },
+        "errorMessage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errormessage"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Idempotencykey",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "providerId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Providerid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startedat"
+        },
+        "status": {
+          "$ref": "#/$defs/AgentTaskStatus"
+        },
+        "traceId": {
+          "title": "Traceid",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "sessionId",
+        "incidentId",
+        "status",
+        "idempotencyKey",
+        "traceId",
+        "providerId",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "AgentTaskV1",
+      "type": "object"
+    },
+    "AgentToolClass": {
+      "enum": [
+        "read",
+        "analysis_write",
+        "proposal",
+        "execution"
+      ],
+      "title": "AgentToolClass",
+      "type": "string"
+    },
+    "ToolInvocationStatus": {
+      "enum": [
+        "success",
+        "failed",
+        "rejected"
+      ],
+      "title": "ToolInvocationStatus",
+      "type": "string"
+    },
+    "ToolInvocationV1": {
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "durationMs": {
+          "minimum": 0,
+          "title": "Durationms",
+          "type": "integer"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errorcode"
+        },
+        "errorMessage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errormessage"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "input": {
+          "additionalProperties": true,
+          "title": "Input",
+          "type": "object"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ToolInvocationStatus"
+        },
+        "taskId": {
+          "title": "Taskid",
+          "type": "string"
+        },
+        "toolClass": {
+          "$ref": "#/$defs/AgentToolClass"
+        },
+        "toolName": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Toolname",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "taskId",
+        "sessionId",
+        "toolName",
+        "toolClass",
+        "status",
+        "durationMs",
+        "createdAt"
+      ],
+      "title": "ToolInvocationV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/AgentArtifactV1"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "budget": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AgentBudgetV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "session": {
+      "$ref": "#/$defs/AgentSessionV1"
+    },
+    "tasks": {
+      "items": {
+        "$ref": "#/$defs/AgentTaskV1"
+      },
+      "title": "Tasks",
+      "type": "array"
+    },
+    "toolInvocations": {
+      "items": {
+        "$ref": "#/$defs/ToolInvocationV1"
+      },
+      "title": "Toolinvocations",
+      "type": "array"
+    },
+    "transitions": {
+      "items": {
+        "$ref": "#/$defs/AgentStateTransitionV1"
+      },
+      "title": "Transitions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "session"
+  ],
+  "title": "AgentSessionDetailV1",
+  "type": "object"
+}

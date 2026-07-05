@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "role": "TRACE",
+  "definitionId": "runtime-trace-v1",
+  "promptVersion": "phase19-v1",
+  "providerId": "mock",
+  "modelId": "mock-v1",
+  "allowedTools": ["list_evidence", "get_incident", "create_hypothesis", "create_action_proposal"],
+  "defaultBudget": {
+    "schemaVersion": 1,
+    "maxTokens": 8000,
+    "maxLatencyMs": 60000,
+    "maxCostUsd": 1.0,
+    "consumedTokens": 0,
+    "consumedLatencyMs": 0,
+    "consumedCostUsd": 0.0
+  }
+}

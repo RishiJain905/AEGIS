@@ -20,13 +20,13 @@
     "ProviderErrorV1": {
       "additionalProperties": false,
       "properties": {
-        "schemaVersion": {
-          "minimum": 1,
-          "title": "Schemaversion",
-          "type": "integer"
-        },
         "code": {
           "$ref": "#/$defs/ProviderErrorCode"
+        },
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
         },
         "message": {
           "maxLength": 2048,
@@ -39,10 +39,10 @@
           "title": "Retryable",
           "type": "boolean"
         },
-        "details": {
-          "additionalProperties": true,
-          "title": "Details",
-          "type": "object"
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
         },
         "traceId": {
           "anyOf": [
@@ -57,31 +57,20 @@
           "title": "Traceid"
         }
       },
-      "required": ["schemaVersion", "code", "message"],
+      "required": [
+        "schemaVersion",
+        "code",
+        "message"
+      ],
       "title": "ProviderErrorV1",
       "type": "object"
     },
     "ProviderUsageV1": {
       "additionalProperties": false,
       "properties": {
-        "schemaVersion": {
-          "minimum": 1,
-          "title": "Schemaversion",
-          "type": "integer"
-        },
-        "promptTokens": {
-          "minimum": 0,
-          "title": "Prompttokens",
-          "type": "integer"
-        },
         "completionTokens": {
           "minimum": 0,
           "title": "Completiontokens",
-          "type": "integer"
-        },
-        "totalTokens": {
-          "minimum": 0,
-          "title": "Totaltokens",
           "type": "integer"
         },
         "estimatedCostUsd": {
@@ -96,62 +85,35 @@
           ],
           "default": null,
           "title": "Estimatedcostusd"
+        },
+        "promptTokens": {
+          "minimum": 0,
+          "title": "Prompttokens",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "totalTokens": {
+          "minimum": 0,
+          "title": "Totaltokens",
+          "type": "integer"
         }
       },
-      "required": ["schemaVersion", "promptTokens", "completionTokens", "totalTokens"],
+      "required": [
+        "schemaVersion",
+        "promptTokens",
+        "completionTokens",
+        "totalTokens"
+      ],
       "title": "ProviderUsageV1",
       "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": {
-      "minimum": 1,
-      "title": "Schemaversion",
-      "type": "integer"
-    },
-    "requestId": {
-      "title": "Requestid",
-      "type": "string"
-    },
-    "traceId": {
-      "title": "Traceid",
-      "type": "string"
-    },
-    "providerId": {
-      "maxLength": 64,
-      "minLength": 1,
-      "title": "Providerid",
-      "type": "string"
-    },
-    "modelId": {
-      "maxLength": 128,
-      "minLength": 1,
-      "title": "Modelid",
-      "type": "string"
-    },
-    "promptVersion": {
-      "maxLength": 64,
-      "minLength": 1,
-      "title": "Promptversion",
-      "type": "string"
-    },
-    "latencyMs": {
-      "minimum": 0,
-      "title": "Latencyms",
-      "type": "integer"
-    },
-    "usage": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/ProviderUsageV1"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
     "error": {
       "anyOf": [
         {
@@ -162,6 +124,50 @@
         }
       ],
       "default": null
+    },
+    "latencyMs": {
+      "minimum": 0,
+      "title": "Latencyms",
+      "type": "integer"
+    },
+    "modelId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Modelid",
+      "type": "string"
+    },
+    "objectStorageRef": {
+      "anyOf": [
+        {
+          "maxLength": 512,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Objectstorageref"
+    },
+    "promptVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Promptversion",
+      "type": "string"
+    },
+    "providerId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Providerid",
+      "type": "string"
+    },
+    "recordedAt": {
+      "title": "Recordedat",
+      "type": "string"
+    },
+    "requestId": {
+      "title": "Requestid",
+      "type": "string"
     },
     "sanitizedRequest": {
       "additionalProperties": true,
@@ -181,23 +187,25 @@
       "default": null,
       "title": "Sanitizedresponse"
     },
-    "objectStorageRef": {
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "traceId": {
+      "title": "Traceid",
+      "type": "string"
+    },
+    "usage": {
       "anyOf": [
         {
-          "maxLength": 512,
-          "type": "string"
+          "$ref": "#/$defs/ProviderUsageV1"
         },
         {
           "type": "null"
         }
       ],
-      "default": null,
-      "title": "Objectstorageref"
-    },
-    "recordedAt": {
-      "format": "date-time",
-      "title": "Recordedat",
-      "type": "string"
+      "default": null
     }
   },
   "required": [

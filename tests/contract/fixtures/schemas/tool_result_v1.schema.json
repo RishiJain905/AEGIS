@@ -1,0 +1,72 @@
+{
+  "$defs": {
+    "ToolInvocationStatus": {
+      "enum": [
+        "success",
+        "failed",
+        "rejected"
+      ],
+      "title": "ToolInvocationStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "errorCode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Errorcode"
+    },
+    "errorMessage": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Errormessage"
+    },
+    "invocationId": {
+      "title": "Invocationid",
+      "type": "string"
+    },
+    "output": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/ToolInvocationStatus"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "invocationId",
+    "status"
+  ],
+  "title": "ToolResultV1",
+  "type": "object"
+}

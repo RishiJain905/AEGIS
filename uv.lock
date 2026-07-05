@@ -68,6 +68,7 @@ dependencies = [
     { name = "aegis-contracts" },
     { name = "aegis-model-provider" },
     { name = "aegis-persistence" },
+    { name = "jsonschema" },
 ]
 
 [package.metadata]
@@ -75,6 +76,7 @@ requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
     { name = "aegis-model-provider", editable = "packages/model-provider" },
     { name = "aegis-persistence", editable = "packages/persistence" },
+    { name = "jsonschema", specifier = ">=4.23" },
 ]
 
 [[package]]
@@ -333,6 +335,7 @@ name = "aegis-workers"
 version = "0.0.0"
 source = { editable = "services/workers" }
 dependencies = [
+    { name = "aegis-agents" },
     { name = "aegis-contracts" },
     { name = "aegis-event-streaming" },
     { name = "aegis-persistence" },
@@ -341,6 +344,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aegis-agents", editable = "services/agents" },
     { name = "aegis-contracts", editable = "packages/contracts-python" },
     { name = "aegis-event-streaming", editable = "packages/event-streaming" },
     { name = "aegis-persistence", editable = "packages/persistence" },

@@ -1,5 +1,23 @@
 """AEGIS shared Python contracts."""
 
+from aegis_contracts.agent_runtime import (
+    AgentArtifactType,
+    AgentArtifactV1,
+    AgentBudgetV1,
+    AgentDefinitionV1,
+    AgentSessionDetailV1,
+    AgentStateTransitionV1,
+    AgentTaskStatus,
+    AgentTaskV1,
+    AgentToolClass,
+    CreateAgentSessionRequestV1,
+    CreateAgentTaskRequestV1,
+    EvidenceCitationV1,
+    ToolDefinitionV1,
+    ToolInvocationStatus,
+    ToolInvocationV1,
+    ToolResultV1,
+)
 from aegis_contracts.api import (
     PROTOCOL_VERSION,
     CursorPaginationV1,
@@ -175,6 +193,22 @@ from aegis_contracts.websocket import (
 
 __all__ = [
     "WORKSPACE_VERSION",
+    "AgentArtifactType",
+    "AgentArtifactV1",
+    "AgentBudgetV1",
+    "AgentDefinitionV1",
+    "AgentSessionDetailV1",
+    "AgentStateTransitionV1",
+    "AgentTaskStatus",
+    "AgentTaskV1",
+    "AgentToolClass",
+    "CreateAgentSessionRequestV1",
+    "CreateAgentTaskRequestV1",
+    "EvidenceCitationV1",
+    "ToolDefinitionV1",
+    "ToolInvocationStatus",
+    "ToolInvocationV1",
+    "ToolResultV1",
     "ActionClass",
     "ActionProposalV1",
     "ActorRef",

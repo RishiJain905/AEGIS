@@ -1,0 +1,68 @@
+{
+  "$defs": {
+    "AgentArtifactType": {
+      "enum": [
+        "step_result",
+        "hypothesis",
+        "proposal",
+        "audit"
+      ],
+      "title": "AgentArtifactType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "artifactType": {
+      "$ref": "#/$defs/AgentArtifactType"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "generationArtifactId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Generationartifactid"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "taskId": {
+      "title": "Taskid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "taskId",
+    "sessionId",
+    "artifactType",
+    "createdAt"
+  ],
+  "title": "AgentArtifactV1",
+  "type": "object"
+}

@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from aegis_contracts import (
     ActionProposalV1,
+    AgentArtifactV1,
+    AgentBudgetV1,
     AgentSessionV1,
+    AgentStateTransitionV1,
+    AgentTaskV1,
     AlertV1,
     ApprovalV1,
     AssetRiskScoreV1,
@@ -23,12 +27,16 @@ from aegis_contracts import (
     ScenarioV1,
     ScenarioVersionV1,
     SimulationCheckpointV1,
+    ToolInvocationV1,
     parse_contract,
 )
 
 from aegis_persistence.orm.tables import (
     ActionProposalRow,
+    AgentArtifactRow,
     AgentSessionRow,
+    AgentStateTransitionRow,
+    AgentTaskRow,
     AlertRow,
     ApprovalRow,
     AssetRiskScoreRow,
@@ -47,6 +55,7 @@ from aegis_persistence.orm.tables import (
     ScenarioVersionRow,
     SimulationCheckpointRow,
     StoredObjectRow,
+    ToolInvocationRow,
 )
 
 
@@ -84,6 +93,28 @@ def hypothesis_to_domain(row: HypothesisRow) -> HypothesisV1:
 
 def agent_session_to_domain(row: AgentSessionRow) -> AgentSessionV1:
     return parse_contract(AgentSessionV1, row.payload)
+
+
+def agent_task_to_domain(row: AgentTaskRow) -> AgentTaskV1:
+    return parse_contract(AgentTaskV1, row.payload)
+
+
+def agent_state_transition_to_domain(row: AgentStateTransitionRow) -> AgentStateTransitionV1:
+    return parse_contract(AgentStateTransitionV1, row.payload)
+
+
+def tool_invocation_to_domain(row: ToolInvocationRow) -> ToolInvocationV1:
+    return parse_contract(ToolInvocationV1, row.payload)
+
+
+def agent_artifact_to_domain(row: AgentArtifactRow) -> AgentArtifactV1:
+    return parse_contract(AgentArtifactV1, row.payload)
+
+
+def agent_budget_from_row(row: AgentSessionRow) -> AgentBudgetV1 | None:
+    if row.budget is None:
+        return None
+    return parse_contract(AgentBudgetV1, row.budget)
 
 
 def action_proposal_to_domain(row: ActionProposalRow) -> ActionProposalV1:

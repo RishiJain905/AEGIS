@@ -1,0 +1,131 @@
+{
+  "$defs": {
+    "AgentTaskStatus": {
+      "enum": [
+        "queued",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "timed_out"
+      ],
+      "title": "AgentTaskStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "attempt": {
+      "default": 1,
+      "minimum": 1,
+      "title": "Attempt",
+      "type": "integer"
+    },
+    "completedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Completedat"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "errorCode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Errorcode"
+    },
+    "errorMessage": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Errormessage"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "idempotencyKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Idempotencykey",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "providerId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Providerid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "startedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Startedat"
+    },
+    "status": {
+      "$ref": "#/$defs/AgentTaskStatus"
+    },
+    "traceId": {
+      "title": "Traceid",
+      "type": "string"
+    },
+    "updatedAt": {
+      "title": "Updatedat",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "sessionId",
+    "incidentId",
+    "status",
+    "idempotencyKey",
+    "traceId",
+    "providerId",
+    "createdAt",
+    "updatedAt"
+  ],
+  "title": "AgentTaskV1",
+  "type": "object"
+}

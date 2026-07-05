@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "AgentSessionState": {
+      "enum": [
+        "queued",
+        "gathering",
+        "hypothesizing",
+        "verifying",
+        "proposing",
+        "approval_pending",
+        "executing",
+        "completed",
+        "failed",
+        "cancelled"
+      ],
+      "title": "AgentSessionState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "fromState": {
+      "$ref": "#/$defs/AgentSessionState"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "taskId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Taskid"
+    },
+    "toState": {
+      "$ref": "#/$defs/AgentSessionState"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "sessionId",
+    "fromState",
+    "toState",
+    "reason",
+    "createdAt"
+  ],
+  "title": "AgentStateTransitionV1",
+  "type": "object"
+}

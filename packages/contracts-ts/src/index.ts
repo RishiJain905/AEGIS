@@ -60,6 +60,20 @@ import {
   structuredOutputSpecSchema,
   toolSchemaSchema,
 } from './generation';
+import {
+  agentArtifactSchema,
+  agentBudgetSchema,
+  agentDefinitionSchema,
+  agentSessionDetailSchema,
+  agentStateTransitionSchema,
+  agentTaskSchema,
+  createAgentSessionRequestSchema,
+  createAgentTaskRequestSchema,
+  evidenceCitationSchema,
+  toolDefinitionSchema,
+  toolInvocationSchema,
+  toolResultSchema,
+} from './agent-runtime';
 import { websocketFrameSchema } from './websocket';
 
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
@@ -146,6 +160,8 @@ export function safeParseAegisEnvironment(env: Record<string, string | undefined
   return aegisEnvironmentSchema.safeParse(env);
 }
 
+export * from './agent-runtime';
+
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
   graph_node_v1: graphNodeSchema,
@@ -227,4 +243,16 @@ export const FIXTURE_SCHEMA_MAP = {
   provider_capabilities_v1: providerCapabilitiesSchema,
   structured_output_spec_v1: structuredOutputSpecSchema,
   tool_schema_v1: toolSchemaSchema,
+  agent_definition_v1: agentDefinitionSchema,
+  agent_task_v1: agentTaskSchema,
+  agent_budget_v1: agentBudgetSchema,
+  agent_state_transition_v1: agentStateTransitionSchema,
+  tool_definition_v1: toolDefinitionSchema,
+  tool_invocation_v1: toolInvocationSchema,
+  tool_result_v1: toolResultSchema,
+  evidence_citation_v1: evidenceCitationSchema,
+  agent_artifact_v1: agentArtifactSchema,
+  create_agent_session_request_v1: createAgentSessionRequestSchema,
+  create_agent_task_request_v1: createAgentTaskRequestSchema,
+  agent_session_detail_v1: agentSessionDetailSchema,
 } as const;

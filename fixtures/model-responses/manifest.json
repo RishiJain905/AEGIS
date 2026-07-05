@@ -17,6 +17,14 @@
       "providerId": "recorded",
       "modelId": "recorded-v1",
       "promptVersion": "phase18-v1"
+    },
+    {
+      "name": "agent-step-v1",
+      "path": "recorded/agent-step-v1.json",
+      "requestHash": "82e4b4afdf9a45b8",
+      "providerId": "recorded",
+      "modelId": "recorded-v1",
+      "promptVersion": "phase19-v1"
     }
   ]
 }

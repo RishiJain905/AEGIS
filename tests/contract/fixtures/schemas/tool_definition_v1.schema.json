@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "AgentRole": {
+      "enum": [
+        "WATCHTOWER",
+        "TRACE",
+        "ORACLE",
+        "BASTION",
+        "WARDEN",
+        "SCRIBE"
+      ],
+      "title": "AgentRole",
+      "type": "string"
+    },
+    "AgentToolClass": {
+      "enum": [
+        "read",
+        "analysis_write",
+        "proposal",
+        "execution"
+      ],
+      "title": "AgentToolClass",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "allowedRoles": {
+      "items": {
+        "$ref": "#/$defs/AgentRole"
+      },
+      "title": "Allowedroles",
+      "type": "array"
+    },
+    "description": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "inputSchema": {
+      "additionalProperties": true,
+      "title": "Inputschema",
+      "type": "object"
+    },
+    "modelVisible": {
+      "title": "Modelvisible",
+      "type": "boolean"
+    },
+    "name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "outputSchema": {
+      "additionalProperties": true,
+      "title": "Outputschema",
+      "type": "object"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "toolClass": {
+      "$ref": "#/$defs/AgentToolClass"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "name",
+    "description",
+    "toolClass",
+    "modelVisible",
+    "allowedRoles"
+  ],
+  "title": "ToolDefinitionV1",
+  "type": "object"
+}

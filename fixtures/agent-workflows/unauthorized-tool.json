@@ -1,0 +1,6 @@
+{
+  "workflowVersion": 1,
+  "description": "Unauthorized execution tool attempt",
+  "toolName": "execute_simulation_command",
+  "expectedErrorCode": "TOOL_UNAUTHORIZED"
+}

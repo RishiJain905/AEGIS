@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "ast_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sessionId": "agent-session:ags_synthetic_001",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "fromState": "queued",
+  "toState": "gathering",
+  "reason": "task_started",
+  "createdAt": "2026-06-30T02:15:00.000Z"
+}

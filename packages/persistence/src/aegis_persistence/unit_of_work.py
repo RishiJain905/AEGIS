@@ -8,9 +8,16 @@ from aegis_contracts import AegisSettings, DomainEventEnvelopeV1
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from aegis_persistence.repositories.postgres import (
+    PostgresActionProposalRepository,
+    PostgresAgentArtifactRepository,
+    PostgresAgentSessionRepository,
+    PostgresAgentStateTransitionRepository,
+    PostgresAgentTaskRepository,
     PostgresAlertRepository,
     PostgresCheckpointRepository,
     PostgresEventRepository,
+    PostgresEvidenceRepository,
+    PostgresHypothesisRepository,
     PostgresIdempotencyRepository,
     PostgresIncidentRepository,
     PostgresModelRepository,
@@ -19,6 +26,7 @@ from aegis_persistence.repositories.postgres import (
     PostgresRunRepository,
     PostgresScenarioRepository,
     PostgresScenarioVersionRepository,
+    PostgresToolInvocationRepository,
     create_outbox_row,
 )
 
@@ -50,6 +58,14 @@ class PostgresUnitOfWork:
         self._models = PostgresModelRepository(self._session)
         self._risk_scores = PostgresRiskScoreRepository(self._session)
         self._checkpoints = PostgresCheckpointRepository(self._session)
+        self._agent_sessions = PostgresAgentSessionRepository(self._session)
+        self._agent_tasks = PostgresAgentTaskRepository(self._session)
+        self._agent_transitions = PostgresAgentStateTransitionRepository(self._session)
+        self._tool_invocations = PostgresToolInvocationRepository(self._session)
+        self._agent_artifacts = PostgresAgentArtifactRepository(self._session)
+        self._evidence = PostgresEvidenceRepository(self._session)
+        self._hypotheses = PostgresHypothesisRepository(self._session)
+        self._action_proposals = PostgresActionProposalRepository(self._session)
         return self
 
     async def __aexit__(
@@ -115,6 +131,38 @@ class PostgresUnitOfWork:
         return self._checkpoints
 
     @property
+    def agent_sessions(self) -> PostgresAgentSessionRepository:
+        return self._agent_sessions
+
+    @property
+    def agent_tasks(self) -> PostgresAgentTaskRepository:
+        return self._agent_tasks
+
+    @property
+    def agent_transitions(self) -> PostgresAgentStateTransitionRepository:
+        return self._agent_transitions
+
+    @property
+    def tool_invocations(self) -> PostgresToolInvocationRepository:
+        return self._tool_invocations
+
+    @property
+    def agent_artifacts(self) -> PostgresAgentArtifactRepository:
+        return self._agent_artifacts
+
+    @property
+    def evidence(self) -> PostgresEvidenceRepository:
+        return self._evidence
+
+    @property
+    def hypotheses(self) -> PostgresHypothesisRepository:
+        return self._hypotheses
+
+    @property
+    def action_proposals(self) -> PostgresActionProposalRepository:
+        return self._action_proposals
+
+    @property
     def session(self) -> AsyncSession:
         if self._session is None:
             msg = "UnitOfWork is not active"
@@ -141,6 +189,9 @@ class EventRepositoryProxy:
 
     async def get_by_id(self, event_id: str) -> DomainEventEnvelopeV1 | None:
         return await self._repository.get_by_id(event_id)
+
+    async def next_sequence(self, run_id: str) -> int:
+        return await self._repository.next_sequence(run_id)
 
     async def append(self, envelope: DomainEventEnvelopeV1) -> DomainEventEnvelopeV1:
         msg = "Use UnitOfWork.append_event to persist events with outbox rows"

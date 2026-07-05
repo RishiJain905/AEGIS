@@ -1,0 +1,50 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "algorithmVersion": {
+      "minLength": 1,
+      "title": "Algorithmversion",
+      "type": "string"
+    },
+    "checksum": {
+      "minLength": 1,
+      "title": "Checksum",
+      "type": "string"
+    },
+    "eventsPersisted": {
+      "minimum": 0,
+      "title": "Eventspersisted",
+      "type": "integer"
+    },
+    "nodesUpdated": {
+      "minimum": 0,
+      "title": "Nodesupdated",
+      "type": "integer"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "scoresComputed": {
+      "minimum": 0,
+      "title": "Scorescomputed",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "algorithmVersion",
+    "scoresComputed",
+    "nodesUpdated",
+    "eventsPersisted",
+    "checksum"
+  ],
+  "title": "RiskComputeResponseV1",
+  "type": "object"
+}

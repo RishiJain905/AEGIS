@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "tiv_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sessionId": "agent-session:ags_synthetic_001",
+  "toolName": "list_evidence",
+  "toolClass": "read",
+  "status": "success",
+  "durationMs": 12,
+  "input": {},
+  "output": { "evidenceIds": ["evidence:evd_synthetic_001"] },
+  "createdAt": "2026-06-30T02:15:01.000Z"
+}

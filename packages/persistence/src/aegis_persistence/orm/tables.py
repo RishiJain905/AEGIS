@@ -291,6 +291,7 @@ class AgentSessionRow(Base):
     )
     trace_id: Mapped[str] = mapped_column(String(64), nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    budget: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -498,4 +499,112 @@ class IdempotencyRecordRow(Base):
 
     __table_args__ = (
         UniqueConstraint("scope", "idempotency_key", name="uq_idempotency_scope_key"),
+    )
+
+
+class AgentTaskRow(Base):
+    __tablename__ = "agent_tasks"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    session_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("agent_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            "idempotency_key",
+            name="uq_agent_tasks_session_idempotency",
+        ),
+        Index("ix_agent_tasks_session_status", "session_id", "status"),
+    )
+
+
+class AgentStateTransitionRow(Base):
+    __tablename__ = "agent_state_transitions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    session_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("agent_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    task_id: Mapped[str | None] = mapped_column(
+        String(64),
+        ForeignKey("agent_tasks.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    from_state: Mapped[str] = mapped_column(String(64), nullable=False)
+    to_state: Mapped[str] = mapped_column(String(64), nullable=False)
+    reason: Mapped[str] = mapped_column(String(512), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_agent_state_transitions_session_created", "session_id", "created_at"),
+    )
+
+
+class ToolInvocationRow(Base):
+    __tablename__ = "tool_invocations"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    task_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("agent_tasks.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("agent_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    tool_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    tool_class: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    duration_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    input_payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    output_payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("ix_tool_invocations_task_created", "task_id", "created_at"),)
+
+
+class AgentArtifactRow(Base):
+    __tablename__ = "agent_artifacts"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    task_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("agent_tasks.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("agent_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    artifact_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    generation_artifact_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_agent_artifacts_session_created", "session_id", "created_at"),
     )

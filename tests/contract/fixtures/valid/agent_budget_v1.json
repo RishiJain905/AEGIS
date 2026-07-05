@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "maxTokens": 8000,
+  "maxLatencyMs": 60000,
+  "maxCostUsd": 1.0,
+  "consumedTokens": 0,
+  "consumedLatencyMs": 0,
+  "consumedCostUsd": 0.0
+}

@@ -6,6 +6,7 @@ dependencies = [
     "aegis-contracts",
     "aegis-persistence",
     "aegis-event-streaming",
+    "aegis-agents",
     "redis[hiredis]>=5.2",
 ]
 
@@ -13,6 +14,7 @@ dependencies = [
 aegis-contracts = { workspace = true }
 aegis-persistence = { workspace = true }
 aegis-event-streaming = { workspace = true }
+aegis-agents = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

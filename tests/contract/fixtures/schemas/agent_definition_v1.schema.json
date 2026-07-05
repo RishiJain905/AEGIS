@@ -1,0 +1,124 @@
+{
+  "$defs": {
+    "AgentBudgetV1": {
+      "additionalProperties": false,
+      "properties": {
+        "consumedCostUsd": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Consumedcostusd",
+          "type": "number"
+        },
+        "consumedLatencyMs": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Consumedlatencyms",
+          "type": "integer"
+        },
+        "consumedTokens": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Consumedtokens",
+          "type": "integer"
+        },
+        "maxCostUsd": {
+          "minimum": 0.0,
+          "title": "Maxcostusd",
+          "type": "number"
+        },
+        "maxLatencyMs": {
+          "minimum": 1,
+          "title": "Maxlatencyms",
+          "type": "integer"
+        },
+        "maxTokens": {
+          "minimum": 1,
+          "title": "Maxtokens",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "maxTokens",
+        "maxLatencyMs",
+        "maxCostUsd"
+      ],
+      "title": "AgentBudgetV1",
+      "type": "object"
+    },
+    "AgentRole": {
+      "enum": [
+        "WATCHTOWER",
+        "TRACE",
+        "ORACLE",
+        "BASTION",
+        "WARDEN",
+        "SCRIBE"
+      ],
+      "title": "AgentRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "allowedTools": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowedtools",
+      "type": "array"
+    },
+    "defaultBudget": {
+      "$ref": "#/$defs/AgentBudgetV1"
+    },
+    "definitionId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Definitionid",
+      "type": "string"
+    },
+    "modelId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Modelid",
+      "type": "string"
+    },
+    "promptVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Promptversion",
+      "type": "string"
+    },
+    "providerId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Providerid",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/AgentRole"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "role",
+    "definitionId",
+    "promptVersion",
+    "providerId",
+    "modelId",
+    "allowedTools",
+    "defaultBudget"
+  ],
+  "title": "AgentDefinitionV1",
+  "type": "object"
+}

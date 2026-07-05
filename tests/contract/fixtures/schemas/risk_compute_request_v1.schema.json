@@ -1,0 +1,66 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "dryRun": {
+      "default": false,
+      "title": "Dryrun",
+      "type": "boolean"
+    },
+    "fromSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fromsequence"
+    },
+    "incidentSeedAssetIds": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentseedassetids"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "toSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tosequence"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId"
+  ],
+  "title": "RiskComputeRequestV1",
+  "type": "object"
+}

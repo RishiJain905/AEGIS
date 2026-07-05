@@ -49,7 +49,16 @@ class MockProvider:
         structured_data = None
         content = None
         if request.structured_output is not None:
-            if "invalid" in user_text.lower():
+            if "rationale" in (request.structured_output.json_schema.get("required") or []):
+                payload = {
+                    "rationale": f"Mock investigation step for request {fingerprint}",
+                    "confidence": 0.82,
+                    "evidenceCitations": [],
+                    "toolRequests": [{"name": "list_evidence", "arguments": {}}],
+                }
+                structured_data = validate_structured_output(payload, request.structured_output)
+                content = json.dumps(structured_data)
+            elif "invalid" in user_text.lower():
                 payload = {"summary": 123, "confidence": "high"}
                 content = json.dumps(payload)
                 structured_data = None

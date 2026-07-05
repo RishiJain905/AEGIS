@@ -1,0 +1,34 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "idempotencyKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Idempotencykey",
+      "type": "string"
+    },
+    "providerId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Providerid"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "idempotencyKey"
+  ],
+  "title": "CreateAgentTaskRequestV1",
+  "type": "object"
+}
