@@ -57,10 +57,7 @@
       "title": "Tosequence"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId"
-  ],
+  "required": ["schemaVersion", "runId"],
   "title": "RiskComputeRequestV1",
   "type": "object"
 }

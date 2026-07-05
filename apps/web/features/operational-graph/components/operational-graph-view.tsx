@@ -264,7 +264,9 @@ export function OperationalGraphView({
       return;
     }
     const state = useGraphVisualStore.getState().visualState;
-    const investigationLayerEnabled = state.filterSet.enabledLayers.includes(GraphLayer.INVESTIGATION);
+    const investigationLayerEnabled = state.filterSet.enabledLayers.includes(
+      GraphLayer.INVESTIGATION,
+    );
     if (!investigationLayerEnabled || !state.overlayToggles.incident) {
       return;
     }

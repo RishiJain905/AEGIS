@@ -30,15 +30,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "schemaVersion",
-    "sequence",
-    "eventId",
-    "eventType",
-    "label",
-    "timestamp",
-    "status"
-  ],
+  "required": ["schemaVersion", "sequence", "eventId", "eventType", "label", "timestamp", "status"],
   "title": "TimelineEntryV1",
   "type": "object"
 }

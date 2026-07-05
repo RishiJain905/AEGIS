@@ -13,10 +13,7 @@ import type { NodeStatusValue } from '@aegis/ui';
 import { GraphHighlightMode } from '@/features/operational-graph/contracts/graph-visual-state';
 import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-visual-store';
 
-import {
-  useInvestigationAgentSessions,
-  useInvestigationDetail,
-} from './use-investigation-queries';
+import { useInvestigationAgentSessions, useInvestigationDetail } from './use-investigation-queries';
 
 export interface InvestigationPanelProps {
   incidentId: string;
@@ -106,7 +103,11 @@ function TriageSection({ triageResults }: { triageResults: WatchtowerTriageResul
                 {Math.round(triage.confidence * 100)}% confidence
               </span>
             </div>
-            <Alert variant={escalationVariant(triage.escalation)} className="mt-2" title="Escalation">
+            <Alert
+              variant={escalationVariant(triage.escalation)}
+              className="mt-2"
+              title="Escalation"
+            >
               {triage.escalationRationale}
             </Alert>
             {triage.correlationDecisions.length > 0 ? (
@@ -220,7 +221,9 @@ function AgentLifecycleSection({ sessions }: { sessions: AgentSessionDetailV1[] 
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-medium">{detail.session.role}</span>
-              <Badge nodeStatus={taskStatusBadge(detail.session.state)}>{detail.session.state}</Badge>
+              <Badge nodeStatus={taskStatusBadge(detail.session.state)}>
+                {detail.session.state}
+              </Badge>
             </div>
             <p className="mt-1 font-mono text-[10px] text-[var(--aegis-text-muted)]">
               {detail.session.id}
@@ -259,7 +262,9 @@ function AgentLifecycleSection({ sessions }: { sessions: AgentSessionDetailV1[] 
             ) : null}
             {detail.toolInvocations.length > 0 ? (
               <details className="mt-2 text-xs text-[var(--aegis-text-secondary)]">
-                <summary className="cursor-pointer">Tool invocations ({detail.toolInvocations.length})</summary>
+                <summary className="cursor-pointer">
+                  Tool invocations ({detail.toolInvocations.length})
+                </summary>
                 <ul className="mt-2 flex flex-col gap-1">
                   {detail.toolInvocations.map((invocation) => (
                     <li key={invocation.id} className="font-mono text-[10px]">
@@ -345,7 +350,11 @@ function InvestigationContent({
       <TriageSection triageResults={detail.triageResults} />
       <EvidenceSection attachments={supportingEvidence} contradictions={contradictions} />
       {detail.notes.length > 0 ? (
-        <Panel title="Investigation notes" density="compact" data-testid="investigation-notes-panel">
+        <Panel
+          title="Investigation notes"
+          density="compact"
+          data-testid="investigation-notes-panel"
+        >
           <ul className="flex flex-col gap-2">
             {detail.notes.map((note) => (
               <li
@@ -384,15 +393,6 @@ export function InvestigationPanel({ incidentId }: InvestigationPanelProps) {
           void investigationQuery.refetch();
           void agentSessionsQuery.refetch();
         }}
-      />
-    );
-  }
-
-  if (!investigationQuery.data) {
-    return (
-      <EmptyState
-        title="Investigation unavailable"
-        description="No investigation artifacts are available for this incident."
       />
     );
   }

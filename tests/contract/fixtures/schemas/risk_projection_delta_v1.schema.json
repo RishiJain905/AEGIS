@@ -31,13 +31,7 @@
           "type": "number"
         }
       },
-      "required": [
-        "assetId",
-        "riskScore",
-        "direct",
-        "propagated",
-        "revision"
-      ],
+      "required": ["assetId", "riskScore", "direct", "propagated", "revision"],
       "title": "RiskProjectionNodeUpdateV1",
       "type": "object"
     }
@@ -72,13 +66,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId",
-    "sequence",
-    "algorithmVersion",
-    "nodeUpdates"
-  ],
+  "required": ["schemaVersion", "runId", "sequence", "algorithmVersion", "nodeUpdates"],
   "title": "RiskProjectionDeltaV1",
   "type": "object"
 }

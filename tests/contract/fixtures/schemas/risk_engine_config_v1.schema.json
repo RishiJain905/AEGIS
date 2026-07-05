@@ -1,13 +1,7 @@
 {
   "$defs": {
     "RelationshipType": {
-      "enum": [
-        "COMMUNICATED_WITH",
-        "AUTHENTICATED_TO",
-        "DEPENDS_ON",
-        "ADMINISTERS",
-        "HOSTS"
-      ],
+      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
       "title": "RelationshipType",
       "type": "string"
     }
@@ -94,10 +88,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "algorithmVersion"
-  ],
+  "required": ["schemaVersion", "algorithmVersion"],
   "title": "RiskEngineConfigV1",
   "type": "object"
 }

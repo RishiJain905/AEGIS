@@ -88,32 +88,54 @@ async function shot(name, url, fn = async () => {}) {
 const paths = [];
 
 paths.push(
-  await shot('20-incident-investigation-panel', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector('[data-testid="investigation-panel"]', { timeout: 30000 });
-    await page.waitForSelector('[data-testid="investigation-triage-panel"]', { timeout: 30000 });
-  }),
+  await shot(
+    '20-incident-investigation-panel',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector('[data-testid="investigation-panel"]', { timeout: 30000 });
+      await page.waitForSelector('[data-testid="investigation-triage-panel"]', { timeout: 30000 });
+    },
+  ),
 );
 
 paths.push(
-  await shot('20-investigation-evidence', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector('[data-testid="investigation-evidence-panel"]', { timeout: 30000 });
-    await page.waitForSelector('[data-testid="investigation-contradictions-panel"]', { timeout: 30000 });
-  }),
+  await shot(
+    '20-investigation-evidence',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector('[data-testid="investigation-evidence-panel"]', {
+        timeout: 30000,
+      });
+      await page.waitForSelector('[data-testid="investigation-contradictions-panel"]', {
+        timeout: 30000,
+      });
+    },
+  ),
 );
 
 paths.push(
-  await shot('20-investigation-agent-lifecycle', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector('[data-testid="investigation-agent-lifecycle-panel"]', { timeout: 30000 });
-  }),
+  await shot(
+    '20-investigation-agent-lifecycle',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector('[data-testid="investigation-agent-lifecycle-panel"]', {
+        timeout: 30000,
+      });
+    },
+  ),
 );
 
 paths.push(
-  await shot('20-investigation-graph-overlay', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector('[data-testid="operational-graph-view"]', { timeout: 30000 });
-    await page.waitForSelector('[data-testid="investigation-overlay-panel"]', { timeout: 30000 });
-    await page.click('[data-testid="highlight-investigation-overlay"]');
-    await page.waitForTimeout(800);
-  }),
+  await shot(
+    '20-investigation-graph-overlay',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector('[data-testid="operational-graph-view"]', { timeout: 30000 });
+      await page.waitForSelector('[data-testid="investigation-overlay-panel"]', { timeout: 30000 });
+      await page.click('[data-testid="highlight-investigation-overlay"]');
+      await page.waitForTimeout(800);
+    },
+  ),
 );
 
 paths.push(

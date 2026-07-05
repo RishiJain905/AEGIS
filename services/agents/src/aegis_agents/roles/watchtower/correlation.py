@@ -42,14 +42,15 @@ def correlate_alerts(alerts: list[AlertV1]) -> list[AlertCorrelationDecisionV1]:
                 factors=["shared_asset", asset_id],
             )
         )
-        for left in alert_ids:
-            for right in alert_ids:
-                if left < right:
-                    seen_pairs.add((left, right))
+        for left_id in alert_ids:
+            for right_id in alert_ids:
+                if left_id < right_id:
+                    seen_pairs.add((left_id, right_id))
 
     for index, left in enumerate(sorted_alerts):
         for right in sorted_alerts[index + 1 :]:
-            pair_key = tuple(sorted((left.id, right.id)))
+            first_id, second_id = sorted((left.id, right.id))
+            pair_key = (first_id, second_id)
             if pair_key in seen_pairs:
                 continue
             delta = abs(right.created_at - left.created_at)

@@ -72,7 +72,8 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
           <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 xl:flex-row">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
               <LiveRunControls />
-              {children ?? (runId ? <VisualizationSlot runId={runId} incidentId={incidentId} /> : null)}
+              {children ??
+                (runId ? <VisualizationSlot runId={runId} incidentId={incidentId} /> : null)}
               <TimelineView />
             </div>
             <InspectorPanel runId={runId} incidentId={incidentId} />

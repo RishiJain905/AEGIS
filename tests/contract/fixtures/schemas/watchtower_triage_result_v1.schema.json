@@ -30,20 +30,12 @@
           "type": "string"
         }
       },
-      "required": [
-        "alertIds",
-        "decision",
-        "rationale"
-      ],
+      "required": ["alertIds", "decision", "rationale"],
       "title": "AlertCorrelationDecisionV1",
       "type": "object"
     },
     "TriageEscalationLevel": {
-      "enum": [
-        "monitor",
-        "investigate",
-        "urgent"
-      ],
+      "enum": ["monitor", "investigate", "urgent"],
       "title": "TriageEscalationLevel",
       "type": "string"
     }

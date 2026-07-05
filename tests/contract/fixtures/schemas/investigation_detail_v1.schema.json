@@ -98,11 +98,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "alertIds",
-        "decision",
-        "rationale"
-      ],
+      "required": ["alertIds", "decision", "rationale"],
       "title": "AlertCorrelationDecisionV1",
       "type": "object"
     },
@@ -297,22 +293,12 @@
           "type": "string"
         }
       },
-      "required": [
-        "sourceType",
-        "sourceId",
-        "summary"
-      ],
+      "required": ["sourceType", "sourceId", "summary"],
       "title": "EvidenceProvenanceV1",
       "type": "object"
     },
     "EvidenceSourceType": {
-      "enum": [
-        "event",
-        "alert",
-        "asset",
-        "risk_path",
-        "existing_evidence"
-      ],
+      "enum": ["event", "alert", "asset", "risk_path", "existing_evidence"],
       "title": "EvidenceSourceType",
       "type": "string"
     },
@@ -344,11 +330,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "entityId",
-        "entityType",
-        "highlightKind"
-      ],
+      "required": ["entityId", "entityType", "highlightKind"],
       "title": "GraphOverlayHighlightV1",
       "type": "object"
     },
@@ -546,19 +528,12 @@
           "type": "string"
         }
       },
-      "required": [
-        "toolName",
-        "purpose"
-      ],
+      "required": ["toolName", "purpose"],
       "title": "TraceSearchStepV1",
       "type": "object"
     },
     "TriageEscalationLevel": {
-      "enum": [
-        "monitor",
-        "investigate",
-        "urgent"
-      ],
+      "enum": ["monitor", "investigate", "urgent"],
       "title": "TriageEscalationLevel",
       "type": "string"
     },
@@ -729,11 +704,7 @@
       "type": "array"
     }
   },
-  "required": [
-    "schemaVersion",
-    "incidentId",
-    "runId"
-  ],
+  "required": ["schemaVersion", "incidentId", "runId"],
   "title": "InvestigationDetailV1",
   "type": "object"
 }
