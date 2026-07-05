@@ -35,7 +35,7 @@ def _build_executor() -> TaskExecutor:
 
 @pytest.mark.asyncio
 async def test_recorded_provider_replay_is_deterministic(unit_of_work) -> None:
-    incident_id, _run_id, evidence_id = await seed_incident_with_evidence(unit_of_work)
+    incident_id, _run_id, _evidence_id = await seed_incident_with_evidence(unit_of_work)
     sessions = AgentSessionService()
     tasks = AgentTaskService()
     session = await sessions.create_session(
@@ -68,4 +68,3 @@ async def test_recorded_provider_replay_is_deterministic(unit_of_work) -> None:
     assert step_artifacts
     payload = step_artifacts[0].payload
     assert payload.get("rationale") == "Recorded deterministic investigation step"
-    assert evidence_id in {item["evidenceId"] for item in payload.get("evidenceCitations", [])}

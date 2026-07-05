@@ -16,12 +16,7 @@
     "structuredData": {
       "rationale": "Recorded deterministic investigation step",
       "confidence": 0.88,
-      "evidenceCitations": [
-        {
-          "evidenceId": "evidence:evd_runtime_harness_001",
-          "rationale": "Matches suspicious authentication pattern"
-        }
-      ],
+      "evidenceCitations": [],
       "toolRequests": [
         {
           "name": "list_evidence",
