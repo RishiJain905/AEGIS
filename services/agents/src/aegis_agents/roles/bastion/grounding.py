@@ -61,7 +61,7 @@ def validate_response_option_grounding(
     for evidence_id in evidence_ids:
         if evidence_id not in allowed_evidence:
             raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.GROUNDING_FAILED,
+                code=AgentRuntimeErrorCode.EVIDENCE_NOT_VISIBLE,
                 message=f"Evidence not visible: {evidence_id}",
                 trace_id=trace_id,
             )
@@ -69,7 +69,7 @@ def validate_response_option_grounding(
     for hypothesis_id in hypothesis_ids:
         if hypothesis_id not in context.visible_hypothesis_ids:
             raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.GROUNDING_FAILED,
+                code=AgentRuntimeErrorCode.TOOL_VALIDATION_FAILED,
                 message=f"Hypothesis not visible: {hypothesis_id}",
                 trace_id=trace_id,
             )

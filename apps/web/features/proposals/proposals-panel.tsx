@@ -34,15 +34,11 @@ function policyOutcomeVariant(
   }
 }
 
-function selectedOption(
-  revision: ProposalRevisionV1 | undefined,
-): ResponseOptionV1 | undefined {
+function selectedOption(revision: ProposalRevisionV1 | undefined): ResponseOptionV1 | undefined {
   if (!revision) {
     return undefined;
   }
-  return revision.responseOptions.find(
-    (option) => option.optionId === revision.selectedOptionId,
-  );
+  return revision.responseOptions.find((option) => option.optionId === revision.selectedOptionId);
 }
 
 function ProposalCard({
@@ -55,9 +51,7 @@ function ProposalCard({
   decisions: PolicyDecisionV1[];
 }) {
   const option = selectedOption(revision);
-  const latestDecision = decisions
-    .filter((decision) => decision.proposalId === proposal.id)
-    .at(-1);
+  const latestDecision = decisions.filter((decision) => decision.proposalId === proposal.id).at(-1);
 
   return (
     <li
@@ -89,7 +83,9 @@ function ProposalCard({
             {[option.targetAssetId, ...option.affectedAssetIds].join(', ')}
           </p>
           <p>
-            <span className="font-medium text-[var(--aegis-text-primary)]">Expected consequences:</span>{' '}
+            <span className="font-medium text-[var(--aegis-text-primary)]">
+              Expected consequences:
+            </span>{' '}
             {option.expectedConsequences}
           </p>
           <p>
@@ -176,7 +172,11 @@ function ProposalsContent({ detail }: { detail: InvestigationDetailV1 }) {
           ))}
         </ul>
       </Panel>
-      <Panel title="Proposal lifecycle & audit" density="compact" data-testid="proposal-lifecycle-panel">
+      <Panel
+        title="Proposal lifecycle & audit"
+        density="compact"
+        data-testid="proposal-lifecycle-panel"
+      >
         <ul className="space-y-2 text-xs text-[var(--aegis-text-secondary)]">
           {detail.proposals.map((proposal) => (
             <li key={`audit-${proposal.id}`} className="font-mono">

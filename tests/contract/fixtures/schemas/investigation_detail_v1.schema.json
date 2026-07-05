@@ -1,12 +1,7 @@
 {
   "$defs": {
     "ActionClass": {
-      "enum": [
-        "class_0",
-        "class_1",
-        "class_2",
-        "class_3"
-      ],
+      "enum": ["class_0", "class_1", "class_2", "class_3"],
       "title": "ActionClass",
       "type": "string"
     },
@@ -168,14 +163,7 @@
       "type": "object"
     },
     "AgentRole": {
-      "enum": [
-        "WATCHTOWER",
-        "TRACE",
-        "ORACLE",
-        "BASTION",
-        "WARDEN",
-        "SCRIBE"
-      ],
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
       "title": "AgentRole",
       "type": "string"
     },
@@ -209,11 +197,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "alertIds",
-        "decision",
-        "rationale"
-      ],
+      "required": ["alertIds", "decision", "rationale"],
       "title": "AlertCorrelationDecisionV1",
       "type": "object"
     },
@@ -243,11 +227,7 @@
           "type": "integer"
         }
       },
-      "required": [
-        "schemaVersion",
-        "required",
-        "rationale"
-      ],
+      "required": ["schemaVersion", "required", "rationale"],
       "title": "ApprovalRequirementV1",
       "type": "object"
     },
@@ -420,10 +400,7 @@
           "type": "array"
         }
       },
-      "required": [
-        "schemaVersion",
-        "rationale"
-      ],
+      "required": ["schemaVersion", "rationale"],
       "title": "ContradictionLinkV1",
       "type": "object"
     },
@@ -560,22 +537,12 @@
           "type": "string"
         }
       },
-      "required": [
-        "sourceType",
-        "sourceId",
-        "summary"
-      ],
+      "required": ["sourceType", "sourceId", "summary"],
       "title": "EvidenceProvenanceV1",
       "type": "object"
     },
     "EvidenceSourceType": {
-      "enum": [
-        "event",
-        "alert",
-        "asset",
-        "risk_path",
-        "existing_evidence"
-      ],
+      "enum": ["event", "alert", "asset", "risk_path", "existing_evidence"],
       "title": "EvidenceSourceType",
       "type": "string"
     },
@@ -607,11 +574,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "entityId",
-        "entityType",
-        "highlightKind"
-      ],
+      "required": ["entityId", "entityType", "highlightKind"],
       "title": "GraphOverlayHighlightV1",
       "type": "object"
     },
@@ -652,11 +615,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "schemaVersion",
-        "kind",
-        "text"
-      ],
+      "required": ["schemaVersion", "kind", "text"],
       "title": "HypothesisClaimV1",
       "type": "object"
     },
@@ -701,11 +660,7 @@
           "type": "array"
         }
       },
-      "required": [
-        "hypothesisId",
-        "revisionId",
-        "confidencePoint"
-      ],
+      "required": ["hypothesisId", "revisionId", "confidencePoint"],
       "title": "HypothesisComparisonEntryV1",
       "type": "object"
     },
@@ -913,11 +868,7 @@
       "type": "object"
     },
     "HypothesisStatusV1": {
-      "enum": [
-        "active",
-        "superseded",
-        "retired"
-      ],
+      "enum": ["active", "superseded", "retired"],
       "title": "HypothesisStatusV1",
       "type": "string"
     },
@@ -1007,12 +958,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "schemaVersion",
-        "id",
-        "incidentId",
-        "createdAt"
-      ],
+      "required": ["schemaVersion", "id", "incidentId", "createdAt"],
       "title": "HypothesisV1",
       "type": "object"
     },
@@ -1272,11 +1218,7 @@
       "type": "object"
     },
     "PolicyOutcomeV1": {
-      "enum": [
-        "allow",
-        "block",
-        "approval_required"
-      ],
+      "enum": ["allow", "block", "approval_required"],
       "title": "PolicyOutcomeV1",
       "type": "string"
     },
@@ -1388,13 +1330,7 @@
       "type": "object"
     },
     "ProposalStatus": {
-      "enum": [
-        "pending",
-        "approved",
-        "rejected",
-        "executed",
-        "cancelled"
-      ],
+      "enum": ["pending", "approved", "rejected", "executed", "cancelled"],
       "title": "ProposalStatus",
       "type": "string"
     },
@@ -1666,19 +1602,12 @@
           "type": "string"
         }
       },
-      "required": [
-        "toolName",
-        "purpose"
-      ],
+      "required": ["toolName", "purpose"],
       "title": "TraceSearchStepV1",
       "type": "object"
     },
     "TriageEscalationLevel": {
-      "enum": [
-        "monitor",
-        "investigate",
-        "urgent"
-      ],
+      "enum": ["monitor", "investigate", "urgent"],
       "title": "TriageEscalationLevel",
       "type": "string"
     },
@@ -1966,11 +1895,7 @@
       "type": "array"
     }
   },
-  "required": [
-    "schemaVersion",
-    "incidentId",
-    "runId"
-  ],
+  "required": ["schemaVersion", "incidentId", "runId"],
   "title": "InvestigationDetailV1",
   "type": "object"
 }

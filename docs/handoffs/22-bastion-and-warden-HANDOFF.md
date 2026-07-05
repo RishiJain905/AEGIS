@@ -22,35 +22,35 @@ Phase 22 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/22-bastion-a
 
 ## Files added
 
-| Area | Key paths |
-|------|-----------|
-| Contracts | `packages/contracts-python/src/aegis_contracts/proposals.py`, `packages/contracts-ts/src/proposals.ts` |
-| Policy | `packages/policy/src/aegis_policy/commands.py`, `engine.py` |
-| Migration | `migrations/versions/009_bastion_warden_proposals.py` |
-| Persistence | `packages/persistence/src/aegis_persistence/repositories/proposals.py` |
-| BASTION | `services/agents/src/aegis_agents/roles/bastion/**` |
-| WARDEN | `services/agents/src/aegis_agents/roles/warden/**` |
-| Tools | `services/agents/src/aegis_agents/tools/proposal/**` |
-| Events | `services/agents/src/aegis_agents/runtime/proposal_events.py` |
-| Frontend | `apps/web/features/proposals/proposals-panel.tsx` |
-| Tests | `tests/policy/**`, `tests/agents/bastion/**`, `tests/agents/warden/**`, `tests/integration/agents/test_bastion_warden_flow.py` |
-| Fixtures | `fixtures/model-responses/bastion/**`, `fixtures/model-responses/warden/**` |
-| Scripts | `scripts/run_bastion_warden_harness.py`, `apps/web/scripts/capture-bastion-warden-demo.mjs` |
-| Docs | `docs/policy-and-proposals.md`, ADR `0023-bastion-warden-policy-proposals.md` |
+| Area        | Key paths                                                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Contracts   | `packages/contracts-python/src/aegis_contracts/proposals.py`, `packages/contracts-ts/src/proposals.ts`                         |
+| Policy      | `packages/policy/src/aegis_policy/commands.py`, `engine.py`                                                                    |
+| Migration   | `migrations/versions/009_bastion_warden_proposals.py`                                                                          |
+| Persistence | `packages/persistence/src/aegis_persistence/repositories/proposals.py`                                                         |
+| BASTION     | `services/agents/src/aegis_agents/roles/bastion/**`                                                                            |
+| WARDEN      | `services/agents/src/aegis_agents/roles/warden/**`                                                                             |
+| Tools       | `services/agents/src/aegis_agents/tools/proposal/**`                                                                           |
+| Events      | `services/agents/src/aegis_agents/runtime/proposal_events.py`                                                                  |
+| Frontend    | `apps/web/features/proposals/proposals-panel.tsx`                                                                              |
+| Tests       | `tests/policy/**`, `tests/agents/bastion/**`, `tests/agents/warden/**`, `tests/integration/agents/test_bastion_warden_flow.py` |
+| Fixtures    | `fixtures/model-responses/bastion/**`, `fixtures/model-responses/warden/**`                                                    |
+| Scripts     | `scripts/run_bastion_warden_harness.py`, `apps/web/scripts/capture-bastion-warden-demo.mjs`                                    |
+| Docs        | `docs/policy-and-proposals.md`, ADR `0023-bastion-warden-policy-proposals.md`                                                  |
 
 ## Contracts introduced or changed
 
-| Contract | Version | Notes |
-|----------|---------|-------|
-| `ResponseOptionV1` | schema v1 | Evidence-grounded response option |
-| `ProposalRevisionV1` | schema v1 | Append-only proposal body |
-| `PolicyInputV1` / `PolicyDecisionV1` | schema v1 | Deterministic evaluation |
-| `ApprovalRequirementV1` | schema v1 | Phase 24 gate metadata |
-| `ActionProposalV1` | schema v2 | `currentRevisionId`, `scenarioCommand` |
-| `InvestigationDetailV1` | schema v3 | Proposal/policy aggregation |
-| `TriggerBastionRequestV1` / `TriggerWardenRequestV1` | schema v1 | Trigger APIs |
-| Event `action.proposal.policy_evaluated` | schema v1 | WARDEN outcome |
-| `WORKSPACE_VERSION` | `0.0.0-phase22` | Compatibility bump |
+| Contract                                             | Version         | Notes                                  |
+| ---------------------------------------------------- | --------------- | -------------------------------------- |
+| `ResponseOptionV1`                                   | schema v1       | Evidence-grounded response option      |
+| `ProposalRevisionV1`                                 | schema v1       | Append-only proposal body              |
+| `PolicyInputV1` / `PolicyDecisionV1`                 | schema v1       | Deterministic evaluation               |
+| `ApprovalRequirementV1`                              | schema v1       | Phase 24 gate metadata                 |
+| `ActionProposalV1`                                   | schema v2       | `currentRevisionId`, `scenarioCommand` |
+| `InvestigationDetailV1`                              | schema v3       | Proposal/policy aggregation            |
+| `TriggerBastionRequestV1` / `TriggerWardenRequestV1` | schema v1       | Trigger APIs                           |
+| Event `action.proposal.policy_evaluated`             | schema v1       | WARDEN outcome                         |
+| `WORKSPACE_VERSION`                                  | `0.0.0-phase22` | Compatibility bump                     |
 
 ## Database migrations
 
@@ -58,20 +58,20 @@ Phase 22 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/22-bastion-a
 
 ## Commands executed and results
 
-| Command | Result |
-|---------|--------|
-| `uv run ruff check .` | **PASS** |
-| `uv run pytest tests/policy tests/agents/bastion tests/agents/warden -q` | **PASS** (14 tests) |
-| `uv run pytest tests/policy tests/agents tests/contract -q` | **PASS** (410 tests; boundary test env caveat below) |
-| `uv run mypy apps services packages` | **KNOWN ISSUE** — duplicate module path + fastapi stubs (pre-existing) |
-| `uv run lint-imports` | **ENV CAVEAT** — requires full workspace packages on PYTHONPATH |
-| `pnpm check-contracts` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `pnpm lint` | **PASS** |
-| `pnpm test` | **PASS** (59 web tests) |
-| `node apps/web/scripts/capture-bastion-warden-demo.mjs` | **PASS** (fixture-mode screenshots) |
-| `uv run python scripts/run_bastion_warden_harness.py` | Requires PostgreSQL |
-| `uv run pytest tests/integration/agents/test_bastion_warden_flow.py` | Requires `AEGIS_INTEGRATION_POSTGRES=1` + PostgreSQL |
+| Command                                                                  | Result                                                                 |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `uv run ruff check .`                                                    | **PASS**                                                               |
+| `uv run pytest tests/policy tests/agents/bastion tests/agents/warden -q` | **PASS** (14 tests)                                                    |
+| `uv run pytest tests/policy tests/agents tests/contract -q`              | **PASS** (410 tests; boundary test env caveat below)                   |
+| `uv run mypy apps services packages`                                     | **KNOWN ISSUE** — duplicate module path + fastapi stubs (pre-existing) |
+| `uv run lint-imports`                                                    | **ENV CAVEAT** — requires full workspace packages on PYTHONPATH        |
+| `pnpm check-contracts`                                                   | **PASS**                                                               |
+| `pnpm typecheck`                                                         | **PASS**                                                               |
+| `pnpm lint`                                                              | **PASS**                                                               |
+| `pnpm test`                                                              | **PASS** (59 web tests)                                                |
+| `node apps/web/scripts/capture-bastion-warden-demo.mjs`                  | **PASS** (fixture-mode screenshots)                                    |
+| `uv run python scripts/run_bastion_warden_harness.py`                    | Requires PostgreSQL                                                    |
+| `uv run pytest tests/integration/agents/test_bastion_warden_flow.py`     | Requires `AEGIS_INTEGRATION_POSTGRES=1` + PostgreSQL                   |
 
 ## Visual evidence
 

@@ -48,9 +48,7 @@ function run(command) {
   }
 }
 
-const phase22Tests = run(
-  'uv run pytest tests/policy tests/agents/bastion tests/agents/warden -q',
-);
+const phase22Tests = run('uv run pytest tests/policy tests/agents/bastion tests/agents/warden -q');
 const bastionHarness = run('PYTHONPATH=. uv run python scripts/run_bastion_warden_harness.py');
 
 const api = spawn('uv', ['run', 'aegis-api'], { cwd: ROOT, env, stdio: 'ignore' });

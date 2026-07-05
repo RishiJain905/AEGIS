@@ -63,15 +63,7 @@
       "$ref": "#/$defs/AgentSessionState"
     }
   },
-  "required": [
-    "schemaVersion",
-    "id",
-    "sessionId",
-    "fromState",
-    "toState",
-    "reason",
-    "createdAt"
-  ],
+  "required": ["schemaVersion", "id", "sessionId", "fromState", "toState", "reason", "createdAt"],
   "title": "AgentStateTransitionV1",
   "type": "object"
 }
