@@ -31,7 +31,7 @@ _ORACLE_FIXTURE_PATH = (
 
 
 def _load_oracle_mock_payload(fingerprint: str) -> dict[str, object]:
-    payload = json.loads(_ORACLE_FIXTURE_PATH.read_text(encoding="utf-8"))
+    payload: dict[str, object] = json.loads(_ORACLE_FIXTURE_PATH.read_text(encoding="utf-8"))
     payload["rationale"] = f"Mock ORACLE hypotheses for request {fingerprint}"
     return payload
 

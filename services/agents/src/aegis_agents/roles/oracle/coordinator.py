@@ -47,7 +47,7 @@ class OracleCoordinator:
             row = result.scalars().first()
             if row is None:
                 raise AgentRuntimeError(
-                    code=AgentRuntimeErrorCode.VALIDATION_FAILED,
+                    code=AgentRuntimeErrorCode.INCIDENT_NOT_FOUND,
                     message="No incident found for run",
                     trace_id=request.trace_id,
                 )
@@ -56,7 +56,7 @@ class OracleCoordinator:
         detail = await uow.investigation.get_detail(incident_id, request.run_id)
         if not detail.triage_results:
             raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.VALIDATION_FAILED,
+                code=AgentRuntimeErrorCode.TOOL_VALIDATION_FAILED,
                 message="ORACLE requires WATCHTOWER triage artifacts",
                 trace_id=request.trace_id,
             )

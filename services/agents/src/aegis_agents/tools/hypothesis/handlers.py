@@ -69,11 +69,11 @@ async def handle_create_hypothesis_revision(
         revision = revision.model_copy(update={"hypothesis_id": hypothesis_id})
         await ctx.uow.oracle_hypotheses.add_hypothesis(hypothesis)
     else:
-        hypothesis = await ctx.uow.oracle_hypotheses.get_hypothesis(hypothesis_id)
-        if hypothesis is None:
+        existing_hypothesis = await ctx.uow.oracle_hypotheses.get_hypothesis(hypothesis_id)
+        if existing_hypothesis is None:
             msg = f"Hypothesis not found: {hypothesis_id}"
             raise KeyError(msg)
-        hypothesis = hypothesis.model_copy(
+        hypothesis = existing_hypothesis.model_copy(
             update={
                 "current_revision_id": revision.id,
                 "family": revision.family.value,
