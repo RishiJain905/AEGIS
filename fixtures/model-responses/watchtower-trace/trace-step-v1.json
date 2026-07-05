@@ -18,7 +18,7 @@
       "confidence": 0.89,
       "evidenceCitations": [
         {
-          "evidenceId": "evidence:evd_synthetic_001",
+          "evidenceId": "evidence:evd_runtime_test_001",
           "rationale": "Grounded authentication evidence"
         }
       ],
@@ -43,7 +43,7 @@
         {
           "assetId": "asset:device-workstation-01",
           "confidence": 0.82,
-          "evidenceIds": ["evidence:evd_synthetic_001"],
+          "evidenceIds": ["evidence:evd_runtime_test_001"],
           "rationale": "Primary alert asset"
         }
       ],

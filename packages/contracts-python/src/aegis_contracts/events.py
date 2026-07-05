@@ -132,6 +132,10 @@ class EventTypeRegistry:
         "model.score.recorded": 1,
         "risk.score.computed": 1,
         "risk.projection.updated": 1,
+        "investigation.triage.completed": 1,
+        "investigation.plan.created": 1,
+        "investigation.evidence.attached": 1,
+        "investigation.graph.overlay": 1,
     }
 
     @classmethod
