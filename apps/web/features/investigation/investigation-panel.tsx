@@ -312,8 +312,7 @@ function HypothesisSection({
 
   const selectedRevision =
     revisions.find(
-      (revision) =>
-        revision.hypothesisId === selectedHypothesisId && revision.status === 'active',
+      (revision) => revision.hypothesisId === selectedHypothesisId && revision.status === 'active',
     ) ??
     revisions.find((revision) => revision.hypothesisId === selectedHypothesisId) ??
     null;
@@ -347,7 +346,9 @@ function HypothesisSection({
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge>{hypothesis.family ?? 'unknown'}</Badge>
-                    <Badge nodeStatus={taskStatusBadge(hypothesis.status)}>{hypothesis.status}</Badge>
+                    <Badge nodeStatus={taskStatusBadge(hypothesis.status)}>
+                      {hypothesis.status}
+                    </Badge>
                   </div>
                   <p className="mt-2 font-medium">{headRevision?.claim ?? 'No revision loaded'}</p>
                   {headRevision ? (
@@ -453,7 +454,9 @@ function HypothesisSection({
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge>{claim.kind}</Badge>
-                        {claim.isAssumption ? <Badge nodeStatus={NodeStatus.SUSPICIOUS}>assumption</Badge> : null}
+                        {claim.isAssumption ? (
+                          <Badge nodeStatus={NodeStatus.SUSPICIOUS}>assumption</Badge>
+                        ) : null}
                       </div>
                       <p className="mt-1">{claim.text}</p>
                       {claim.evidenceIds.length > 0 ? (

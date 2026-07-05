@@ -21,48 +21,48 @@ Phase 21 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/21-oracle.md
 
 ## Files added
 
-| Area | Key paths |
-| ---- | --------- |
-| Contracts | `packages/contracts-python/src/aegis_contracts/hypothesis.py`, `packages/contracts-ts/src/hypothesis.ts` |
-| Migration | `migrations/versions/008_oracle_hypotheses.py` |
-| Persistence | `packages/persistence/src/aegis_persistence/repositories/hypothesis.py` |
-| ORACLE | `services/agents/src/aegis_agents/roles/oracle/**` |
-| Tools | `services/agents/src/aegis_agents/tools/hypothesis/**` |
-| API | `apps/api/src/aegis_api/investigation/router.py` (trigger-oracle) |
-| Frontend | `apps/web/features/investigation/investigation-panel.tsx`, `apps/web/fixtures/investigation-fixture.ts` |
-| Tests | `tests/agents/oracle/**`, `tests/integration/agents/test_oracle_flow.py` |
-| Fixtures | `fixtures/model-responses/oracle/**`, `fixtures/agent-workflows/oracle-hypothesis-generation.json` |
-| Scripts | `scripts/run_oracle_harness.py`, `apps/web/scripts/capture-oracle-demo.mjs` |
-| Docs | `docs/agents/oracle.md`, `docs/handoffs/21-oracle-HANDOFF.md`, ADR `0022-oracle-hypothesis-generation.md` |
+| Area        | Key paths                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------- |
+| Contracts   | `packages/contracts-python/src/aegis_contracts/hypothesis.py`, `packages/contracts-ts/src/hypothesis.ts`  |
+| Migration   | `migrations/versions/008_oracle_hypotheses.py`                                                            |
+| Persistence | `packages/persistence/src/aegis_persistence/repositories/hypothesis.py`                                   |
+| ORACLE      | `services/agents/src/aegis_agents/roles/oracle/**`                                                        |
+| Tools       | `services/agents/src/aegis_agents/tools/hypothesis/**`                                                    |
+| API         | `apps/api/src/aegis_api/investigation/router.py` (trigger-oracle)                                         |
+| Frontend    | `apps/web/features/investigation/investigation-panel.tsx`, `apps/web/fixtures/investigation-fixture.ts`   |
+| Tests       | `tests/agents/oracle/**`, `tests/integration/agents/test_oracle_flow.py`                                  |
+| Fixtures    | `fixtures/model-responses/oracle/**`, `fixtures/agent-workflows/oracle-hypothesis-generation.json`        |
+| Scripts     | `scripts/run_oracle_harness.py`, `apps/web/scripts/capture-oracle-demo.mjs`                               |
+| Docs        | `docs/agents/oracle.md`, `docs/handoffs/21-oracle-HANDOFF.md`, ADR `0022-oracle-hypothesis-generation.md` |
 
 ## Files modified
 
-| File | Reason |
-| ---- | ------ |
-| `packages/contracts-python/src/aegis_contracts/investigation.py` | `InvestigationDetailV1` v2 hypothesis fields |
-| `packages/contracts-python/src/aegis_contracts/entities.py` | `HypothesisV1` v2 identity anchor |
-| `packages/contracts-python/src/aegis_contracts/events.py` | Hypothesis domain events |
-| `services/agents/src/aegis_agents/roles/registry.py` | ORACLE handler registration |
-| `services/agents/src/aegis_agents/runtime/registry.py` | ORACLE tool map |
-| `services/agents/src/aegis_agents/runtime/executor.py` | ORACLE user prompt |
-| `services/agents/src/aegis_agents/runtime/investigation_events.py` | Hypothesis event builders |
-| `packages/model-provider/.../mock.py` | `phase21-oracle-v1` outputs |
-| `apps/api/src/aegis_api/agents/observability.py` | ORACLE demo controls |
-| `packages/contracts-*/versioning.*` | `WORKSPACE_VERSION=0.0.0-phase21` |
+| File                                                               | Reason                                       |
+| ------------------------------------------------------------------ | -------------------------------------------- |
+| `packages/contracts-python/src/aegis_contracts/investigation.py`   | `InvestigationDetailV1` v2 hypothesis fields |
+| `packages/contracts-python/src/aegis_contracts/entities.py`        | `HypothesisV1` v2 identity anchor            |
+| `packages/contracts-python/src/aegis_contracts/events.py`          | Hypothesis domain events                     |
+| `services/agents/src/aegis_agents/roles/registry.py`               | ORACLE handler registration                  |
+| `services/agents/src/aegis_agents/runtime/registry.py`             | ORACLE tool map                              |
+| `services/agents/src/aegis_agents/runtime/executor.py`             | ORACLE user prompt                           |
+| `services/agents/src/aegis_agents/runtime/investigation_events.py` | Hypothesis event builders                    |
+| `packages/model-provider/.../mock.py`                              | `phase21-oracle-v1` outputs                  |
+| `apps/api/src/aegis_api/agents/observability.py`                   | ORACLE demo controls                         |
+| `packages/contracts-*/versioning.*`                                | `WORKSPACE_VERSION=0.0.0-phase21`            |
 
 ## Contracts introduced or changed
 
-| Contract | Version | Notes |
-| -------- | ------- | ----- |
-| `HypothesisRevisionV1` | schema v1 | Append-only rich hypothesis content |
-| `HypothesisComparisonV1` | schema v1 | Support/contradiction matrix |
-| `VerificationRequestV1` | schema v1 | Bounded TRACE follow-up |
-| `ConfidenceAssessmentV1` | schema v1 | Point + range + coverage + penalty |
-| `HypothesisClaimV1` | schema v1 | Grounded claim with `ClaimKindV1` |
-| `HypothesisV1` | schema v2 | Identity anchor with `currentRevisionId` |
-| `InvestigationDetailV1` | schema v2 | Hypothesis artifact aggregation |
-| `TriggerOracleRequestV1` | schema v1 | Trigger API |
-| `WORKSPACE_VERSION` | `0.0.0-phase21` | Compatibility bump |
+| Contract                 | Version         | Notes                                    |
+| ------------------------ | --------------- | ---------------------------------------- |
+| `HypothesisRevisionV1`   | schema v1       | Append-only rich hypothesis content      |
+| `HypothesisComparisonV1` | schema v1       | Support/contradiction matrix             |
+| `VerificationRequestV1`  | schema v1       | Bounded TRACE follow-up                  |
+| `ConfidenceAssessmentV1` | schema v1       | Point + range + coverage + penalty       |
+| `HypothesisClaimV1`      | schema v1       | Grounded claim with `ClaimKindV1`        |
+| `HypothesisV1`           | schema v2       | Identity anchor with `currentRevisionId` |
+| `InvestigationDetailV1`  | schema v2       | Hypothesis artifact aggregation          |
+| `TriggerOracleRequestV1` | schema v1       | Trigger API                              |
+| `WORKSPACE_VERSION`      | `0.0.0-phase21` | Compatibility bump                       |
 
 ## Database migrations
 
@@ -70,20 +70,20 @@ Phase 21 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/21-oracle.md
 
 ## Commands executed and results
 
-| Command | Result |
-| ------- | ------ |
-| `uv run ruff check .` | **PASS** |
-| `uv run mypy apps services packages` | **KNOWN ISSUE** — duplicate module path `aegis_agents.runtime.factory` (pre-existing) |
-| `uv run pytest -q` | **PASS** |
-| `uv run pytest tests/agents/oracle -q` | **PASS** |
-| `uv run pytest tests/integration/agents/test_oracle_flow.py -q` | **PASS** (with PostgreSQL) |
-| `uv run lint-imports` | **PASS** |
-| `pnpm check-contracts` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `pnpm lint` | **PASS** |
-| `pnpm test` | **PASS** |
-| `uv run python scripts/run_oracle_harness.py` | Requires PostgreSQL |
-| `node apps/web/scripts/capture-oracle-demo.mjs` | Fixture-mode UI screenshots |
+| Command                                                         | Result                                                                                |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `uv run ruff check .`                                           | **PASS**                                                                              |
+| `uv run mypy apps services packages`                            | **KNOWN ISSUE** — duplicate module path `aegis_agents.runtime.factory` (pre-existing) |
+| `uv run pytest -q`                                              | **PASS**                                                                              |
+| `uv run pytest tests/agents/oracle -q`                          | **PASS**                                                                              |
+| `uv run pytest tests/integration/agents/test_oracle_flow.py -q` | **PASS** (with PostgreSQL)                                                            |
+| `uv run lint-imports`                                           | **PASS**                                                                              |
+| `pnpm check-contracts`                                          | **PASS**                                                                              |
+| `pnpm typecheck`                                                | **PASS**                                                                              |
+| `pnpm lint`                                                     | **PASS**                                                                              |
+| `pnpm test`                                                     | **PASS**                                                                              |
+| `uv run python scripts/run_oracle_harness.py`                   | Requires PostgreSQL                                                                   |
+| `node apps/web/scripts/capture-oracle-demo.mjs`                 | Fixture-mode UI screenshots                                                           |
 
 ## Architecture decisions and ADRs
 
@@ -112,15 +112,15 @@ Phase 21 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/21-oracle.md
 
 ## Acceptance criteria evidence
 
-| Criterion | Evidence |
-| --------- | -------- |
-| Multiple competing hypotheses generated | `test_oracle_acceptance_criteria.py`, integration flow, fixture UI |
-| Claims grounded to visible evidence | `test_oracle_grounding.py` |
-| Contradictions preserved and visible | `test_oracle_grounding.py`, investigation panel contradictions section |
-| Confidence range/coverage/penalty validated | `test_oracle_confidence.py` |
-| Append-only revisions (supersede/retire) | `test_oracle_acceptance_criteria.py`, revision history UI |
-| ORACLE tool authorization boundaries | `test_oracle_tool_permissions.py`, harness unauthorized tool check |
-| No simulation mutation | ORACLE handler persists analysis artifacts only |
-| Investigation detail API returns hypothesis artifacts | `InvestigationDetailV1` v2, integration test |
-| Realtime invalidation on hypothesis events | `investigation.*` prefix in live-run provider |
-| Command centre hypothesis UI | `investigation-panel.tsx`, capture script screenshots |
+| Criterion                                             | Evidence                                                               |
+| ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| Multiple competing hypotheses generated               | `test_oracle_acceptance_criteria.py`, integration flow, fixture UI     |
+| Claims grounded to visible evidence                   | `test_oracle_grounding.py`                                             |
+| Contradictions preserved and visible                  | `test_oracle_grounding.py`, investigation panel contradictions section |
+| Confidence range/coverage/penalty validated           | `test_oracle_confidence.py`                                            |
+| Append-only revisions (supersede/retire)              | `test_oracle_acceptance_criteria.py`, revision history UI              |
+| ORACLE tool authorization boundaries                  | `test_oracle_tool_permissions.py`, harness unauthorized tool check     |
+| No simulation mutation                                | ORACLE handler persists analysis artifacts only                        |
+| Investigation detail API returns hypothesis artifacts | `InvestigationDetailV1` v2, integration test                           |
+| Realtime invalidation on hypothesis events            | `investigation.*` prefix in live-run provider                          |
+| Command centre hypothesis UI                          | `investigation-panel.tsx`, capture script screenshots                  |

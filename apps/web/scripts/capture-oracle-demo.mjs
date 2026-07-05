@@ -97,55 +97,79 @@ paths.push(
 );
 
 paths.push(
-  await shot('02-investigation-evidence', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector('[data-testid="investigation-panel"]', { timeout: 30000 });
-    await page.waitForSelector('[data-testid="investigation-evidence-panel"]', { timeout: 30000 });
-    await page.waitForSelector('[data-testid="investigation-triage-panel"]', { timeout: 30000 });
-  }),
+  await shot(
+    '02-investigation-evidence',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector('[data-testid="investigation-panel"]', { timeout: 30000 });
+      await page.waitForSelector('[data-testid="investigation-evidence-panel"]', {
+        timeout: 30000,
+      });
+      await page.waitForSelector('[data-testid="investigation-triage-panel"]', { timeout: 30000 });
+    },
+  ),
 );
 
 paths.push(
-  await shot('03-oracle-multiple-hypotheses', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector('[data-testid="investigation-hypotheses-panel"]', { timeout: 30000 });
-    await page.waitForSelector(`[data-testid="hypothesis-card-${HYPOTHESIS_ONE_ID}"]`, {
-      timeout: 30000,
-    });
-    await page.waitForSelector(`[data-testid="hypothesis-card-${HYPOTHESIS_TWO_ID}"]`, {
-      timeout: 30000,
-    });
-  }),
+  await shot(
+    '03-oracle-multiple-hypotheses',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector('[data-testid="investigation-hypotheses-panel"]', {
+        timeout: 30000,
+      });
+      await page.waitForSelector(`[data-testid="hypothesis-card-${HYPOTHESIS_ONE_ID}"]`, {
+        timeout: 30000,
+      });
+      await page.waitForSelector(`[data-testid="hypothesis-card-${HYPOTHESIS_TWO_ID}"]`, {
+        timeout: 30000,
+      });
+    },
+  ),
 );
 
 paths.push(
-  await shot('04-hypothesis-detail-provenance', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector(`[data-testid="hypothesis-detail-${HYPOTHESIS_ONE_ID}"]`, {
-      timeout: 30000,
-    });
-    await page.click(`[data-testid="hypothesis-card-${HYPOTHESIS_ONE_ID}"]`);
-    await page.waitForTimeout(500);
-  }),
+  await shot(
+    '04-hypothesis-detail-provenance',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector(`[data-testid="hypothesis-detail-${HYPOTHESIS_ONE_ID}"]`, {
+        timeout: 30000,
+      });
+      await page.click(`[data-testid="hypothesis-card-${HYPOTHESIS_ONE_ID}"]`);
+      await page.waitForTimeout(500);
+    },
+  ),
 );
 
 paths.push(
-  await shot('05-confidence-uncertainty', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector(`[data-testid="hypothesis-detail-${HYPOTHESIS_ONE_ID}"]`, {
-      timeout: 30000,
-    });
-    await page.getByText('Unknowns').scrollIntoViewIfNeeded();
-  }),
+  await shot(
+    '05-confidence-uncertainty',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector(`[data-testid="hypothesis-detail-${HYPOTHESIS_ONE_ID}"]`, {
+        timeout: 30000,
+      });
+      await page.getByText('Unknowns').scrollIntoViewIfNeeded();
+    },
+  ),
 );
 
 paths.push(
-  await shot('06-contradictions-visible', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector('[data-testid="investigation-contradictions-panel"]', {
-      timeout: 30000,
-    });
-    await page.click(`[data-testid="hypothesis-card-${HYPOTHESIS_TWO_ID}"]`);
-    await page.waitForSelector(`[data-testid="hypothesis-detail-${HYPOTHESIS_TWO_ID}"]`, {
-      timeout: 30000,
-    });
-    await page.getByText('Contradicting evidence').scrollIntoViewIfNeeded();
-  }),
+  await shot(
+    '06-contradictions-visible',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector('[data-testid="investigation-contradictions-panel"]', {
+        timeout: 30000,
+      });
+      await page.click(`[data-testid="hypothesis-card-${HYPOTHESIS_TWO_ID}"]`);
+      await page.waitForSelector(`[data-testid="hypothesis-detail-${HYPOTHESIS_TWO_ID}"]`, {
+        timeout: 30000,
+      });
+      await page.getByText('Contradicting evidence').scrollIntoViewIfNeeded();
+    },
+  ),
 );
 
 paths.push(
@@ -157,22 +181,30 @@ paths.push(
 );
 
 paths.push(
-  await shot('08-hypothesis-revision', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.click(`[data-testid="hypothesis-card-${HYPOTHESIS_TWO_ID}"]`);
-    await page.waitForSelector(`[data-testid="hypothesis-detail-${HYPOTHESIS_TWO_ID}"]`, {
-      timeout: 30000,
-    });
-    await page.getByText('Revision history').click();
-    await page.waitForTimeout(500);
-  }),
+  await shot(
+    '08-hypothesis-revision',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.click(`[data-testid="hypothesis-card-${HYPOTHESIS_TWO_ID}"]`);
+      await page.waitForSelector(`[data-testid="hypothesis-detail-${HYPOTHESIS_TWO_ID}"]`, {
+        timeout: 30000,
+      });
+      await page.getByText('Revision history').click();
+      await page.waitForTimeout(500);
+    },
+  ),
 );
 
 paths.push(
-  await shot('09-agent-lifecycle-audit', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector('[data-testid="investigation-agent-lifecycle-panel"]', {
-      timeout: 30000,
-    });
-  }),
+  await shot(
+    '09-agent-lifecycle-audit',
+    `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`,
+    async () => {
+      await page.waitForSelector('[data-testid="investigation-agent-lifecycle-panel"]', {
+        timeout: 30000,
+      });
+    },
+  ),
 );
 
 paths.push(
@@ -185,7 +217,9 @@ paths.push(
 
 paths.push(
   await shot('11-realtime-update', `${WEB_BASE}/incidents/${SYNTHETIC_INCIDENT_ID}`, async () => {
-    await page.waitForSelector('[data-testid="investigation-hypotheses-panel"]', { timeout: 30000 });
+    await page.waitForSelector('[data-testid="investigation-hypotheses-panel"]', {
+      timeout: 30000,
+    });
     await page.waitForSelector('[data-testid="hypothesis-comparison-hcmp_synthetic_001"]', {
       timeout: 30000,
     });
@@ -199,7 +233,9 @@ paths.push(
       waitUntil: 'domcontentloaded',
       timeout: 90000,
     });
-    await narrow.waitForSelector('[data-testid="investigation-hypotheses-panel"]', { timeout: 30000 });
+    await narrow.waitForSelector('[data-testid="investigation-hypotheses-panel"]', {
+      timeout: 30000,
+    });
     await narrow.waitForTimeout(1200);
     const path = `${OUT}/12-responsive-hypotheses.png`;
     await narrow.screenshot({ path, fullPage: true });

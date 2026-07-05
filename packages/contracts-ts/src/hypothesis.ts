@@ -110,11 +110,7 @@ export const hypothesisRevisionSchema = z.object({
   predictions: z.array(z.string()).default([]),
   contradictionLinks: z.array(contradictionLinkSchema).default([]),
   status: z
-    .enum([
-      HypothesisStatusV1.ACTIVE,
-      HypothesisStatusV1.SUPERSEDED,
-      HypothesisStatusV1.RETIRED,
-    ])
+    .enum([HypothesisStatusV1.ACTIVE, HypothesisStatusV1.SUPERSEDED, HypothesisStatusV1.RETIRED])
     .default(HypothesisStatusV1.ACTIVE),
   rationale: z.string().min(1).max(2048),
   createdAt: utcTimestampSchema,

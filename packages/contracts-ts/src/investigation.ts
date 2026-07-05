@@ -173,28 +173,30 @@ export const agentGraphOverlaySchema = z.object({
   createdAt: utcTimestampSchema,
 });
 
-export const investigationDetailSchema = z.object({
-  schemaVersion: z.number().int().min(1),
-  incidentId: incidentIdSchema,
-  runId: runIdSchema,
-  triageResults: z.array(watchtowerTriageResultSchema).default([]),
-  plans: z.array(traceInvestigationPlanSchema).default([]),
-  evidenceAttachments: z.array(evidenceAttachmentSchema).default([]),
-  notes: z.array(investigationNoteSchema).default([]),
-  candidateAssets: z.array(candidateAffectedAssetSchema).default([]),
-  overlays: z.array(agentGraphOverlaySchema).default([]),
-  hypotheses: z.array(hypothesisSchema).default([]),
-  hypothesisRevisions: z.array(hypothesisRevisionSchema).default([]),
-  hypothesisComparisons: z.array(hypothesisComparisonSchema).default([]),
-  verificationRequests: z.array(verificationRequestSchema).default([]),
-}).superRefine((value, ctx) => {
-  if (value.schemaVersion !== 1 && value.schemaVersion !== INVESTIGATION_DETAIL_SCHEMA_VERSION) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: `Unsupported investigation detail schema: ${String(value.schemaVersion)}`,
-    });
-  }
-});
+export const investigationDetailSchema = z
+  .object({
+    schemaVersion: z.number().int().min(1),
+    incidentId: incidentIdSchema,
+    runId: runIdSchema,
+    triageResults: z.array(watchtowerTriageResultSchema).default([]),
+    plans: z.array(traceInvestigationPlanSchema).default([]),
+    evidenceAttachments: z.array(evidenceAttachmentSchema).default([]),
+    notes: z.array(investigationNoteSchema).default([]),
+    candidateAssets: z.array(candidateAffectedAssetSchema).default([]),
+    overlays: z.array(agentGraphOverlaySchema).default([]),
+    hypotheses: z.array(hypothesisSchema).default([]),
+    hypothesisRevisions: z.array(hypothesisRevisionSchema).default([]),
+    hypothesisComparisons: z.array(hypothesisComparisonSchema).default([]),
+    verificationRequests: z.array(verificationRequestSchema).default([]),
+  })
+  .superRefine((value, ctx) => {
+    if (value.schemaVersion !== 1 && value.schemaVersion !== INVESTIGATION_DETAIL_SCHEMA_VERSION) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Unsupported investigation detail schema: ${String(value.schemaVersion)}`,
+      });
+    }
+  });
 
 export const triggerWatchtowerRequestSchema = z.object({
   schemaVersion: z.literal(1),
