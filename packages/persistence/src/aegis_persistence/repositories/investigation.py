@@ -33,6 +33,7 @@ from aegis_persistence.orm.tables import (
     WatchtowerTriageResultRow,
 )
 from aegis_persistence.repositories.hypothesis import PostgresOracleHypothesisRepository
+from aegis_persistence.repositories.proposals import PostgresProposalRepository
 
 
 class PostgresInvestigationRepository:
@@ -41,9 +42,11 @@ class PostgresInvestigationRepository:
         session: AsyncSession,
         *,
         oracle_repository: PostgresOracleHypothesisRepository | None = None,
+        proposal_repository: PostgresProposalRepository | None = None,
     ) -> None:
         self._session = session
         self._oracle = oracle_repository or PostgresOracleHypothesisRepository(session)
+        self._proposals = proposal_repository or PostgresProposalRepository(session)
 
     async def get_triage_by_idempotency(
         self,
@@ -214,4 +217,7 @@ class PostgresInvestigationRepository:
             hypothesis_revisions=await self._oracle.list_revisions_for_incident(incident_id),
             hypothesis_comparisons=await self._oracle.list_comparisons_for_incident(incident_id),
             verification_requests=await self._oracle.list_verification_requests(incident_id),
+            proposals=await self._proposals.list_proposals_for_incident(incident_id),
+            proposal_revisions=await self._proposals.list_revisions_for_incident(incident_id),
+            policy_decisions=await self._proposals.list_policy_decisions_for_incident(incident_id),
         )

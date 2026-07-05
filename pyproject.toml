@@ -28,10 +28,16 @@ members = [
 
 [tool.uv.sources]
 aegis-persistence = { workspace = true }
+aegis-policy = { workspace = true }
+aegis-agents = { workspace = true }
+aegis-api = { workspace = true }
 
 [dependency-groups]
 dev = [
+    "aegis-api",
     "aegis-persistence",
+    "aegis-policy",
+    "aegis-agents",
     "alembic>=1.15",
     "httpx>=0.28",
     "import-linter>=2.3",

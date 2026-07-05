@@ -29,6 +29,18 @@
       "title": "Createdat",
       "type": "string"
     },
+    "currentRevisionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Currentrevisionid"
+    },
     "id": {
       "title": "Id",
       "type": "string"
@@ -46,6 +58,18 @@
       "minimum": 0,
       "title": "Revision",
       "type": "integer"
+    },
+    "scenarioCommand": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Scenariocommand"
     },
     "schemaVersion": {
       "minimum": 1,

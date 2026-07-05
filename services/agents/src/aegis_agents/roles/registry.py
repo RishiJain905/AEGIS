@@ -9,6 +9,10 @@ from typing import Any, Protocol
 from aegis_contracts.entities import AgentRole
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
+from aegis_agents.roles.bastion.schemas import (
+    BASTION_PROPOSAL_OUTPUT_SCHEMA,
+    WARDEN_POLICY_OUTPUT_SCHEMA,
+)
 from aegis_agents.roles.common.schemas import (
     TRACE_STEP_OUTPUT_SCHEMA,
     WATCHTOWER_TRIAGE_OUTPUT_SCHEMA,
@@ -102,22 +106,58 @@ ORACLE_HANDLER = RoleHandler(
     ],
 )
 
+BASTION_HANDLER = RoleHandler(
+    role=AgentRole.BASTION,
+    prompt_version="phase22-bastion-v1",
+    system_prompt=(
+        "You are BASTION, the AEGIS response planning agent. "
+        "Propose evidence-grounded response options with proportionate actions, "
+        "expected benefit, cost, reversibility, and monitoring."
+    ),
+    output_schema=BASTION_PROPOSAL_OUTPUT_SCHEMA,
+    default_tool_requests=[
+        {"name": "list_existing_evidence", "arguments": {}, "purpose": "Load visible evidence"},
+        {"name": "list_hypotheses", "arguments": {}, "purpose": "Review ORACLE hypotheses"},
+        {"name": "get_risk_scores", "arguments": {}, "purpose": "Review graph risk context"},
+    ],
+)
+
+WARDEN_HANDLER = RoleHandler(
+    role=AgentRole.WARDEN,
+    prompt_version="phase22-warden-v1",
+    system_prompt=(
+        "You are WARDEN, the AEGIS policy explanation agent. "
+        "Provide concise non-authoritative prose; deterministic policy outcomes "
+        "are computed by the platform."
+    ),
+    output_schema=WARDEN_POLICY_OUTPUT_SCHEMA,
+    default_tool_requests=[
+        {"name": "list_proposals", "arguments": {}, "purpose": "Review pending proposals"},
+    ],
+)
+
 ROLE_HANDLER_METADATA: dict[AgentRole, RoleHandler] = {
     AgentRole.WATCHTOWER: WATCHTOWER_HANDLER,
     AgentRole.TRACE: TRACE_HANDLER,
     AgentRole.ORACLE: ORACLE_HANDLER,
+    AgentRole.BASTION: BASTION_HANDLER,
+    AgentRole.WARDEN: WARDEN_HANDLER,
 }
 
 
 def _load_handlers() -> dict[AgentRole, RoleHandlerProtocol]:
+    from aegis_agents.roles.bastion.handler import BastionRoleHandler
     from aegis_agents.roles.oracle.handler import OracleRoleHandler
     from aegis_agents.roles.trace.handler import TraceRoleHandler
+    from aegis_agents.roles.warden.handler import WardenRoleHandler
     from aegis_agents.roles.watchtower.handler import WatchtowerRoleHandler
 
     handlers: list[RoleHandlerProtocol] = [
         WatchtowerRoleHandler(),
         TraceRoleHandler(),
         OracleRoleHandler(),
+        BastionRoleHandler(),
+        WardenRoleHandler(),
     ]
     return {handler.role: handler for handler in handlers}
 

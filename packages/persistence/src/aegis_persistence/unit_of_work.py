@@ -31,6 +31,7 @@ from aegis_persistence.repositories.postgres import (
     PostgresToolInvocationRepository,
     create_outbox_row,
 )
+from aegis_persistence.repositories.proposals import PostgresProposalRepository
 
 
 class PostgresUnitOfWork:
@@ -68,8 +69,13 @@ class PostgresUnitOfWork:
         self._evidence = PostgresEvidenceRepository(self._session)
         self._hypotheses = PostgresHypothesisRepository(self._session)
         self._action_proposals = PostgresActionProposalRepository(self._session)
-        self._investigation = PostgresInvestigationRepository(self._session)
         self._oracle_hypotheses = PostgresOracleHypothesisRepository(self._session)
+        self._proposals = PostgresProposalRepository(self._session)
+        self._investigation = PostgresInvestigationRepository(
+            self._session,
+            oracle_repository=self._oracle_hypotheses,
+            proposal_repository=self._proposals,
+        )
         return self
 
     async def __aexit__(
@@ -165,6 +171,10 @@ class PostgresUnitOfWork:
     @property
     def action_proposals(self) -> PostgresActionProposalRepository:
         return self._action_proposals
+
+    @property
+    def proposals(self) -> PostgresProposalRepository:
+        return self._proposals
 
     @property
     def investigation(self) -> PostgresInvestigationRepository:

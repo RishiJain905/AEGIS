@@ -30,7 +30,10 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "aegis-agents" },
+    { name = "aegis-api" },
     { name = "aegis-persistence" },
+    { name = "aegis-policy" },
     { name = "alembic" },
     { name = "httpx" },
     { name = "import-linter" },
@@ -47,7 +50,10 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "aegis-agents", editable = "services/agents" },
+    { name = "aegis-api", editable = "apps/api" },
     { name = "aegis-persistence", editable = "packages/persistence" },
+    { name = "aegis-policy", editable = "packages/policy" },
     { name = "alembic", specifier = ">=1.15" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "import-linter", specifier = ">=2.3" },
@@ -68,6 +74,7 @@ dependencies = [
     { name = "aegis-contracts" },
     { name = "aegis-model-provider" },
     { name = "aegis-persistence" },
+    { name = "aegis-policy" },
     { name = "jsonschema" },
 ]
 
@@ -76,6 +83,7 @@ requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
     { name = "aegis-model-provider", editable = "packages/model-provider" },
     { name = "aegis-persistence", editable = "packages/persistence" },
+    { name = "aegis-policy", editable = "packages/policy" },
     { name = "jsonschema", specifier = ">=4.23" },
 ]
 

@@ -262,19 +262,41 @@ export const agentSessionSchema = z
 
 export const actionProposalSchema = z
   .object({
-    schemaVersion: schemaVersionCheck(ACTION_PROPOSAL_SCHEMA_VERSION),
+    schemaVersion: z.number().int().min(1),
     id: proposalIdSchema,
     incidentId: incidentIdSchema,
     agentSessionId: agentSessionIdSchema,
     actionClass: z.enum(['class_0', 'class_1', 'class_2', 'class_3']),
     targetAssetId: assetIdSchema,
     command: z.string().min(1),
+    scenarioCommand: z.string().nullable().optional(),
+    currentRevisionId: z.string().nullable().optional(),
     status: z.enum(['pending', 'approved', 'rejected', 'executed', 'cancelled']),
     rationale: z.string().default(''),
     revision: revisionSchema,
     createdAt: utcTimestampSchema,
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.schemaVersion !== 1 && value.schemaVersion !== ACTION_PROPOSAL_SCHEMA_VERSION) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Unsupported action proposal schema: ${String(value.schemaVersion)}`,
+      });
+    }
+    if (value.schemaVersion === ACTION_PROPOSAL_SCHEMA_VERSION && !value.currentRevisionId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Action proposal v2 requires currentRevisionId',
+      });
+    }
+    if (value.schemaVersion === ACTION_PROPOSAL_SCHEMA_VERSION && !value.scenarioCommand) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Action proposal v2 requires scenarioCommand',
+      });
+    }
+  });
 
 export const approvalSchema = z
   .object({

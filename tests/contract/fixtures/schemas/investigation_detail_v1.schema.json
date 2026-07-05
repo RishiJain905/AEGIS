@@ -1,5 +1,99 @@
 {
   "$defs": {
+    "ActionClass": {
+      "enum": ["class_0", "class_1", "class_2", "class_3"],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "ActionProposalV1": {
+      "additionalProperties": false,
+      "properties": {
+        "actionClass": {
+          "$ref": "#/$defs/ActionClass"
+        },
+        "agentSessionId": {
+          "title": "Agentsessionid",
+          "type": "string"
+        },
+        "command": {
+          "minLength": 1,
+          "title": "Command",
+          "type": "string"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "currentRevisionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currentrevisionid"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "rationale": {
+          "default": "",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "scenarioCommand": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scenariocommand"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/ProposalStatus"
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "incidentId",
+        "agentSessionId",
+        "actionClass",
+        "targetAssetId",
+        "command",
+        "status",
+        "revision",
+        "createdAt"
+      ],
+      "title": "ActionProposalV1",
+      "type": "object"
+    },
     "AgentGraphOverlayV1": {
       "additionalProperties": false,
       "properties": {
@@ -68,6 +162,11 @@
       "title": "AgentGraphOverlayV1",
       "type": "object"
     },
+    "AgentRole": {
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
+      "title": "AgentRole",
+      "type": "string"
+    },
     "AlertCorrelationDecisionV1": {
       "additionalProperties": false,
       "properties": {
@@ -100,6 +199,36 @@
       },
       "required": ["alertIds", "decision", "rationale"],
       "title": "AlertCorrelationDecisionV1",
+      "type": "object"
+    },
+    "ApprovalRequirementV1": {
+      "additionalProperties": false,
+      "properties": {
+        "approverRoles": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Approverroles",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": ["schemaVersion", "required", "rationale"],
+      "title": "ApprovalRequirementV1",
       "type": "object"
     },
     "CandidateAffectedAssetV1": {
@@ -158,6 +287,121 @@
         "createdAt"
       ],
       "title": "CandidateAffectedAssetV1",
+      "type": "object"
+    },
+    "ClaimKindV1": {
+      "enum": [
+        "observed_fact",
+        "model_score",
+        "graph_risk",
+        "agent_inference",
+        "unsupported_claim"
+      ],
+      "title": "ClaimKindV1",
+      "type": "string"
+    },
+    "ConfidenceAssessmentV1": {
+      "additionalProperties": false,
+      "properties": {
+        "contradictionPenalty": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Contradictionpenalty",
+          "type": "number"
+        },
+        "coverage": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Coverage",
+          "type": "number"
+        },
+        "explanation": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "max": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Max",
+          "type": "number"
+        },
+        "min": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Min",
+          "type": "number"
+        },
+        "point": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Point",
+          "type": "number"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "point",
+        "min",
+        "max",
+        "coverage",
+        "contradictionPenalty",
+        "explanation"
+      ],
+      "title": "ConfidenceAssessmentV1",
+      "type": "object"
+    },
+    "ContradictionLinkV1": {
+      "additionalProperties": false,
+      "properties": {
+        "contradictingAttachmentIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Contradictingattachmentids",
+          "type": "array"
+        },
+        "contradictingEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Contradictingevidenceids",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "supportingAttachmentIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supportingattachmentids",
+          "type": "array"
+        },
+        "supportingEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supportingevidenceids",
+          "type": "array"
+        }
+      },
+      "required": ["schemaVersion", "rationale"],
+      "title": "ContradictionLinkV1",
       "type": "object"
     },
     "EvidenceAttachmentV1": {
@@ -334,6 +578,405 @@
       "title": "GraphOverlayHighlightV1",
       "type": "object"
     },
+    "HypothesisClaimV1": {
+      "additionalProperties": false,
+      "properties": {
+        "attachmentIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Attachmentids",
+          "type": "array"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "isAssumption": {
+          "default": false,
+          "title": "Isassumption",
+          "type": "boolean"
+        },
+        "kind": {
+          "$ref": "#/$defs/ClaimKindV1"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "text": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": ["schemaVersion", "kind", "text"],
+      "title": "HypothesisClaimV1",
+      "type": "object"
+    },
+    "HypothesisComparisonEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "confidencePoint": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidencepoint",
+          "type": "number"
+        },
+        "contradictingEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Contradictingevidenceids",
+          "type": "array"
+        },
+        "hypothesisId": {
+          "title": "Hypothesisid",
+          "type": "string"
+        },
+        "revisionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Revisionid",
+          "type": "string"
+        },
+        "sharedEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sharedevidenceids",
+          "type": "array"
+        },
+        "uniqueEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Uniqueevidenceids",
+          "type": "array"
+        }
+      },
+      "required": ["hypothesisId", "revisionId", "confidencePoint"],
+      "title": "HypothesisComparisonEntryV1",
+      "type": "object"
+    },
+    "HypothesisComparisonV1": {
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/HypothesisComparisonEntryV1"
+          },
+          "minItems": 2,
+          "title": "Entries",
+          "type": "array"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "matrix": {
+          "additionalProperties": true,
+          "title": "Matrix",
+          "type": "object"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "summary": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "taskId": {
+          "title": "Taskid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "incidentId",
+        "sessionId",
+        "taskId",
+        "entries",
+        "summary",
+        "createdAt"
+      ],
+      "title": "HypothesisComparisonV1",
+      "type": "object"
+    },
+    "HypothesisFamilyV1": {
+      "enum": [
+        "lateral_movement",
+        "credential_abuse",
+        "benign_anomaly",
+        "supply_chain",
+        "insider_threat",
+        "data_exfiltration"
+      ],
+      "title": "HypothesisFamilyV1",
+      "type": "string"
+    },
+    "HypothesisRevisionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "assumptions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumptions",
+          "type": "array"
+        },
+        "claim": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "title": "Claim",
+          "type": "string"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/HypothesisClaimV1"
+          },
+          "title": "Claims",
+          "type": "array"
+        },
+        "confidence": {
+          "$ref": "#/$defs/ConfidenceAssessmentV1"
+        },
+        "contradictingEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Contradictingevidenceids",
+          "type": "array"
+        },
+        "contradictionLinks": {
+          "items": {
+            "$ref": "#/$defs/ContradictionLinkV1"
+          },
+          "title": "Contradictionlinks",
+          "type": "array"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "family": {
+          "$ref": "#/$defs/HypothesisFamilyV1"
+        },
+        "hypothesisId": {
+          "title": "Hypothesisid",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "predictions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Predictions",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "revisionNumber": {
+          "minimum": 1,
+          "title": "Revisionnumber",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/HypothesisStatusV1",
+          "default": "active"
+        },
+        "supportingEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supportingevidenceids",
+          "type": "array"
+        },
+        "taskId": {
+          "title": "Taskid",
+          "type": "string"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unknowns",
+          "type": "array"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "hypothesisId",
+        "incidentId",
+        "sessionId",
+        "taskId",
+        "revisionNumber",
+        "claim",
+        "family",
+        "confidence",
+        "rationale",
+        "createdAt"
+      ],
+      "title": "HypothesisRevisionV1",
+      "type": "object"
+    },
+    "HypothesisStatusV1": {
+      "enum": ["active", "superseded", "retired"],
+      "title": "HypothesisStatusV1",
+      "type": "string"
+    },
+    "HypothesisV1": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "currentRevisionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currentrevisionid"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "family": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Family"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "statement": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Statement"
+        },
+        "status": {
+          "default": "active",
+          "maxLength": 32,
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": ["schemaVersion", "id", "incidentId", "createdAt"],
+      "title": "HypothesisV1",
+      "type": "object"
+    },
+    "IncidentState": {
+      "enum": [
+        "open",
+        "triaged",
+        "investigating",
+        "containment_proposed",
+        "approval_pending",
+        "containing",
+        "monitoring",
+        "resolved",
+        "closed"
+      ],
+      "title": "IncidentState",
+      "type": "string"
+    },
     "InvestigationNoteV1": {
       "additionalProperties": false,
       "properties": {
@@ -391,6 +1034,437 @@
       ],
       "title": "InvestigationNoteV1",
       "type": "object"
+    },
+    "PolicyDecisionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "approvalRequirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ApprovalRequirementV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evaluatedAt": {
+          "title": "Evaluatedat",
+          "type": "string"
+        },
+        "explanationProse": {
+          "default": "",
+          "maxLength": 4096,
+          "title": "Explanationprose",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/PolicyOutcomeV1"
+        },
+        "policyInput": {
+          "$ref": "#/$defs/PolicyInputV1"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "proposalRevisionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Proposalrevisionid",
+          "type": "string"
+        },
+        "reasonCodes": {
+          "items": {
+            "$ref": "#/$defs/PolicyReasonCodeV1"
+          },
+          "minItems": 1,
+          "title": "Reasoncodes",
+          "type": "array"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "taskId": {
+          "title": "Taskid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "proposalRevisionId",
+        "incidentId",
+        "sessionId",
+        "taskId",
+        "outcome",
+        "reasonCodes",
+        "policyInput",
+        "evaluatedAt"
+      ],
+      "title": "PolicyDecisionV1",
+      "type": "object"
+    },
+    "PolicyInputV1": {
+      "additionalProperties": false,
+      "properties": {
+        "actionClass": {
+          "$ref": "#/$defs/ActionClass"
+        },
+        "agentRole": {
+          "$ref": "#/$defs/AgentRole"
+        },
+        "assetCriticality": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Assetcriticality",
+          "type": "number"
+        },
+        "currentRevisionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Currentrevisionid",
+          "type": "string"
+        },
+        "hypothesisConfidenceMin": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hypothesisconfidencemin"
+        },
+        "incidentState": {
+          "$ref": "#/$defs/IncidentState"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "proposalRevisionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Proposalrevisionid",
+          "type": "string"
+        },
+        "proposalRevisionNumber": {
+          "minimum": 1,
+          "title": "Proposalrevisionnumber",
+          "type": "integer"
+        },
+        "reversibility": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "title": "Reversibility",
+          "type": "string"
+        },
+        "scenarioCommand": {
+          "$ref": "#/$defs/ScenarioCommandTemplateV1"
+        },
+        "scenarioRestricted": {
+          "default": false,
+          "title": "Scenariorestricted",
+          "type": "boolean"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "proposalId",
+        "proposalRevisionId",
+        "proposalRevisionNumber",
+        "currentRevisionId",
+        "actionClass",
+        "scenarioCommand",
+        "agentRole",
+        "targetAssetId",
+        "assetCriticality",
+        "reversibility",
+        "incidentState"
+      ],
+      "title": "PolicyInputV1",
+      "type": "object"
+    },
+    "PolicyOutcomeV1": {
+      "enum": ["allow", "block", "approval_required"],
+      "title": "PolicyOutcomeV1",
+      "type": "string"
+    },
+    "PolicyReasonCodeV1": {
+      "enum": [
+        "allowed_read_only",
+        "allowed_low_impact",
+        "approval_required_operational",
+        "approval_required_critical",
+        "blocked_unknown_command",
+        "blocked_malformed_command",
+        "blocked_scenario_restriction",
+        "blocked_criticality_threshold",
+        "blocked_stale_revision",
+        "blocked_invalid_action_class",
+        "blocked_incident_state"
+      ],
+      "title": "PolicyReasonCodeV1",
+      "type": "string"
+    },
+    "ProposalRevisionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "linkedHypothesisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Linkedhypothesisids",
+          "type": "array"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "rationale": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "responseOptions": {
+          "items": {
+            "$ref": "#/$defs/ResponseOptionV1"
+          },
+          "minItems": 1,
+          "title": "Responseoptions",
+          "type": "array"
+        },
+        "revisionNumber": {
+          "minimum": 1,
+          "title": "Revisionnumber",
+          "type": "integer"
+        },
+        "riskTradeoffs": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "title": "Risktradeoffs",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "selectedOptionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Selectedoptionid",
+          "type": "string"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "taskId": {
+          "title": "Taskid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "incidentId",
+        "sessionId",
+        "taskId",
+        "revisionNumber",
+        "responseOptions",
+        "selectedOptionId",
+        "rationale",
+        "riskTradeoffs",
+        "createdAt"
+      ],
+      "title": "ProposalRevisionV1",
+      "type": "object"
+    },
+    "ProposalStatus": {
+      "enum": ["pending", "approved", "rejected", "executed", "cancelled"],
+      "title": "ProposalStatus",
+      "type": "string"
+    },
+    "ResponseOptionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "actionClass": {
+          "$ref": "#/$defs/ActionClass"
+        },
+        "affectedAssetIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Affectedassetids",
+          "type": "array"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "expectedBenefit": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Expectedbenefit",
+          "type": "string"
+        },
+        "expectedConsequences": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Expectedconsequences",
+          "type": "string"
+        },
+        "hypothesisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hypothesisids",
+          "type": "array"
+        },
+        "monitoringPlan": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Monitoringplan",
+          "type": "string"
+        },
+        "operationalCost": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Operationalcost",
+          "type": "string"
+        },
+        "optionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Optionid",
+          "type": "string"
+        },
+        "prerequisites": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Prerequisites",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "reversibility": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "title": "Reversibility",
+          "type": "string"
+        },
+        "scenarioCommand": {
+          "$ref": "#/$defs/ScenarioCommandTemplateV1"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        },
+        "uncertainty": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "title": "Uncertainty",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "optionId",
+        "scenarioCommand",
+        "actionClass",
+        "targetAssetId",
+        "expectedBenefit",
+        "operationalCost",
+        "reversibility",
+        "monitoringPlan",
+        "expectedConsequences",
+        "confidence",
+        "uncertainty",
+        "rationale"
+      ],
+      "title": "ResponseOptionV1",
+      "type": "object"
+    },
+    "ScenarioCommandTemplateV1": {
+      "enum": [
+        "observe",
+        "increase_monitoring",
+        "isolate",
+        "revoke_credentials",
+        "restrict_access",
+        "restart_service",
+        "rollback_deployment"
+      ],
+      "title": "ScenarioCommandTemplateV1",
+      "type": "string"
     },
     "TraceInvestigationPlanV1": {
       "additionalProperties": false,
@@ -537,6 +1611,74 @@
       "title": "TriageEscalationLevel",
       "type": "string"
     },
+    "VerificationRequestV1": {
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "hypothesisId": {
+          "title": "Hypothesisid",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Idempotencykey",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "purpose": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Purpose",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "targetEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Targetevidenceids",
+          "type": "array"
+        },
+        "taskId": {
+          "title": "Taskid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "incidentId",
+        "hypothesisId",
+        "sessionId",
+        "taskId",
+        "purpose",
+        "idempotencyKey",
+        "createdAt"
+      ],
+      "title": "VerificationRequestV1",
+      "type": "object"
+    },
     "WatchtowerTriageResultV1": {
       "additionalProperties": false,
       "properties": {
@@ -662,6 +1804,27 @@
       "title": "Evidenceattachments",
       "type": "array"
     },
+    "hypotheses": {
+      "items": {
+        "$ref": "#/$defs/HypothesisV1"
+      },
+      "title": "Hypotheses",
+      "type": "array"
+    },
+    "hypothesisComparisons": {
+      "items": {
+        "$ref": "#/$defs/HypothesisComparisonV1"
+      },
+      "title": "Hypothesiscomparisons",
+      "type": "array"
+    },
+    "hypothesisRevisions": {
+      "items": {
+        "$ref": "#/$defs/HypothesisRevisionV1"
+      },
+      "title": "Hypothesisrevisions",
+      "type": "array"
+    },
     "incidentId": {
       "title": "Incidentid",
       "type": "string"
@@ -687,6 +1850,27 @@
       "title": "Plans",
       "type": "array"
     },
+    "policyDecisions": {
+      "items": {
+        "$ref": "#/$defs/PolicyDecisionV1"
+      },
+      "title": "Policydecisions",
+      "type": "array"
+    },
+    "proposalRevisions": {
+      "items": {
+        "$ref": "#/$defs/ProposalRevisionV1"
+      },
+      "title": "Proposalrevisions",
+      "type": "array"
+    },
+    "proposals": {
+      "items": {
+        "$ref": "#/$defs/ActionProposalV1"
+      },
+      "title": "Proposals",
+      "type": "array"
+    },
     "runId": {
       "title": "Runid",
       "type": "string"
@@ -701,6 +1885,13 @@
         "$ref": "#/$defs/WatchtowerTriageResultV1"
       },
       "title": "Triageresults",
+      "type": "array"
+    },
+    "verificationRequests": {
+      "items": {
+        "$ref": "#/$defs/VerificationRequestV1"
+      },
+      "title": "Verificationrequests",
       "type": "array"
     }
   },

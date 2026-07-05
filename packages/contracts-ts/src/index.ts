@@ -173,6 +173,7 @@ export function safeParseAegisEnvironment(env: Record<string, string | undefined
 export * from './agent-runtime';
 export * from './investigation';
 export * from './hypothesis';
+export * from './proposals';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,

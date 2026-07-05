@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "incidentId": "incident:inc_synthetic_001",
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "providerId": "mock",
+  "idempotencyKey": "trigger-warden-demo-001"
+}

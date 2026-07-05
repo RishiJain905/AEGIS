@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "incidentId": "incident:inc_synthetic_001",
+  "sessionId": "agent-session:ags_synthetic_001",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "revisionNumber": 1,
+  "selectedOptionId": "opt-isolate-gateway",
+  "rationale": "Isolation balances containment strength against moderate operational cost.",
+  "riskTradeoffs": "Isolation may disrupt internal API consumers; delaying risks lateral movement.",
+  "linkedHypothesisIds": ["hyp_01ARZ3NDEKTSV4RRFFQ69G5FB2"],
+  "responseOptions": [
+    {
+      "schemaVersion": 1,
+      "optionId": "opt-isolate-gateway",
+      "scenarioCommand": "isolate",
+      "actionClass": "class_2",
+      "targetAssetId": "asset:svc-api-gateway",
+      "affectedAssetIds": ["asset:svc-api-gateway"],
+      "evidenceIds": ["evidence:evd_synthetic_001"],
+      "hypothesisIds": ["hyp_01ARZ3NDEKTSV4RRFFQ69G5FB2"],
+      "expectedBenefit": "Blocks suspected credential abuse path.",
+      "operationalCost": "Moderate disruption to dependent services.",
+      "reversibility": "Reversible after approval and verification.",
+      "prerequisites": ["Notify operations bridge"],
+      "monitoringPlan": "Track auth failures and dependency health.",
+      "expectedConsequences": "Short-term API unavailability for internal consumers.",
+      "confidence": 0.84,
+      "uncertainty": "Collateral coupling with auth service requires approval.",
+      "rationale": "Best containment option given grounded credential abuse hypothesis."
+    }
+  ],
+  "createdAt": "2026-06-30T02:09:00.000Z"
+}

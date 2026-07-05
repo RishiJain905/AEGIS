@@ -2,14 +2,34 @@
   "additionalProperties": false,
   "properties": {
     "confidence": {
-      "maximum": 1.0,
-      "minimum": 0.0,
-      "title": "Confidence",
-      "type": "number"
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Confidence"
     },
     "createdAt": {
       "title": "Createdat",
       "type": "string"
+    },
+    "currentRevisionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Currentrevisionid"
     },
     "evidenceIds": {
       "items": {
@@ -17,6 +37,19 @@
       },
       "title": "Evidenceids",
       "type": "array"
+    },
+    "family": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Family"
     },
     "id": {
       "title": "Id",
@@ -32,20 +65,26 @@
       "type": "integer"
     },
     "statement": {
-      "minLength": 1,
-      "title": "Statement",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Statement"
+    },
+    "status": {
+      "default": "active",
+      "maxLength": 32,
+      "title": "Status",
       "type": "string"
     }
   },
-  "required": [
-    "schemaVersion",
-    "id",
-    "incidentId",
-    "statement",
-    "confidence",
-    "evidenceIds",
-    "createdAt"
-  ],
+  "required": ["schemaVersion", "id", "incidentId", "createdAt"],
   "title": "HypothesisV1",
   "type": "object"
 }

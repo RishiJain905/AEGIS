@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "required": true,
+  "approverRoles": ["incident_commander", "security_lead"],
+  "rationale": "Class 2/3 simulated actions require explicit human approval before execution."
+}
