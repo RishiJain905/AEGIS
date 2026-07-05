@@ -11,6 +11,7 @@ from aegis_contracts import (
     DomainEventEnvelopeV1,
     EvidenceV1,
     ExecutedActionV1,
+    GenerationArtifactV1,
     GraphSnapshotV1,
     HypothesisV1,
     IdempotencyRecordV1,
@@ -34,6 +35,7 @@ from aegis_persistence.orm.tables import (
     DomainEventRow,
     EvidenceRow,
     ExecutedActionRow,
+    GenerationArtifactRow,
     GraphSnapshotRow,
     HypothesisRow,
     IdempotencyRecordRow,
@@ -141,3 +143,7 @@ def event_to_outbox_payload(envelope: DomainEventEnvelopeV1) -> dict[str, object
         "type": envelope.type,
         "channel": "events",
     }
+
+
+def generation_artifact_to_domain(row: GenerationArtifactRow) -> GenerationArtifactV1:
+    return parse_contract(GenerationArtifactV1, row.payload)

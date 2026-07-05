@@ -6,6 +6,7 @@ from aegis_contracts import (
     AlertV1,
     AssetRiskScoreV1,
     DomainEventEnvelopeV1,
+    GenerationArtifactV1,
     GraphSnapshotV1,
     IdempotencyRecordV1,
     IncidentV1,
@@ -33,6 +34,7 @@ from aegis_persistence.mappers import (
     domain_to_payload,
     event_to_domain,
     event_to_outbox_payload,
+    generation_artifact_to_domain,
     graph_snapshot_to_domain,
     idempotency_record_to_domain,
     incident_to_domain,
@@ -47,6 +49,7 @@ from aegis_persistence.orm.tables import (
     AlertRow,
     AssetRiskScoreRow,
     DomainEventRow,
+    GenerationArtifactRow,
     GraphSnapshotRow,
     IdempotencyRecordRow,
     IncidentRow,
@@ -509,6 +512,34 @@ class PostgresRiskScoreRepository:
             if current is None or row.computed_at_sequence >= current.computed_at_sequence:
                 latest_by_asset[row.asset_id] = row
         return sorted(latest_by_asset.values(), key=lambda item: item.asset_id)
+
+
+class PostgresGenerationArtifactRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def save(self, artifact: GenerationArtifactV1) -> GenerationArtifactV1:
+        payload = domain_to_payload(artifact)
+        row = GenerationArtifactRow(
+            request_id=artifact.request_id,
+            trace_id=artifact.trace_id,
+            provider_id=artifact.provider_id,
+            model_id=artifact.model_id,
+            prompt_version=artifact.prompt_version,
+            latency_ms=artifact.latency_ms,
+            usage=artifact.usage.model_dump(by_alias=True, mode="json") if artifact.usage else None,
+            error=artifact.error.model_dump(by_alias=True, mode="json") if artifact.error else None,
+            artifact_ref=artifact.artifact_ref,
+            payload=payload,
+            recorded_at=artifact.recorded_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return artifact
+
+    async def get_by_request_id(self, request_id: str) -> GenerationArtifactV1 | None:
+        row = await self._session.get(GenerationArtifactRow, request_id)
+        return generation_artifact_to_domain(row) if row else None
 
 
 class PostgresCheckpointRepository:

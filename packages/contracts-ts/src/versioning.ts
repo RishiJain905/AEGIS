@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase17' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase18' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -85,6 +85,18 @@ export const RISK_PROJECTION_DELTA_SCHEMA_VERSION = 1;
 export const RISK_COMPUTE_REQUEST_SCHEMA_VERSION = 1;
 export const RISK_COMPUTE_RESPONSE_SCHEMA_VERSION = 1;
 export const RISK_SCORES_LIST_RESPONSE_SCHEMA_VERSION = 1;
+export const GENERATION_REQUEST_SCHEMA_VERSION = 1;
+export const GENERATION_RESPONSE_SCHEMA_VERSION = 1;
+export const STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION = 1;
+export const TOOL_SCHEMA_SCHEMA_VERSION = 1;
+export const PROVIDER_CAPABILITIES_SCHEMA_VERSION = 1;
+export const MODEL_CONFIG_SCHEMA_VERSION = 1;
+export const PROVIDER_USAGE_SCHEMA_VERSION = 1;
+export const PROVIDER_ERROR_SCHEMA_VERSION = 1;
+export const RECORDED_RESPONSE_KEY_SCHEMA_VERSION = 1;
+export const GENERATION_ARTIFACT_SCHEMA_VERSION = 1;
+export const PROVIDER_GENERATE_REQUEST_SCHEMA_VERSION = 1;
+export const PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -165,4 +177,16 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   risk_compute_request: [RISK_COMPUTE_REQUEST_SCHEMA_VERSION],
   risk_compute_response: [RISK_COMPUTE_RESPONSE_SCHEMA_VERSION],
   risk_scores_list_response: [RISK_SCORES_LIST_RESPONSE_SCHEMA_VERSION],
+  generation_request: [GENERATION_REQUEST_SCHEMA_VERSION],
+  generation_response: [GENERATION_RESPONSE_SCHEMA_VERSION],
+  structured_output_spec: [STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION],
+  tool_schema: [TOOL_SCHEMA_SCHEMA_VERSION],
+  provider_capabilities: [PROVIDER_CAPABILITIES_SCHEMA_VERSION],
+  model_config: [MODEL_CONFIG_SCHEMA_VERSION],
+  provider_usage: [PROVIDER_USAGE_SCHEMA_VERSION],
+  provider_error: [PROVIDER_ERROR_SCHEMA_VERSION],
+  recorded_response_key: [RECORDED_RESPONSE_KEY_SCHEMA_VERSION],
+  generation_artifact: [GENERATION_ARTIFACT_SCHEMA_VERSION],
+  provider_generate_request: [PROVIDER_GENERATE_REQUEST_SCHEMA_VERSION],
+  provider_generate_response: [PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION],
 };

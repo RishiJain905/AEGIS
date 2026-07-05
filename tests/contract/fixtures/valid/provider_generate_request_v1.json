@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "schemaVersion": 1,
+    "requestId": "gen_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "modelConfig": {
+      "schemaVersion": 1,
+      "providerId": "mock",
+      "modelId": "mock-v1",
+      "promptVersion": "phase18-v1"
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "Summarize the incident signals."
+      }
+    ],
+    "maxOutputTokens": 1024
+  },
+  "providerId": "mock",
+  "dryRun": false
+}

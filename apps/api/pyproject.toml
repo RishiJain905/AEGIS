@@ -10,6 +10,7 @@ dependencies = [
     "aegis-simulation",
     "aegis-ml",
     "aegis-incidents",
+    "aegis-agents",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
 ]
@@ -21,6 +22,7 @@ aegis-event-streaming = { workspace = true }
 aegis-simulation = { workspace = true }
 aegis-ml = { workspace = true }
 aegis-incidents = { workspace = true }
+aegis-agents = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

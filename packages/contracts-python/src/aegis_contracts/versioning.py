@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase17"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase18"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -93,6 +93,18 @@ RISK_PROJECTION_DELTA_SCHEMA_VERSION: Final[int] = 1
 RISK_COMPUTE_REQUEST_SCHEMA_VERSION: Final[int] = 1
 RISK_COMPUTE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 RISK_SCORES_LIST_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+GENERATION_REQUEST_SCHEMA_VERSION: Final[int] = 1
+GENERATION_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION: Final[int] = 1
+TOOL_SCHEMA_SCHEMA_VERSION: Final[int] = 1
+PROVIDER_CAPABILITIES_SCHEMA_VERSION: Final[int] = 1
+MODEL_CONFIG_SCHEMA_VERSION: Final[int] = 1
+PROVIDER_USAGE_SCHEMA_VERSION: Final[int] = 1
+PROVIDER_ERROR_SCHEMA_VERSION: Final[int] = 1
+RECORDED_RESPONSE_KEY_SCHEMA_VERSION: Final[int] = 1
+GENERATION_ARTIFACT_SCHEMA_VERSION: Final[int] = 1
+PROVIDER_GENERATE_REQUEST_SCHEMA_VERSION: Final[int] = 1
+PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -171,6 +183,18 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "risk_compute_request": frozenset({RISK_COMPUTE_REQUEST_SCHEMA_VERSION}),
     "risk_compute_response": frozenset({RISK_COMPUTE_RESPONSE_SCHEMA_VERSION}),
     "risk_scores_list_response": frozenset({RISK_SCORES_LIST_RESPONSE_SCHEMA_VERSION}),
+    "generation_request": frozenset({GENERATION_REQUEST_SCHEMA_VERSION}),
+    "generation_response": frozenset({GENERATION_RESPONSE_SCHEMA_VERSION}),
+    "structured_output_spec": frozenset({STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION}),
+    "tool_schema": frozenset({TOOL_SCHEMA_SCHEMA_VERSION}),
+    "provider_capabilities": frozenset({PROVIDER_CAPABILITIES_SCHEMA_VERSION}),
+    "model_config": frozenset({MODEL_CONFIG_SCHEMA_VERSION}),
+    "provider_usage": frozenset({PROVIDER_USAGE_SCHEMA_VERSION}),
+    "provider_error": frozenset({PROVIDER_ERROR_SCHEMA_VERSION}),
+    "recorded_response_key": frozenset({RECORDED_RESPONSE_KEY_SCHEMA_VERSION}),
+    "generation_artifact": frozenset({GENERATION_ARTIFACT_SCHEMA_VERSION}),
+    "provider_generate_request": frozenset({PROVIDER_GENERATE_REQUEST_SCHEMA_VERSION}),
+    "provider_generate_response": frozenset({PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION}),
 }
 
 

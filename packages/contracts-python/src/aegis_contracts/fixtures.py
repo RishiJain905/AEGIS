@@ -32,6 +32,20 @@ from aegis_contracts.features import (
     FeatureWindowV1,
     OnlineFeatureUpdateV1,
 )
+from aegis_contracts.generation import (
+    GenerationArtifactV1,
+    GenerationRequestV1,
+    GenerationResponseV1,
+    ModelConfigV1,
+    ProviderCapabilitiesV1,
+    ProviderErrorV1,
+    ProviderGenerateRequestV1,
+    ProviderGenerateResponseV1,
+    ProviderUsageV1,
+    RecordedResponseKeyV1,
+    StructuredOutputSpecV1,
+    ToolSchemaV1,
+)
 from aegis_contracts.graph import (
     GraphDeltaV1,
     GraphEdgeV1,
@@ -156,4 +170,16 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "risk_compute_request_v1": RiskComputeRequestV1,
     "risk_compute_response_v1": RiskComputeResponseV1,
     "risk_scores_list_response_v1": RiskScoresListResponseV1,
+    "generation_request_v1": GenerationRequestV1,
+    "generation_response_v1": GenerationResponseV1,
+    "generation_artifact_v1": GenerationArtifactV1,
+    "model_config_v1": ModelConfigV1,
+    "provider_usage_v1": ProviderUsageV1,
+    "provider_error_v1": ProviderErrorV1,
+    "recorded_response_key_v1": RecordedResponseKeyV1,
+    "provider_generate_request_v1": ProviderGenerateRequestV1,
+    "provider_generate_response_v1": ProviderGenerateResponseV1,
+    "provider_capabilities_v1": ProviderCapabilitiesV1,
+    "structured_output_spec_v1": StructuredOutputSpecV1,
+    "tool_schema_v1": ToolSchemaV1,
 }

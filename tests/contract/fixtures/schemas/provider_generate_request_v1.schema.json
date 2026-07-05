@@ -1,0 +1,347 @@
+{
+  "$defs": {
+    "GenerationMessageRole": {
+      "enum": [
+        "system",
+        "user",
+        "assistant",
+        "tool"
+      ],
+      "title": "GenerationMessageRole",
+      "type": "string"
+    },
+    "GenerationMessageV1": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "$ref": "#/$defs/GenerationMessageRole"
+        },
+        "content": {
+          "maxLength": 65536,
+          "minLength": 0,
+          "title": "Content",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "required": [
+        "role",
+        "content"
+      ],
+      "title": "GenerationMessageV1",
+      "type": "object"
+    },
+    "GenerationRequestV1": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "requestId": {
+          "title": "Requestid",
+          "type": "string"
+        },
+        "traceId": {
+          "title": "Traceid",
+          "type": "string"
+        },
+        "correlationId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlationid"
+        },
+        "providerId": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Providerid"
+        },
+        "modelConfig": {
+          "$ref": "#/$defs/ModelConfigV1"
+        },
+        "messages": {
+          "items": {
+            "$ref": "#/$defs/GenerationMessageV1"
+          },
+          "maxItems": 64,
+          "minItems": 1,
+          "title": "Messages",
+          "type": "array"
+        },
+        "tools": {
+          "items": {
+            "$ref": "#/$defs/ToolSchemaV1"
+          },
+          "maxItems": 32,
+          "title": "Tools",
+          "type": "array"
+        },
+        "structuredOutput": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StructuredOutputSpecV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "capabilitiesRequired": {
+          "items": {
+            "$ref": "#/$defs/ProviderCapability"
+          },
+          "title": "Capabilitiesrequired",
+          "type": "array"
+        },
+        "maxOutputTokens": {
+          "default": 4096,
+          "maximum": 65536,
+          "minimum": 1,
+          "title": "Maxoutputtokens",
+          "type": "integer"
+        },
+        "timeoutMs": {
+          "anyOf": [
+            {
+              "maximum": 600000,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timeoutms"
+        },
+        "idempotencyKey": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idempotencykey"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "requestId",
+        "traceId",
+        "modelConfig",
+        "messages"
+      ],
+      "title": "GenerationRequestV1",
+      "type": "object"
+    },
+    "ModelConfigV1": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "providerId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Providerid",
+          "type": "string"
+        },
+        "modelId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Modelid",
+          "type": "string"
+        },
+        "promptVersion": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Promptversion",
+          "type": "string"
+        },
+        "temperature": {
+          "anyOf": [
+            {
+              "maximum": 2.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temperature"
+        },
+        "maxOutputTokens": {
+          "anyOf": [
+            {
+              "maximum": 65536,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxoutputtokens"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "providerId",
+        "modelId",
+        "promptVersion"
+      ],
+      "title": "ModelConfigV1",
+      "type": "object"
+    },
+    "ProviderCapability": {
+      "enum": [
+        "structured_output",
+        "tools",
+        "vision",
+        "streaming"
+      ],
+      "title": "ProviderCapability",
+      "type": "string"
+    },
+    "StructuredOutputSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "jsonSchema": {
+          "additionalProperties": true,
+          "title": "Jsonschema",
+          "type": "object"
+        },
+        "strict": {
+          "default": true,
+          "title": "Strict",
+          "type": "boolean"
+        },
+        "maxRepairAttempts": {
+          "default": 1,
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Maxrepairattempts",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "jsonSchema"
+      ],
+      "title": "StructuredOutputSpecV1",
+      "type": "object"
+    },
+    "ToolSchemaV1": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "title": "Parameters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "name",
+        "description"
+      ],
+      "title": "ToolSchemaV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "request": {
+      "$ref": "#/$defs/GenerationRequestV1"
+    },
+    "providerId": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Providerid"
+    },
+    "dryRun": {
+      "default": false,
+      "title": "Dryrun",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "request"
+  ],
+  "title": "ProviderGenerateRequestV1",
+  "type": "object"
+}

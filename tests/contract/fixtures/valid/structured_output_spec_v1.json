@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "jsonSchema": {
+    "type": "object",
+    "properties": {
+      "summary": { "type": "string" }
+    },
+    "required": ["summary"],
+    "additionalProperties": false
+  },
+  "strict": true,
+  "maxRepairAttempts": 1
+}
