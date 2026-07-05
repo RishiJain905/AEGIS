@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 
 from aegis_contracts.generation import (
     GenerationRequestV1,
@@ -22,6 +23,17 @@ from aegis_contracts.versioning import (
 from aegis_model_provider.cost import with_estimated_cost
 from aegis_model_provider.fingerprint import request_fingerprint
 from aegis_model_provider.structured_output import validate_structured_output
+
+_ORACLE_FIXTURE_PATH = (
+    Path(__file__).resolve().parents[5]
+    / "fixtures/model-responses/oracle/oracle-multi-hypothesis-v1.json"
+)
+
+
+def _load_oracle_mock_payload(fingerprint: str) -> dict[str, object]:
+    payload: dict[str, object] = json.loads(_ORACLE_FIXTURE_PATH.read_text(encoding="utf-8"))
+    payload["rationale"] = f"Mock ORACLE hypotheses for request {fingerprint}"
+    return payload
 
 
 class MockProvider:
@@ -88,6 +100,15 @@ class MockProvider:
                 }
                 structured_data = validate_structured_output(payload, request.structured_output)
                 content = json.dumps(structured_data)
+            elif prompt_version == "phase21-oracle-v1":
+                if "invalid" in user_text.lower():
+                    payload = {"hypotheses": [], "comparisonSummary": 123}
+                    content = json.dumps(payload)
+                    structured_data = None
+                else:
+                    payload = _load_oracle_mock_payload(fingerprint)
+                    structured_data = validate_structured_output(payload, request.structured_output)
+                    content = json.dumps(structured_data)
             elif "rationale" in (request.structured_output.json_schema.get("required") or []):
                 payload = {
                     "rationale": f"Mock investigation step for request {fingerprint}",

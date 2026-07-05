@@ -1,0 +1,76 @@
+{
+  "hypotheses": [
+    {
+      "family": "credential_abuse",
+      "claim": "Compromised service credentials enabled lateral relay activity.",
+      "confidence": {
+        "point": 0.72,
+        "min": 0.58,
+        "max": 0.81,
+        "coverage": 0.66,
+        "contradictionPenalty": 0.12,
+        "explanation": "Grounded in authentication alerts and relay path evidence."
+      },
+      "claims": [
+        {
+          "kind": "observed_fact",
+          "text": "Authentication failures clustered on relay service.",
+          "evidenceIds": [],
+          "attachmentIds": []
+        }
+      ],
+      "supportingEvidenceIds": [],
+      "contradictingEvidenceIds": [],
+      "unknowns": ["Whether MFA bypass occurred"],
+      "predictions": ["Additional relay hops if credential reuse continues"],
+      "contradictionLinks": []
+    },
+    {
+      "family": "benign_anomaly",
+      "claim": "Elevated relay traffic may be scheduled maintenance noise.",
+      "confidence": {
+        "point": 0.34,
+        "min": 0.2,
+        "max": 0.48,
+        "coverage": 0.25,
+        "contradictionPenalty": 0.3,
+        "explanation": "Lower coverage with contradictory timing evidence."
+      },
+      "claims": [
+        {
+          "kind": "agent_inference",
+          "text": "Maintenance window overlap is possible but unverified.",
+          "evidenceIds": [],
+          "isAssumption": true
+        }
+      ],
+      "supportingEvidenceIds": [],
+      "contradictingEvidenceIds": [],
+      "unknowns": ["Maintenance schedule confirmation"],
+      "predictions": ["Traffic normalization without containment"],
+      "contradictionLinks": [
+        {
+          "supportingEvidenceIds": [],
+          "contradictingEvidenceIds": [],
+          "supportingAttachmentIds": [],
+          "contradictingAttachmentIds": [],
+          "rationale": "Authentication spike contradicts benign maintenance theory."
+        }
+      ]
+    }
+  ],
+  "comparisonSummary": "Credential abuse has stronger grounded support than benign maintenance.",
+  "verificationRequests": [
+    {
+      "hypothesisIndex": 0,
+      "purpose": "Confirm credential reuse across relay hops",
+      "targetEvidenceIds": []
+    }
+  ],
+  "evidenceCitations": [],
+  "toolRequests": [
+    {"name": "list_existing_evidence", "arguments": {}},
+    {"name": "list_hypotheses", "arguments": {}}
+  ],
+  "rationale": "Mock ORACLE hypotheses for deterministic provider execution."
+}

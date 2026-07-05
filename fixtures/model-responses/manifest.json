@@ -41,6 +41,14 @@
       "providerId": "recorded",
       "modelId": "recorded-v1",
       "promptVersion": "phase20-trace-v1"
+    },
+    {
+      "name": "oracle-multi-hypothesis-v1",
+      "path": "oracle/oracle-multi-hypothesis-v1.json",
+      "requestHash": "7f8e9a1b2c3d4e5f",
+      "providerId": "recorded",
+      "modelId": "recorded-v1",
+      "promptVersion": "phase21-oracle-v1"
     }
   ]
 }

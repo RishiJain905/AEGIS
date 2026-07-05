@@ -46,10 +46,19 @@ _TRACE_TOOLS = [
     "create_investigation_note",
 ]
 
+_ORACLE_TOOLS = [
+    "get_incident",
+    "list_existing_evidence",
+    "list_hypotheses",
+    "create_hypothesis_revision",
+    "request_trace_verification",
+    "retire_hypothesis",
+]
+
 _ROLE_TOOLS: dict[AgentRole, list[str]] = {
     AgentRole.WATCHTOWER: _WATCHTOWER_TOOLS,
     AgentRole.TRACE: _TRACE_TOOLS,
-    AgentRole.ORACLE: _BASE_TOOLS,
+    AgentRole.ORACLE: _ORACLE_TOOLS,
     AgentRole.BASTION: _BASE_TOOLS + ["create_action_proposal"],
     AgentRole.WARDEN: _BASE_TOOLS + ["create_action_proposal"],
     AgentRole.SCRIBE: _BASE_TOOLS,

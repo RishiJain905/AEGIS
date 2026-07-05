@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase20"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase21"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -28,7 +28,7 @@ RUN_SCHEMA_VERSION: Final[int] = 1
 ALERT_SCHEMA_VERSION: Final[int] = 1
 INCIDENT_SCHEMA_VERSION: Final[int] = 1
 EVIDENCE_SCHEMA_VERSION: Final[int] = 1
-HYPOTHESIS_SCHEMA_VERSION: Final[int] = 1
+HYPOTHESIS_SCHEMA_VERSION: Final[int] = 2
 AGENT_SESSION_SCHEMA_VERSION: Final[int] = 1
 ACTION_PROPOSAL_SCHEMA_VERSION: Final[int] = 1
 APPROVAL_SCHEMA_VERSION: Final[int] = 1
@@ -123,8 +123,15 @@ EVIDENCE_ATTACHMENT_SCHEMA_VERSION: Final[int] = 1
 CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION: Final[int] = 1
 INVESTIGATION_NOTE_SCHEMA_VERSION: Final[int] = 1
 AGENT_GRAPH_OVERLAY_SCHEMA_VERSION: Final[int] = 1
-INVESTIGATION_DETAIL_SCHEMA_VERSION: Final[int] = 1
+INVESTIGATION_DETAIL_SCHEMA_VERSION: Final[int] = 2
 TRIGGER_WATCHTOWER_REQUEST_SCHEMA_VERSION: Final[int] = 1
+HYPOTHESIS_CLAIM_SCHEMA_VERSION: Final[int] = 1
+CONFIDENCE_ASSESSMENT_SCHEMA_VERSION: Final[int] = 1
+CONTRADICTION_LINK_SCHEMA_VERSION: Final[int] = 1
+HYPOTHESIS_REVISION_SCHEMA_VERSION: Final[int] = 1
+HYPOTHESIS_COMPARISON_SCHEMA_VERSION: Final[int] = 1
+VERIFICATION_REQUEST_SCHEMA_VERSION: Final[int] = 1
+TRIGGER_ORACLE_REQUEST_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -145,7 +152,14 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "alert": frozenset({ALERT_SCHEMA_VERSION}),
     "incident": frozenset({INCIDENT_SCHEMA_VERSION}),
     "evidence": frozenset({EVIDENCE_SCHEMA_VERSION}),
-    "hypothesis": frozenset({HYPOTHESIS_SCHEMA_VERSION}),
+    "hypothesis": frozenset({1, HYPOTHESIS_SCHEMA_VERSION}),
+    "hypothesis_claim": frozenset({HYPOTHESIS_CLAIM_SCHEMA_VERSION}),
+    "confidence_assessment": frozenset({CONFIDENCE_ASSESSMENT_SCHEMA_VERSION}),
+    "contradiction_link": frozenset({CONTRADICTION_LINK_SCHEMA_VERSION}),
+    "hypothesis_revision": frozenset({HYPOTHESIS_REVISION_SCHEMA_VERSION}),
+    "hypothesis_comparison": frozenset({HYPOTHESIS_COMPARISON_SCHEMA_VERSION}),
+    "verification_request": frozenset({VERIFICATION_REQUEST_SCHEMA_VERSION}),
+    "trigger_oracle_request": frozenset({TRIGGER_ORACLE_REQUEST_SCHEMA_VERSION}),
     "agent_session": frozenset({AGENT_SESSION_SCHEMA_VERSION}),
     "action_proposal": frozenset({ACTION_PROPOSAL_SCHEMA_VERSION}),
     "approval": frozenset({APPROVAL_SCHEMA_VERSION}),
@@ -233,7 +247,7 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "candidate_affected_asset": frozenset({CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION}),
     "investigation_note": frozenset({INVESTIGATION_NOTE_SCHEMA_VERSION}),
     "agent_graph_overlay": frozenset({AGENT_GRAPH_OVERLAY_SCHEMA_VERSION}),
-    "investigation_detail": frozenset({INVESTIGATION_DETAIL_SCHEMA_VERSION}),
+    "investigation_detail": frozenset({1, INVESTIGATION_DETAIL_SCHEMA_VERSION}),
     "trigger_watchtower_request": frozenset({TRIGGER_WATCHTOWER_REQUEST_SCHEMA_VERSION}),
 }
 

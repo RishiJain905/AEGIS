@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from aegis_agents.roles.oracle.coordinator import OracleCoordinator
 from aegis_agents.roles.watchtower.coordinator import WatchtowerCoordinator
 from aegis_api.db.session import db_session, get_db_session_maker
 from aegis_contracts import IncidentV1, InvestigationDetailV1
+from aegis_contracts.hypothesis import TriggerOracleRequestV1
 from aegis_contracts.investigation import TriggerWatchtowerRequestV1
 from aegis_contracts.versioning import INVESTIGATION_DETAIL_SCHEMA_VERSION
 from aegis_persistence.mappers import incident_to_domain
@@ -49,4 +51,20 @@ async def trigger_watchtower(run_id: str, request: TriggerWatchtowerRequestV1) -
         "watchtowerSessionId": result.watchtower_session_id,
         "traceSessionId": result.trace_session_id,
         "triageResultId": result.triage.id,
+    }
+
+
+@router.post("/runs/{run_id}/investigation/trigger-oracle")
+async def trigger_oracle(run_id: str, request: TriggerOracleRequestV1) -> dict[str, object]:
+    if request.run_id != run_id:
+        raise HTTPException(status_code=400, detail="runId mismatch")
+    coordinator = OracleCoordinator()
+    async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        result = await coordinator.trigger_for_run(uow, request)
+    return {
+        "schemaVersion": INVESTIGATION_DETAIL_SCHEMA_VERSION,
+        "incidentId": result.incident_id,
+        "oracleSessionId": result.oracle_session_id,
+        "oracleTaskId": result.oracle_task_id,
+        "traceSessionId": result.trace_session_id,
     }

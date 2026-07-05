@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from aegis_agents.tools.hypothesis import HYPOTHESIS_TOOL_DEFINITIONS
 from aegis_agents.tools.investigation import INVESTIGATION_TOOL_DEFINITIONS
 from aegis_contracts.agent_runtime import AgentToolClass, ToolDefinitionV1
 from aegis_contracts.entities import AgentRole
@@ -128,4 +129,5 @@ CANONICAL_TOOL_DEFINITIONS: list[ToolDefinitionV1] = [
         allowed_roles=[],
     ),
     *INVESTIGATION_TOOL_DEFINITIONS,
+    *HYPOTHESIS_TOOL_DEFINITIONS,
 ]

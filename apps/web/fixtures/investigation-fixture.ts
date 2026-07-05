@@ -13,8 +13,16 @@ const TRACE_SESSION_ID = 'agent-session:ags_synthetic_001';
 const WATCHTOWER_TASK_ID = 'atk_01ARZ3NDEKTSV4RRFFQ69G5FB0';
 const TRACE_TASK_ID = 'atk_01ARZ3NDEKTSV4RRFFQ69G5FAV';
 
+const ORACLE_SESSION_ID = 'agent-session:ags_oracle_001';
+const ORACLE_TASK_ID = 'atk_01ARZ3NDEKTSV4RRFFQ69G5FB1';
+const HYPOTHESIS_ONE_ID = 'hyp_01ARZ3NDEKTSV4RRFFQ69G5FB2';
+const HYPOTHESIS_TWO_ID = 'hyp_01ARZ3NDEKTSV4RRFFQ69G5FB3';
+const REVISION_ONE_ID = 'hrev_01ARZ3NDEKTSV4RRFFQ69G5FB4';
+const REVISION_TWO_ID = 'hrev_01ARZ3NDEKTSV4RRFFQ69G5FB5';
+const REVISION_THREE_ID = 'hrev_01ARZ3NDEKTSV4RRFFQ69G5FB6';
+
 const syntheticInvestigationDetail = parseContract(investigationDetailSchema, {
-  schemaVersion: 1,
+  schemaVersion: 2,
   incidentId: SYNTHETIC_INCIDENT_ID,
   runId: SYNTHETIC_RUN_ID,
   triageResults: [
@@ -196,6 +204,211 @@ const syntheticInvestigationDetail = parseContract(investigationDetailSchema, {
       createdAt: '2026-06-30T02:06:00.000Z',
     },
   ],
+  hypotheses: [
+    {
+      schemaVersion: 2,
+      id: HYPOTHESIS_ONE_ID,
+      incidentId: SYNTHETIC_INCIDENT_ID,
+      currentRevisionId: REVISION_ONE_ID,
+      family: 'credential_abuse',
+      status: 'active',
+      createdAt: '2026-06-30T02:07:00.000Z',
+    },
+    {
+      schemaVersion: 2,
+      id: HYPOTHESIS_TWO_ID,
+      incidentId: SYNTHETIC_INCIDENT_ID,
+      currentRevisionId: REVISION_THREE_ID,
+      family: 'benign_anomaly',
+      status: 'active',
+      createdAt: '2026-06-30T02:07:10.000Z',
+    },
+  ],
+  hypothesisRevisions: [
+    {
+      schemaVersion: 1,
+      id: REVISION_ONE_ID,
+      hypothesisId: HYPOTHESIS_ONE_ID,
+      incidentId: SYNTHETIC_INCIDENT_ID,
+      sessionId: ORACLE_SESSION_ID,
+      taskId: ORACLE_TASK_ID,
+      revisionNumber: 1,
+      claim: 'Compromised gateway credentials enabled relay authentication bursts.',
+      family: 'credential_abuse',
+      confidence: {
+        schemaVersion: 1,
+        point: 0.74,
+        min: 0.6,
+        max: 0.84,
+        coverage: 0.68,
+        contradictionPenalty: 0.14,
+        explanation: 'Grounded in authentication alert and gateway evidence attachments.',
+      },
+      claims: [
+        {
+          schemaVersion: 1,
+          kind: 'observed_fact',
+          text: 'Authentication burst exceeded baseline on API gateway.',
+          evidenceIds: ['evidence:evd_synthetic_001'],
+          attachmentIds: ['eatt_synthetic_001'],
+          isAssumption: false,
+        },
+      ],
+      assumptions: [],
+      supportingEvidenceIds: ['evidence:evd_synthetic_001'],
+      contradictingEvidenceIds: [],
+      unknowns: ['Whether MFA bypass occurred'],
+      predictions: ['Additional relay hops if credential reuse continues'],
+      contradictionLinks: [],
+      status: 'active',
+      rationale: 'Primary competing explanation for gateway authentication anomaly.',
+      createdAt: '2026-06-30T02:07:00.000Z',
+    },
+    {
+      schemaVersion: 1,
+      id: REVISION_TWO_ID,
+      hypothesisId: HYPOTHESIS_TWO_ID,
+      incidentId: SYNTHETIC_INCIDENT_ID,
+      sessionId: ORACLE_SESSION_ID,
+      taskId: ORACLE_TASK_ID,
+      revisionNumber: 1,
+      claim: 'Notification fan-out may explain elevated gateway traffic.',
+      family: 'benign_anomaly',
+      confidence: {
+        schemaVersion: 1,
+        point: 0.36,
+        min: 0.22,
+        max: 0.5,
+        coverage: 0.28,
+        contradictionPenalty: 0.32,
+        explanation: 'Lower coverage with contradictory notification timing evidence.',
+      },
+      claims: [
+        {
+          schemaVersion: 1,
+          kind: 'agent_inference',
+          text: 'Maintenance overlap is possible but unverified.',
+          evidenceIds: [],
+          attachmentIds: [],
+          isAssumption: true,
+        },
+      ],
+      assumptions: ['Scheduled maintenance window overlap'],
+      supportingEvidenceIds: [],
+      contradictingEvidenceIds: ['evidence:evd_synthetic_001'],
+      unknowns: ['Maintenance schedule confirmation'],
+      predictions: ['Traffic normalization without containment'],
+      contradictionLinks: [
+        {
+          schemaVersion: 1,
+          supportingEvidenceIds: [],
+          contradictingEvidenceIds: ['evidence:evd_synthetic_001'],
+          supportingAttachmentIds: [],
+          contradictingAttachmentIds: ['eatt_synthetic_002'],
+          rationale: 'Normal notification volume contradicts lateral movement theory.',
+        },
+      ],
+      status: 'superseded',
+      rationale: 'Initial benign explanation before contradiction review.',
+      createdAt: '2026-06-30T02:07:05.000Z',
+    },
+    {
+      schemaVersion: 1,
+      id: REVISION_THREE_ID,
+      hypothesisId: HYPOTHESIS_TWO_ID,
+      incidentId: SYNTHETIC_INCIDENT_ID,
+      sessionId: ORACLE_SESSION_ID,
+      taskId: ORACLE_TASK_ID,
+      revisionNumber: 2,
+      claim: 'Benign maintenance remains possible but weakened by contradictory timing.',
+      family: 'benign_anomaly',
+      confidence: {
+        schemaVersion: 1,
+        point: 0.29,
+        min: 0.18,
+        max: 0.42,
+        coverage: 0.22,
+        contradictionPenalty: 0.38,
+        explanation: 'Revised downward after contradictory notification evidence.',
+      },
+      claims: [
+        {
+          schemaVersion: 1,
+          kind: 'unsupported_claim',
+          text: 'Maintenance was definitely scheduled at incident time.',
+          evidenceIds: [],
+          attachmentIds: [],
+          isAssumption: false,
+        },
+      ],
+      assumptions: ['Maintenance schedule not yet confirmed'],
+      supportingEvidenceIds: [],
+      contradictingEvidenceIds: ['evidence:evd_synthetic_001'],
+      unknowns: ['Maintenance schedule confirmation'],
+      predictions: ['Traffic normalization if maintenance confirmed'],
+      contradictionLinks: [
+        {
+          schemaVersion: 1,
+          supportingEvidenceIds: [],
+          contradictingEvidenceIds: ['evidence:evd_synthetic_001'],
+          supportingAttachmentIds: [],
+          contradictingAttachmentIds: ['eatt_synthetic_002'],
+          rationale: 'Contradictory notification evidence remains visible after revision.',
+        },
+      ],
+      status: 'active',
+      rationale: 'Revised hypothesis after new contradictory evidence arrived.',
+      createdAt: '2026-06-30T02:08:00.000Z',
+    },
+  ],
+  hypothesisComparisons: [
+    {
+      schemaVersion: 1,
+      id: 'hcmp_synthetic_001',
+      incidentId: SYNTHETIC_INCIDENT_ID,
+      sessionId: ORACLE_SESSION_ID,
+      taskId: ORACLE_TASK_ID,
+      entries: [
+        {
+          hypothesisId: HYPOTHESIS_ONE_ID,
+          revisionId: REVISION_ONE_ID,
+          sharedEvidenceIds: [],
+          uniqueEvidenceIds: ['evidence:evd_synthetic_001'],
+          contradictingEvidenceIds: [],
+          confidencePoint: 0.74,
+        },
+        {
+          hypothesisId: HYPOTHESIS_TWO_ID,
+          revisionId: REVISION_THREE_ID,
+          sharedEvidenceIds: [],
+          uniqueEvidenceIds: [],
+          contradictingEvidenceIds: ['evidence:evd_synthetic_001'],
+          confidencePoint: 0.29,
+        },
+      ],
+      summary:
+        'Credential abuse has stronger grounded support; benign maintenance remains visible but contradicted.',
+      matrix: {
+        sharedEvidence: [],
+        competingFamilies: ['credential_abuse', 'benign_anomaly'],
+      },
+      createdAt: '2026-06-30T02:07:30.000Z',
+    },
+  ],
+  verificationRequests: [
+    {
+      schemaVersion: 1,
+      id: 'vreq_synthetic_001',
+      incidentId: SYNTHETIC_INCIDENT_ID,
+      hypothesisId: HYPOTHESIS_ONE_ID,
+      sessionId: ORACLE_SESSION_ID,
+      taskId: ORACLE_TASK_ID,
+      purpose: 'Confirm credential reuse across relay hops',
+      targetEvidenceIds: ['evidence:evd_synthetic_001'],
+      idempotencyKey: 'oracle:synthetic:verify:001',
+      createdAt: '2026-06-30T02:07:40.000Z',
+    },
+  ],
 });
 
 const watchtowerSessionDetail = parseContract(agentSessionDetailSchema, {
@@ -341,6 +554,94 @@ const traceSessionDetail = parseContract(agentSessionDetailSchema, {
   artifacts: [],
 });
 
+const oracleSessionDetail = parseContract(agentSessionDetailSchema, {
+  schemaVersion: 1,
+  session: {
+    schemaVersion: 1,
+    id: ORACLE_SESSION_ID,
+    incidentId: SYNTHETIC_INCIDENT_ID,
+    role: 'ORACLE',
+    state: 'completed',
+    traceId: 'trc_01ARZ3NDEKTSV4RRFFQ69G5FAV',
+    createdAt: '2026-06-30T02:06:30.000Z',
+    updatedAt: '2026-06-30T02:08:10.000Z',
+  },
+  tasks: [
+    {
+      schemaVersion: 1,
+      id: ORACLE_TASK_ID,
+      sessionId: ORACLE_SESSION_ID,
+      incidentId: SYNTHETIC_INCIDENT_ID,
+      status: 'completed',
+      attempt: 1,
+      idempotencyKey: 'oracle:synthetic:001',
+      traceId: 'trc_01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      providerId: 'mock',
+      createdAt: '2026-06-30T02:06:35.000Z',
+      updatedAt: '2026-06-30T02:08:00.000Z',
+      startedAt: '2026-06-30T02:06:40.000Z',
+      completedAt: '2026-06-30T02:08:00.000Z',
+    },
+  ],
+  transitions: [
+    {
+      schemaVersion: 1,
+      id: 'transition:oracle_001',
+      sessionId: ORACLE_SESSION_ID,
+      taskId: ORACLE_TASK_ID,
+      fromState: 'queued',
+      toState: 'hypothesizing',
+      reason: 'model_step_received',
+      createdAt: '2026-06-30T02:07:00.000Z',
+    },
+    {
+      schemaVersion: 1,
+      id: 'transition:oracle_002',
+      sessionId: ORACLE_SESSION_ID,
+      taskId: ORACLE_TASK_ID,
+      fromState: 'hypothesizing',
+      toState: 'verifying',
+      reason: 'grounding_validated',
+      createdAt: '2026-06-30T02:07:20.000Z',
+    },
+    {
+      schemaVersion: 1,
+      id: 'transition:oracle_003',
+      sessionId: ORACLE_SESSION_ID,
+      taskId: ORACLE_TASK_ID,
+      fromState: 'verifying',
+      toState: 'completed',
+      reason: 'Hypothesis artifacts persisted',
+      createdAt: '2026-06-30T02:08:00.000Z',
+    },
+  ],
+  toolInvocations: [
+    {
+      schemaVersion: 1,
+      id: 'tiv_01ARZ3NDEKTSV4RRFFQ69G5FB3',
+      taskId: ORACLE_TASK_ID,
+      sessionId: ORACLE_SESSION_ID,
+      toolName: 'list_existing_evidence',
+      toolClass: 'read',
+      status: 'success',
+      durationMs: 12,
+      createdAt: '2026-06-30T02:07:05.000Z',
+    },
+    {
+      schemaVersion: 1,
+      id: 'tiv_01ARZ3NDEKTSV4RRFFQ69G5FB4',
+      taskId: ORACLE_TASK_ID,
+      sessionId: ORACLE_SESSION_ID,
+      toolName: 'list_hypotheses',
+      toolClass: 'read',
+      status: 'success',
+      durationMs: 9,
+      createdAt: '2026-06-30T02:07:10.000Z',
+    },
+  ],
+  artifacts: [],
+});
+
 const INVESTIGATION_DETAILS: Record<string, InvestigationDetailV1> = {
   [SYNTHETIC_INCIDENT_ID]: syntheticInvestigationDetail,
 };
@@ -348,6 +649,7 @@ const INVESTIGATION_DETAILS: Record<string, InvestigationDetailV1> = {
 const AGENT_SESSION_DETAILS: Record<string, AgentSessionDetailV1> = {
   [WATCHTOWER_SESSION_ID]: watchtowerSessionDetail,
   [TRACE_SESSION_ID]: traceSessionDetail,
+  [ORACLE_SESSION_ID]: oracleSessionDetail,
 };
 
 export function getInvestigationDetailFixture(incidentId: string): InvestigationDetailV1 | null {
@@ -378,6 +680,9 @@ export function listInvestigationSessionIds(incidentId: string): string[] {
   }
   for (const overlay of detail.overlays) {
     sessionIds.add(overlay.sessionId);
+  }
+  for (const revision of detail.hypothesisRevisions) {
+    sessionIds.add(revision.sessionId);
   }
   return [...sessionIds];
 }

@@ -13,6 +13,7 @@ from aegis_agents.roles.common.schemas import (
     TRACE_STEP_OUTPUT_SCHEMA,
     WATCHTOWER_TRIAGE_OUTPUT_SCHEMA,
 )
+from aegis_agents.roles.oracle.schemas import ORACLE_HYPOTHESIS_OUTPUT_SCHEMA
 
 PostProcessHook = Callable[["PostProcessContext", dict[str, Any]], Awaitable[None]]
 
@@ -86,19 +87,37 @@ TRACE_HANDLER = RoleHandler(
     ],
 )
 
+ORACLE_HANDLER = RoleHandler(
+    role=AgentRole.ORACLE,
+    prompt_version="phase21-oracle-v1",
+    system_prompt=(
+        "You are ORACLE, the AEGIS hypothesis generation agent. "
+        "Produce multiple competing evidence-grounded hypotheses with explicit "
+        "confidence, contradictions, unknowns, and verification requests."
+    ),
+    output_schema=ORACLE_HYPOTHESIS_OUTPUT_SCHEMA,
+    default_tool_requests=[
+        {"name": "list_existing_evidence", "arguments": {}, "purpose": "Load visible evidence"},
+        {"name": "list_hypotheses", "arguments": {}, "purpose": "Review current hypotheses"},
+    ],
+)
+
 ROLE_HANDLER_METADATA: dict[AgentRole, RoleHandler] = {
     AgentRole.WATCHTOWER: WATCHTOWER_HANDLER,
     AgentRole.TRACE: TRACE_HANDLER,
+    AgentRole.ORACLE: ORACLE_HANDLER,
 }
 
 
 def _load_handlers() -> dict[AgentRole, RoleHandlerProtocol]:
+    from aegis_agents.roles.oracle.handler import OracleRoleHandler
     from aegis_agents.roles.trace.handler import TraceRoleHandler
     from aegis_agents.roles.watchtower.handler import WatchtowerRoleHandler
 
     handlers: list[RoleHandlerProtocol] = [
         WatchtowerRoleHandler(),
         TraceRoleHandler(),
+        OracleRoleHandler(),
     ]
     return {handler.role: handler for handler in handlers}
 

@@ -8,6 +8,7 @@ from typing import Any
 from aegis_agents.runtime.grounding import validate_citations
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_agents.tools.context import ToolExecutionContext
+from aegis_agents.tools.hypothesis import HYPOTHESIS_TOOL_HANDLERS
 from aegis_agents.tools.investigation import INVESTIGATION_TOOL_HANDLERS
 from aegis_contracts import ActionClass, ActionProposalV1, HypothesisV1, ProposalStatus
 from aegis_contracts.agent_runtime import AgentArtifactType, AgentArtifactV1, EvidenceCitationV1
@@ -15,7 +16,6 @@ from aegis_contracts.versioning import (
     ACTION_PROPOSAL_SCHEMA_VERSION,
     AGENT_ARTIFACT_SCHEMA_VERSION,
     EVIDENCE_CITATION_SCHEMA_VERSION,
-    HYPOTHESIS_SCHEMA_VERSION,
 )
 
 
@@ -59,7 +59,7 @@ async def handle_create_hypothesis(
     )
     now = datetime.now(UTC)
     hypothesis = HypothesisV1(
-        schema_version=HYPOTHESIS_SCHEMA_VERSION,
+        schema_version=1,
         id=new_runtime_id("hyp"),
         incident_id=ctx.incident_id,
         statement=payload["statement"],
@@ -127,6 +127,7 @@ TOOL_HANDLERS = {
     "create_hypothesis": handle_create_hypothesis,
     "create_action_proposal": handle_create_action_proposal,
     **INVESTIGATION_TOOL_HANDLERS,
+    **HYPOTHESIS_TOOL_HANDLERS,
 }
 
 __all__ = ["ToolExecutionContext", "TOOL_HANDLERS"]

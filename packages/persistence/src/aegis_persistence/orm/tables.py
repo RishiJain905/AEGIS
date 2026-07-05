@@ -727,3 +727,82 @@ class AgentGraphOverlayRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (Index("ix_graph_overlays_incident_created", "incident_id", "created_at"),)
+
+
+class HypothesisRevisionRow(Base):
+    __tablename__ = "hypothesis_revisions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    hypothesis_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("hypotheses.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    revision_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "hypothesis_id",
+            "revision_number",
+            name="uq_hypothesis_revision_number",
+        ),
+        Index("ix_hypothesis_revisions_incident_created", "incident_id", "created_at"),
+    )
+
+
+class HypothesisComparisonRow(Base):
+    __tablename__ = "hypothesis_comparisons"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_hypothesis_comparisons_incident_created", "incident_id", "created_at"),
+    )
+
+
+class VerificationRequestRow(Base):
+    __tablename__ = "verification_requests"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    hypothesis_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("hypotheses.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "incident_id",
+            "idempotency_key",
+            name="uq_verification_incident_idempotency",
+        ),
+        Index("ix_verification_requests_incident_created", "incident_id", "created_at"),
+    )

@@ -1,0 +1,14 @@
+{
+  "workflowVersion": 1,
+  "description": "Mock provider ORACLE hypothesis generation workflow for Phase 21 harness",
+  "providerId": "mock",
+  "role": "ORACLE",
+  "promptVersion": "phase21-oracle-v1",
+  "expectedToolSequence": ["list_hypotheses", "list_existing_evidence"],
+  "expectedHypothesisCount": 2,
+  "expectedArtifacts": [
+    "HypothesisRevisionV1",
+    "HypothesisComparisonV1",
+    "VerificationRequestV1"
+  ]
+}

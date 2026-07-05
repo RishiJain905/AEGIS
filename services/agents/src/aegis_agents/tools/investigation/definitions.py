@@ -7,6 +7,7 @@ from aegis_contracts.entities import AgentRole
 from aegis_contracts.versioning import TOOL_DEFINITION_SCHEMA_VERSION
 
 _INVESTIGATION_ROLES = [AgentRole.WATCHTOWER, AgentRole.TRACE]
+_ORACLE_READ_ROLES = [AgentRole.WATCHTOWER, AgentRole.TRACE, AgentRole.ORACLE]
 
 _EVENT_SUMMARY_SCHEMA = {
     "type": "object",
@@ -309,7 +310,7 @@ INVESTIGATION_TOOL_DEFINITIONS: list[ToolDefinitionV1] = [
             },
             "required": ["evidence"],
         },
-        allowed_roles=_INVESTIGATION_ROLES,
+        allowed_roles=_ORACLE_READ_ROLES,
     ),
     ToolDefinitionV1(
         schema_version=TOOL_DEFINITION_SCHEMA_VERSION,
