@@ -13,7 +13,8 @@ def new_runtime_id(prefix: str) -> str:
 
 
 def new_agent_session_id() -> str:
-    return f"agent-session:{new_runtime_id('ags')}"
+    suffix = "".join(secrets.choice(_CROCKFORD).lower() for _ in range(24))
+    return f"agent-session:ags_{suffix}"
 
 
 def new_transition_id() -> str:
