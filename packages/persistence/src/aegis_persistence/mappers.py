@@ -30,6 +30,11 @@ from aegis_contracts import (
     ToolInvocationV1,
     parse_contract,
 )
+from aegis_contracts.hypothesis import (
+    HypothesisComparisonV1,
+    HypothesisRevisionV1,
+    VerificationRequestV1,
+)
 from aegis_contracts.investigation import (
     AgentGraphOverlayV1,
     CandidateAffectedAssetV1,
@@ -56,6 +61,8 @@ from aegis_persistence.orm.tables import (
     ExecutedActionRow,
     GenerationArtifactRow,
     GraphSnapshotRow,
+    HypothesisComparisonRow,
+    HypothesisRevisionRow,
     HypothesisRow,
     IdempotencyRecordRow,
     IncidentRow,
@@ -69,6 +76,7 @@ from aegis_persistence.orm.tables import (
     StoredObjectRow,
     ToolInvocationRow,
     TraceInvestigationPlanRow,
+    VerificationRequestRow,
     WatchtowerTriageResultRow,
 )
 
@@ -216,3 +224,15 @@ def candidate_asset_to_domain(row: CandidateAffectedAssetRow) -> CandidateAffect
 
 def graph_overlay_to_domain(row: AgentGraphOverlayRow) -> AgentGraphOverlayV1:
     return parse_contract(AgentGraphOverlayV1, row.payload)
+
+
+def hypothesis_revision_to_domain(row: HypothesisRevisionRow) -> HypothesisRevisionV1:
+    return parse_contract(HypothesisRevisionV1, row.payload)
+
+
+def hypothesis_comparison_to_domain(row: HypothesisComparisonRow) -> HypothesisComparisonV1:
+    return parse_contract(HypothesisComparisonV1, row.payload)
+
+
+def verification_request_to_domain(row: VerificationRequestRow) -> VerificationRequestV1:
+    return parse_contract(VerificationRequestV1, row.payload)

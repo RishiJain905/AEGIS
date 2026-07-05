@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase20' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase21' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -20,7 +20,7 @@ export const RUN_SCHEMA_VERSION = 1;
 export const ALERT_SCHEMA_VERSION = 1;
 export const INCIDENT_SCHEMA_VERSION = 1;
 export const EVIDENCE_SCHEMA_VERSION = 1;
-export const HYPOTHESIS_SCHEMA_VERSION = 1;
+export const HYPOTHESIS_SCHEMA_VERSION = 2;
 export const AGENT_SESSION_SCHEMA_VERSION = 1;
 export const ACTION_PROPOSAL_SCHEMA_VERSION = 1;
 export const APPROVAL_SCHEMA_VERSION = 1;
@@ -115,7 +115,15 @@ export const EVIDENCE_ATTACHMENT_SCHEMA_VERSION = 1;
 export const CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION = 1;
 export const INVESTIGATION_NOTE_SCHEMA_VERSION = 1;
 export const AGENT_GRAPH_OVERLAY_SCHEMA_VERSION = 1;
-export const INVESTIGATION_DETAIL_SCHEMA_VERSION = 1;
+export const INVESTIGATION_DETAIL_SCHEMA_VERSION = 2;
+export const TRIGGER_WATCHTOWER_REQUEST_SCHEMA_VERSION = 1;
+export const HYPOTHESIS_CLAIM_SCHEMA_VERSION = 1;
+export const CONFIDENCE_ASSESSMENT_SCHEMA_VERSION = 1;
+export const CONTRADICTION_LINK_SCHEMA_VERSION = 1;
+export const HYPOTHESIS_REVISION_SCHEMA_VERSION = 1;
+export const HYPOTHESIS_COMPARISON_SCHEMA_VERSION = 1;
+export const VERIFICATION_REQUEST_SCHEMA_VERSION = 1;
+export const TRIGGER_ORACLE_REQUEST_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -136,7 +144,14 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   alert: [ALERT_SCHEMA_VERSION],
   incident: [INCIDENT_SCHEMA_VERSION],
   evidence: [EVIDENCE_SCHEMA_VERSION],
-  hypothesis: [HYPOTHESIS_SCHEMA_VERSION],
+  hypothesis: [1, HYPOTHESIS_SCHEMA_VERSION],
+  hypothesis_claim: [HYPOTHESIS_CLAIM_SCHEMA_VERSION],
+  confidence_assessment: [CONFIDENCE_ASSESSMENT_SCHEMA_VERSION],
+  contradiction_link: [CONTRADICTION_LINK_SCHEMA_VERSION],
+  hypothesis_revision: [HYPOTHESIS_REVISION_SCHEMA_VERSION],
+  hypothesis_comparison: [HYPOTHESIS_COMPARISON_SCHEMA_VERSION],
+  verification_request: [VERIFICATION_REQUEST_SCHEMA_VERSION],
+  trigger_oracle_request: [TRIGGER_ORACLE_REQUEST_SCHEMA_VERSION],
   agent_session: [AGENT_SESSION_SCHEMA_VERSION],
   action_proposal: [ACTION_PROPOSAL_SCHEMA_VERSION],
   approval: [APPROVAL_SCHEMA_VERSION],
@@ -226,5 +241,5 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   candidate_affected_asset: [CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION],
   investigation_note: [INVESTIGATION_NOTE_SCHEMA_VERSION],
   agent_graph_overlay: [AGENT_GRAPH_OVERLAY_SCHEMA_VERSION],
-  investigation_detail: [INVESTIGATION_DETAIL_SCHEMA_VERSION],
+  investigation_detail: [1, INVESTIGATION_DETAIL_SCHEMA_VERSION],
 };

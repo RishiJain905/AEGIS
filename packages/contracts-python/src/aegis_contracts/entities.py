@@ -256,18 +256,40 @@ class HypothesisV1(BaseModel):
     schema_version: int = Field(alias="schemaVersion", ge=1)
     id: HypothesisId
     incident_id: IncidentId = Field(alias="incidentId")
-    statement: str = Field(min_length=1)
-    confidence: float = Field(ge=0.0, le=1.0)
-    evidence_ids: list[EvidenceId] = Field(alias="evidenceIds")
+    current_revision_id: str | None = Field(default=None, alias="currentRevisionId")
+    family: str | None = Field(default=None, max_length=64)
+    status: str = Field(default="active", max_length=32)
+    statement: str | None = Field(default=None, min_length=1)
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    evidence_ids: list[EvidenceId] = Field(alias="evidenceIds", default_factory=list)
     created_at: UtcTimestamp = Field(alias="createdAt")
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> HypothesisV1:
         assert_supported_schema_version("hypothesis", self.schema_version)
-        if self.schema_version != HYPOTHESIS_SCHEMA_VERSION:
+        if self.schema_version not in {1, HYPOTHESIS_SCHEMA_VERSION}:
             raise ContractValidationError(
                 code=ContractErrorCode.SCHEMA_VERSION_UNSUPPORTED,
                 message=f"Unsupported hypothesis schema version: {self.schema_version}",
+                details={"schemaVersion": self.schema_version},
+            )
+        if self.schema_version == 1:
+            if not self.statement:
+                raise ContractValidationError(
+                    code=ContractErrorCode.VALIDATION_FAILED,
+                    message="Hypothesis v1 requires statement",
+                    details={"schemaVersion": self.schema_version},
+                )
+            if self.confidence is None:
+                raise ContractValidationError(
+                    code=ContractErrorCode.VALIDATION_FAILED,
+                    message="Hypothesis v1 requires confidence",
+                    details={"schemaVersion": self.schema_version},
+                )
+        if self.schema_version == HYPOTHESIS_SCHEMA_VERSION and not self.current_revision_id:
+            raise ContractValidationError(
+                code=ContractErrorCode.VALIDATION_FAILED,
+                message="Hypothesis v2 requires currentRevisionId",
                 details={"schemaVersion": self.schema_version},
             )
         return self

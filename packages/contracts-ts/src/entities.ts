@@ -200,15 +200,41 @@ export const evidenceSchema = z
 
 export const hypothesisSchema = z
   .object({
-    schemaVersion: schemaVersionCheck(HYPOTHESIS_SCHEMA_VERSION),
+    schemaVersion: z.number().int().min(1),
     id: hypothesisIdSchema,
     incidentId: incidentIdSchema,
-    statement: z.string().min(1),
-    confidence: z.number().min(0).max(1),
-    evidenceIds: z.array(evidenceIdSchema),
+    currentRevisionId: z.string().min(1).max(64).nullable().optional(),
+    family: z.string().max(64).nullable().optional(),
+    status: z.string().max(32).default('active'),
+    statement: z.string().min(1).nullable().optional(),
+    confidence: z.number().min(0).max(1).nullable().optional(),
+    evidenceIds: z.array(evidenceIdSchema).default([]),
     createdAt: utcTimestampSchema,
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.schemaVersion !== 1 && value.schemaVersion !== HYPOTHESIS_SCHEMA_VERSION) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Unsupported hypothesis schema version: ${String(value.schemaVersion)}`,
+      });
+      return;
+    }
+    if (value.schemaVersion === 1) {
+      if (!value.statement) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Hypothesis v1 requires statement' });
+      }
+      if (value.confidence == null) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Hypothesis v1 requires confidence' });
+      }
+    }
+    if (value.schemaVersion === HYPOTHESIS_SCHEMA_VERSION && !value.currentRevisionId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Hypothesis v2 requires currentRevisionId',
+      });
+    }
+  });
 
 export const agentSessionSchema = z
   .object({

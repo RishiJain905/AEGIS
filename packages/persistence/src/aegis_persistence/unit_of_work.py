@@ -7,6 +7,7 @@ from types import TracebackType
 from aegis_contracts import AegisSettings, DomainEventEnvelopeV1
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from aegis_persistence.repositories.hypothesis import PostgresOracleHypothesisRepository
 from aegis_persistence.repositories.investigation import PostgresInvestigationRepository
 from aegis_persistence.repositories.postgres import (
     PostgresActionProposalRepository,
@@ -68,6 +69,7 @@ class PostgresUnitOfWork:
         self._hypotheses = PostgresHypothesisRepository(self._session)
         self._action_proposals = PostgresActionProposalRepository(self._session)
         self._investigation = PostgresInvestigationRepository(self._session)
+        self._oracle_hypotheses = PostgresOracleHypothesisRepository(self._session)
         return self
 
     async def __aexit__(
@@ -167,6 +169,10 @@ class PostgresUnitOfWork:
     @property
     def investigation(self) -> PostgresInvestigationRepository:
         return self._investigation
+
+    @property
+    def oracle_hypotheses(self) -> PostgresOracleHypothesisRepository:
+        return self._oracle_hypotheses
 
     @property
     def session(self) -> AsyncSession:

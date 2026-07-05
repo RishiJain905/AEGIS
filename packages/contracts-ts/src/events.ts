@@ -70,6 +70,10 @@ export const EVENT_TYPE_REGISTRY: Readonly<Record<string, number>> = {
   'investigation.plan.created': 1,
   'investigation.evidence.attached': 1,
   'investigation.graph.overlay': 1,
+  'investigation.hypothesis.created': 1,
+  'investigation.hypothesis.revised': 1,
+  'investigation.hypothesis.comparison.created': 1,
+  'investigation.verification.requested': 1,
 };
 
 export function isKnownEventType(eventType: string): boolean {

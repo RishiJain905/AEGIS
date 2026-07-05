@@ -29,8 +29,16 @@ async def agents_observability_page(request: Request) -> HTMLResponse:
   </style>
 </head>
 <body>
-  <h1>Phase 19–20 — Agent Runtime &amp; Investigation</h1>
-  <p class="note">Shared runtime foundation (Phase 19) plus WATCHTOWER/TRACE investigation controls (Phase 20).</p>
+  <h1>Phase 19–21 — Agent Runtime &amp; Investigation</h1>
+  <p class="note">Shared runtime foundation (Phase 19), WATCHTOWER/TRACE investigation (Phase 20), and ORACLE hypothesis generation (Phase 21).</p>
+
+  <section>
+    <h2>Phase 21 — ORACLE</h2>
+    <button onclick="triggerOracle()">Trigger ORACLE for harness run</button>
+    <button onclick="loadOracleHypotheses()">Show hypothesis artifacts</button>
+    <button onclick="showInvalidOracleOutput()">Show invalid ORACLE output rejection</button>
+    <pre id="oracle-observability">No ORACLE activity yet.</pre>
+  </section>
 
   <section>
     <h2>Phase 20 — WATCHTOWER / TRACE</h2>
@@ -78,6 +86,7 @@ async def agents_observability_page(request: Request) -> HTMLResponse:
     let lastIncidentId = 'incident:inc_runtime_harness_001';
     let lastRunId = null;
     let lastTraceSessionId = null;
+    let lastOracleSessionId = null;
 
     async function loadRegistry() {{
       const res = await fetch(`${{API}}/agents/registry`);
@@ -140,6 +149,56 @@ async def agents_observability_page(request: Request) -> HTMLResponse:
       }}
       const res = await fetch(`${{API}}/agent-sessions/${{lastTraceSessionId}}`);
       document.getElementById('watchtower-trace').textContent = JSON.stringify(await res.json(), null, 2);
+    }}
+
+    async function triggerOracle() {{
+      const runId = await resolveHarnessRunId();
+      if (!lastIncidentId) {{
+        await createHarnessIncident();
+      }}
+      if (!lastTraceSessionId) {{
+        await triggerWatchtower();
+      }}
+      const res = await fetch(`${{API}}/runs/${{runId}}/investigation/trigger-oracle`, {{
+        method: 'POST',
+        headers: {{ 'Content-Type': 'application/json' }},
+        body: JSON.stringify({{
+          schemaVersion: 1,
+          runId,
+          incidentId: lastIncidentId,
+          traceId: 'trc_01ARZ3NDEKTSV4RRFFQ69G5FAV',
+          providerId: 'mock',
+          idempotencyKey: `oracle-${{Date.now()}}`
+        }})
+      }});
+      const body = await res.json();
+      lastOracleSessionId = body.oracleSessionId ?? lastOracleSessionId;
+      document.getElementById('oracle-observability').textContent = JSON.stringify(body, null, 2);
+    }}
+
+    async function loadOracleHypotheses() {{
+      if (!lastIncidentId) {{
+        document.getElementById('oracle-observability').textContent = 'Trigger ORACLE or seed harness first.';
+        return;
+      }}
+      const res = await fetch(`${{API}}/incidents/${{lastIncidentId}}/investigation`);
+      const detail = await res.json();
+      document.getElementById('oracle-observability').textContent = JSON.stringify({{
+        hypotheses: detail.hypotheses ?? [],
+        hypothesisRevisions: detail.hypothesisRevisions ?? [],
+        hypothesisComparisons: detail.hypothesisComparisons ?? [],
+        verificationRequests: detail.verificationRequests ?? []
+      }}, null, 2);
+    }}
+
+    function showInvalidOracleOutput() {{
+      document.getElementById('oracle-observability').textContent = JSON.stringify({{
+        rejected: true,
+        role: 'ORACLE',
+        promptVersion: 'phase21-oracle-v1',
+        reason: 'Structured output validation failed: hypotheses array must contain at least 2 entries',
+        safeFailure: true
+      }}, null, 2);
     }}
 
     async function runMockTask() {{

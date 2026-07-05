@@ -253,6 +253,8 @@ class TaskExecutor:
             if role_handler is not None and session.role.value == "TRACE"
             else "Perform WATCHTOWER triage for the incident."
             if role_handler is not None and session.role.value == "WATCHTOWER"
+            else "Generate competing evidence-grounded hypotheses for the incident."
+            if role_handler is not None and session.role.value == "ORACLE"
             else "Perform one investigation step for the incident."
         )
 
@@ -358,6 +360,11 @@ class TaskExecutor:
                 tool_requests = [{"name": "list_alerts", "arguments": {}}]
             elif role_handler is not None and session.role.value == "TRACE":
                 tool_requests = [{"name": "search_events", "arguments": {"limit": 200}}]
+            elif role_handler is not None and session.role.value == "ORACLE":
+                tool_requests = [
+                    {"name": "list_existing_evidence", "arguments": {}},
+                    {"name": "list_hypotheses", "arguments": {}},
+                ]
             else:
                 tool_requests = [{"name": "list_evidence", "arguments": {}}]
 
