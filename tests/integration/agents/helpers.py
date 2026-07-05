@@ -91,7 +91,7 @@ async def seed_investigation_run(
 
     incident = IncidentV1(
         schema_version=INCIDENT_SCHEMA_VERSION,
-        id=new_runtime_id("inc"),
+        id="incident:watchtower-trace-integration",
         run_id=run.id,
         title="Watchtower trace integration incident",
         state=IncidentState.OPEN,

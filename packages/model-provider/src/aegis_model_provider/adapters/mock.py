@@ -69,7 +69,7 @@ class MockProvider:
                     "rationale": f"Mock TRACE investigation for request {fingerprint}",
                     "confidence": 0.81,
                     "evidenceCitations": [],
-                    "toolRequests": [{"name": "search_events", "arguments": {"query": ""}}],
+                    "toolRequests": [{"name": "search_events", "arguments": {"limit": 200}}],
                     "seedAssetIds": [],
                     "maxHops": 3,
                     "maxToolCalls": 12,

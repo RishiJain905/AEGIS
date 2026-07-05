@@ -29,7 +29,7 @@
     {
       "name": "watchtower-triage-v1",
       "path": "watchtower-trace/watchtower-triage-v1.json",
-      "requestHash": "a1b2c3d4e5f60718",
+      "requestHash": "32d3fac8b3a50303",
       "providerId": "recorded",
       "modelId": "recorded-v1",
       "promptVersion": "phase20-watchtower-v1"
@@ -37,7 +37,7 @@
     {
       "name": "trace-step-v1",
       "path": "watchtower-trace/trace-step-v1.json",
-      "requestHash": "c3d4e5f60718a1b2",
+      "requestHash": "3bda3743c9d54e66",
       "providerId": "recorded",
       "modelId": "recorded-v1",
       "promptVersion": "phase20-trace-v1"

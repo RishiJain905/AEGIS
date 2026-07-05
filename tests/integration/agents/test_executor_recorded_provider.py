@@ -66,4 +66,4 @@ async def test_recorded_provider_replay_is_deterministic(unit_of_work) -> None:
     ]
     assert step_artifacts
     payload = step_artifacts[0].payload
-    assert payload.get("rationale") == "Recorded deterministic investigation step"
+    assert payload.get("rationale") == "Recorded bounded TRACE investigation step"
