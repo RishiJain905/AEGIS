@@ -96,8 +96,10 @@ async def test_agent_failure_does_not_mutate_run_state(unit_of_work) -> None:
             provider_id="mock",
         ),
     )
+    executor = _build_executor()
+    executor.request_cancel(task.id)
     with pytest.raises(AgentRuntimeError):
-        await _build_executor(timeout_seconds=0.001).execute(unit_of_work, task.id)
+        await executor.execute(unit_of_work, task.id)
     run_after = await unit_of_work.runs.get_by_id(run_id)
     assert run_after is not None
     assert run_after.status == run_before.status
