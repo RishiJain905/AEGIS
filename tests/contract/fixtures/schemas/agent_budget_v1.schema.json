@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "consumedCostUsd": {
+      "default": 0.0,
+      "minimum": 0.0,
+      "title": "Consumedcostusd",
+      "type": "number"
+    },
+    "consumedLatencyMs": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Consumedlatencyms",
+      "type": "integer"
+    },
+    "consumedTokens": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Consumedtokens",
+      "type": "integer"
+    },
+    "maxCostUsd": {
+      "minimum": 0.0,
+      "title": "Maxcostusd",
+      "type": "number"
+    },
+    "maxLatencyMs": {
+      "minimum": 1,
+      "title": "Maxlatencyms",
+      "type": "integer"
+    },
+    "maxTokens": {
+      "minimum": 1,
+      "title": "Maxtokens",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "maxTokens", "maxLatencyMs", "maxCostUsd"],
+  "title": "AgentBudgetV1",
+  "type": "object"
+}

@@ -1,16 +1,19 @@
 {
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": {
-      "minimum": 1,
-      "title": "Schemaversion",
-      "type": "integer"
-    },
-    "providerId": {
-      "maxLength": 64,
-      "minLength": 1,
-      "title": "Providerid",
-      "type": "string"
+    "maxOutputTokens": {
+      "anyOf": [
+        {
+          "maximum": 65536,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Maxoutputtokens"
     },
     "modelId": {
       "maxLength": 128,
@@ -23,6 +26,17 @@
       "minLength": 1,
       "title": "Promptversion",
       "type": "string"
+    },
+    "providerId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Providerid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
     },
     "temperature": {
       "anyOf": [
@@ -37,20 +51,6 @@
       ],
       "default": null,
       "title": "Temperature"
-    },
-    "maxOutputTokens": {
-      "anyOf": [
-        {
-          "maximum": 65536,
-          "minimum": 1,
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Maxoutputtokens"
     }
   },
   "required": ["schemaVersion", "providerId", "modelId", "promptVersion"],

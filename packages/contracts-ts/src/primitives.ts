@@ -7,7 +7,7 @@ const AUTHORED_ID_PATTERN =
   /^(asset|incident|alert|evidence|agent-session|business-unit|edge|scenario|scenario-version|relationship|service|user|device|identity|database|control):[a-z0-9][a-z0-9._-]{0,126}$/;
 
 const RUNTIME_ID_PATTERN =
-  /^(evt|run|trc|inc|alt|evd|ags|prp|apr|act|mdl|scr|hyp|gen)_[0-9A-HJKMNP-TV-Z]{26}$/;
+  /^(evt|run|trc|inc|alt|evd|ags|prp|apr|act|mdl|scr|hyp|gen|atk|tiv|aaf)_[0-9A-HJKMNP-TV-Z]{26}$/;
 
 const UTC_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$/;
 
@@ -132,6 +132,33 @@ export const hypothesisIdSchema = z.string().superRefine((value, ctx) => {
 export const generationRequestIdSchema = z.string().superRefine((value, ctx) => {
   try {
     validateRuntimeId('gen', value);
+  } catch (error) {
+    if (error instanceof ContractValidationError) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: error.message });
+    }
+  }
+});
+export const agentTaskIdSchema = z.string().superRefine((value, ctx) => {
+  try {
+    validateRuntimeId('atk', value);
+  } catch (error) {
+    if (error instanceof ContractValidationError) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: error.message });
+    }
+  }
+});
+export const toolInvocationIdSchema = z.string().superRefine((value, ctx) => {
+  try {
+    validateRuntimeId('tiv', value);
+  } catch (error) {
+    if (error instanceof ContractValidationError) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: error.message });
+    }
+  }
+});
+export const agentArtifactIdSchema = z.string().superRefine((value, ctx) => {
+  try {
+    validateRuntimeId('aaf', value);
   } catch (error) {
     if (error instanceof ContractValidationError) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: error.message });

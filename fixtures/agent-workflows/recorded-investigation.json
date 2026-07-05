@@ -1,0 +1,12 @@
+{
+  "workflowVersion": 1,
+  "description": "Recorded provider replay workflow for Phase 19 agent step",
+  "providerId": "recorded",
+  "recordedResponseKey": {
+    "schemaVersion": 1,
+    "providerId": "recorded",
+    "modelId": "recorded-v1",
+    "promptVersion": "phase19-v1",
+    "requestHash": "82e4b4afdf9a45b8"
+  }
+}

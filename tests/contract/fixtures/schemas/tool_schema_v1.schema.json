@@ -1,10 +1,11 @@
 {
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": {
-      "minimum": 1,
-      "title": "Schemaversion",
-      "type": "integer"
+    "description": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
     },
     "name": {
       "maxLength": 128,
@@ -12,16 +13,15 @@
       "title": "Name",
       "type": "string"
     },
-    "description": {
-      "maxLength": 2048,
-      "minLength": 1,
-      "title": "Description",
-      "type": "string"
-    },
     "parameters": {
       "additionalProperties": true,
       "title": "Parameters",
       "type": "object"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
     }
   },
   "required": ["schemaVersion", "name", "description"],

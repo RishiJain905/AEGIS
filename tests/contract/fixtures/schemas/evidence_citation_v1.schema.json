@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "evidenceId": {
+      "title": "Evidenceid",
+      "type": "string"
+    },
+    "rationale": {
+      "default": "",
+      "title": "Rationale",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "evidenceId"],
+  "title": "EvidenceCitationV1",
+  "type": "object"
+}

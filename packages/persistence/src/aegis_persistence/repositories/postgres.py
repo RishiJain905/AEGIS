@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 from aegis_contracts import (
+    ActionProposalV1,
+    AgentArtifactV1,
+    AgentBudgetV1,
+    AgentSessionV1,
+    AgentStateTransitionV1,
+    AgentTaskV1,
     AlertV1,
     AssetRiskScoreV1,
     DomainEventEnvelopeV1,
+    EvidenceV1,
     GenerationArtifactV1,
     GraphSnapshotV1,
+    HypothesisV1,
     IdempotencyRecordV1,
     IncidentV1,
     ModelManifestV1,
@@ -17,6 +25,7 @@ from aegis_contracts import (
     ScenarioV1,
     ScenarioVersionV1,
     SimulationCheckpointV1,
+    ToolInvocationV1,
 )
 from sqlalchemy import CursorResult, select, update
 from sqlalchemy.exc import IntegrityError
@@ -28,12 +37,18 @@ from aegis_persistence.errors import (
     StaleRevisionError,
 )
 from aegis_persistence.mappers import (
+    agent_artifact_to_domain,
+    agent_budget_from_row,
+    agent_session_to_domain,
+    agent_state_transition_to_domain,
+    agent_task_to_domain,
     alert_to_domain,
     asset_risk_score_to_domain,
     checkpoint_to_domain,
     domain_to_payload,
     event_to_domain,
     event_to_outbox_payload,
+    evidence_to_domain,
     generation_artifact_to_domain,
     graph_snapshot_to_domain,
     idempotency_record_to_domain,
@@ -44,13 +59,21 @@ from aegis_persistence.mappers import (
     run_to_domain,
     scenario_to_domain,
     scenario_version_to_domain,
+    tool_invocation_to_domain,
 )
 from aegis_persistence.orm.tables import (
+    ActionProposalRow,
+    AgentArtifactRow,
+    AgentSessionRow,
+    AgentStateTransitionRow,
+    AgentTaskRow,
     AlertRow,
     AssetRiskScoreRow,
     DomainEventRow,
+    EvidenceRow,
     GenerationArtifactRow,
     GraphSnapshotRow,
+    HypothesisRow,
     IdempotencyRecordRow,
     IncidentRow,
     ModelManifestRow,
@@ -61,6 +84,7 @@ from aegis_persistence.orm.tables import (
     ScenarioVersionRow,
     SimulationCheckpointRow,
     StoredObjectRow,
+    ToolInvocationRow,
 )
 
 
@@ -242,6 +266,16 @@ class PostgresEventRepository:
                 event_id=envelope.event_id,
             ) from exc
         return envelope
+
+    async def next_sequence(self, run_id: str) -> int:
+        result = await self._session.execute(
+            select(DomainEventRow.sequence)
+            .where(DomainEventRow.run_id == run_id)
+            .order_by(DomainEventRow.sequence.desc())
+            .limit(1)
+        )
+        current = result.scalar_one_or_none()
+        return 0 if current is None else int(current) + 1
 
 
 class PostgresAlertRepository:
@@ -574,6 +608,288 @@ class PostgresCheckpointRepository:
         self._session.add(row)
         await self._session.flush()
         return checkpoint
+
+
+class PostgresAgentSessionRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_id(self, session_id: str) -> AgentSessionV1 | None:
+        row = await self._session.get(AgentSessionRow, session_id)
+        return agent_session_to_domain(row) if row else None
+
+    async def get_budget(self, session_id: str) -> AgentBudgetV1 | None:
+        row = await self._session.get(AgentSessionRow, session_id)
+        return agent_budget_from_row(row) if row else None
+
+    async def add(
+        self,
+        session: AgentSessionV1,
+        *,
+        budget: AgentBudgetV1 | None = None,
+    ) -> AgentSessionV1:
+        payload = domain_to_payload(session)
+        row = AgentSessionRow(
+            id=session.id,
+            incident_id=session.incident_id,
+            trace_id=session.trace_id,
+            payload=payload,
+            budget=domain_to_payload(budget) if budget else None,
+            created_at=session.created_at,
+            updated_at=session.updated_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return session
+
+    async def update(
+        self,
+        session: AgentSessionV1,
+        *,
+        budget: AgentBudgetV1 | None = None,
+    ) -> AgentSessionV1:
+        row = await self._session.get(AgentSessionRow, session.id)
+        if row is None:
+            msg = f"Agent session not found: {session.id}"
+            raise KeyError(msg)
+        row.payload = domain_to_payload(session)
+        row.updated_at = session.updated_at
+        if budget is not None:
+            row.budget = domain_to_payload(budget)
+        await self._session.flush()
+        return session
+
+
+class PostgresAgentTaskRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_id(self, task_id: str) -> AgentTaskV1 | None:
+        row = await self._session.get(AgentTaskRow, task_id)
+        return agent_task_to_domain(row) if row else None
+
+    async def get_by_idempotency(
+        self,
+        *,
+        session_id: str,
+        idempotency_key: str,
+    ) -> AgentTaskV1 | None:
+        result = await self._session.execute(
+            select(AgentTaskRow).where(
+                AgentTaskRow.session_id == session_id,
+                AgentTaskRow.idempotency_key == idempotency_key,
+            )
+        )
+        row = result.scalar_one_or_none()
+        return agent_task_to_domain(row) if row else None
+
+    async def list_for_session(self, session_id: str) -> list[AgentTaskV1]:
+        result = await self._session.execute(
+            select(AgentTaskRow)
+            .where(AgentTaskRow.session_id == session_id)
+            .order_by(AgentTaskRow.created_at.asc())
+        )
+        return [agent_task_to_domain(row) for row in result.scalars().all()]
+
+    async def list_queued(self, *, limit: int = 20) -> list[AgentTaskV1]:
+        result = await self._session.execute(
+            select(AgentTaskRow)
+            .where(AgentTaskRow.status == "queued")
+            .order_by(AgentTaskRow.created_at.asc())
+            .limit(limit)
+        )
+        return [agent_task_to_domain(row) for row in result.scalars().all()]
+
+    async def list_running(self) -> list[AgentTaskV1]:
+        result = await self._session.execute(
+            select(AgentTaskRow).where(AgentTaskRow.status == "running")
+        )
+        return [agent_task_to_domain(row) for row in result.scalars().all()]
+
+    async def add(self, task: AgentTaskV1) -> AgentTaskV1:
+        payload = domain_to_payload(task)
+        row = AgentTaskRow(
+            id=task.id,
+            session_id=task.session_id,
+            incident_id=task.incident_id,
+            idempotency_key=task.idempotency_key,
+            status=task.status.value,
+            attempt=task.attempt,
+            payload=payload,
+            created_at=task.created_at,
+            updated_at=task.updated_at,
+        )
+        self._session.add(row)
+        try:
+            await self._session.flush()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            raise DuplicateIdempotencyKeyError(
+                scope="agent-task",
+                idempotency_key=task.idempotency_key,
+            ) from exc
+        return task
+
+    async def update(self, task: AgentTaskV1) -> AgentTaskV1:
+        row = await self._session.get(AgentTaskRow, task.id)
+        if row is None:
+            msg = f"Agent task not found: {task.id}"
+            raise KeyError(msg)
+        row.status = task.status.value
+        row.attempt = task.attempt
+        row.payload = domain_to_payload(task)
+        row.updated_at = task.updated_at
+        await self._session.flush()
+        return task
+
+
+class PostgresAgentStateTransitionRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(self, transition: AgentStateTransitionV1) -> AgentStateTransitionV1:
+        payload = domain_to_payload(transition)
+        row = AgentStateTransitionRow(
+            id=transition.id,
+            session_id=transition.session_id,
+            task_id=transition.task_id,
+            from_state=transition.from_state.value,
+            to_state=transition.to_state.value,
+            reason=transition.reason,
+            payload=payload,
+            created_at=transition.created_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return transition
+
+    async def list_for_session(self, session_id: str) -> list[AgentStateTransitionV1]:
+        result = await self._session.execute(
+            select(AgentStateTransitionRow)
+            .where(AgentStateTransitionRow.session_id == session_id)
+            .order_by(AgentStateTransitionRow.created_at.asc())
+        )
+        return [agent_state_transition_to_domain(row) for row in result.scalars().all()]
+
+
+class PostgresToolInvocationRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(self, invocation: ToolInvocationV1) -> ToolInvocationV1:
+        payload = domain_to_payload(invocation)
+        row = ToolInvocationRow(
+            id=invocation.id,
+            task_id=invocation.task_id,
+            session_id=invocation.session_id,
+            tool_name=invocation.tool_name,
+            tool_class=invocation.tool_class.value,
+            status=invocation.status.value,
+            duration_ms=invocation.duration_ms,
+            input_payload=invocation.input_payload,
+            output_payload=invocation.output_payload,
+            error_code=invocation.error_code,
+            error_message=invocation.error_message,
+            payload=payload,
+            created_at=invocation.created_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return invocation
+
+    async def list_for_session(self, session_id: str, *, limit: int = 50) -> list[ToolInvocationV1]:
+        result = await self._session.execute(
+            select(ToolInvocationRow)
+            .where(ToolInvocationRow.session_id == session_id)
+            .order_by(ToolInvocationRow.created_at.desc())
+            .limit(limit)
+        )
+        return [tool_invocation_to_domain(row) for row in result.scalars().all()]
+
+
+class PostgresAgentArtifactRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(self, artifact: AgentArtifactV1) -> AgentArtifactV1:
+        payload = domain_to_payload(artifact)
+        row = AgentArtifactRow(
+            id=artifact.id,
+            task_id=artifact.task_id,
+            session_id=artifact.session_id,
+            artifact_type=artifact.artifact_type.value,
+            generation_artifact_id=artifact.generation_artifact_id,
+            payload=payload,
+            created_at=artifact.created_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return artifact
+
+    async def list_for_session(self, session_id: str) -> list[AgentArtifactV1]:
+        result = await self._session.execute(
+            select(AgentArtifactRow)
+            .where(AgentArtifactRow.session_id == session_id)
+            .order_by(AgentArtifactRow.created_at.asc())
+        )
+        return [agent_artifact_to_domain(row) for row in result.scalars().all()]
+
+
+class PostgresEvidenceRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_ids(self, evidence_ids: list[str]) -> list[EvidenceV1]:
+        if not evidence_ids:
+            return []
+        result = await self._session.execute(
+            select(EvidenceRow).where(EvidenceRow.id.in_(evidence_ids))
+        )
+        return [evidence_to_domain(row) for row in result.scalars().all()]
+
+    async def list_for_run(self, run_id: str) -> list[EvidenceV1]:
+        result = await self._session.execute(
+            select(EvidenceRow)
+            .where(EvidenceRow.run_id == run_id)
+            .order_by(EvidenceRow.created_at.asc())
+        )
+        return [evidence_to_domain(row) for row in result.scalars().all()]
+
+
+class PostgresHypothesisRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(self, hypothesis: HypothesisV1) -> HypothesisV1:
+        payload = domain_to_payload(hypothesis)
+        row = HypothesisRow(
+            id=hypothesis.id,
+            incident_id=hypothesis.incident_id,
+            payload=payload,
+            created_at=hypothesis.created_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return hypothesis
+
+
+class PostgresActionProposalRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(self, proposal: ActionProposalV1) -> ActionProposalV1:
+        payload = domain_to_payload(proposal)
+        row = ActionProposalRow(
+            id=proposal.id,
+            incident_id=proposal.incident_id,
+            revision=proposal.revision,
+            status=proposal.status.value,
+            payload=payload,
+            created_at=proposal.created_at,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        return proposal
 
 
 def create_outbox_row(envelope: DomainEventEnvelopeV1) -> OutboxRow:

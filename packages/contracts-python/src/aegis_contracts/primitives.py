@@ -17,7 +17,8 @@ AUTHORED_ID_PATTERN = re.compile(
     r"[a-z0-9][a-z0-9._-]{0,126}$"
 )
 RUNTIME_ID_PATTERN = re.compile(
-    r"^(evt|run|trc|inc|alt|evd|ags|prp|apr|act|mdl|scr|hyp|gen)_[0-9A-HJKMNP-TV-Z]{26}$"
+    r"^(evt|run|trc|inc|alt|evd|ags|prp|apr|act|mdl|scr|hyp|gen|atk|tiv|aaf)"
+    r"_[0-9A-HJKMNP-TV-Z]{26}$"
 )
 
 Sequence = Annotated[int, Field(ge=0)]
@@ -133,6 +134,9 @@ ActionId = Annotated[str, BeforeValidator(_make_runtime_id_validator("act"))]
 ModelId = Annotated[str, BeforeValidator(_make_runtime_id_validator("mdl"))]
 HypothesisId = Annotated[str, BeforeValidator(_make_runtime_id_validator("hyp"))]
 GenerationRequestId = Annotated[str, BeforeValidator(_make_runtime_id_validator("gen"))]
+AgentTaskId = Annotated[str, BeforeValidator(_make_runtime_id_validator("atk"))]
+ToolInvocationId = Annotated[str, BeforeValidator(_make_runtime_id_validator("tiv"))]
+AgentArtifactId = Annotated[str, BeforeValidator(_make_runtime_id_validator("aaf"))]
 
 UtcTimestamp = Annotated[
     datetime,

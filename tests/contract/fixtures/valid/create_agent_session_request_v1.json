@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "role": "TRACE",
+  "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "enqueueInitialTask": true,
+  "providerId": "mock"
+}

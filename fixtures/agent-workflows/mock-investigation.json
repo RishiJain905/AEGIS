@@ -1,0 +1,7 @@
+{
+  "workflowVersion": 1,
+  "description": "Mock provider investigation workflow for Phase 19 harness",
+  "providerId": "mock",
+  "expectedToolSequence": ["list_evidence"],
+  "expectedSessionTerminalState": "completed"
+}

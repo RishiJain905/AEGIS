@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase18"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase19"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -105,6 +105,18 @@ RECORDED_RESPONSE_KEY_SCHEMA_VERSION: Final[int] = 1
 GENERATION_ARTIFACT_SCHEMA_VERSION: Final[int] = 1
 PROVIDER_GENERATE_REQUEST_SCHEMA_VERSION: Final[int] = 1
 PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+AGENT_DEFINITION_SCHEMA_VERSION: Final[int] = 1
+AGENT_TASK_SCHEMA_VERSION: Final[int] = 1
+AGENT_STATE_TRANSITION_SCHEMA_VERSION: Final[int] = 1
+TOOL_DEFINITION_SCHEMA_VERSION: Final[int] = 1
+TOOL_INVOCATION_SCHEMA_VERSION: Final[int] = 1
+TOOL_RESULT_SCHEMA_VERSION: Final[int] = 1
+EVIDENCE_CITATION_SCHEMA_VERSION: Final[int] = 1
+AGENT_BUDGET_SCHEMA_VERSION: Final[int] = 1
+AGENT_ARTIFACT_SCHEMA_VERSION: Final[int] = 1
+CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION: Final[int] = 1
+CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION: Final[int] = 1
+AGENT_SESSION_DETAIL_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -195,6 +207,18 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "generation_artifact": frozenset({GENERATION_ARTIFACT_SCHEMA_VERSION}),
     "provider_generate_request": frozenset({PROVIDER_GENERATE_REQUEST_SCHEMA_VERSION}),
     "provider_generate_response": frozenset({PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION}),
+    "agent_definition": frozenset({AGENT_DEFINITION_SCHEMA_VERSION}),
+    "agent_task": frozenset({AGENT_TASK_SCHEMA_VERSION}),
+    "agent_state_transition": frozenset({AGENT_STATE_TRANSITION_SCHEMA_VERSION}),
+    "tool_definition": frozenset({TOOL_DEFINITION_SCHEMA_VERSION}),
+    "tool_invocation": frozenset({TOOL_INVOCATION_SCHEMA_VERSION}),
+    "tool_result": frozenset({TOOL_RESULT_SCHEMA_VERSION}),
+    "evidence_citation": frozenset({EVIDENCE_CITATION_SCHEMA_VERSION}),
+    "agent_budget": frozenset({AGENT_BUDGET_SCHEMA_VERSION}),
+    "agent_artifact": frozenset({AGENT_ARTIFACT_SCHEMA_VERSION}),
+    "create_agent_session_request": frozenset({CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION}),
+    "create_agent_task_request": frozenset({CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION}),
+    "agent_session_detail": frozenset({AGENT_SESSION_DETAIL_SCHEMA_VERSION}),
 }
 
 

@@ -20,13 +20,13 @@
   },
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": {
-      "minimum": 1,
-      "title": "Schemaversion",
-      "type": "integer"
-    },
     "code": {
       "$ref": "#/$defs/ProviderErrorCode"
+    },
+    "details": {
+      "additionalProperties": true,
+      "title": "Details",
+      "type": "object"
     },
     "message": {
       "maxLength": 2048,
@@ -39,10 +39,10 @@
       "title": "Retryable",
       "type": "boolean"
     },
-    "details": {
-      "additionalProperties": true,
-      "title": "Details",
-      "type": "object"
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
     },
     "traceId": {
       "anyOf": [

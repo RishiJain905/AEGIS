@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase18' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase19' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -97,6 +97,18 @@ export const RECORDED_RESPONSE_KEY_SCHEMA_VERSION = 1;
 export const GENERATION_ARTIFACT_SCHEMA_VERSION = 1;
 export const PROVIDER_GENERATE_REQUEST_SCHEMA_VERSION = 1;
 export const PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION = 1;
+export const AGENT_DEFINITION_SCHEMA_VERSION = 1;
+export const AGENT_TASK_SCHEMA_VERSION = 1;
+export const AGENT_STATE_TRANSITION_SCHEMA_VERSION = 1;
+export const TOOL_DEFINITION_SCHEMA_VERSION = 1;
+export const TOOL_INVOCATION_SCHEMA_VERSION = 1;
+export const TOOL_RESULT_SCHEMA_VERSION = 1;
+export const EVIDENCE_CITATION_SCHEMA_VERSION = 1;
+export const AGENT_BUDGET_SCHEMA_VERSION = 1;
+export const AGENT_ARTIFACT_SCHEMA_VERSION = 1;
+export const CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION = 1;
+export const CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION = 1;
+export const AGENT_SESSION_DETAIL_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -189,4 +201,16 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   generation_artifact: [GENERATION_ARTIFACT_SCHEMA_VERSION],
   provider_generate_request: [PROVIDER_GENERATE_REQUEST_SCHEMA_VERSION],
   provider_generate_response: [PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION],
+  agent_definition: [AGENT_DEFINITION_SCHEMA_VERSION],
+  agent_task: [AGENT_TASK_SCHEMA_VERSION],
+  agent_state_transition: [AGENT_STATE_TRANSITION_SCHEMA_VERSION],
+  tool_definition: [TOOL_DEFINITION_SCHEMA_VERSION],
+  tool_invocation: [TOOL_INVOCATION_SCHEMA_VERSION],
+  tool_result: [TOOL_RESULT_SCHEMA_VERSION],
+  evidence_citation: [EVIDENCE_CITATION_SCHEMA_VERSION],
+  agent_budget: [AGENT_BUDGET_SCHEMA_VERSION],
+  agent_artifact: [AGENT_ARTIFACT_SCHEMA_VERSION],
+  create_agent_session_request: [CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION],
+  create_agent_task_request: [CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION],
+  agent_session_detail: [AGENT_SESSION_DETAIL_SCHEMA_VERSION],
 };

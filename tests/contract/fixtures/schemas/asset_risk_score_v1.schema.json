@@ -1,0 +1,267 @@
+{
+  "$defs": {
+    "RelationshipType": {
+      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
+      "title": "RelationshipType",
+      "type": "string"
+    },
+    "RiskContributionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Amount",
+          "type": "number"
+        },
+        "criticalityFactor": {
+          "minimum": 1.0,
+          "title": "Criticalityfactor",
+          "type": "number"
+        },
+        "distanceDecay": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Distancedecay",
+          "type": "number"
+        },
+        "explanationPath": {
+          "$ref": "#/$defs/RiskExplanationPathV1"
+        },
+        "hopCount": {
+          "minimum": 0,
+          "title": "Hopcount",
+          "type": "integer"
+        },
+        "originAssetId": {
+          "title": "Originassetid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "signalId": {
+          "minLength": 1,
+          "title": "Signalid",
+          "type": "string"
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        },
+        "temporalDecay": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Temporaldecay",
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "signalId",
+        "originAssetId",
+        "targetAssetId",
+        "amount",
+        "hopCount",
+        "distanceDecay",
+        "temporalDecay",
+        "criticalityFactor",
+        "explanationPath"
+      ],
+      "title": "RiskContributionV1",
+      "type": "object"
+    },
+    "RiskExplanationPathV1": {
+      "additionalProperties": false,
+      "properties": {
+        "algorithmVersion": {
+          "minLength": 1,
+          "title": "Algorithmversion",
+          "type": "string"
+        },
+        "contribution": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Contribution",
+          "type": "number"
+        },
+        "criticalityFactor": {
+          "minimum": 1.0,
+          "title": "Criticalityfactor",
+          "type": "number"
+        },
+        "distanceDecay": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Distancedecay",
+          "type": "number"
+        },
+        "hopCount": {
+          "minimum": 0,
+          "title": "Hopcount",
+          "type": "integer"
+        },
+        "hops": {
+          "items": {
+            "$ref": "#/$defs/RiskPathHopV1"
+          },
+          "minItems": 0,
+          "title": "Hops",
+          "type": "array"
+        },
+        "nodeIds": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Nodeids",
+          "type": "array"
+        },
+        "originAssetId": {
+          "title": "Originassetid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "signalId": {
+          "minLength": 1,
+          "title": "Signalid",
+          "type": "string"
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        },
+        "temporalDecay": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Temporaldecay",
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "signalId",
+        "originAssetId",
+        "targetAssetId",
+        "nodeIds",
+        "hops",
+        "hopCount",
+        "distanceDecay",
+        "temporalDecay",
+        "criticalityFactor",
+        "contribution",
+        "algorithmVersion"
+      ],
+      "title": "RiskExplanationPathV1",
+      "type": "object"
+    },
+    "RiskPathHopV1": {
+      "additionalProperties": false,
+      "properties": {
+        "edgeId": {
+          "title": "Edgeid",
+          "type": "string"
+        },
+        "edgeWeight": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Edgeweight",
+          "type": "number"
+        },
+        "hopIndex": {
+          "minimum": 1,
+          "title": "Hopindex",
+          "type": "integer"
+        },
+        "relationshipType": {
+          "$ref": "#/$defs/RelationshipType"
+        },
+        "sourceId": {
+          "title": "Sourceid",
+          "type": "string"
+        },
+        "targetId": {
+          "title": "Targetid",
+          "type": "string"
+        }
+      },
+      "required": ["edgeId", "sourceId", "targetId", "relationshipType", "edgeWeight", "hopIndex"],
+      "title": "RiskPathHopV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "algorithmVersion": {
+      "minLength": 1,
+      "title": "Algorithmversion",
+      "type": "string"
+    },
+    "assetId": {
+      "title": "Assetid",
+      "type": "string"
+    },
+    "computedAtSequence": {
+      "minimum": 0,
+      "title": "Computedatsequence",
+      "type": "integer"
+    },
+    "direct": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Direct",
+      "type": "number"
+    },
+    "propagated": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Propagated",
+      "type": "number"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "topContributions": {
+      "items": {
+        "$ref": "#/$defs/RiskContributionV1"
+      },
+      "title": "Topcontributions",
+      "type": "array"
+    },
+    "total": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Total",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "assetId",
+    "total",
+    "direct",
+    "propagated",
+    "algorithmVersion",
+    "computedAtSequence",
+    "simTime"
+  ],
+  "title": "AssetRiskScoreV1",
+  "type": "object"
+}

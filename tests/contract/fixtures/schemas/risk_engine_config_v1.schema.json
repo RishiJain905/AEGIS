@@ -1,0 +1,94 @@
+{
+  "$defs": {
+    "RelationshipType": {
+      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
+      "title": "RelationshipType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "algorithmVersion": {
+      "minLength": 1,
+      "title": "Algorithmversion",
+      "type": "string"
+    },
+    "criticalityAmplifier": {
+      "default": 0.25,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Criticalityamplifier",
+      "type": "number"
+    },
+    "distanceDecayFactor": {
+      "default": 0.65,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Distancedecayfactor",
+      "type": "number"
+    },
+    "eligibleRelationshipTypes": {
+      "items": {
+        "$ref": "#/$defs/RelationshipType"
+      },
+      "title": "Eligiblerelationshiptypes",
+      "type": "array"
+    },
+    "globalCap": {
+      "default": 1.0,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Globalcap",
+      "type": "number"
+    },
+    "maxHops": {
+      "default": 4,
+      "maximum": 16,
+      "minimum": 1,
+      "title": "Maxhops",
+      "type": "integer"
+    },
+    "minExplanationContribution": {
+      "default": 0.01,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minexplanationcontribution",
+      "type": "number"
+    },
+    "relationshipTypeWeights": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Relationshiptypeweights",
+      "type": "object"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "temporalDecayFactor": {
+      "default": 0.5,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Temporaldecayfactor",
+      "type": "number"
+    },
+    "temporalHalfLifeSeconds": {
+      "default": 3600.0,
+      "exclusiveMinimum": 0.0,
+      "title": "Temporalhalflifeseconds",
+      "type": "number"
+    },
+    "topExplanationPaths": {
+      "default": 5,
+      "maximum": 20,
+      "minimum": 1,
+      "title": "Topexplanationpaths",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "algorithmVersion"],
+  "title": "RiskEngineConfigV1",
+  "type": "object"
+}

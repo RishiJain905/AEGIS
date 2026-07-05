@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "name": "list_evidence",
+  "description": "List evidence visible for the incident run",
+  "toolClass": "read",
+  "modelVisible": true,
+  "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+  "outputSchema": {
+    "type": "object",
+    "properties": { "evidenceIds": { "type": "array", "items": { "type": "string" } } },
+    "required": ["evidenceIds"]
+  },
+  "allowedRoles": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"]
+}

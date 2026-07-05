@@ -1,0 +1,44 @@
+{
+  "$defs": {
+    "AgentRole": {
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
+      "title": "AgentRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "enqueueInitialTask": {
+      "default": true,
+      "title": "Enqueueinitialtask",
+      "type": "boolean"
+    },
+    "providerId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Providerid"
+    },
+    "role": {
+      "$ref": "#/$defs/AgentRole"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "traceId": {
+      "title": "Traceid",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "role", "traceId"],
+  "title": "CreateAgentSessionRequestV1",
+  "type": "object"
+}

@@ -1,0 +1,110 @@
+{
+  "$defs": {
+    "AgentToolClass": {
+      "enum": ["read", "analysis_write", "proposal", "execution"],
+      "title": "AgentToolClass",
+      "type": "string"
+    },
+    "ToolInvocationStatus": {
+      "enum": ["success", "failed", "rejected"],
+      "title": "ToolInvocationStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "durationMs": {
+      "minimum": 0,
+      "title": "Durationms",
+      "type": "integer"
+    },
+    "errorCode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Errorcode"
+    },
+    "errorMessage": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Errormessage"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "input": {
+      "additionalProperties": true,
+      "title": "Input",
+      "type": "object"
+    },
+    "output": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ToolInvocationStatus"
+    },
+    "taskId": {
+      "title": "Taskid",
+      "type": "string"
+    },
+    "toolClass": {
+      "$ref": "#/$defs/AgentToolClass"
+    },
+    "toolName": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Toolname",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "taskId",
+    "sessionId",
+    "toolName",
+    "toolClass",
+    "status",
+    "durationMs",
+    "createdAt"
+  ],
+  "title": "ToolInvocationV1",
+  "type": "object"
+}

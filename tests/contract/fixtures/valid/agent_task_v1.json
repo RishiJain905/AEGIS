@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sessionId": "agent-session:ags_synthetic_001",
+  "incidentId": "incident:inc_synthetic_001",
+  "status": "queued",
+  "attempt": 1,
+  "idempotencyKey": "task-demo-001",
+  "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "providerId": "mock",
+  "createdAt": "2026-06-30T02:15:00.000Z",
+  "updatedAt": "2026-06-30T02:15:00.000Z"
+}

@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "idempotencyKey": "task-demo-001",
+  "providerId": "mock"
+}

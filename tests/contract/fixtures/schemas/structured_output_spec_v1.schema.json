@@ -1,20 +1,10 @@
 {
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": {
-      "minimum": 1,
-      "title": "Schemaversion",
-      "type": "integer"
-    },
     "jsonSchema": {
       "additionalProperties": true,
       "title": "Jsonschema",
       "type": "object"
-    },
-    "strict": {
-      "default": true,
-      "title": "Strict",
-      "type": "boolean"
     },
     "maxRepairAttempts": {
       "default": 1,
@@ -22,6 +12,16 @@
       "minimum": 0,
       "title": "Maxrepairattempts",
       "type": "integer"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "strict": {
+      "default": true,
+      "title": "Strict",
+      "type": "boolean"
     }
   },
   "required": ["schemaVersion", "jsonSchema"],

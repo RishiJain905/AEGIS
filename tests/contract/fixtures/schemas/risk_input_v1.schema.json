@@ -1,0 +1,106 @@
+{
+  "$defs": {
+    "RiskSignalSourceType": {
+      "enum": ["rule", "model"],
+      "title": "RiskSignalSourceType",
+      "type": "string"
+    },
+    "RiskSignalStatus": {
+      "enum": ["active", "resolved", "expired"],
+      "title": "RiskSignalStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "title": "Assetid",
+      "type": "string"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "deduplicationKey": {
+      "minLength": 1,
+      "title": "Deduplicationkey",
+      "type": "string"
+    },
+    "detectorId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Detectorid"
+    },
+    "provenanceRef": {
+      "minLength": 1,
+      "title": "Provenanceref",
+      "type": "string"
+    },
+    "ruleId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ruleid"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "signalId": {
+      "minLength": 1,
+      "title": "Signalid",
+      "type": "string"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "sourceType": {
+      "$ref": "#/$defs/RiskSignalSourceType"
+    },
+    "status": {
+      "$ref": "#/$defs/RiskSignalStatus",
+      "default": "active"
+    },
+    "strength": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Strength",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "signalId",
+    "runId",
+    "sourceType",
+    "assetId",
+    "strength",
+    "confidence",
+    "simTime",
+    "deduplicationKey",
+    "provenanceRef"
+  ],
+  "title": "RiskInputV1",
+  "type": "object"
+}
