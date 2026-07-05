@@ -17,7 +17,7 @@ AUTHORED_ID_PATTERN = re.compile(
     r"[a-z0-9][a-z0-9._-]{0,126}$"
 )
 RUNTIME_ID_PATTERN = re.compile(
-    r"^(evt|run|trc|inc|alt|evd|ags|prp|apr|act|mdl|scr|hyp)_[0-9A-HJKMNP-TV-Z]{26}$"
+    r"^(evt|run|trc|inc|alt|evd|ags|prp|apr|act|mdl|scr|hyp|gen)_[0-9A-HJKMNP-TV-Z]{26}$"
 )
 
 Sequence = Annotated[int, Field(ge=0)]
@@ -132,6 +132,7 @@ ApprovalId = Annotated[str, BeforeValidator(_make_runtime_id_validator("apr"))]
 ActionId = Annotated[str, BeforeValidator(_make_runtime_id_validator("act"))]
 ModelId = Annotated[str, BeforeValidator(_make_runtime_id_validator("mdl"))]
 HypothesisId = Annotated[str, BeforeValidator(_make_runtime_id_validator("hyp"))]
+GenerationRequestId = Annotated[str, BeforeValidator(_make_runtime_id_validator("gen"))]
 
 UtcTimestamp = Annotated[
     datetime,

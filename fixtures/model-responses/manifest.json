@@ -1,0 +1,22 @@
+{
+  "manifestVersion": 1,
+  "redactionPolicy": "strip-api-keys-and-system-prompts",
+  "fixtures": [
+    {
+      "name": "structured-success-v1",
+      "path": "recorded/structured-success-v1.json",
+      "requestHash": "541d3a346b0c2427",
+      "providerId": "recorded",
+      "modelId": "recorded-v1",
+      "promptVersion": "phase18-v1"
+    },
+    {
+      "name": "simple-completion-v1",
+      "path": "recorded/simple-completion-v1.json",
+      "requestHash": "b1c2d3e4f5a67890",
+      "providerId": "recorded",
+      "modelId": "recorded-v1",
+      "promptVersion": "phase18-v1"
+    }
+  ]
+}

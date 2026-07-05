@@ -1,0 +1,27 @@
+{
+  "$defs": {
+    "ProviderCapability": {
+      "enum": ["structured_output", "tools", "vision", "streaming"],
+      "title": "ProviderCapability",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "capabilities": {
+      "items": {
+        "$ref": "#/$defs/ProviderCapability"
+      },
+      "title": "Capabilities",
+      "type": "array"
+    }
+  },
+  "required": ["schemaVersion"],
+  "title": "ProviderCapabilitiesV1",
+  "type": "object"
+}

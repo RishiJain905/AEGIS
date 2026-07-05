@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "providerId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Providerid",
+      "type": "string"
+    },
+    "modelId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Modelid",
+      "type": "string"
+    },
+    "promptVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Promptversion",
+      "type": "string"
+    },
+    "requestHash": {
+      "maxLength": 128,
+      "minLength": 8,
+      "title": "Requesthash",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "providerId", "modelId", "promptVersion", "requestHash"],
+  "title": "RecordedResponseKeyV1",
+  "type": "object"
+}

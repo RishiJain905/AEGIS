@@ -1,0 +1,63 @@
+{
+  "$defs": {
+    "ProviderErrorCode": {
+      "enum": [
+        "VALIDATION_FAILED",
+        "CAPABILITY_UNSUPPORTED",
+        "CREDENTIALS_MISSING",
+        "OUTPUT_LIMIT_EXCEEDED",
+        "STRUCTURED_OUTPUT_INVALID",
+        "TIMEOUT",
+        "RETRY_EXHAUSTED",
+        "CIRCUIT_OPEN",
+        "PROVIDER_UNAVAILABLE",
+        "CANCELLATION",
+        "INTERNAL"
+      ],
+      "title": "ProviderErrorCode",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "code": {
+      "$ref": "#/$defs/ProviderErrorCode"
+    },
+    "message": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Message",
+      "type": "string"
+    },
+    "retryable": {
+      "default": false,
+      "title": "Retryable",
+      "type": "boolean"
+    },
+    "details": {
+      "additionalProperties": true,
+      "title": "Details",
+      "type": "object"
+    },
+    "traceId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Traceid"
+    }
+  },
+  "required": ["schemaVersion", "code", "message"],
+  "title": "ProviderErrorV1",
+  "type": "object"
+}

@@ -1,0 +1,27 @@
+{
+  "recordedResponseKey": {
+    "schemaVersion": 1,
+    "providerId": "recorded",
+    "modelId": "recorded-v1",
+    "promptVersion": "phase18-v1",
+    "requestHash": "b1c2d3e4f5a67890"
+  },
+  "response": {
+    "schemaVersion": 1,
+    "requestId": "gen_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+    "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+    "providerId": "recorded",
+    "modelId": "recorded-v1",
+    "promptVersion": "phase18-v1",
+    "content": "Recorded simple completion.",
+    "finishReason": "stop",
+    "usage": {
+      "schemaVersion": 1,
+      "promptTokens": 12,
+      "completionTokens": 6,
+      "totalTokens": 18
+    },
+    "latencyMs": 2,
+    "completedAt": "2026-07-03T12:00:00.000Z"
+  }
+}

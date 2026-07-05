@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "promptTokens": {
+      "minimum": 0,
+      "title": "Prompttokens",
+      "type": "integer"
+    },
+    "completionTokens": {
+      "minimum": 0,
+      "title": "Completiontokens",
+      "type": "integer"
+    },
+    "totalTokens": {
+      "minimum": 0,
+      "title": "Totaltokens",
+      "type": "integer"
+    },
+    "estimatedCostUsd": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Estimatedcostusd"
+    }
+  },
+  "required": ["schemaVersion", "promptTokens", "completionTokens", "totalTokens"],
+  "title": "ProviderUsageV1",
+  "type": "object"
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "code": "CREDENTIALS_MISSING",
+  "message": "Provider credentials are not configured",
+  "retryable": false,
+  "details": {
+    "providerId": "openai"
+  },
+  "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV"
+}

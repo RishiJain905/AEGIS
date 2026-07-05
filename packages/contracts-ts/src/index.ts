@@ -46,6 +46,20 @@ import {
   riskProjectionDeltaSchema,
   riskScoresListResponseSchema,
 } from './risk';
+import {
+  generationArtifactSchema,
+  generationRequestSchema,
+  generationResponseSchema,
+  modelConfigSchema,
+  providerCapabilitiesSchema,
+  providerErrorSchema,
+  providerGenerateRequestSchema,
+  providerGenerateResponseSchema,
+  providerUsageSchema,
+  recordedResponseKeySchema,
+  structuredOutputSpecSchema,
+  toolSchemaSchema,
+} from './generation';
 import { websocketFrameSchema } from './websocket';
 
 import { cursorPaginationSchema, idempotencyMetadataSchema } from './api';
@@ -100,6 +114,7 @@ export * from './features';
 export * from './detection';
 export * from './models';
 export * from './risk';
+export * from './generation';
 export * from './websocket';
 export * from './live-run';
 export * from './parsing';
@@ -200,4 +215,16 @@ export const FIXTURE_SCHEMA_MAP = {
   risk_compute_request_v1: riskComputeRequestSchema,
   risk_compute_response_v1: riskComputeResponseSchema,
   risk_scores_list_response_v1: riskScoresListResponseSchema,
+  generation_request_v1: generationRequestSchema,
+  generation_response_v1: generationResponseSchema,
+  generation_artifact_v1: generationArtifactSchema,
+  model_config_v1: modelConfigSchema,
+  provider_usage_v1: providerUsageSchema,
+  provider_error_v1: providerErrorSchema,
+  recorded_response_key_v1: recordedResponseKeySchema,
+  provider_generate_request_v1: providerGenerateRequestSchema,
+  provider_generate_response_v1: providerGenerateResponseSchema,
+  provider_capabilities_v1: providerCapabilitiesSchema,
+  structured_output_spec_v1: structuredOutputSpecSchema,
+  tool_schema_v1: toolSchemaSchema,
 } as const;

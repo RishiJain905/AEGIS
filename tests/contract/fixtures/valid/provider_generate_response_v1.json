@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "response": {
+    "schemaVersion": 1,
+    "requestId": "gen_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "providerId": "mock",
+    "modelId": "mock-v1",
+    "promptVersion": "phase18-v1",
+    "structuredData": {
+      "summary": "Synthetic incident summary",
+      "confidence": 0.82
+    },
+    "finishReason": "stop",
+    "usage": {
+      "schemaVersion": 1,
+      "promptTokens": 42,
+      "completionTokens": 18,
+      "totalTokens": 60
+    },
+    "latencyMs": 12,
+    "completedAt": "2026-07-03T12:00:00.000Z"
+  }
+}

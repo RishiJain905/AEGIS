@@ -16,6 +16,7 @@ members = [
     "packages/simulation-domain",
     "packages/graph-domain",
     "packages/graph-risk",
+    "packages/model-provider",
     "packages/policy",
     "packages/observability",
     "services/simulation",
@@ -69,7 +70,7 @@ module = "tests.*"
 disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
-module = ["sklearn.*", "joblib.*"]
+module = ["sklearn.*", "joblib.*", "jsonschema.*", "openai.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -86,6 +87,8 @@ root_packages = [
     "aegis_scenario_sdk",
     "aegis_simulation_domain",
     "aegis_graph_domain",
+    "aegis_graph_risk",
+    "aegis_model_provider",
     "aegis_policy",
     "aegis_observability",
     "aegis_event_streaming",
@@ -117,6 +120,8 @@ source_modules = [
     "aegis_scenario_sdk",
     "aegis_simulation_domain",
     "aegis_graph_domain",
+    "aegis_graph_risk",
+    "aegis_model_provider",
     "aegis_policy",
     "aegis_observability",
     "aegis_event_streaming",
@@ -132,6 +137,8 @@ source_modules = [
     "aegis_scenario_sdk",
     "aegis_simulation_domain",
     "aegis_graph_domain",
+    "aegis_graph_risk",
+    "aegis_model_provider",
     "aegis_policy",
     "aegis_observability",
     "aegis_event_streaming",

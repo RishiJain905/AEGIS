@@ -1,0 +1,31 @@
+{
+  "recordedResponseKey": {
+    "schemaVersion": 1,
+    "providerId": "recorded",
+    "modelId": "recorded-v1",
+    "promptVersion": "phase18-v1",
+    "requestHash": "541d3a346b0c2427"
+  },
+  "response": {
+    "schemaVersion": 1,
+    "requestId": "gen_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "providerId": "recorded",
+    "modelId": "recorded-v1",
+    "promptVersion": "phase18-v1",
+    "structuredData": {
+      "summary": "Recorded deterministic incident summary",
+      "confidence": 0.91
+    },
+    "finishReason": "stop",
+    "usage": {
+      "schemaVersion": 1,
+      "promptTokens": 40,
+      "completionTokens": 16,
+      "totalTokens": 56,
+      "estimatedCostUsd": 0.0
+    },
+    "latencyMs": 3,
+    "completedAt": "2026-07-03T12:00:00.000Z"
+  }
+}

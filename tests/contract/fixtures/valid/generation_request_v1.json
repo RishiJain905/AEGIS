@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "requestId": "gen_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "traceId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "correlationId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "providerId": "mock",
+  "modelConfig": {
+    "schemaVersion": 1,
+    "providerId": "mock",
+    "modelId": "mock-v1",
+    "promptVersion": "phase18-v1",
+    "temperature": 0.0,
+    "maxOutputTokens": 1024
+  },
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a defensive analyst assistant."
+    },
+    {
+      "role": "user",
+      "content": "Summarize the incident signals."
+    }
+  ],
+  "tools": [],
+  "structuredOutput": {
+    "schemaVersion": 1,
+    "jsonSchema": {
+      "type": "object",
+      "properties": {
+        "summary": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": ["summary", "confidence"],
+      "additionalProperties": false
+    },
+    "strict": true,
+    "maxRepairAttempts": 1
+  },
+  "capabilitiesRequired": ["structured_output"],
+  "maxOutputTokens": 1024,
+  "timeoutMs": 30000,
+  "idempotencyKey": "phase18-fixture-request"
+}

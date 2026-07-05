@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "search_events",
+  "description": "Search normalized events for an incident scope.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string" }
+    },
+    "required": ["query"]
+  }
+}

@@ -1,0 +1,57 @@
+"""Provider configuration loaded from environment variables."""
+
+from __future__ import annotations
+
+from enum import StrEnum
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class ProviderKind(StrEnum):
+    MOCK = "mock"
+    RECORDED = "recorded"
+    OPENAI = "openai"
+    OPENAI_COMPATIBLE = "openai-compatible"
+
+
+class ProviderSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=True,
+    )
+
+    AEGIS_PROVIDER_DEFAULT: ProviderKind = ProviderKind.MOCK
+    AEGIS_PROVIDER_TIMEOUT_SECONDS: int = Field(default=60, ge=1, le=600)
+    AEGIS_PROVIDER_MAX_RETRIES: int = Field(default=3, ge=0, le=10)
+    AEGIS_PROVIDER_RETRY_BACKOFF_SECONDS: float = Field(default=1.0, ge=0.1, le=60.0)
+    AEGIS_PROVIDER_CIRCUIT_BREAKER_THRESHOLD: int = Field(default=5, ge=1, le=100)
+    AEGIS_PROVIDER_CIRCUIT_BREAKER_RESET_SECONDS: int = Field(default=60, ge=1, le=3600)
+    AEGIS_PROVIDER_MAX_CONCURRENT_REQUESTS: int = Field(default=10, ge=1, le=256)
+    AEGIS_PROVIDER_MAX_OUTPUT_TOKENS: int = Field(default=4096, ge=1, le=65536)
+    AEGIS_PROVIDER_MAX_COST_USD: float | None = Field(default=None, ge=0.0)
+    AEGIS_PROVIDER_RECORDED_FIXTURES_DIR: str = "fixtures/model-responses"
+
+    AEGIS_PROVIDER_OPENAI_API_KEY: str = ""
+    AEGIS_PROVIDER_OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+    AEGIS_PROVIDER_OPENAI_MODEL: str = "gpt-4o-mini"
+
+    AEGIS_PROVIDER_LOCAL_BASE_URL: str = "http://localhost:11434/v1"
+    AEGIS_PROVIDER_LOCAL_API_KEY: str = "ollama"
+    AEGIS_PROVIDER_LOCAL_MODEL: str = "llama3.2"
+    AEGIS_PROVIDER_IN_MEMORY_ARTIFACTS: bool = False
+
+    @property
+    def timeout_ms(self) -> int:
+        return self.AEGIS_PROVIDER_TIMEOUT_SECONDS * 1000
+
+    @property
+    def recorded_fixtures_path(self) -> Path:
+        return Path(self.AEGIS_PROVIDER_RECORDED_FIXTURES_DIR)
+
+
+def load_provider_settings() -> ProviderSettings:
+    return ProviderSettings()
