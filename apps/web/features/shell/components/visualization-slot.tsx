@@ -27,9 +27,10 @@ const OperationalGraphView = dynamic(
 
 interface VisualizationSlotProps {
   runId: string;
+  incidentId?: string;
 }
 
-export function VisualizationSlot({ runId }: VisualizationSlotProps) {
+export function VisualizationSlot({ runId, incidentId }: VisualizationSlotProps) {
   const liveRun = useLiveRun();
   const graphQuery = useRunGraph(runId, {
     enabled: liveRun?.isLiveMode !== true,
@@ -44,6 +45,7 @@ export function VisualizationSlot({ runId }: VisualizationSlotProps) {
       >
         <OperationalGraphView
           runId={runId}
+          incidentId={incidentId}
           snapshot={liveRun.bootstrapSnapshot}
           graphStore={liveRun.graphStore}
           graphRevision={liveRun.graphRevision}
@@ -100,7 +102,7 @@ export function VisualizationSlot({ runId }: VisualizationSlotProps) {
       description="Sigma.js operational investigation graph"
       data-testid="visualization-slot"
     >
-      <OperationalGraphView runId={runId} snapshot={snapshot} />
+      <OperationalGraphView runId={runId} incidentId={incidentId} snapshot={snapshot} />
     </Panel>
   );
 }

@@ -1,7 +1,8 @@
-"""Agent definition registry for generic Phase 19 runtime."""
+"""Agent definition registry for generic Phase 19 runtime and Phase 20 investigation roles."""
 
 from __future__ import annotations
 
+from aegis_agents.roles.registry import get_role_handler
 from aegis_contracts.agent_runtime import AgentBudgetV1, AgentDefinitionV1
 from aegis_contracts.entities import AgentRole
 from aegis_contracts.versioning import (
@@ -22,9 +23,32 @@ _BASE_TOOLS = [
     "create_hypothesis",
 ]
 
+_WATCHTOWER_TOOLS = [
+    "get_incident",
+    "list_alerts",
+    "get_alert",
+    "get_risk_scores",
+    "list_existing_evidence",
+]
+
+_TRACE_TOOLS = [
+    "get_incident",
+    "list_alerts",
+    "get_alert",
+    "get_risk_scores",
+    "list_existing_evidence",
+    "search_events",
+    "get_asset",
+    "list_relationships",
+    "get_graph_paths",
+    "get_incident_timeline",
+    "attach_evidence",
+    "create_investigation_note",
+]
+
 _ROLE_TOOLS: dict[AgentRole, list[str]] = {
-    AgentRole.WATCHTOWER: _BASE_TOOLS,
-    AgentRole.TRACE: _BASE_TOOLS + ["create_action_proposal"],
+    AgentRole.WATCHTOWER: _WATCHTOWER_TOOLS,
+    AgentRole.TRACE: _TRACE_TOOLS,
     AgentRole.ORACLE: _BASE_TOOLS,
     AgentRole.BASTION: _BASE_TOOLS + ["create_action_proposal"],
     AgentRole.WARDEN: _BASE_TOOLS + ["create_action_proposal"],
@@ -33,11 +57,13 @@ _ROLE_TOOLS: dict[AgentRole, list[str]] = {
 
 
 def build_definition(role: AgentRole, *, provider_id: str = "mock") -> AgentDefinitionV1:
+    handler = get_role_handler(role)
+    prompt_version = handler.prompt_version if handler is not None else "phase19-v1"
     return AgentDefinitionV1(
         schema_version=AGENT_DEFINITION_SCHEMA_VERSION,
         role=role,
         definition_id=f"runtime-{role.value.lower()}-v1",
-        prompt_version="phase19-v1",
+        prompt_version=prompt_version,
         provider_id=provider_id,
         model_id=f"{provider_id}-v1",
         allowed_tools=_ROLE_TOOLS[role],

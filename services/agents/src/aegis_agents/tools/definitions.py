@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from aegis_agents.tools.investigation import INVESTIGATION_TOOL_DEFINITIONS
 from aegis_contracts.agent_runtime import AgentToolClass, ToolDefinitionV1
 from aegis_contracts.entities import AgentRole
 from aegis_contracts.versioning import TOOL_DEFINITION_SCHEMA_VERSION
@@ -126,4 +127,5 @@ CANONICAL_TOOL_DEFINITIONS: list[ToolDefinitionV1] = [
         output_schema={"type": "object", "properties": {"executed": {"type": "boolean"}}},
         allowed_roles=[],
     ),
+    *INVESTIGATION_TOOL_DEFINITIONS,
 ]

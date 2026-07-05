@@ -1,18 +1,22 @@
 import type {
+  AgentSessionDetailV1,
   AlertV1,
   AssetRiskScoreV1,
   GraphSnapshotV1,
   IncidentV1,
+  InvestigationDetailV1,
   RunV1,
   ScenarioV1,
   ScenarioVersionV1,
 } from '@aegis/contracts-ts';
 
 export type {
+  AgentSessionDetailV1,
   AlertV1,
   AssetRiskScoreV1,
   GraphSnapshotV1,
   IncidentV1,
+  InvestigationDetailV1,
   RunV1,
   ScenarioV1,
   ScenarioVersionV1,
@@ -43,6 +47,8 @@ export interface AegisApiClient {
   listRuns(signal?: AbortSignal): Promise<RunV1[]>;
   listIncidents(runId: string, signal?: AbortSignal): Promise<IncidentV1[]>;
   getIncident(incidentId: string, signal?: AbortSignal): Promise<IncidentV1>;
+  getInvestigationDetail(incidentId: string, signal?: AbortSignal): Promise<InvestigationDetailV1>;
+  getAgentSession(sessionId: string, signal?: AbortSignal): Promise<AgentSessionDetailV1>;
   listAlerts(runId: string, signal?: AbortSignal): Promise<AlertV1[]>;
   listRiskScores(runId: string, signal?: AbortSignal): Promise<AssetRiskScoreV1[]>;
   getRunGraph(runId: string, signal?: AbortSignal): Promise<RunGraphResult>;

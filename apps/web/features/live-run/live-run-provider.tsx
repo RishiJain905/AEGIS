@@ -131,6 +131,28 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.runs.riskScores(runId) });
         void queryClient.invalidateQueries({ queryKey: queryKeys.runs.graph(runId) });
       }
+      if (envelope.event.type.startsWith('investigation.')) {
+        const incidentId = envelope.event.payload.incidentId;
+        if (typeof incidentId === 'string' && incidentId.length > 0) {
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.incidents.investigation(incidentId),
+          });
+        }
+      }
+      if (envelope.event.type.startsWith('agent.')) {
+        const sessionId = envelope.event.payload.sessionId;
+        if (typeof sessionId === 'string' && sessionId.length > 0) {
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSessions.detail(sessionId),
+          });
+        }
+        const incidentId = envelope.event.payload.incidentId;
+        if (typeof incidentId === 'string' && incidentId.length > 0) {
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.incidents.investigation(incidentId),
+          });
+        }
+      }
       saveStoredCursor(runId, envelope.event.sequence);
     },
     [applyEventToGraph, queryClient, runId, state.locallyPaused],

@@ -30,17 +30,28 @@ from aegis_contracts import (
     ToolInvocationV1,
     parse_contract,
 )
+from aegis_contracts.investigation import (
+    AgentGraphOverlayV1,
+    CandidateAffectedAssetV1,
+    EvidenceAttachmentV1,
+    InvestigationNoteV1,
+    TraceInvestigationPlanV1,
+    WatchtowerTriageResultV1,
+)
 
 from aegis_persistence.orm.tables import (
     ActionProposalRow,
     AgentArtifactRow,
+    AgentGraphOverlayRow,
     AgentSessionRow,
     AgentStateTransitionRow,
     AgentTaskRow,
     AlertRow,
     ApprovalRow,
     AssetRiskScoreRow,
+    CandidateAffectedAssetRow,
     DomainEventRow,
+    EvidenceAttachmentRow,
     EvidenceRow,
     ExecutedActionRow,
     GenerationArtifactRow,
@@ -48,6 +59,7 @@ from aegis_persistence.orm.tables import (
     HypothesisRow,
     IdempotencyRecordRow,
     IncidentRow,
+    InvestigationNoteRow,
     ModelManifestRow,
     ModelScoreRow,
     RunRow,
@@ -56,6 +68,8 @@ from aegis_persistence.orm.tables import (
     SimulationCheckpointRow,
     StoredObjectRow,
     ToolInvocationRow,
+    TraceInvestigationPlanRow,
+    WatchtowerTriageResultRow,
 )
 
 
@@ -178,3 +192,27 @@ def event_to_outbox_payload(envelope: DomainEventEnvelopeV1) -> dict[str, object
 
 def generation_artifact_to_domain(row: GenerationArtifactRow) -> GenerationArtifactV1:
     return parse_contract(GenerationArtifactV1, row.payload)
+
+
+def triage_result_to_domain(row: WatchtowerTriageResultRow) -> WatchtowerTriageResultV1:
+    return parse_contract(WatchtowerTriageResultV1, row.payload)
+
+
+def trace_plan_to_domain(row: TraceInvestigationPlanRow) -> TraceInvestigationPlanV1:
+    return parse_contract(TraceInvestigationPlanV1, row.payload)
+
+
+def evidence_attachment_to_domain(row: EvidenceAttachmentRow) -> EvidenceAttachmentV1:
+    return parse_contract(EvidenceAttachmentV1, row.payload)
+
+
+def investigation_note_to_domain(row: InvestigationNoteRow) -> InvestigationNoteV1:
+    return parse_contract(InvestigationNoteV1, row.payload)
+
+
+def candidate_asset_to_domain(row: CandidateAffectedAssetRow) -> CandidateAffectedAssetV1:
+    return parse_contract(CandidateAffectedAssetV1, row.payload)
+
+
+def graph_overlay_to_domain(row: AgentGraphOverlayRow) -> AgentGraphOverlayV1:
+    return parse_contract(AgentGraphOverlayV1, row.payload)

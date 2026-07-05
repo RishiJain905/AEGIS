@@ -7,6 +7,7 @@ from types import TracebackType
 from aegis_contracts import AegisSettings, DomainEventEnvelopeV1
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from aegis_persistence.repositories.investigation import PostgresInvestigationRepository
 from aegis_persistence.repositories.postgres import (
     PostgresActionProposalRepository,
     PostgresAgentArtifactRepository,
@@ -66,6 +67,7 @@ class PostgresUnitOfWork:
         self._evidence = PostgresEvidenceRepository(self._session)
         self._hypotheses = PostgresHypothesisRepository(self._session)
         self._action_proposals = PostgresActionProposalRepository(self._session)
+        self._investigation = PostgresInvestigationRepository(self._session)
         return self
 
     async def __aexit__(
@@ -161,6 +163,10 @@ class PostgresUnitOfWork:
     @property
     def action_proposals(self) -> PostgresActionProposalRepository:
         return self._action_proposals
+
+    @property
+    def investigation(self) -> PostgresInvestigationRepository:
+        return self._investigation
 
     @property
     def session(self) -> AsyncSession:

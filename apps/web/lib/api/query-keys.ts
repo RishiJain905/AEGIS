@@ -15,6 +15,10 @@ export const queryKeys = {
   },
   incidents: {
     detail: (incidentId: string) => ['incidents', incidentId] as const,
+    investigation: (incidentId: string) => ['incidents', incidentId, 'investigation'] as const,
+  },
+  agentSessions: {
+    detail: (sessionId: string) => ['agent-sessions', sessionId] as const,
   },
   connection: {
     status: ['connection', 'status'] as const,

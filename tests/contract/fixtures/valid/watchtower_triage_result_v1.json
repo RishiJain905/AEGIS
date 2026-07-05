@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "wtri_synthetic_001",
+  "incidentId": "incident:inc_synthetic_001",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sessionId": "agent-session:ags_synthetic_001",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "alertSummaries": [
+    {
+      "alertId": "alert:alt_synthetic_001",
+      "title": "Repeated authentication failures",
+      "severity": "high",
+      "assetId": "asset:device-workstation-01"
+    }
+  ],
+  "groupedAlertIds": [],
+  "separatedAlertIds": ["alert:alt_synthetic_001"],
+  "correlationDecisions": [
+    {
+      "alertIds": ["alert:alt_synthetic_001"],
+      "decision": "separate",
+      "rationale": "Alert has no shared-asset or temporal-proximity correlation with other alerts.",
+      "factors": ["isolated_alert"]
+    }
+  ],
+  "escalation": "investigate",
+  "escalationRationale": "High severity authentication anomaly warrants investigation.",
+  "confidence": 0.82,
+  "evidenceIds": ["evidence:evd_synthetic_001"],
+  "idempotencyKey": "triage-demo-001",
+  "createdAt": "2026-06-30T02:05:00.000Z"
+}

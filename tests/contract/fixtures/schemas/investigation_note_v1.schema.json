@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "evidenceIds": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Evidenceids",
+      "type": "array"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "note": {
+      "maxLength": 4096,
+      "minLength": 1,
+      "title": "Note",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "taskId": {
+      "title": "Taskid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "incidentId",
+    "sessionId",
+    "taskId",
+    "note",
+    "evidenceIds",
+    "createdAt"
+  ],
+  "title": "InvestigationNoteV1",
+  "type": "object"
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "inote_synthetic_001",
+  "incidentId": "incident:inc_synthetic_001",
+  "sessionId": "agent-session:ags_synthetic_001",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "note": "Initial TRACE review confirms suspicious authentication pattern on workstation.",
+  "evidenceIds": ["evidence:evd_synthetic_001"],
+  "createdAt": "2026-06-30T02:13:00.000Z"
+}

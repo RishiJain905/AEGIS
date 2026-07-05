@@ -3,6 +3,7 @@
 import { Badge, Button, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
 import { GraphEntityInspector, IncidentContextInspector } from '@/features/inspector';
+import { InvestigationPanel } from '@/features/investigation';
 import { RiskExplanationPanel } from '@/features/risk';
 import {
   useIncident,
@@ -128,6 +129,8 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                 selectedEntityId={selectedEntityId}
               />
             ) : null}
+
+            {incidentId ? <InvestigationPanel incidentId={incidentId} /> : null}
 
             {incidentQuery.data ? (
               <Panel title="Incident" density="compact">

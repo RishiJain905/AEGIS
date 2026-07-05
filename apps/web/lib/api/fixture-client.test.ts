@@ -60,4 +60,18 @@ describe('fixture client', () => {
       status: 404,
     });
   });
+
+  it('returns investigation detail for synthetic incident fixture', async () => {
+    const client = createFixtureProvider();
+    const detail = await client.getInvestigationDetail('incident:inc_synthetic_001');
+    expect(detail.triageResults).toHaveLength(1);
+    expect(detail.evidenceAttachments.some((item) => item.isContradiction)).toBe(true);
+  });
+
+  it('returns agent session detail from investigation fixture', async () => {
+    const client = createFixtureProvider();
+    const session = await client.getAgentSession('agent-session:ags_synthetic_001');
+    expect(session.session.role).toBe('TRACE');
+    expect(session.tasks).toHaveLength(1);
+  });
 });

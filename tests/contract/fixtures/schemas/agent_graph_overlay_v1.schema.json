@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "GraphOverlayHighlightV1": {
+      "additionalProperties": false,
+      "properties": {
+        "entityId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Entityid",
+          "type": "string"
+        },
+        "entityType": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Entitytype",
+          "type": "string"
+        },
+        "highlightKind": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Highlightkind",
+          "type": "string"
+        },
+        "label": {
+          "default": "",
+          "maxLength": 256,
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": ["entityId", "entityType", "highlightKind"],
+      "title": "GraphOverlayHighlightV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "edgeHighlights": {
+      "items": {
+        "$ref": "#/$defs/GraphOverlayHighlightV1"
+      },
+      "title": "Edgehighlights",
+      "type": "array"
+    },
+    "highlights": {
+      "items": {
+        "$ref": "#/$defs/GraphOverlayHighlightV1"
+      },
+      "title": "Highlights",
+      "type": "array"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "taskId": {
+      "title": "Taskid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "incidentId",
+    "runId",
+    "sessionId",
+    "taskId",
+    "rationale",
+    "createdAt"
+  ],
+  "title": "AgentGraphOverlayV1",
+  "type": "object"
+}

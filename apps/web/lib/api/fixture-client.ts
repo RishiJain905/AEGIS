@@ -9,6 +9,10 @@ import {
 } from '@aegis/contracts-ts';
 import { z } from 'zod';
 
+import {
+  getAgentSessionFixture,
+  getInvestigationDetailFixture,
+} from '@/fixtures/investigation-fixture';
 import shellDataset from '@/fixtures/shell-dataset.json';
 import { FIXTURE_RISK_SCORES } from '@/fixtures/risk-scores-fixture';
 import type {
@@ -196,6 +200,30 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
         });
       }
       return applyProfile(incident, signal);
+    },
+
+    async getInvestigationDetail(incidentId, signal) {
+      const detail = getInvestigationDetailFixture(incidentId);
+      if (!detail) {
+        throw new ApiClientError({
+          code: 'NOT_FOUND',
+          message: `Investigation not found for incident: ${incidentId}`,
+          status: 404,
+        });
+      }
+      return applyProfile(detail, signal);
+    },
+
+    async getAgentSession(sessionId, signal) {
+      const session = getAgentSessionFixture(sessionId);
+      if (!session) {
+        throw new ApiClientError({
+          code: 'NOT_FOUND',
+          message: `Agent session not found: ${sessionId}`,
+          status: 404,
+        });
+      }
+      return applyProfile(session, signal);
     },
 
     async listAlerts(runId, signal) {

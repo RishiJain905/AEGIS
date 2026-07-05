@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
 from aegis_agents.runtime.grounding import validate_citations
 from aegis_agents.runtime.ids import new_runtime_id
+from aegis_agents.tools.context import ToolExecutionContext
+from aegis_agents.tools.investigation import INVESTIGATION_TOOL_HANDLERS
 from aegis_contracts import ActionClass, ActionProposalV1, HypothesisV1, ProposalStatus
 from aegis_contracts.agent_runtime import AgentArtifactType, AgentArtifactV1, EvidenceCitationV1
 from aegis_contracts.versioning import (
@@ -16,18 +17,6 @@ from aegis_contracts.versioning import (
     EVIDENCE_CITATION_SCHEMA_VERSION,
     HYPOTHESIS_SCHEMA_VERSION,
 )
-from aegis_persistence.unit_of_work import PostgresUnitOfWork
-
-
-@dataclass
-class ToolExecutionContext:
-    uow: PostgresUnitOfWork
-    session_id: str
-    task_id: str
-    incident_id: str
-    run_id: str
-    trace_id: str
-    visible_evidence_ids: set[str] = field(default_factory=set)
 
 
 async def handle_list_evidence(ctx: ToolExecutionContext, _input: dict[str, Any]) -> dict[str, Any]:
@@ -137,4 +126,7 @@ TOOL_HANDLERS = {
     "get_incident": handle_get_incident,
     "create_hypothesis": handle_create_hypothesis,
     "create_action_proposal": handle_create_action_proposal,
+    **INVESTIGATION_TOOL_HANDLERS,
 }
+
+__all__ = ["ToolExecutionContext", "TOOL_HANDLERS"]

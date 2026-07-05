@@ -1,0 +1,9 @@
+{
+  "workflowVersion": 1,
+  "description": "Mock provider WATCHTOWER triage workflow for Phase 20 harness",
+  "providerId": "mock",
+  "role": "WATCHTOWER",
+  "promptVersion": "phase20-watchtower-v1",
+  "expectedToolSequence": ["list_alerts", "list_existing_evidence"],
+  "expectedEscalation": "investigate"
+}

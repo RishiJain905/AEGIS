@@ -19,6 +19,7 @@ import {
   LayoutStatus,
   type GraphVisualState,
 } from '@/features/operational-graph/contracts/graph-visual-state';
+import { useInvestigationDetail } from '@/features/investigation';
 import { filterNodesBySearch } from '@/features/operational-graph/layout/initial-layout';
 import {
   autoCollapseClusterIds,
@@ -53,6 +54,7 @@ const LEGEND_ITEMS = [
 export interface OperationalGraphViewProps {
   snapshot: GraphSnapshotV1;
   runId: string;
+  incidentId?: string;
   graphStore?: import('@aegis/graph-domain').GraphStore;
   graphRevision?: number;
 }
@@ -81,10 +83,12 @@ function buildVisualStateWithPositions(
 
 export function OperationalGraphView({
   snapshot,
+  incidentId,
   graphStore,
   graphRevision = 0,
 }: OperationalGraphViewProps) {
   const store = useGraphStoreInstance(snapshot, graphStore);
+  const investigationQuery = useInvestigationDetail(incidentId ?? '');
   const adapterRef = useRef<SigmaOperationalGraphAdapter | null>(null);
   const layoutCoordinatorRef = useRef<LayoutCoordinator | null>(null);
   const updateBatcherRef = useRef<UpdateBatcher | null>(null);
@@ -254,6 +258,48 @@ export function OperationalGraphView({
       false,
     );
   }, [pathModeActive, selection.primaryNodeId, selection.secondaryNodeId, store, setHighlight]);
+
+  useEffect(() => {
+    if (!incidentId || !investigationQuery.data) {
+      return;
+    }
+    const state = useGraphVisualStore.getState().visualState;
+    const investigationLayerEnabled = state.filterSet.enabledLayers.includes(
+      GraphLayer.INVESTIGATION,
+    );
+    if (!investigationLayerEnabled || !state.overlayToggles.incident) {
+      return;
+    }
+    if (
+      state.highlightMode !== GraphHighlightMode.NONE &&
+      state.highlightMode !== GraphHighlightMode.INCIDENT
+    ) {
+      return;
+    }
+
+    const latestOverlay = investigationQuery.data.overlays.at(-1);
+    if (!latestOverlay) {
+      return;
+    }
+
+    const nodeIds = latestOverlay.highlights
+      .filter((highlight) => highlight.entityType === 'asset')
+      .map((highlight) => highlight.entityId);
+    const edgeIds = latestOverlay.edgeHighlights.map((highlight) => highlight.entityId);
+
+    if (nodeIds.length === 0 && edgeIds.length === 0) {
+      return;
+    }
+
+    setHighlight(GraphHighlightMode.INCIDENT, nodeIds, edgeIds, false);
+  }, [
+    incidentId,
+    investigationQuery.data,
+    filterSet.enabledLayers,
+    overlayToggles.incident,
+    highlightMode,
+    setHighlight,
+  ]);
 
   const handleAdapterReady = useCallback(
     (adapter: SigmaOperationalGraphAdapter) => {

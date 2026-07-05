@@ -1,0 +1,144 @@
+{
+  "$defs": {
+    "EvidenceProvenanceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "collectedAtSequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Collectedatsequence"
+        },
+        "collectedByTool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Collectedbytool"
+        },
+        "sourceId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Sourceid",
+          "type": "string"
+        },
+        "sourceType": {
+          "$ref": "#/$defs/EvidenceSourceType"
+        },
+        "summary": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": ["sourceType", "sourceId", "summary"],
+      "title": "EvidenceProvenanceV1",
+      "type": "object"
+    },
+    "EvidenceSourceType": {
+      "enum": ["event", "alert", "asset", "risk_path", "existing_evidence"],
+      "title": "EvidenceSourceType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Assetid"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "evidenceId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidenceid"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "isContradiction": {
+      "default": false,
+      "title": "Iscontradiction",
+      "type": "boolean"
+    },
+    "provenance": {
+      "$ref": "#/$defs/EvidenceProvenanceV1"
+    },
+    "rationale": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "taskId": {
+      "title": "Taskid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "incidentId",
+    "sessionId",
+    "taskId",
+    "provenance",
+    "confidence",
+    "rationale",
+    "createdAt"
+  ],
+  "title": "EvidenceAttachmentV1",
+  "type": "object"
+}

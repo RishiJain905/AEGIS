@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from aegis_agents.providers.generation import AgentGenerationFacade
+from aegis_agents.roles.registry import PostProcessContext, get_role_handler
 from aegis_agents.runtime.budget import apply_usage, check_budget
 from aegis_agents.runtime.errors import AgentRuntimeError, AgentRuntimeErrorCode
 from aegis_agents.runtime.events import (
@@ -238,6 +239,23 @@ class TaskExecutor:
         visible_ids = {item.id for item in evidence}
         check_budget(budget, trace_id=task.trace_id)
 
+        role_handler = get_role_handler(session.role)
+        output_schema = (
+            role_handler.output_schema() if role_handler is not None else AGENT_STEP_OUTPUT_SCHEMA
+        )
+        system_prompt = (
+            role_handler.system_prompt()
+            if role_handler is not None
+            else "You are the AEGIS generic agent runtime. Return grounded structured output."
+        )
+        user_prompt = (
+            "Perform bounded TRACE investigation for the incident."
+            if role_handler is not None and session.role.value == "TRACE"
+            else "Perform WATCHTOWER triage for the incident."
+            if role_handler is not None and session.role.value == "WATCHTOWER"
+            else "Perform one investigation step for the incident."
+        )
+
         request = GenerationRequestV1(
             schema_version=GENERATION_REQUEST_SCHEMA_VERSION,
             request_id=new_runtime_id("gen"),
@@ -252,16 +270,16 @@ class TaskExecutor:
             messages=[
                 GenerationMessageV1(
                     role=GenerationMessageRole.SYSTEM,
-                    content="You are the AEGIS generic agent runtime. Return grounded structured output.",
+                    content=system_prompt,
                 ),
                 GenerationMessageV1(
                     role=GenerationMessageRole.USER,
-                    content="Perform one investigation step for the incident.",
+                    content=user_prompt,
                 ),
             ],
             structured_output=StructuredOutputSpecV1(
                 schema_version=STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION,
-                json_schema=AGENT_STEP_OUTPUT_SCHEMA,
+                json_schema=output_schema,
                 strict=True,
                 max_repair_attempts=1,
             ),
@@ -336,7 +354,12 @@ class TaskExecutor:
         )
         tool_requests = structured.get("toolRequests", [])
         if not tool_requests and definition.provider_id == "mock":
-            tool_requests = [{"name": "list_evidence", "arguments": {}}]
+            if role_handler is not None and session.role.value == "WATCHTOWER":
+                tool_requests = [{"name": "list_alerts", "arguments": {}}]
+            elif role_handler is not None and session.role.value == "TRACE":
+                tool_requests = [{"name": "search_events", "arguments": {"limit": 200}}]
+            else:
+                tool_requests = [{"name": "list_evidence", "arguments": {}}]
 
         for tool_request in tool_requests:
             if task.id in self._cancelled:
@@ -364,6 +387,21 @@ class TaskExecutor:
                     tool_name=invocation.tool_name,
                     status=invocation.status.value,
                 )
+            )
+
+        if role_handler is not None:
+            await role_handler.post_process(
+                ctx=PostProcessContext(
+                    uow=uow,
+                    session_id=session.id,
+                    task_id=task.id,
+                    incident_id=task.incident_id,
+                    run_id=incident_run_id,
+                    trace_id=task.trace_id,
+                    idempotency_key=task.idempotency_key,
+                    visible_evidence_ids=visible_ids,
+                ),
+                structured=structured,
             )
 
         artifact = AgentArtifactV1(

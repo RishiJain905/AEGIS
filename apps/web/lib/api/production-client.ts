@@ -1,6 +1,8 @@
 import {
+  agentSessionDetailSchema,
   apiErrorEnvelopeSchema,
   graphSnapshotSchema,
+  investigationDetailSchema,
   parseContract,
   riskScoresListResponseSchema,
 } from '@aegis/contracts-ts';
@@ -56,6 +58,14 @@ export function createProductionClient(): AegisApiClient {
     listRuns: (signal) => fetchJson('/api/v1/runs', signal),
     listIncidents: (runId, signal) => fetchJson(`/api/v1/runs/${runId}/incidents`, signal),
     getIncident: (incidentId, signal) => fetchJson(`/api/v1/incidents/${incidentId}`, signal),
+    getInvestigationDetail: (incidentId, signal) =>
+      fetchJson(`/api/v1/incidents/${incidentId}/investigation`, signal, (data) =>
+        parseContract(investigationDetailSchema, data),
+      ),
+    getAgentSession: (sessionId, signal) =>
+      fetchJson(`/api/v1/agent-sessions/${sessionId}`, signal, (data) =>
+        parseContract(agentSessionDetailSchema, data),
+      ),
     listAlerts: (runId, signal) => fetchJson(`/api/v1/runs/${runId}/alerts`, signal),
     listRiskScores: async (runId, signal) => {
       const response = await fetchJson(`/api/v1/risk/scores/${runId}`, signal, (data) =>

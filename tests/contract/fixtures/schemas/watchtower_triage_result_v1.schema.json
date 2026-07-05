@@ -1,0 +1,149 @@
+{
+  "$defs": {
+    "AlertCorrelationDecisionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "alertIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Alertids",
+          "type": "array"
+        },
+        "decision": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Decision",
+          "type": "string"
+        },
+        "factors": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Factors",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        }
+      },
+      "required": ["alertIds", "decision", "rationale"],
+      "title": "AlertCorrelationDecisionV1",
+      "type": "object"
+    },
+    "TriageEscalationLevel": {
+      "enum": ["monitor", "investigate", "urgent"],
+      "title": "TriageEscalationLevel",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "alertSummaries": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Alertsummaries",
+      "type": "array"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "correlationDecisions": {
+      "items": {
+        "$ref": "#/$defs/AlertCorrelationDecisionV1"
+      },
+      "title": "Correlationdecisions",
+      "type": "array"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "escalation": {
+      "$ref": "#/$defs/TriageEscalationLevel"
+    },
+    "escalationRationale": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Escalationrationale",
+      "type": "string"
+    },
+    "evidenceIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidenceids",
+      "type": "array"
+    },
+    "groupedAlertIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Groupedalertids",
+      "type": "array"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "idempotencyKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Idempotencykey",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "separatedAlertIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Separatedalertids",
+      "type": "array"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "taskId": {
+      "title": "Taskid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "incidentId",
+    "runId",
+    "sessionId",
+    "taskId",
+    "escalation",
+    "escalationRationale",
+    "confidence",
+    "idempotencyKey",
+    "createdAt"
+  ],
+  "title": "WatchtowerTriageResultV1",
+  "type": "object"
+}

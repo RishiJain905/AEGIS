@@ -48,8 +48,47 @@ class MockProvider:
         )
         structured_data = None
         content = None
+        prompt_version = request.model_config_ref.prompt_version
         if request.structured_output is not None:
-            if "rationale" in (request.structured_output.json_schema.get("required") or []):
+            if prompt_version == "phase20-watchtower-v1":
+                payload = {
+                    "alertSummaries": [],
+                    "groupedAlertIds": [],
+                    "separatedAlertIds": [],
+                    "correlationDecisions": [],
+                    "escalation": "investigate",
+                    "escalationRationale": f"Mock WATCHTOWER triage for request {fingerprint}",
+                    "confidence": 0.78,
+                    "evidenceCitations": [],
+                    "toolRequests": [{"name": "list_alerts", "arguments": {}}],
+                }
+                structured_data = validate_structured_output(payload, request.structured_output)
+                content = json.dumps(structured_data)
+            elif prompt_version == "phase20-trace-v1":
+                payload = {
+                    "rationale": f"Mock TRACE investigation for request {fingerprint}",
+                    "confidence": 0.81,
+                    "evidenceCitations": [],
+                    "toolRequests": [{"name": "search_events", "arguments": {"limit": 200}}],
+                    "seedAssetIds": [],
+                    "maxHops": 3,
+                    "maxToolCalls": 12,
+                    "searchSteps": [
+                        {
+                            "toolName": "list_existing_evidence",
+                            "arguments": {},
+                            "purpose": "Review visible evidence",
+                        }
+                    ],
+                    "candidateAssets": [],
+                    "evidenceAttachments": [],
+                    "graphHighlights": [],
+                    "edgeHighlights": [],
+                    "overlayRationale": "Mock bounded graph overlay",
+                }
+                structured_data = validate_structured_output(payload, request.structured_output)
+                content = json.dumps(structured_data)
+            elif "rationale" in (request.structured_output.json_schema.get("required") or []):
                 payload = {
                     "rationale": f"Mock investigation step for request {fingerprint}",
                     "confidence": 0.82,

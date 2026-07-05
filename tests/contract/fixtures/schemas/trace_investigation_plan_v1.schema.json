@@ -1,0 +1,142 @@
+{
+  "$defs": {
+    "TraceSearchStepV1": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "title": "Arguments",
+          "type": "object"
+        },
+        "purpose": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Purpose",
+          "type": "string"
+        },
+        "toolName": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Toolname",
+          "type": "string"
+        }
+      },
+      "required": ["toolName", "purpose"],
+      "title": "TraceSearchStepV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "maxHops": {
+      "maximum": 8,
+      "minimum": 1,
+      "title": "Maxhops",
+      "type": "integer"
+    },
+    "maxTokens": {
+      "maximum": 100000,
+      "minimum": 1,
+      "title": "Maxtokens",
+      "type": "integer"
+    },
+    "maxToolCalls": {
+      "maximum": 50,
+      "minimum": 1,
+      "title": "Maxtoolcalls",
+      "type": "integer"
+    },
+    "rationale": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "searchSteps": {
+      "items": {
+        "$ref": "#/$defs/TraceSearchStepV1"
+      },
+      "title": "Searchsteps",
+      "type": "array"
+    },
+    "seedAssetIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Seedassetids",
+      "type": "array"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "taskId": {
+      "title": "Taskid",
+      "type": "string"
+    },
+    "timeWindowEndSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Timewindowendsequence"
+    },
+    "timeWindowStartSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Timewindowstartsequence"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "incidentId",
+    "runId",
+    "sessionId",
+    "taskId",
+    "maxHops",
+    "maxToolCalls",
+    "maxTokens",
+    "rationale",
+    "createdAt"
+  ],
+  "title": "TraceInvestigationPlanV1",
+  "type": "object"
+}
