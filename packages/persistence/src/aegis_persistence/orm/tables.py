@@ -335,6 +335,56 @@ class ApprovalRow(Base):
     decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class ProposalRevisionRow(Base):
+    __tablename__ = "proposal_revisions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    proposal_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("action_proposals.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    revision_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "proposal_id",
+            "revision_number",
+            name="uq_proposal_revision_number",
+        ),
+    )
+
+
+class PolicyDecisionRow(Base):
+    __tablename__ = "policy_decisions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    proposal_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("action_proposals.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    proposal_revision_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class ExecutedActionRow(Base):
     __tablename__ = "executed_actions"
 

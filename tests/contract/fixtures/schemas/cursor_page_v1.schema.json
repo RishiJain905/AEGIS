@@ -42,7 +42,10 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "hasMore"],
+  "required": [
+    "schemaVersion",
+    "hasMore"
+  ],
   "title": "CursorPaginationV1",
   "type": "object"
 }

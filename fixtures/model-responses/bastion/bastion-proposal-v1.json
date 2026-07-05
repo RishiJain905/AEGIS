@@ -1,0 +1,47 @@
+{
+  "rationale": "Mock BASTION proposes proportionate containment based on ORACLE hypotheses and visible evidence.",
+  "riskTradeoffs": "Isolation reduces lateral movement risk but may disrupt logistics API consumers during peak hours.",
+  "linkedHypothesisIds": ["hyp_01ARZ3NDEKTSV4RRFFQ69G5FB2"],
+  "selectedOptionId": "opt-isolate-primary",
+  "responseOptions": [
+    {
+      "optionId": "opt-observe",
+      "scenarioCommand": "observe",
+      "targetAssetId": "asset:svc-logistics-api",
+      "affectedAssetIds": ["asset:svc-logistics-api"],
+      "evidenceIds": ["evidence:ev_001"],
+      "hypothesisIds": ["hyp_01ARZ3NDEKTSV4RRFFQ69G5FB2"],
+      "expectedBenefit": "Maintain visibility without operational disruption.",
+      "operationalCost": "Low analyst time for continued monitoring.",
+      "reversibility": "Fully reversible; no state change required.",
+      "prerequisites": ["Confirm alert correlation remains stable"],
+      "monitoringPlan": "Increase auth anomaly watch on logistics API for 24h.",
+      "expectedConsequences": "Attack surface unchanged; detection fidelity preserved.",
+      "confidence": 0.72,
+      "uncertainty": "Benign maintenance overlap not fully ruled out.",
+      "rationale": "Low-impact monitoring if operator tolerance for disruption is low."
+    },
+    {
+      "optionId": "opt-isolate-primary",
+      "scenarioCommand": "isolate",
+      "targetAssetId": "asset:svc-logistics-api",
+      "affectedAssetIds": ["asset:svc-logistics-api", "asset:svc-auth-gateway"],
+      "evidenceIds": ["evidence:ev_001", "evidence:ev_002"],
+      "hypothesisIds": ["hyp_01ARZ3NDEKTSV4RRFFQ69G5FB2"],
+      "expectedBenefit": "Stops suspected credential abuse path to logistics API.",
+      "operationalCost": "Moderate service disruption for dependent workflows.",
+      "reversibility": "Reversible after approval and verification.",
+      "prerequisites": ["Notify operations bridge", "Validate no active maintenance window"],
+      "monitoringPlan": "Track failed auth attempts and dependency health post-isolation.",
+      "expectedConsequences": "Short-term API unavailability for internal consumers.",
+      "confidence": 0.81,
+      "uncertainty": "Collateral impact on auth gateway coupling requires approval.",
+      "rationale": "Best balance of containment versus evidence strength."
+    }
+  ],
+  "evidenceCitations": [
+    {"evidenceId": "evidence:ev_001", "rationale": "Auth anomaly cluster"},
+    {"evidenceId": "evidence:ev_002", "rationale": "Graph path to sensitive datastore"}
+  ],
+  "toolRequests": []
+}

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from aegis_agents.tools.hypothesis import HYPOTHESIS_TOOL_DEFINITIONS
 from aegis_agents.tools.investigation import INVESTIGATION_TOOL_DEFINITIONS
+from aegis_agents.tools.proposal import PROPOSAL_TOOL_DEFINITIONS
 from aegis_contracts.agent_runtime import AgentToolClass, ToolDefinitionV1
 from aegis_contracts.entities import AgentRole
 from aegis_contracts.versioning import TOOL_DEFINITION_SCHEMA_VERSION
@@ -111,7 +112,7 @@ CANONICAL_TOOL_DEFINITIONS: list[ToolDefinitionV1] = [
             },
             "required": ["proposalId", "status"],
         },
-        allowed_roles=[AgentRole.BASTION, AgentRole.WARDEN, AgentRole.TRACE],
+        allowed_roles=[AgentRole.BASTION],
     ),
     ToolDefinitionV1(
         schema_version=TOOL_DEFINITION_SCHEMA_VERSION,
@@ -130,4 +131,5 @@ CANONICAL_TOOL_DEFINITIONS: list[ToolDefinitionV1] = [
     ),
     *INVESTIGATION_TOOL_DEFINITIONS,
     *HYPOTHESIS_TOOL_DEFINITIONS,
+    *PROPOSAL_TOOL_DEFINITIONS,
 ]

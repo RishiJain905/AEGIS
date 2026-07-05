@@ -96,6 +96,15 @@ from aegis_contracts.models import (
     TrainingRunManifestV1,
 )
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
+from aegis_contracts.proposals import (
+    ApprovalRequirementV1,
+    PolicyDecisionV1,
+    PolicyInputV1,
+    ProposalRevisionV1,
+    ResponseOptionV1,
+    TriggerBastionRequestV1,
+    TriggerWardenRequestV1,
+)
 from aegis_contracts.realtime import (
     BackfillRequestV1,
     BackfillResultV1,
@@ -224,4 +233,11 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "investigation_note_v1": InvestigationNoteV1,
     "agent_graph_overlay_v1": AgentGraphOverlayV1,
     "investigation_detail_v1": InvestigationDetailV1,
+    "response_option_v1": ResponseOptionV1,
+    "proposal_revision_v1": ProposalRevisionV1,
+    "approval_requirement_v1": ApprovalRequirementV1,
+    "policy_input_v1": PolicyInputV1,
+    "policy_decision_v1": PolicyDecisionV1,
+    "trigger_bastion_request_v1": TriggerBastionRequestV1,
+    "trigger_warden_request_v1": TriggerWardenRequestV1,
 }

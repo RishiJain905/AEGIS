@@ -255,6 +255,10 @@ class TaskExecutor:
             if role_handler is not None and session.role.value == "WATCHTOWER"
             else "Generate competing evidence-grounded hypotheses for the incident."
             if role_handler is not None and session.role.value == "ORACLE"
+            else "Propose evidence-grounded response options for the incident."
+            if role_handler is not None and session.role.value == "BASTION"
+            else "Explain policy evaluation context for pending proposals."
+            if role_handler is not None and session.role.value == "WARDEN"
             else "Perform one investigation step for the incident."
         )
 
@@ -365,6 +369,14 @@ class TaskExecutor:
                     {"name": "list_existing_evidence", "arguments": {}},
                     {"name": "list_hypotheses", "arguments": {}},
                 ]
+            elif role_handler is not None and session.role.value == "BASTION":
+                tool_requests = [
+                    {"name": "list_existing_evidence", "arguments": {}},
+                    {"name": "list_hypotheses", "arguments": {}},
+                    {"name": "get_risk_scores", "arguments": {}},
+                ]
+            elif role_handler is not None and session.role.value == "WARDEN":
+                tool_requests = [{"name": "list_proposals", "arguments": {}}]
             else:
                 tool_requests = [{"name": "list_evidence", "arguments": {}}]
 

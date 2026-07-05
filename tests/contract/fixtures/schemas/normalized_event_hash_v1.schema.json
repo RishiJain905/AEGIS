@@ -30,7 +30,14 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "scenarioVersionId", "seed", "engineVersion", "hash", "eventCount"],
+  "required": [
+    "schemaVersion",
+    "scenarioVersionId",
+    "seed",
+    "engineVersion",
+    "hash",
+    "eventCount"
+  ],
   "title": "NormalizedEventHashV1",
   "type": "object"
 }

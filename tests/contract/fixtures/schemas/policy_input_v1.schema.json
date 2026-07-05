@@ -1,0 +1,146 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "enum": [
+        "class_0",
+        "class_1",
+        "class_2",
+        "class_3"
+      ],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "AgentRole": {
+      "enum": [
+        "WATCHTOWER",
+        "TRACE",
+        "ORACLE",
+        "BASTION",
+        "WARDEN",
+        "SCRIBE"
+      ],
+      "title": "AgentRole",
+      "type": "string"
+    },
+    "IncidentState": {
+      "enum": [
+        "open",
+        "triaged",
+        "investigating",
+        "containment_proposed",
+        "approval_pending",
+        "containing",
+        "monitoring",
+        "resolved",
+        "closed"
+      ],
+      "title": "IncidentState",
+      "type": "string"
+    },
+    "ScenarioCommandTemplateV1": {
+      "enum": [
+        "observe",
+        "increase_monitoring",
+        "isolate",
+        "revoke_credentials",
+        "restrict_access",
+        "restart_service",
+        "rollback_deployment"
+      ],
+      "title": "ScenarioCommandTemplateV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actionClass": {
+      "$ref": "#/$defs/ActionClass"
+    },
+    "agentRole": {
+      "$ref": "#/$defs/AgentRole"
+    },
+    "assetCriticality": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Assetcriticality",
+      "type": "number"
+    },
+    "currentRevisionId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Currentrevisionid",
+      "type": "string"
+    },
+    "hypothesisConfidenceMin": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hypothesisconfidencemin"
+    },
+    "incidentState": {
+      "$ref": "#/$defs/IncidentState"
+    },
+    "proposalId": {
+      "title": "Proposalid",
+      "type": "string"
+    },
+    "proposalRevisionId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Proposalrevisionid",
+      "type": "string"
+    },
+    "proposalRevisionNumber": {
+      "minimum": 1,
+      "title": "Proposalrevisionnumber",
+      "type": "integer"
+    },
+    "reversibility": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Reversibility",
+      "type": "string"
+    },
+    "scenarioCommand": {
+      "$ref": "#/$defs/ScenarioCommandTemplateV1"
+    },
+    "scenarioRestricted": {
+      "default": false,
+      "title": "Scenariorestricted",
+      "type": "boolean"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "targetAssetId": {
+      "title": "Targetassetid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "proposalId",
+    "proposalRevisionId",
+    "proposalRevisionNumber",
+    "currentRevisionId",
+    "actionClass",
+    "scenarioCommand",
+    "agentRole",
+    "targetAssetId",
+    "assetCriticality",
+    "reversibility",
+    "incidentState"
+  ],
+  "title": "PolicyInputV1",
+  "type": "object"
+}

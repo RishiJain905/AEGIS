@@ -60,6 +60,7 @@ export const EVENT_TYPE_REGISTRY: Readonly<Record<string, number>> = {
   'agent.task.failed': 1,
   'agent.tool.invoked': 1,
   'action.proposal.created': 1,
+  'action.proposal.policy_evaluated': 1,
   'action.proposal.approved': 1,
   'action.executed': 1,
   'graph.snapshot.created': 1,

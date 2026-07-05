@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "pdc_01ARZ3NDEKTSV4RRFFQ69G5FBC",
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "proposalRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "incidentId": "incident:inc_synthetic_001",
+  "sessionId": "agent-session:ags_warden_001",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FBD",
+  "outcome": "approval_required",
+  "reasonCodes": ["approval_required_operational"],
+  "approvalRequirement": {
+    "schemaVersion": 1,
+    "required": true,
+    "approverRoles": ["incident_commander", "security_lead"],
+    "rationale": "Class 2/3 simulated actions require explicit human approval before execution."
+  },
+  "policyInput": {
+    "schemaVersion": 1,
+    "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+    "proposalRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+    "proposalRevisionNumber": 1,
+    "currentRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+    "actionClass": "class_2",
+    "scenarioCommand": "isolate",
+    "agentRole": "BASTION",
+    "targetAssetId": "asset:svc-api-gateway",
+    "assetCriticality": 0.82,
+    "reversibility": "Reversible after approval and verification.",
+    "incidentState": "containment_proposed",
+    "scenarioRestricted": true,
+    "hypothesisConfidenceMin": 0.72
+  },
+  "explanationProse": "Operational isolation requires human approval; deterministic policy blocks autonomous execution.",
+  "evaluatedAt": "2026-06-30T02:09:30.000Z"
+}

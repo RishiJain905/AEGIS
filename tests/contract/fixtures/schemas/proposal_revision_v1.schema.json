@@ -1,0 +1,234 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "enum": [
+        "class_0",
+        "class_1",
+        "class_2",
+        "class_3"
+      ],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "ResponseOptionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "actionClass": {
+          "$ref": "#/$defs/ActionClass"
+        },
+        "affectedAssetIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Affectedassetids",
+          "type": "array"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "expectedBenefit": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Expectedbenefit",
+          "type": "string"
+        },
+        "expectedConsequences": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Expectedconsequences",
+          "type": "string"
+        },
+        "hypothesisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hypothesisids",
+          "type": "array"
+        },
+        "monitoringPlan": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Monitoringplan",
+          "type": "string"
+        },
+        "operationalCost": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Operationalcost",
+          "type": "string"
+        },
+        "optionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Optionid",
+          "type": "string"
+        },
+        "prerequisites": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Prerequisites",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "reversibility": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "title": "Reversibility",
+          "type": "string"
+        },
+        "scenarioCommand": {
+          "$ref": "#/$defs/ScenarioCommandTemplateV1"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        },
+        "uncertainty": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "title": "Uncertainty",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "optionId",
+        "scenarioCommand",
+        "actionClass",
+        "targetAssetId",
+        "expectedBenefit",
+        "operationalCost",
+        "reversibility",
+        "monitoringPlan",
+        "expectedConsequences",
+        "confidence",
+        "uncertainty",
+        "rationale"
+      ],
+      "title": "ResponseOptionV1",
+      "type": "object"
+    },
+    "ScenarioCommandTemplateV1": {
+      "enum": [
+        "observe",
+        "increase_monitoring",
+        "isolate",
+        "revoke_credentials",
+        "restrict_access",
+        "restart_service",
+        "rollback_deployment"
+      ],
+      "title": "ScenarioCommandTemplateV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "linkedHypothesisIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Linkedhypothesisids",
+      "type": "array"
+    },
+    "proposalId": {
+      "title": "Proposalid",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 4096,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "responseOptions": {
+      "items": {
+        "$ref": "#/$defs/ResponseOptionV1"
+      },
+      "minItems": 1,
+      "title": "Responseoptions",
+      "type": "array"
+    },
+    "revisionNumber": {
+      "minimum": 1,
+      "title": "Revisionnumber",
+      "type": "integer"
+    },
+    "riskTradeoffs": {
+      "maxLength": 4096,
+      "minLength": 1,
+      "title": "Risktradeoffs",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "selectedOptionId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Selectedoptionid",
+      "type": "string"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "taskId": {
+      "title": "Taskid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "proposalId",
+    "incidentId",
+    "sessionId",
+    "taskId",
+    "revisionNumber",
+    "responseOptions",
+    "selectedOptionId",
+    "rationale",
+    "riskTradeoffs",
+    "createdAt"
+  ],
+  "title": "ProposalRevisionV1",
+  "type": "object"
+}

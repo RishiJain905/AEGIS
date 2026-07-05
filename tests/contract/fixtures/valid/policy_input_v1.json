@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "proposalRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "proposalRevisionNumber": 1,
+  "currentRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "actionClass": "class_2",
+  "scenarioCommand": "isolate",
+  "agentRole": "BASTION",
+  "targetAssetId": "asset:svc-api-gateway",
+  "assetCriticality": 0.82,
+  "reversibility": "Reversible after approval and verification.",
+  "incidentState": "containment_proposed",
+  "scenarioRestricted": true,
+  "hypothesisConfidenceMin": 0.72
+}

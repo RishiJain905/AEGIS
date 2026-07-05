@@ -43,6 +43,7 @@ from aegis_contracts.investigation import (
     TraceInvestigationPlanV1,
     WatchtowerTriageResultV1,
 )
+from aegis_contracts.proposals import PolicyDecisionV1, ProposalRevisionV1
 
 from aegis_persistence.orm.tables import (
     ActionProposalRow,
@@ -69,6 +70,8 @@ from aegis_persistence.orm.tables import (
     InvestigationNoteRow,
     ModelManifestRow,
     ModelScoreRow,
+    PolicyDecisionRow,
+    ProposalRevisionRow,
     RunRow,
     ScenarioRow,
     ScenarioVersionRow,
@@ -236,3 +239,11 @@ def hypothesis_comparison_to_domain(row: HypothesisComparisonRow) -> HypothesisC
 
 def verification_request_to_domain(row: VerificationRequestRow) -> VerificationRequestV1:
     return parse_contract(VerificationRequestV1, row.payload)
+
+
+def proposal_revision_to_domain(row: ProposalRevisionRow) -> ProposalRevisionV1:
+    return parse_contract(ProposalRevisionV1, row.payload)
+
+
+def policy_decision_to_domain(row: PolicyDecisionRow) -> PolicyDecisionV1:
+    return parse_contract(PolicyDecisionV1, row.payload)

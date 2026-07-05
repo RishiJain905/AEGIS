@@ -1,0 +1,34 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "approverRoles": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Approverroles",
+      "type": "array"
+    },
+    "rationale": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "required": {
+      "title": "Required",
+      "type": "boolean"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "required",
+    "rationale"
+  ],
+  "title": "ApprovalRequirementV1",
+  "type": "object"
+}

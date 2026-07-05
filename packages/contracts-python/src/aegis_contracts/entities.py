@@ -329,6 +329,8 @@ class ActionProposalV1(BaseModel):
     action_class: ActionClass = Field(alias="actionClass")
     target_asset_id: AssetId = Field(alias="targetAssetId")
     command: str = Field(min_length=1)
+    scenario_command: str | None = Field(default=None, alias="scenarioCommand")
+    current_revision_id: str | None = Field(default=None, alias="currentRevisionId")
     status: ProposalStatus
     rationale: str = ""
     revision: Revision
@@ -337,10 +339,22 @@ class ActionProposalV1(BaseModel):
     @model_validator(mode="after")
     def validate_schema_version(self) -> ActionProposalV1:
         assert_supported_schema_version("action_proposal", self.schema_version)
-        if self.schema_version != ACTION_PROPOSAL_SCHEMA_VERSION:
+        if self.schema_version not in {1, ACTION_PROPOSAL_SCHEMA_VERSION}:
             raise ContractValidationError(
                 code=ContractErrorCode.SCHEMA_VERSION_UNSUPPORTED,
                 message=f"Unsupported action proposal schema version: {self.schema_version}",
+                details={"schemaVersion": self.schema_version},
+            )
+        if self.schema_version == ACTION_PROPOSAL_SCHEMA_VERSION and not self.current_revision_id:
+            raise ContractValidationError(
+                code=ContractErrorCode.VALIDATION_FAILED,
+                message="Action proposal v2 requires currentRevisionId",
+                details={"schemaVersion": self.schema_version},
+            )
+        if self.schema_version == ACTION_PROPOSAL_SCHEMA_VERSION and not self.scenario_command:
+            raise ContractValidationError(
+                code=ContractErrorCode.VALIDATION_FAILED,
+                message="Action proposal v2 requires scenarioCommand",
                 details={"schemaVersion": self.schema_version},
             )
         return self

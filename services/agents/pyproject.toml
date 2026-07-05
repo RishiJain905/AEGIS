@@ -2,12 +2,13 @@
 name = "aegis-agents"
 version = "0.0.0"
 requires-python = ">=3.12,<3.13"
-dependencies = ["aegis-contracts", "aegis-model-provider", "aegis-persistence", "jsonschema>=4.23"]
+dependencies = ["aegis-contracts", "aegis-model-provider", "aegis-persistence", "aegis-policy", "jsonschema>=4.23"]
 
 [tool.uv.sources]
 aegis-contracts = { workspace = true }
 aegis-model-provider = { workspace = true }
 aegis-persistence = { workspace = true }
+aegis-policy = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

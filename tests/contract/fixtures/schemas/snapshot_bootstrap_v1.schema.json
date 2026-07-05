@@ -1,12 +1,23 @@
 {
   "$defs": {
     "AssetType": {
-      "enum": ["service", "device", "user", "identity", "database", "control", "ai_model"],
+      "enum": [
+        "service",
+        "device",
+        "user",
+        "identity",
+        "database",
+        "control",
+        "ai_model"
+      ],
       "title": "AssetType",
       "type": "string"
     },
     "EntityType": {
-      "enum": ["asset", "cluster"],
+      "enum": [
+        "asset",
+        "cluster"
+      ],
       "title": "EntityType",
       "type": "string"
     },
@@ -40,7 +51,13 @@
           "type": "integer"
         }
       },
-      "required": ["schemaVersion", "id", "label", "memberNodeIds", "revision"],
+      "required": [
+        "schemaVersion",
+        "id",
+        "label",
+        "memberNodeIds",
+        "revision"
+      ],
       "title": "GraphClusterV1",
       "type": "object"
     },
@@ -250,12 +267,24 @@
       "type": "object"
     },
     "NodeStatus": {
-      "enum": ["normal", "suspicious", "under_investigation", "contained", "compromised"],
+      "enum": [
+        "normal",
+        "suspicious",
+        "under_investigation",
+        "contained",
+        "compromised"
+      ],
       "title": "NodeStatus",
       "type": "string"
     },
     "RelationshipType": {
-      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
+      "enum": [
+        "COMMUNICATED_WITH",
+        "AUTHENTICATED_TO",
+        "DEPENDS_ON",
+        "ADMINISTERS",
+        "HOSTS"
+      ],
       "title": "RelationshipType",
       "type": "string"
     },
@@ -329,7 +358,12 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "run", "graphSnapshot", "lastAppliedSequence"],
+  "required": [
+    "schemaVersion",
+    "run",
+    "graphSnapshot",
+    "lastAppliedSequence"
+  ],
   "title": "SnapshotBootstrapPayloadV1",
   "type": "object"
 }

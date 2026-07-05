@@ -16,6 +16,8 @@ import {
   hypothesisRevisionSchema,
   verificationRequestSchema,
 } from './hypothesis';
+import { actionProposalSchema } from './entities';
+import { policyDecisionSchema, proposalRevisionSchema } from './proposals';
 import { hypothesisSchema } from './entities';
 import {
   AGENT_GRAPH_OVERLAY_SCHEMA_VERSION,
@@ -188,9 +190,16 @@ export const investigationDetailSchema = z
     hypothesisRevisions: z.array(hypothesisRevisionSchema).default([]),
     hypothesisComparisons: z.array(hypothesisComparisonSchema).default([]),
     verificationRequests: z.array(verificationRequestSchema).default([]),
+    proposals: z.array(actionProposalSchema).default([]),
+    proposalRevisions: z.array(proposalRevisionSchema).default([]),
+    policyDecisions: z.array(policyDecisionSchema).default([]),
   })
   .superRefine((value, ctx) => {
-    if (value.schemaVersion !== 1 && value.schemaVersion !== INVESTIGATION_DETAIL_SCHEMA_VERSION) {
+    if (
+      value.schemaVersion !== 1 &&
+      value.schemaVersion !== 2 &&
+      value.schemaVersion !== INVESTIGATION_DETAIL_SCHEMA_VERSION
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Unsupported investigation detail schema: ${String(value.schemaVersion)}`,

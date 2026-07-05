@@ -24,6 +24,16 @@ from aegis_model_provider.cost import with_estimated_cost
 from aegis_model_provider.fingerprint import request_fingerprint
 from aegis_model_provider.structured_output import validate_structured_output
 
+_BASTION_FIXTURE_PATH = (
+    Path(__file__).resolve().parents[5]
+    / "fixtures/model-responses/bastion/bastion-proposal-v1.json"
+)
+_WARDEN_FIXTURE_PATH = (
+    Path(__file__).resolve().parents[5]
+    / "fixtures/model-responses/warden/warden-policy-v1.json"
+)
+
+
 _ORACLE_FIXTURE_PATH = (
     Path(__file__).resolve().parents[5]
     / "fixtures/model-responses/oracle/oracle-multi-hypothesis-v1.json"
@@ -33,6 +43,18 @@ _ORACLE_FIXTURE_PATH = (
 def _load_oracle_mock_payload(fingerprint: str) -> dict[str, object]:
     payload: dict[str, object] = json.loads(_ORACLE_FIXTURE_PATH.read_text(encoding="utf-8"))
     payload["rationale"] = f"Mock ORACLE hypotheses for request {fingerprint}"
+    return payload
+
+
+def _load_bastion_mock_payload(fingerprint: str) -> dict[str, object]:
+    payload: dict[str, object] = json.loads(_BASTION_FIXTURE_PATH.read_text(encoding="utf-8"))
+    payload["rationale"] = f"Mock BASTION proposal for request {fingerprint}"
+    return payload
+
+
+def _load_warden_mock_payload(fingerprint: str) -> dict[str, object]:
+    payload: dict[str, object] = json.loads(_WARDEN_FIXTURE_PATH.read_text(encoding="utf-8"))
+    payload["explanationProse"] = f"Mock WARDEN policy prose for request {fingerprint}"
     return payload
 
 
@@ -109,6 +131,24 @@ class MockProvider:
                     payload = _load_oracle_mock_payload(fingerprint)
                     structured_data = validate_structured_output(payload, request.structured_output)
                     content = json.dumps(structured_data)
+            elif prompt_version == "phase22-bastion-v1":
+                if "invalid" in user_text.lower() or "malformed" in user_text.lower():
+                    payload = {
+                        "rationale": "bad",
+                        "riskTradeoffs": "bad",
+                        "selectedOptionId": "missing",
+                        "responseOptions": [],
+                    }
+                    content = json.dumps(payload)
+                    structured_data = None
+                else:
+                    payload = _load_bastion_mock_payload(fingerprint)
+                    structured_data = validate_structured_output(payload, request.structured_output)
+                    content = json.dumps(structured_data)
+            elif prompt_version == "phase22-warden-v1":
+                payload = _load_warden_mock_payload(fingerprint)
+                structured_data = validate_structured_output(payload, request.structured_output)
+                content = json.dumps(structured_data)
             elif "rationale" in (request.structured_output.json_schema.get("required") or []):
                 payload = {
                     "rationale": f"Mock investigation step for request {fingerprint}",
