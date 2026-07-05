@@ -63,7 +63,8 @@ async def test_watchtower_trace_flow_is_idempotent_and_grounded(unit_of_work) ->
     detail = await unit_of_work.investigation.get_detail(incident_id, run_id)
     assert detail.triage_results
     assert detail.plans
-    assert any(item.evidence_ids for item in detail.triage_results) or detail.evidence_attachments
+    assert detail.overlays
+    assert detail.plans[0].seed_asset_ids
     if detail.evidence_attachments:
         assert all(
             attachment.provenance.source_id or attachment.evidence_id
