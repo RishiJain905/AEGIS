@@ -47,7 +47,7 @@ class OpenAIHostedProvider:
             ],
         )
 
-    def _client(self):
+    def _client(self) -> Any:
         if not self._settings.AEGIS_PROVIDER_OPENAI_API_KEY.strip():
             raise ProviderRuntimeError(
                 make_provider_error(

@@ -31,13 +31,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "schemaVersion",
-    "providerId",
-    "modelId",
-    "promptVersion",
-    "requestHash"
-  ],
+  "required": ["schemaVersion", "providerId", "modelId", "promptVersion", "requestHash"],
   "title": "RecordedResponseKeyV1",
   "type": "object"
 }

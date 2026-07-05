@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 
 from aegis_contracts.generation import ProviderErrorCode
@@ -75,7 +76,7 @@ async def run_with_resilience[T](
     *,
     trace_id: str | None,
     timeout_ms: int | None,
-    operation,
+    operation: Callable[[], Awaitable[T]],
 ) -> T:
     ctx.assert_circuit_closed(trace_id=trace_id)
     timeout_seconds = (

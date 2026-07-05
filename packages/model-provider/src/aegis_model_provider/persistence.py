@@ -63,6 +63,6 @@ def build_generation_artifact(
         error=error,
         sanitized_request=sanitized_request,
         sanitized_response=sanitized_response,
-        artifact_ref=f"generation-artifacts/{request.request_id}.json",
+        object_storage_ref=f"generation-artifacts/{request.request_id}.json",
         recorded_at=datetime.now(UTC),
     )

@@ -19,6 +19,7 @@ from aegis_model_provider.persistence import (
     GenerationArtifactRepository,
     build_generation_artifact,
 )
+from aegis_model_provider.protocol import ModelProvider
 from aegis_model_provider.registry import ProviderRegistry
 from aegis_model_provider.resilience import ResilienceContext, run_with_resilience
 from aegis_model_provider.structured_output import (
@@ -55,7 +56,7 @@ class GenerationService:
             async def operation() -> GenerationResponseV1:
                 return await self._generate_with_optional_repair(provider, request)
 
-            response = await run_with_resilience(
+            response: GenerationResponseV1 = await run_with_resilience(
                 self._resilience,
                 trace_id=request.trace_id,
                 timeout_ms=request.timeout_ms,
@@ -70,7 +71,9 @@ class GenerationService:
                     latency_ms=latency_ms,
                 )
                 await self._artifact_repository.save(artifact)
-                response = response.model_copy(update={"artifact_ref": artifact.artifact_ref})
+                storage_ref = artifact.object_storage_ref
+                if storage_ref is not None:
+                    response = response.model_copy(update={"artifact_ref": storage_ref})
             return ProviderGenerateResponseV1(
                 schema_version=PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION,
                 response=response,
@@ -102,7 +105,7 @@ class GenerationService:
 
     async def _generate_with_optional_repair(
         self,
-        provider,
+        provider: ModelProvider,
         request: GenerationRequestV1,
     ) -> GenerationResponseV1:
         response = await provider.generate(request)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from aegis_model_provider.adapters.openai_hosted import OpenAIHostedProvider
 from aegis_model_provider.config import ProviderSettings
 
@@ -13,7 +15,7 @@ class OpenAICompatibleProvider(OpenAIHostedProvider):
         super().__init__(settings)
         self._settings = settings
 
-    def _client(self):
+    def _client(self) -> Any:
         if not self._settings.AEGIS_PROVIDER_LOCAL_BASE_URL.strip():
             from aegis_contracts.generation import ProviderErrorCode
 

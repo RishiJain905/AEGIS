@@ -32,7 +32,10 @@ def redact_value(value: Any) -> Any:
 
 
 def sanitize_request_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    sanitized = redact_value(payload)
+    sanitized_any = redact_value(payload)
+    if not isinstance(sanitized_any, dict):
+        return payload
+    sanitized: dict[str, Any] = sanitized_any
     messages = sanitized.get("messages")
     if isinstance(messages, list):
         for message in messages:

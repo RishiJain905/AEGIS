@@ -529,7 +529,7 @@ class PostgresGenerationArtifactRepository:
             latency_ms=artifact.latency_ms,
             usage=artifact.usage.model_dump(by_alias=True, mode="json") if artifact.usage else None,
             error=artifact.error.model_dump(by_alias=True, mode="json") if artifact.error else None,
-            artifact_ref=artifact.artifact_ref,
+            artifact_ref=artifact.object_storage_ref,
             payload=payload,
             recorded_at=artifact.recorded_at,
         )

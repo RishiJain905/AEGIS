@@ -1,12 +1,7 @@
 {
   "$defs": {
     "GenerationMessageRole": {
-      "enum": [
-        "system",
-        "user",
-        "assistant",
-        "tool"
-      ],
+      "enum": ["system", "user", "assistant", "tool"],
       "title": "GenerationMessageRole",
       "type": "string"
     },
@@ -36,10 +31,7 @@
           "title": "Name"
         }
       },
-      "required": [
-        "role",
-        "content"
-      ],
+      "required": ["role", "content"],
       "title": "GenerationMessageV1",
       "type": "object"
     },
@@ -98,22 +90,12 @@
           "title": "Maxoutputtokens"
         }
       },
-      "required": [
-        "schemaVersion",
-        "providerId",
-        "modelId",
-        "promptVersion"
-      ],
+      "required": ["schemaVersion", "providerId", "modelId", "promptVersion"],
       "title": "ModelConfigV1",
       "type": "object"
     },
     "ProviderCapability": {
-      "enum": [
-        "structured_output",
-        "tools",
-        "vision",
-        "streaming"
-      ],
+      "enum": ["structured_output", "tools", "vision", "streaming"],
       "title": "ProviderCapability",
       "type": "string"
     },
@@ -143,10 +125,7 @@
           "type": "integer"
         }
       },
-      "required": [
-        "schemaVersion",
-        "jsonSchema"
-      ],
+      "required": ["schemaVersion", "jsonSchema"],
       "title": "StructuredOutputSpecV1",
       "type": "object"
     },
@@ -176,11 +155,7 @@
           "type": "object"
         }
       },
-      "required": [
-        "schemaVersion",
-        "name",
-        "description"
-      ],
+      "required": ["schemaVersion", "name", "description"],
       "title": "ToolSchemaV1",
       "type": "object"
     }
@@ -298,13 +273,7 @@
       "title": "Idempotencykey"
     }
   },
-  "required": [
-    "schemaVersion",
-    "requestId",
-    "traceId",
-    "modelConfig",
-    "messages"
-  ],
+  "required": ["schemaVersion", "requestId", "traceId", "modelConfig", "messages"],
   "title": "GenerationRequestV1",
   "type": "object"
 }

@@ -1,12 +1,7 @@
 {
   "$defs": {
     "ProviderCapability": {
-      "enum": [
-        "structured_output",
-        "tools",
-        "vision",
-        "streaming"
-      ],
+      "enum": ["structured_output", "tools", "vision", "streaming"],
       "title": "ProviderCapability",
       "type": "string"
     }
@@ -26,9 +21,7 @@
       "type": "array"
     }
   },
-  "required": [
-    "schemaVersion"
-  ],
+  "required": ["schemaVersion"],
   "title": "ProviderCapabilitiesV1",
   "type": "object"
 }

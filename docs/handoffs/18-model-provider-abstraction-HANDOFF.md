@@ -23,29 +23,29 @@ Phase 18 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/18-model-pro
 
 ## Files added
 
-| Area | Key paths |
-|------|-----------|
-| Contracts | `packages/contracts-python/src/aegis_contracts/generation.py`, `packages/contracts-ts/src/generation.ts` |
-| Provider package | `packages/model-provider/src/aegis_model_provider/**` |
-| Persistence | `migrations/versions/005_generation_artifacts.py`, `GenerationArtifactRow`, `PostgresGenerationArtifactRepository` |
-| Service wiring | `services/agents/src/aegis_agents/providers/**` |
-| API | `apps/api/src/aegis_api/providers/**` |
-| Fixtures | `fixtures/model-responses/**`, contract golden fixtures |
-| Tests | `tests/agents/provider-conformance/**`, `tests/unit/model_provider/**` |
-| Docs | `docs/agents/model-providers.md`, ADR `0019-model-provider-abstraction.md` |
-| Scripts | `scripts/run_provider_harness.py`, `apps/web/scripts/capture-provider-demo.mjs` |
+| Area             | Key paths                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Contracts        | `packages/contracts-python/src/aegis_contracts/generation.py`, `packages/contracts-ts/src/generation.ts`           |
+| Provider package | `packages/model-provider/src/aegis_model_provider/**`                                                              |
+| Persistence      | `migrations/versions/005_generation_artifacts.py`, `GenerationArtifactRow`, `PostgresGenerationArtifactRepository` |
+| Service wiring   | `services/agents/src/aegis_agents/providers/**`                                                                    |
+| API              | `apps/api/src/aegis_api/providers/**`                                                                              |
+| Fixtures         | `fixtures/model-responses/**`, contract golden fixtures                                                            |
+| Tests            | `tests/agents/provider-conformance/**`, `tests/unit/model_provider/**`                                             |
+| Docs             | `docs/agents/model-providers.md`, ADR `0019-model-provider-abstraction.md`                                         |
+| Scripts          | `scripts/run_provider_harness.py`, `apps/web/scripts/capture-provider-demo.mjs`                                    |
 
 ## Files modified
 
-| File | Reason |
-|------|--------|
-| `packages/contracts-python/src/aegis_contracts/primitives.py` | Added `gen_` runtime ID prefix |
-| `packages/contracts-python/src/aegis_contracts/versioning.py` | Phase 18 schema versions, `WORKSPACE_VERSION` bump |
-| `packages/contracts-ts/src/versioning.ts`, `primitives.ts`, `index.ts` | TS mirror |
-| `pyproject.toml`, `package.json` | Workspace wiring |
-| `.env.example` | Provider configuration |
-| `apps/api/src/aegis_api/main.py` | Register provider routers |
-| `apps/api/pyproject.toml` | Depend on `aegis-agents` |
+| File                                                                   | Reason                                             |
+| ---------------------------------------------------------------------- | -------------------------------------------------- |
+| `packages/contracts-python/src/aegis_contracts/primitives.py`          | Added `gen_` runtime ID prefix                     |
+| `packages/contracts-python/src/aegis_contracts/versioning.py`          | Phase 18 schema versions, `WORKSPACE_VERSION` bump |
+| `packages/contracts-ts/src/versioning.ts`, `primitives.ts`, `index.ts` | TS mirror                                          |
+| `pyproject.toml`, `package.json`                                       | Workspace wiring                                   |
+| `.env.example`                                                         | Provider configuration                             |
+| `apps/api/src/aegis_api/main.py`                                       | Register provider routers                          |
+| `apps/api/pyproject.toml`                                              | Depend on `aegis-agents`                           |
 
 ## Files removed
 
@@ -53,15 +53,15 @@ None.
 
 ## Contracts introduced or changed
 
-| Contract | Version | Notes |
-|----------|---------|-------|
-| `GenerationRequestV1` / `GenerationResponseV1` | schema v1 | Canonical provider-neutral generation |
-| `StructuredOutputSpecV1` | schema v1 | JSON Schema + bounded repair |
-| `ProviderUsageV1` / `ProviderErrorV1` | schema v1 | Audit and normalized failures |
-| `RecordedResponseKeyV1` | schema v1 | Deterministic fixture lookup |
-| `GenerationArtifactV1` | schema v1 | Sanitized audit records |
-| `ProviderGenerateRequestV1` / `ProviderGenerateResponseV1` | schema v1 | HTTP harness DTOs |
-| `WORKSPACE_VERSION` | `0.0.0-phase18` | Compatibility bump |
+| Contract                                                   | Version         | Notes                                 |
+| ---------------------------------------------------------- | --------------- | ------------------------------------- |
+| `GenerationRequestV1` / `GenerationResponseV1`             | schema v1       | Canonical provider-neutral generation |
+| `StructuredOutputSpecV1`                                   | schema v1       | JSON Schema + bounded repair          |
+| `ProviderUsageV1` / `ProviderErrorV1`                      | schema v1       | Audit and normalized failures         |
+| `RecordedResponseKeyV1`                                    | schema v1       | Deterministic fixture lookup          |
+| `GenerationArtifactV1`                                     | schema v1       | Sanitized audit records               |
+| `ProviderGenerateRequestV1` / `ProviderGenerateResponseV1` | schema v1       | HTTP harness DTOs                     |
+| `WORKSPACE_VERSION`                                        | `0.0.0-phase18` | Compatibility bump                    |
 
 ## Database migrations
 
@@ -80,29 +80,29 @@ Provider settings via `AEGIS_PROVIDER_*` (see `.env.example`). `AEGIS_PROVIDER_D
 
 ## Tests added
 
-| Test | Proves |
-|------|--------|
-| `test_provider_conformance.py` | Mock/recorded adapters, capability rejection, malformed output, missing credentials |
-| `test_redaction_and_cost.py` | Secret redaction and cost metadata |
-| `test_resilience.py` | Timeout/retry normalization |
-| `test_fixture_secrets.py` | Recorded fixtures contain no API key patterns |
-| Contract cross-language fixtures | Python/TS parity for generation contracts |
+| Test                             | Proves                                                                              |
+| -------------------------------- | ----------------------------------------------------------------------------------- |
+| `test_provider_conformance.py`   | Mock/recorded adapters, capability rejection, malformed output, missing credentials |
+| `test_redaction_and_cost.py`     | Secret redaction and cost metadata                                                  |
+| `test_resilience.py`             | Timeout/retry normalization                                                         |
+| `test_fixture_secrets.py`        | Recorded fixtures contain no API key patterns                                       |
+| Contract cross-language fixtures | Python/TS parity for generation contracts                                           |
 
 ## Commands executed and results
 
-| Command | Result |
-|---------|--------|
-| `uv run ruff check .` | **PASS** |
-| `uv run mypy apps services packages` | **KNOWN ISSUE** — pre-existing `apps/api/src/aegis_api/db/session.py` duplicate module path (Phase 16/17 precedent) |
-| `uv run pytest -q` | **PASS** — 472 passed, 35 skipped |
-| `uv run pytest tests/agents/provider-conformance -q` | **PASS** — 13 passed, 2 skipped |
-| `uv run lint-imports` | **PASS** — 4 kept, 0 broken |
-| `pnpm check-contracts` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `pnpm lint` | **PASS** |
-| `pnpm test` | **PASS** — 57 tests |
-| `uv run python scripts/run_provider_harness.py` | **PASS** — mock, recorded, invalid output checks |
-| `node apps/web/scripts/capture-provider-demo.mjs` | **PASS** — 10 screenshots captured |
+| Command                                              | Result                                                                                                              |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `uv run ruff check .`                                | **PASS**                                                                                                            |
+| `uv run mypy apps services packages`                 | **KNOWN ISSUE** — pre-existing `apps/api/src/aegis_api/db/session.py` duplicate module path (Phase 16/17 precedent) |
+| `uv run pytest -q`                                   | **PASS** — 472 passed, 35 skipped                                                                                   |
+| `uv run pytest tests/agents/provider-conformance -q` | **PASS** — 13 passed, 2 skipped                                                                                     |
+| `uv run lint-imports`                                | **PASS** — 4 kept, 0 broken                                                                                         |
+| `pnpm check-contracts`                               | **PASS**                                                                                                            |
+| `pnpm typecheck`                                     | **PASS**                                                                                                            |
+| `pnpm lint`                                          | **PASS**                                                                                                            |
+| `pnpm test`                                          | **PASS** — 57 tests                                                                                                 |
+| `uv run python scripts/run_provider_harness.py`      | **PASS** — mock, recorded, invalid output checks                                                                    |
+| `node apps/web/scripts/capture-provider-demo.mjs`    | **PASS** — 10 screenshots captured                                                                                  |
 
 ## Architecture decisions and ADRs
 
