@@ -112,6 +112,17 @@ from aegis_contracts.realtime import (
     DeadLetterRecordV1,
     RealtimeMessageEnvelopeV1,
 )
+from aegis_contracts.reports import (
+    AfterActionReportSourceV1,
+    AfterActionReportV1,
+    GroundingValidationResultV1,
+    ReportCitationV1,
+    ReportClaimV1,
+    ReportExportArtifactV1,
+    ReportTimelineEntryV1,
+    ReportVersionV1,
+    TriggerScribeRequestV1,
+)
 from aegis_contracts.risk import (
     AssetRiskScoreV1,
     RiskComputeRequestV1,
@@ -240,4 +251,13 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "policy_decision_v1": PolicyDecisionV1,
     "trigger_bastion_request_v1": TriggerBastionRequestV1,
     "trigger_warden_request_v1": TriggerWardenRequestV1,
+    "report_citation_v1": ReportCitationV1,
+    "report_claim_v1": ReportClaimV1,
+    "report_timeline_entry_v1": ReportTimelineEntryV1,
+    "after_action_report_source_v1": AfterActionReportSourceV1,
+    "after_action_report_v1": AfterActionReportV1,
+    "report_version_v1": ReportVersionV1,
+    "report_export_artifact_v1": ReportExportArtifactV1,
+    "grounding_validation_result_v1": GroundingValidationResultV1,
+    "trigger_scribe_request_v1": TriggerScribeRequestV1,
 }

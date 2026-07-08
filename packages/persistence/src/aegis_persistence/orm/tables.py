@@ -856,3 +856,62 @@ class VerificationRequestRow(Base):
         ),
         Index("ix_verification_requests_incident_created", "incident_id", "created_at"),
     )
+
+
+class ReportVersionRow(Base):
+    __tablename__ = "report_versions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    incident_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    report_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    checksum: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("run_id", "version_number", name="uq_report_versions_run_version"),
+        Index("ix_report_versions_run_created", "run_id", "created_at"),
+    )
+
+
+class ReportExportArtifactRow(Base):
+    __tablename__ = "report_export_artifacts"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    report_version_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("report_versions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    format: Mapped[str] = mapped_column(String(16), nullable=False)
+    object_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    checksum: Mapped[str] = mapped_column(String(64), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(128), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    content: Mapped[bytes] = mapped_column(nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "report_version_id",
+            "format",
+            name="uq_report_export_version_format",
+        ),
+        Index("ix_report_export_artifacts_run_format", "run_id", "format"),
+    )

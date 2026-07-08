@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase22"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase23"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -139,6 +139,15 @@ POLICY_DECISION_SCHEMA_VERSION: Final[int] = 1
 APPROVAL_REQUIREMENT_SCHEMA_VERSION: Final[int] = 1
 TRIGGER_BASTION_REQUEST_SCHEMA_VERSION: Final[int] = 1
 TRIGGER_WARDEN_REQUEST_SCHEMA_VERSION: Final[int] = 1
+REPORT_CITATION_SCHEMA_VERSION: Final[int] = 1
+REPORT_CLAIM_SCHEMA_VERSION: Final[int] = 1
+REPORT_TIMELINE_ENTRY_SCHEMA_VERSION: Final[int] = 1
+AFTER_ACTION_REPORT_SOURCE_SCHEMA_VERSION: Final[int] = 1
+AFTER_ACTION_REPORT_SCHEMA_VERSION: Final[int] = 1
+REPORT_VERSION_SCHEMA_VERSION: Final[int] = 1
+REPORT_EXPORT_ARTIFACT_SCHEMA_VERSION: Final[int] = 1
+GROUNDING_VALIDATION_RESULT_SCHEMA_VERSION: Final[int] = 1
+TRIGGER_SCRIBE_REQUEST_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -176,6 +185,15 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "approval_requirement": frozenset({APPROVAL_REQUIREMENT_SCHEMA_VERSION}),
     "trigger_bastion_request": frozenset({TRIGGER_BASTION_REQUEST_SCHEMA_VERSION}),
     "trigger_warden_request": frozenset({TRIGGER_WARDEN_REQUEST_SCHEMA_VERSION}),
+    "report_citation": frozenset({REPORT_CITATION_SCHEMA_VERSION}),
+    "report_claim": frozenset({REPORT_CLAIM_SCHEMA_VERSION}),
+    "report_timeline_entry": frozenset({REPORT_TIMELINE_ENTRY_SCHEMA_VERSION}),
+    "after_action_report_source": frozenset({AFTER_ACTION_REPORT_SOURCE_SCHEMA_VERSION}),
+    "after_action_report": frozenset({AFTER_ACTION_REPORT_SCHEMA_VERSION}),
+    "report_version": frozenset({REPORT_VERSION_SCHEMA_VERSION}),
+    "report_export_artifact": frozenset({REPORT_EXPORT_ARTIFACT_SCHEMA_VERSION}),
+    "grounding_validation_result": frozenset({GROUNDING_VALIDATION_RESULT_SCHEMA_VERSION}),
+    "trigger_scribe_request": frozenset({TRIGGER_SCRIBE_REQUEST_SCHEMA_VERSION}),
     "approval": frozenset({APPROVAL_SCHEMA_VERSION}),
     "executed_action": frozenset({EXECUTED_ACTION_SCHEMA_VERSION}),
     "model_manifest": frozenset({MODEL_MANIFEST_SCHEMA_VERSION}),

@@ -24,7 +24,10 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "manifestPath"],
+  "required": [
+    "schemaVersion",
+    "manifestPath"
+  ],
   "title": "ModelVerifyArtifactRequestV1",
   "type": "object"
 }

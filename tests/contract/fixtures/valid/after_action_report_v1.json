@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "id": "aar_01ARZ3NDEKTSV4RRFFQ69G5FBW",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "incidentId": "incident:inc_synthetic_001",
+  "versionNumber": 1,
+  "title": "Operation Silent Relay \u2014 After-action report",
+  "executiveSummary": "Deterministic after-action report summarizing WATCHTOWER triage, TRACE evidence collection, ORACLE hypotheses, BASTION proposals, and WARDEN policy outcomes.",
+  "chronologySummary": "Timeline synthesized from persisted domain events sequences 1\u201342 with investigation artifact cross-links.",
+  "claims": [
+    {
+      "schemaVersion": 1,
+      "claimId": "claim_001",
+      "category": "observed_fact",
+      "text": "Repeated authentication failures were observed on the logistics workstation asset.",
+      "confidence": 0.91,
+      "uncertainty": null,
+      "citations": [
+        {
+          "schemaVersion": 1,
+          "kind": "event",
+          "referenceId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+          "label": "Authentication failure telemetry",
+          "sequence": 12,
+          "rationale": ""
+        }
+      ],
+      "grounded": true,
+      "rejectionReason": null
+    }
+  ],
+  "timeline": [
+    {
+      "schemaVersion": 1,
+      "sequence": 12,
+      "eventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+      "eventType": "telemetry.authentication.failed",
+      "label": "Authentication failed on asset:device-workstation-01",
+      "timestamp": "2026-06-30T02:04:10Z",
+      "status": "suspicious",
+      "relatedEvidenceIds": [
+        "evidence:evt_auth_fail_001"
+      ],
+      "relatedHypothesisIds": []
+    }
+  ],
+  "lessons": [
+    "Preserve contradictory hypotheses during after-action review."
+  ],
+  "contradictions": [
+    "Competing ORACLE hypotheses disagree on whether admin activity is benign."
+  ],
+  "uncertainties": [
+    "Credential misuse confidence remains below verification threshold."
+  ],
+  "source": {
+    "schemaVersion": 1,
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "incidentId": "incident:inc_synthetic_001",
+    "sourceSequenceFrom": 1,
+    "sourceSequenceTo": 42,
+    "eventIds": [
+      "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW"
+    ],
+    "evidenceIds": [
+      "evidence:evt_auth_fail_001"
+    ],
+    "hypothesisIds": [
+      "hyp_01ARZ3NDEKTSV4RRFFQ69G5FBW"
+    ],
+    "proposalIds": [
+      "prp_01ARZ3NDEKTSV4RRFFQ69G5FB9"
+    ],
+    "policyDecisionIds": [
+      "pdc_01ARZ3NDEKTSV4RRFFQ69G5FBA"
+    ],
+    "affectedAssetIds": [
+      "asset:device-workstation-01"
+    ],
+    "alertIds": [
+      "alert:alt_synthetic_001"
+    ],
+    "agentSessionIds": [
+      "agent-session:ags_scribe_001"
+    ],
+    "timeline": [],
+    "investigationSummary": {
+      "incidentTitle": "Operation Silent Relay \u2014 After-action report",
+      "incidentState": "approval_pending"
+    }
+  },
+  "groundingFallback": false,
+  "narrativeProviderId": "mock",
+  "narrativePromptVersion": "phase23-scribe-v1",
+  "sessionId": "agent-session:ags_scribe_001",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FBD",
+  "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "createdAt": "2026-06-30T02:30:00Z"
+}

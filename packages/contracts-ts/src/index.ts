@@ -174,6 +174,19 @@ export * from './agent-runtime';
 export * from './investigation';
 export * from './hypothesis';
 export * from './proposals';
+export * from './reports';
+
+import {
+  afterActionReportSchema,
+  afterActionReportSourceSchema,
+  groundingValidationResultSchema,
+  reportCitationSchema,
+  reportClaimSchema,
+  reportExportArtifactSchema,
+  reportTimelineEntrySchema,
+  reportVersionSchema,
+  triggerScribeRequestSchema,
+} from './reports';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
@@ -275,4 +288,13 @@ export const FIXTURE_SCHEMA_MAP = {
   investigation_note_v1: investigationNoteSchema,
   agent_graph_overlay_v1: agentGraphOverlaySchema,
   investigation_detail_v1: investigationDetailSchema,
+  report_citation_v1: reportCitationSchema,
+  report_claim_v1: reportClaimSchema,
+  report_timeline_entry_v1: reportTimelineEntrySchema,
+  after_action_report_source_v1: afterActionReportSourceSchema,
+  after_action_report_v1: afterActionReportSchema,
+  report_version_v1: reportVersionSchema,
+  report_export_artifact_v1: reportExportArtifactSchema,
+  grounding_validation_result_v1: groundingValidationResultSchema,
+  trigger_scribe_request_v1: triggerScribeRequestSchema,
 } as const;

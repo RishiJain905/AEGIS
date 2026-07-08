@@ -50,7 +50,12 @@
       "type": "string"
     }
   },
-  "required": ["schemaVersion", "runId", "traceId", "idempotencyKey"],
+  "required": [
+    "schemaVersion",
+    "runId",
+    "traceId",
+    "idempotencyKey"
+  ],
   "title": "TriggerWardenRequestV1",
   "type": "object"
 }

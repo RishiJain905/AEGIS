@@ -1,0 +1,139 @@
+{
+  "$defs": {
+    "ReportGenerationStatusV1": {
+      "enum": [
+        "completed",
+        "grounding_fallback",
+        "failed"
+      ],
+      "title": "ReportGenerationStatusV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "checksum": {
+      "maxLength": 64,
+      "minLength": 64,
+      "title": "Checksum",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "groundingFallback": {
+      "default": false,
+      "title": "Groundingfallback",
+      "type": "boolean"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "promptVersion": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Promptversion"
+    },
+    "providerId": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Providerid"
+    },
+    "reportId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Reportid",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sessionid"
+    },
+    "sourceSequenceFrom": {
+      "minimum": 0,
+      "title": "Sourcesequencefrom",
+      "type": "integer"
+    },
+    "sourceSequenceTo": {
+      "minimum": 0,
+      "title": "Sourcesequenceto",
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/ReportGenerationStatusV1"
+    },
+    "taskId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Taskid"
+    },
+    "versionNumber": {
+      "minimum": 1,
+      "title": "Versionnumber",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "runId",
+    "incidentId",
+    "versionNumber",
+    "reportId",
+    "status",
+    "sourceSequenceFrom",
+    "sourceSequenceTo",
+    "checksum",
+    "createdAt"
+  ],
+  "title": "ReportVersionV1",
+  "type": "object"
+}

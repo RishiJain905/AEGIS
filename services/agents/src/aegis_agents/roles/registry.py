@@ -18,6 +18,7 @@ from aegis_agents.roles.common.schemas import (
     WATCHTOWER_TRIAGE_OUTPUT_SCHEMA,
 )
 from aegis_agents.roles.oracle.schemas import ORACLE_HYPOTHESIS_OUTPUT_SCHEMA
+from aegis_agents.roles.scribe.schemas import SCRIBE_NARRATIVE_OUTPUT_SCHEMA
 
 PostProcessHook = Callable[["PostProcessContext", dict[str, Any]], Awaitable[None]]
 
@@ -136,18 +137,45 @@ WARDEN_HANDLER = RoleHandler(
     ],
 )
 
+SCRIBE_HANDLER = RoleHandler(
+    role=AgentRole.SCRIBE,
+    prompt_version="phase23-scribe-v1",
+    system_prompt=(
+        "You are SCRIBE, the AEGIS after-action reporting agent. "
+        "Generate evidence-linked narrative claims with explicit categories. "
+        "Never approve proposals or recommend containment execution."
+    ),
+    output_schema=SCRIBE_NARRATIVE_OUTPUT_SCHEMA,
+    default_tool_requests=[
+        {
+            "name": "list_existing_evidence",
+            "arguments": {},
+            "purpose": "Load investigation evidence",
+        },
+        {"name": "list_hypotheses", "arguments": {}, "purpose": "Review ORACLE hypotheses"},
+        {"name": "list_proposals", "arguments": {}, "purpose": "Review BASTION proposals"},
+        {
+            "name": "search_events",
+            "arguments": {"limit": 200},
+            "purpose": "Review persisted events",
+        },
+    ],
+)
+
 ROLE_HANDLER_METADATA: dict[AgentRole, RoleHandler] = {
     AgentRole.WATCHTOWER: WATCHTOWER_HANDLER,
     AgentRole.TRACE: TRACE_HANDLER,
     AgentRole.ORACLE: ORACLE_HANDLER,
     AgentRole.BASTION: BASTION_HANDLER,
     AgentRole.WARDEN: WARDEN_HANDLER,
+    AgentRole.SCRIBE: SCRIBE_HANDLER,
 }
 
 
 def _load_handlers() -> dict[AgentRole, RoleHandlerProtocol]:
     from aegis_agents.roles.bastion.handler import BastionRoleHandler
     from aegis_agents.roles.oracle.handler import OracleRoleHandler
+    from aegis_agents.roles.scribe.handler import ScribeRoleHandler
     from aegis_agents.roles.trace.handler import TraceRoleHandler
     from aegis_agents.roles.warden.handler import WardenRoleHandler
     from aegis_agents.roles.watchtower.handler import WatchtowerRoleHandler
@@ -158,6 +186,7 @@ def _load_handlers() -> dict[AgentRole, RoleHandlerProtocol]:
         OracleRoleHandler(),
         BastionRoleHandler(),
         WardenRoleHandler(),
+        ScribeRoleHandler(),
     ]
     return {handler.role: handler for handler in handlers}
 

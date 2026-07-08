@@ -40,7 +40,14 @@
       "type": "string"
     }
   },
-  "required": ["schemaVersion", "id", "runId", "sourceEventId", "summary", "createdAt"],
+  "required": [
+    "schemaVersion",
+    "id",
+    "runId",
+    "sourceEventId",
+    "summary",
+    "createdAt"
+  ],
   "title": "EvidenceV1",
   "type": "object"
 }

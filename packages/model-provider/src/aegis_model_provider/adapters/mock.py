@@ -32,6 +32,10 @@ _WARDEN_FIXTURE_PATH = (
     Path(__file__).resolve().parents[5]
     / "fixtures/model-responses/warden/warden-policy-v1.json"
 )
+_SCRIBE_FIXTURE_PATH = (
+    Path(__file__).resolve().parents[5]
+    / "fixtures/model-responses/scribe/scribe-narrative-v1.json"
+)
 
 
 _ORACLE_FIXTURE_PATH = (
@@ -55,6 +59,12 @@ def _load_bastion_mock_payload(fingerprint: str) -> dict[str, object]:
 def _load_warden_mock_payload(fingerprint: str) -> dict[str, object]:
     payload: dict[str, object] = json.loads(_WARDEN_FIXTURE_PATH.read_text(encoding="utf-8"))
     payload["explanationProse"] = f"Mock WARDEN policy prose for request {fingerprint}"
+    return payload
+
+
+def _load_scribe_mock_payload(fingerprint: str) -> dict[str, object]:
+    payload: dict[str, object] = json.loads(_SCRIBE_FIXTURE_PATH.read_text(encoding="utf-8"))
+    payload["executiveSummary"] = f"Mock SCRIBE summary for request {fingerprint}"
     return payload
 
 
@@ -149,6 +159,29 @@ class MockProvider:
                 payload = _load_warden_mock_payload(fingerprint)
                 structured_data = validate_structured_output(payload, request.structured_output)
                 content = json.dumps(structured_data)
+            elif prompt_version == "phase23-scribe-v1":
+                if "hallucinated" in user_text.lower() or "malformed" in user_text.lower():
+                    payload = _load_scribe_mock_payload(fingerprint)
+                    payload["claims"] = [
+                        {
+                            "claimId": "claim_bad_001",
+                            "category": "observed_fact",
+                            "text": "Hallucinated fact with invalid reference.",
+                            "citations": [
+                                {
+                                    "kind": "evidence",
+                                    "referenceId": "evidence:evt_does_not_exist",
+                                    "label": "Missing evidence",
+                                }
+                            ],
+                        }
+                    ]
+                    structured_data = validate_structured_output(payload, request.structured_output)
+                    content = json.dumps(structured_data)
+                else:
+                    payload = _load_scribe_mock_payload(fingerprint)
+                    structured_data = validate_structured_output(payload, request.structured_output)
+                    content = json.dumps(structured_data)
             elif "rationale" in (request.structured_output.json_schema.get("required") or []):
                 payload = {
                     "rationale": f"Mock investigation step for request {fingerprint}",

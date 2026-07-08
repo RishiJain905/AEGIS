@@ -1,0 +1,172 @@
+{
+  "$defs": {
+    "ReportTimelineEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "eventId": {
+          "title": "Eventid",
+          "type": "string"
+        },
+        "eventType": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Eventtype",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "relatedEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Relatedevidenceids",
+          "type": "array"
+        },
+        "relatedHypothesisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Relatedhypothesisids",
+          "type": "array"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "status": {
+          "default": "normal",
+          "maxLength": 64,
+          "title": "Status",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "sequence",
+        "eventId",
+        "eventType",
+        "label",
+        "timestamp"
+      ],
+      "title": "ReportTimelineEntryV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "affectedAssetIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Affectedassetids",
+      "type": "array"
+    },
+    "agentSessionIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Agentsessionids",
+      "type": "array"
+    },
+    "alertIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Alertids",
+      "type": "array"
+    },
+    "eventIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Eventids",
+      "type": "array"
+    },
+    "evidenceIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidenceids",
+      "type": "array"
+    },
+    "hypothesisIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Hypothesisids",
+      "type": "array"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "investigationSummary": {
+      "additionalProperties": true,
+      "title": "Investigationsummary",
+      "type": "object"
+    },
+    "policyDecisionIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Policydecisionids",
+      "type": "array"
+    },
+    "proposalIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Proposalids",
+      "type": "array"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sourceSequenceFrom": {
+      "minimum": 0,
+      "title": "Sourcesequencefrom",
+      "type": "integer"
+    },
+    "sourceSequenceTo": {
+      "minimum": 0,
+      "title": "Sourcesequenceto",
+      "type": "integer"
+    },
+    "timeline": {
+      "items": {
+        "$ref": "#/$defs/ReportTimelineEntryV1"
+      },
+      "title": "Timeline",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "incidentId",
+    "sourceSequenceFrom",
+    "sourceSequenceTo"
+  ],
+  "title": "AfterActionReportSourceV1",
+  "type": "object"
+}

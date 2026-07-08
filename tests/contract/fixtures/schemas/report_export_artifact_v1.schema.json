@@ -1,0 +1,94 @@
+{
+  "$defs": {
+    "ReportExportFormatV1": {
+      "enum": [
+        "markdown",
+        "json",
+        "html"
+      ],
+      "title": "ReportExportFormatV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "checksum": {
+      "maxLength": 64,
+      "minLength": 64,
+      "title": "Checksum",
+      "type": "string"
+    },
+    "contentType": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Contenttype",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "format": {
+      "$ref": "#/$defs/ReportExportFormatV1"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "objectKey": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Objectkey",
+      "type": "string"
+    },
+    "reportSchemaVersion": {
+      "minimum": 1,
+      "title": "Reportschemaversion",
+      "type": "integer"
+    },
+    "reportVersionId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Reportversionid",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sizeBytes": {
+      "minimum": 0,
+      "title": "Sizebytes",
+      "type": "integer"
+    },
+    "workspaceVersion": {
+      "maxLength": 32,
+      "minLength": 1,
+      "title": "Workspaceversion",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "reportVersionId",
+    "runId",
+    "format",
+    "objectKey",
+    "checksum",
+    "contentType",
+    "sizeBytes",
+    "workspaceVersion",
+    "reportSchemaVersion",
+    "createdAt"
+  ],
+  "title": "ReportExportArtifactV1",
+  "type": "object"
+}

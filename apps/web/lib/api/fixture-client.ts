@@ -13,6 +13,10 @@ import {
   getAgentSessionFixture,
   getInvestigationDetailFixture,
 } from '@/fixtures/investigation-fixture';
+import {
+  getAfterActionReportFixture,
+  getReportVersionsFixture,
+} from '@/fixtures/report-fixture';
 import shellDataset from '@/fixtures/shell-dataset.json';
 import { FIXTURE_RISK_SCORES } from '@/fixtures/risk-scores-fixture';
 import type {
@@ -254,6 +258,22 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
         return applyProfile({ snapshot: null, partial: true }, signal);
       }
       return applyProfile({ snapshot, partial: false } satisfies RunGraphResult, signal);
+    },
+
+    async getAfterActionReport(runId, signal) {
+      const report = getAfterActionReportFixture(runId);
+      if (!report) {
+        throw new ApiClientError({
+          code: 'REPORT_NOT_FOUND',
+          message: `No report found for run ${runId}`,
+          status: 404,
+        });
+      }
+      return applyProfile(report, signal);
+    },
+
+    async listAfterActionReportVersions(runId, signal) {
+      return applyProfile(getReportVersionsFixture(runId), signal);
     },
 
     async getConnectionStatus(signal) {

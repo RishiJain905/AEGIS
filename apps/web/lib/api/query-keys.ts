@@ -12,6 +12,8 @@ export const queryKeys = {
     riskScores: (runId: string) => ['runs', runId, 'risk-scores'] as const,
     graph: (runId: string) => ['runs', runId, 'graph'] as const,
     readOnly: (runId: string) => ['runs', runId, 'read-only'] as const,
+    afterActionReport: (runId: string) => ['runs', runId, 'after-action-report'] as const,
+    reportVersions: (runId: string) => ['runs', runId, 'report-versions'] as const,
   },
   incidents: {
     detail: (incidentId: string) => ['incidents', incidentId] as const,

@@ -15,6 +15,10 @@ const TIMELINE_EVENT_PREFIXES = [
   'sim.asset.',
   'sim.branch.',
   'sim.hidden_condition.',
+  'investigation.',
+  'action.proposal.',
+  'agent.',
+  'report.',
 ];
 
 function timelineStatusForEvent(eventType: string, payload: Record<string, unknown>): string {
@@ -65,6 +69,10 @@ function timelineLabelForEvent(event: DomainEventEnvelopeV1): string {
       return 'Graph risk projection updated';
     case 'incident.created':
       return `Incident: ${formatPayloadString(payload.title, 'created')}`;
+    case 'report.generation.completed':
+      return 'After-action report generation completed';
+    case 'report.version.created':
+      return 'After-action report version created';
     default:
       return event.type;
   }

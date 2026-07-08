@@ -1,18 +1,19 @@
 'use client';
 
-import { EmptyState, Panel } from '@aegis/ui';
-
 import { CommandCentreShell } from '@/features/shell/components';
+import { ReportsPanel } from '@/features/reports/reports-panel';
+import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 export default function ReportsPage() {
+  const runId = useWorkspaceUiStore((state) => state.activeRunId);
+
   return (
     <CommandCentreShell>
-      <Panel title="Reports" description="After-action and evaluation reports — Phase 29">
-        <EmptyState
-          title="No reports generated"
-          description="Report generation and scoring exports are deferred to later phases."
-        />
-      </Panel>
+      {runId ? (
+        <ReportsPanel runId={runId} />
+      ) : (
+        <ReportsPanel runId="run_01ARZ3NDEKTSV4RRFFQ69G5FAV" />
+      )}
     </CommandCentreShell>
   );
 }

@@ -53,7 +53,12 @@
       "title": "Temperature"
     }
   },
-  "required": ["schemaVersion", "providerId", "modelId", "promptVersion"],
+  "required": [
+    "schemaVersion",
+    "providerId",
+    "modelId",
+    "promptVersion"
+  ],
   "title": "ModelConfigV1",
   "type": "object"
 }

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "sequence": 12,
+  "eventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "eventType": "telemetry.authentication.failed",
+  "label": "Authentication failed on asset:device-workstation-01",
+  "timestamp": "2026-06-30T02:04:10Z",
+  "status": "suspicious",
+  "relatedEvidenceIds": [
+    "evidence:evt_auth_fail_001"
+  ],
+  "relatedHypothesisIds": []
+}

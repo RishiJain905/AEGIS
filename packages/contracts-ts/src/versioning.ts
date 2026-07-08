@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase22' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase23' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -131,6 +131,15 @@ export const POLICY_DECISION_SCHEMA_VERSION = 1;
 export const APPROVAL_REQUIREMENT_SCHEMA_VERSION = 1;
 export const TRIGGER_BASTION_REQUEST_SCHEMA_VERSION = 1;
 export const TRIGGER_WARDEN_REQUEST_SCHEMA_VERSION = 1;
+export const REPORT_CITATION_SCHEMA_VERSION = 1;
+export const REPORT_CLAIM_SCHEMA_VERSION = 1;
+export const REPORT_TIMELINE_ENTRY_SCHEMA_VERSION = 1;
+export const AFTER_ACTION_REPORT_SOURCE_SCHEMA_VERSION = 1;
+export const AFTER_ACTION_REPORT_SCHEMA_VERSION = 1;
+export const REPORT_VERSION_SCHEMA_VERSION = 1;
+export const REPORT_EXPORT_ARTIFACT_SCHEMA_VERSION = 1;
+export const GROUNDING_VALIDATION_RESULT_SCHEMA_VERSION = 1;
+export const TRIGGER_SCRIBE_REQUEST_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -168,6 +177,15 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   approval_requirement: [APPROVAL_REQUIREMENT_SCHEMA_VERSION],
   trigger_bastion_request: [TRIGGER_BASTION_REQUEST_SCHEMA_VERSION],
   trigger_warden_request: [TRIGGER_WARDEN_REQUEST_SCHEMA_VERSION],
+  report_citation: [REPORT_CITATION_SCHEMA_VERSION],
+  report_claim: [REPORT_CLAIM_SCHEMA_VERSION],
+  report_timeline_entry: [REPORT_TIMELINE_ENTRY_SCHEMA_VERSION],
+  after_action_report_source: [AFTER_ACTION_REPORT_SOURCE_SCHEMA_VERSION],
+  after_action_report: [AFTER_ACTION_REPORT_SCHEMA_VERSION],
+  report_version: [REPORT_VERSION_SCHEMA_VERSION],
+  report_export_artifact: [REPORT_EXPORT_ARTIFACT_SCHEMA_VERSION],
+  grounding_validation_result: [GROUNDING_VALIDATION_RESULT_SCHEMA_VERSION],
+  trigger_scribe_request: [TRIGGER_SCRIBE_REQUEST_SCHEMA_VERSION],
   approval: [APPROVAL_SCHEMA_VERSION],
   executed_action: [EXECUTED_ACTION_SCHEMA_VERSION],
   model_manifest: [MODEL_MANIFEST_SCHEMA_VERSION],

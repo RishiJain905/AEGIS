@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "ReportClaimCategoryV1": {
+      "enum": [
+        "observed_fact",
+        "persisted_event",
+        "detection_score",
+        "graph_risk",
+        "investigation_evidence",
+        "oracle_hypothesis",
+        "bastion_proposal",
+        "warden_policy_decision",
+        "human_decision",
+        "agent_inference",
+        "unsupported",
+        "uncertain"
+      ],
+      "title": "ReportClaimCategoryV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "citationResults": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Citationresults",
+      "type": "array"
+    },
+    "claimId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Claimid",
+      "type": "string"
+    },
+    "downgradedCategory": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReportClaimCategoryV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "rejectionReason": {
+      "anyOf": [
+        {
+          "maxLength": 1024,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rejectionreason"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "valid": {
+      "title": "Valid",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "claimId",
+    "valid"
+  ],
+  "title": "GroundingValidationResultV1",
+  "type": "object"
+}

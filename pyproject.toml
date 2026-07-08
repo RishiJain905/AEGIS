@@ -24,6 +24,7 @@ members = [
     "services/agents",
     "services/ml",
     "services/workers",
+    "services/reports",
 ]
 
 [tool.uv.sources]
@@ -31,6 +32,7 @@ aegis-persistence = { workspace = true }
 aegis-policy = { workspace = true }
 aegis-agents = { workspace = true }
 aegis-api = { workspace = true }
+aegis-reports = { workspace = true }
 
 [dependency-groups]
 dev = [

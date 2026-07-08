@@ -13,7 +13,7 @@ Phase 19 delivers:
 - API routes under `/api/v1/incidents/.../agent-sessions` and observability harness `/agents/observability`
 - Optional worker mode `--mode agent-runtime`
 
-Phase 19 does **not** implement WATCHTOWER/TRACE/ORACLE/BASTION/WARDEN/SCRIBE role-specific reasoning, approval workflows, simulator execution, or shell/network tools.
+Phase 19 does **not** implement approval workflows, simulator execution, or shell/network tools. Role-specific reasoning is delivered incrementally in Phases 20–23 (WATCHTOWER, TRACE, ORACLE, BASTION, WARDEN, SCRIBE).
 
 ## Architecture
 
@@ -85,3 +85,7 @@ node apps/web/scripts/capture-agent-runtime-demo.mjs
 - Extend role-specific definitions in registry; do not bypass tool authorization
 - Continue using Phase 18 provider facade only
 - Execution-class tools remain server-only
+
+## Phase 23 — SCRIBE
+
+SCRIBE is registered in `DEFAULT_AGENT_REGISTRY` with read-only tools (`get_incident`, `list_existing_evidence`, `list_hypotheses`, `list_proposals`, `search_events`, `list_alerts`). `ScribeRoleHandler.post_process` delegates to `aegis_reports.ReportService` for deterministic assembly, optional narrative grounding, immutable versioning, and export artifacts. See `docs/reports.md` and ADR 0024.

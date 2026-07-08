@@ -51,12 +51,13 @@ stateDiagram-v2
 
 ## Phase boundaries
 
-- **Phase 23 (SCRIBE):** reporting — not implemented
+- **Phase 23 (SCRIBE):** evidence-linked after-action reporting via `aegis_reports` + SCRIBE narrative; immutable `ReportVersionV1` artifacts — see `docs/reports.md`
 - **Phase 24:** approval UI, approve/reject routes, simulator command execution — not implemented
 - Class 2/3 proposals stay `pending` with `approval_required`; no autonomous execution in Phase 22
 
 ## References
 
 - ADR 0023 — BASTION/WARDEN Policy and Proposals
+- ADR 0024 — SCRIBE evidence-linked reporting
 - `docs/AEGIS-v1.0-Agent-Specs/agent-system/22-bastion-and-warden.md`
 - `packages/policy/README.md`

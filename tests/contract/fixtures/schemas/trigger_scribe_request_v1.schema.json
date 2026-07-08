@@ -1,0 +1,54 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "idempotencyKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Idempotencykey",
+      "type": "string"
+    },
+    "incidentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "providerId": {
+      "default": "mock",
+      "title": "Providerid",
+      "type": "string"
+    },
+    "regenerate": {
+      "default": false,
+      "title": "Regenerate",
+      "type": "boolean"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "traceId": {
+      "title": "Traceid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "traceId",
+    "idempotencyKey"
+  ],
+  "title": "TriggerScribeRequestV1",
+  "type": "object"
+}

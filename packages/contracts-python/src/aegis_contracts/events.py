@@ -141,6 +141,9 @@ class EventTypeRegistry:
         "investigation.hypothesis.revised": 1,
         "investigation.hypothesis.comparison.created": 1,
         "investigation.verification.requested": 1,
+        "report.version.created": 1,
+        "report.generation.completed": 1,
+        "report.generation.failed": 1,
     }
 
     @classmethod

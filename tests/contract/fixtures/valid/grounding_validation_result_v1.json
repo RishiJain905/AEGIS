@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "claimId": "claim_007",
+  "valid": false,
+  "citationResults": [],
+  "rejectionReason": "Hallucinated evidence reference rejected during grounding validation.",
+  "downgradedCategory": "unsupported"
+}

@@ -1,0 +1,62 @@
+{
+  "executiveSummary": "Mock SCRIBE executive summary grounded to visible investigation artifacts.",
+  "chronologySummary": "Mock chronology synthesized from persisted domain events and investigation timeline.",
+  "claims": [
+    {
+      "claimId": "claim_narrative_001",
+      "category": "investigation_evidence",
+      "text": "TRACE collected authentication failure evidence linked to the primary workstation asset.",
+      "confidence": 0.84,
+      "uncertainty": "Narrative limited to visible evidence IDs.",
+      "citations": [
+        {
+          "kind": "evidence",
+          "referenceId": "evidence:evt_auth_fail_001",
+          "label": "Authentication failure evidence"
+        }
+      ]
+    },
+    {
+      "claimId": "claim_narrative_002",
+      "category": "oracle_hypothesis",
+      "text": "ORACLE hypothesized credential misuse with competing benign-admin explanation.",
+      "confidence": 0.71,
+      "citations": [
+        {
+          "kind": "hypothesis",
+          "referenceId": "hyp_01ARZ3NDEKTSV4RRFFQ69G5FBW",
+          "label": "Credential misuse hypothesis"
+        }
+      ]
+    },
+    {
+      "claimId": "claim_narrative_003",
+      "category": "agent_inference",
+      "text": "Observed coordination between authentication failures and API anomalies suggests staged access.",
+      "confidence": 0.62,
+      "uncertainty": "Inference only; not an observed fact.",
+      "citations": []
+    }
+  ],
+  "lessons": [
+    "Preserve contradictory hypotheses during after-action review.",
+    "Policy-gated proposals require explicit human approval."
+  ],
+  "rationale": "Mock SCRIBE narrative constrained to cited investigation artifacts.",
+  "confidence": 0.8,
+  "evidenceCitations": [],
+  "toolRequests": [
+    {
+      "name": "list_existing_evidence",
+      "arguments": {}
+    },
+    {
+      "name": "list_hypotheses",
+      "arguments": {}
+    },
+    {
+      "name": "list_proposals",
+      "arguments": {}
+    }
+  ]
+}
