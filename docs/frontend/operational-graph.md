@@ -62,10 +62,10 @@ GraphVisualState (Zustand)         ← ephemeral UI (positions, highlights, came
 
 See [`docs/graph-performance.md`](../../graph-performance.md) for worker protocol, LOD tiers, cluster collapse, benchmarks, and budgets.
 
-## Deferred to later phases
+## Related phases
 
-- Live WebSocket delta streaming (Phase 11–13)
-- Three.js cinematic view (Phase 27)
+- Live WebSocket delta streaming: Phases 11–13
+- Three.js semantic renderer (secondary presentation): see [`cinematic-renderer.md`](cinematic-renderer.md) (Phase 27)
 
 ## Development
 
