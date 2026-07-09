@@ -13,6 +13,7 @@ dependencies = [
     "aegis-agents",
     "aegis-policy",
     "aegis-reports",
+    "aegis-replay",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
 ]
@@ -27,6 +28,7 @@ aegis-incidents = { workspace = true }
 aegis-agents = { workspace = true }
 aegis-policy = { workspace = true }
 aegis-reports = { workspace = true }
+aegis-replay = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

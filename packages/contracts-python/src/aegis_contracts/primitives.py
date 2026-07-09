@@ -18,7 +18,7 @@ AUTHORED_ID_PATTERN = re.compile(
 )
 RUNTIME_ID_PATTERN = re.compile(
     r"^(evt|run|trc|inc|alt|evd|ags|prp|apr|act|mdl|scr|hyp|gen|atk|tiv|aaf|"
-    r"wtr|tip|eat|ino|caa|ovl)"
+    r"wtr|tip|eat|ino|caa|ovl|rps)"
     r"_[0-9A-HJKMNP-TV-Z]{26}$"
 )
 
@@ -138,6 +138,7 @@ GenerationRequestId = Annotated[str, BeforeValidator(_make_runtime_id_validator(
 AgentTaskId = Annotated[str, BeforeValidator(_make_runtime_id_validator("atk"))]
 ToolInvocationId = Annotated[str, BeforeValidator(_make_runtime_id_validator("tiv"))]
 AgentArtifactId = Annotated[str, BeforeValidator(_make_runtime_id_validator("aaf"))]
+ReplaySnapshotId = Annotated[str, BeforeValidator(_make_runtime_id_validator("rps"))]
 
 UtcTimestamp = Annotated[
     datetime,

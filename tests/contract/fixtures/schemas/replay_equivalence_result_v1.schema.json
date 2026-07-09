@@ -1,0 +1,297 @@
+{
+  "$defs": {
+    "ReplayCursorV1": {
+      "additionalProperties": false,
+      "properties": {
+        "incidentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Incidentid"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "simTime": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Simtime"
+        }
+      },
+      "required": ["schemaVersion", "runId", "sequence"],
+      "title": "ReplayCursorV1",
+      "type": "object"
+    },
+    "ReplayModeV1": {
+      "enum": ["from_events", "from_snapshot_plus_events"],
+      "title": "ReplayModeV1",
+      "type": "string"
+    },
+    "ReplayProvenanceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "appliedEventCount": {
+          "minimum": 0,
+          "title": "Appliedeventcount",
+          "type": "integer"
+        },
+        "appliedFromSequence": {
+          "minimum": 0,
+          "title": "Appliedfromsequence",
+          "type": "integer"
+        },
+        "appliedToSequence": {
+          "minimum": 0,
+          "title": "Appliedtosequence",
+          "type": "integer"
+        },
+        "fallbackReason": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fallbackreason"
+        },
+        "mode": {
+          "$ref": "#/$defs/ReplayModeV1"
+        },
+        "reconstructedAt": {
+          "title": "Reconstructedat",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "snapshotId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snapshotid"
+        },
+        "snapshotSequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snapshotsequence"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "mode",
+        "appliedFromSequence",
+        "appliedToSequence",
+        "appliedEventCount",
+        "reconstructedAt"
+      ],
+      "title": "ReplayProvenanceV1",
+      "type": "object"
+    },
+    "StateDiffEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "After"
+        },
+        "before": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Before"
+        },
+        "changeType": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Changetype",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": ["path", "changeType"],
+      "title": "StateDiffEntryV1",
+      "type": "object"
+    },
+    "StateDiffV1": {
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/StateDiffEntryV1"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "equivalent": {
+          "title": "Equivalent",
+          "type": "boolean"
+        },
+        "fromCursor": {
+          "$ref": "#/$defs/ReplayCursorV1"
+        },
+        "fromDigest": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Fromdigest",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "toCursor": {
+          "$ref": "#/$defs/ReplayCursorV1"
+        },
+        "toDigest": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Todigest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "fromCursor",
+        "toCursor",
+        "fromDigest",
+        "toDigest",
+        "equivalent"
+      ],
+      "title": "StateDiffV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "checkedAt": {
+      "title": "Checkedat",
+      "type": "string"
+    },
+    "diff": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StateDiffV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "equivalent": {
+      "title": "Equivalent",
+      "type": "boolean"
+    },
+    "liveDigest": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Livedigest",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/ReplayProvenanceV1"
+    },
+    "reconstructedDigest": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Reconstructeddigest",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "sequence",
+    "liveDigest",
+    "reconstructedDigest",
+    "equivalent",
+    "provenance",
+    "checkedAt"
+  ],
+  "title": "ReplayEquivalenceResultV1",
+  "type": "object"
+}

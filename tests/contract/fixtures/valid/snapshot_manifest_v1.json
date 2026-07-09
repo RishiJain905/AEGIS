@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "snapshotId": "rps_01ARZ3NDEKTSV4RRFFQ69G5FC0",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sequence": 500,
+  "simTime": "2026-01-01T18:42:03.420Z",
+  "scenarioVersionId": "scenario-version:v1.0.0-synthetic",
+  "engineVersion": "0.0.0-phase09",
+  "projectorVersion": "0.0.0-phase25",
+  "workspaceVersion": "0.0.0-phase25",
+  "eventRangeFrom": 0,
+  "eventRangeTo": 500,
+  "checksum": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "compression": "gzip",
+  "contentType": "application/gzip",
+  "sizeBytes": 8192,
+  "objectKey": "snapshots/run_01ARZ3NDEKTSV4RRFFQ69G5FAV/500/rps_01ARZ3NDEKTSV4RRFFQ69G5FC0.json.gz",
+  "stateDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "triggerReason": "sequence_interval",
+  "retentionClass": "standard",
+  "createdAt": "2026-06-30T03:00:00.000Z",
+  "compatible": true
+}

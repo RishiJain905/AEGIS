@@ -15,7 +15,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="aegis-worker")
     parser.add_argument(
         "--mode",
-        choices=["health", "outbox-relay", "agent-runtime"],
+        choices=["health", "outbox-relay", "agent-runtime", "snapshot"],
         default=os.environ.get("AEGIS_WORKER_MODE", "health"),
     )
     args = parser.parse_args()
@@ -30,6 +30,12 @@ def main() -> None:
         from aegis_workers.agent_runtime_runner import main as agent_runtime_main
 
         agent_runtime_main()
+        return
+
+    if args.mode == "snapshot":
+        from aegis_workers.snapshots.runner import main as snapshot_main
+
+        snapshot_main()
         return
 
     health = get_health("worker")

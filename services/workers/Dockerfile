@@ -4,9 +4,12 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY services/workers/pyproject.toml services/workers/
+COPY services/replay/pyproject.toml services/replay/
 COPY packages/contracts-python/pyproject.toml packages/contracts-python/
 COPY packages/persistence/pyproject.toml packages/persistence/
 COPY packages/event-streaming/pyproject.toml packages/event-streaming/
+COPY packages/scenario-sdk/pyproject.toml packages/scenario-sdk/
+COPY packages/simulation-domain/pyproject.toml packages/simulation-domain/
 COPY packages/model-provider/pyproject.toml packages/model-provider/
 COPY packages/policy/pyproject.toml packages/policy/
 COPY services/reports/pyproject.toml services/reports/
@@ -14,10 +17,13 @@ COPY services/agents/pyproject.toml services/agents/
 COPY packages/contracts-python/src packages/contracts-python/src
 COPY packages/persistence/src packages/persistence/src
 COPY packages/event-streaming/src packages/event-streaming/src
+COPY packages/scenario-sdk/src packages/scenario-sdk/src
+COPY packages/simulation-domain/src packages/simulation-domain/src
 COPY packages/model-provider/src packages/model-provider/src
 COPY packages/policy/src packages/policy/src
 COPY services/reports/src services/reports/src
 COPY services/agents/src services/agents/src
+COPY services/replay/src services/replay/src
 COPY services/workers/src services/workers/src
 RUN uv sync --frozen --no-dev --package aegis-workers
 
@@ -26,9 +32,12 @@ WORKDIR /app
 RUN groupadd -r aegis && useradd -r -g aegis aegis
 COPY --from=builder /app/.venv /app/.venv
 COPY services/workers/src services/workers/src
+COPY services/replay/src services/replay/src
 COPY packages/contracts-python/src packages/contracts-python/src
 COPY packages/persistence/src packages/persistence/src
 COPY packages/event-streaming/src packages/event-streaming/src
+COPY packages/scenario-sdk/src packages/scenario-sdk/src
+COPY packages/simulation-domain/src packages/simulation-domain/src
 COPY packages/model-provider/src packages/model-provider/src
 COPY packages/policy/src packages/policy/src
 COPY services/reports/src services/reports/src

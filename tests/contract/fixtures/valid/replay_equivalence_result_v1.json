@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sequence": 500,
+  "liveDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "reconstructedDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "equivalent": true,
+  "diff": null,
+  "provenance": {
+    "schemaVersion": 1,
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "mode": "from_events",
+    "snapshotId": null,
+    "snapshotSequence": null,
+    "appliedFromSequence": 0,
+    "appliedToSequence": 500,
+    "appliedEventCount": 500,
+    "fallbackReason": null,
+    "reconstructedAt": "2026-06-30T03:00:00.000Z"
+  },
+  "checkedAt": "2026-06-30T03:01:00.000Z"
+}

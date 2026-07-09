@@ -111,6 +111,9 @@ async def db_session(
             "scenario_versions",
             "scenarios",
             "stored_objects",
+            "replay_snapshot_manifests",
+            "report_export_artifacts",
+            "report_versions",
             "tools",
         ):
             await session.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))

@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase24"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase25"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -161,6 +161,14 @@ APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+REPLAY_CURSOR_SCHEMA_VERSION: Final[int] = 1
+REPLAY_CURSOR_RANGE_SCHEMA_VERSION: Final[int] = 1
+REPLAY_PROVENANCE_SCHEMA_VERSION: Final[int] = 1
+REPLAY_STATE_SCHEMA_VERSION: Final[int] = 1
+REPLAY_SNAPSHOT_SCHEMA_VERSION: Final[int] = 1
+SNAPSHOT_MANIFEST_SCHEMA_VERSION: Final[int] = 1
+STATE_DIFF_SCHEMA_VERSION: Final[int] = 1
+REPLAY_EQUIVALENCE_RESULT_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -307,6 +315,14 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "modify_proposal_response": frozenset({MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION}),
     "cancel_proposal_response": frozenset({CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION}),
     "trigger_watchtower_request": frozenset({TRIGGER_WATCHTOWER_REQUEST_SCHEMA_VERSION}),
+    "replay_cursor": frozenset({REPLAY_CURSOR_SCHEMA_VERSION}),
+    "replay_cursor_range": frozenset({REPLAY_CURSOR_RANGE_SCHEMA_VERSION}),
+    "replay_provenance": frozenset({REPLAY_PROVENANCE_SCHEMA_VERSION}),
+    "replay_state": frozenset({REPLAY_STATE_SCHEMA_VERSION}),
+    "replay_snapshot": frozenset({REPLAY_SNAPSHOT_SCHEMA_VERSION}),
+    "snapshot_manifest": frozenset({SNAPSHOT_MANIFEST_SCHEMA_VERSION}),
+    "state_diff": frozenset({STATE_DIFF_SCHEMA_VERSION}),
+    "replay_equivalence_result": frozenset({REPLAY_EQUIVALENCE_RESULT_SCHEMA_VERSION}),
 }
 
 

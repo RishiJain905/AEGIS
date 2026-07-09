@@ -176,6 +176,7 @@ export * from './hypothesis';
 export * from './proposals';
 export * from './approvals';
 export * from './reports';
+export * from './replay';
 
 import {
   afterActionReportSchema,
@@ -203,6 +204,16 @@ import {
   rejectProposalResponseSchema,
   staleProposalErrorSchema,
 } from './approvals';
+import {
+  replayCursorRangeSchema,
+  replayCursorSchema,
+  replayEquivalenceResultSchema,
+  replayProvenanceSchema,
+  replaySnapshotSchema,
+  replayStateSchema,
+  snapshotManifestSchema,
+  stateDiffSchema,
+} from './replay';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
@@ -326,4 +337,12 @@ export const FIXTURE_SCHEMA_MAP = {
   reject_proposal_response_v1: rejectProposalResponseSchema,
   modify_proposal_response_v1: modifyProposalResponseSchema,
   cancel_proposal_response_v1: cancelProposalResponseSchema,
+  replay_cursor_v1: replayCursorSchema,
+  replay_cursor_range_v1: replayCursorRangeSchema,
+  replay_provenance_v1: replayProvenanceSchema,
+  replay_state_v1: replayStateSchema,
+  replay_snapshot_v1: replaySnapshotSchema,
+  snapshot_manifest_v1: snapshotManifestSchema,
+  state_diff_v1: stateDiffSchema,
+  replay_equivalence_result_v1: replayEquivalenceResultSchema,
 } as const;

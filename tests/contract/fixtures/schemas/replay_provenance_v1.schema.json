@@ -1,0 +1,92 @@
+{
+  "$defs": {
+    "ReplayModeV1": {
+      "enum": ["from_events", "from_snapshot_plus_events"],
+      "title": "ReplayModeV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "appliedEventCount": {
+      "minimum": 0,
+      "title": "Appliedeventcount",
+      "type": "integer"
+    },
+    "appliedFromSequence": {
+      "minimum": 0,
+      "title": "Appliedfromsequence",
+      "type": "integer"
+    },
+    "appliedToSequence": {
+      "minimum": 0,
+      "title": "Appliedtosequence",
+      "type": "integer"
+    },
+    "fallbackReason": {
+      "anyOf": [
+        {
+          "maxLength": 512,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fallbackreason"
+    },
+    "mode": {
+      "$ref": "#/$defs/ReplayModeV1"
+    },
+    "reconstructedAt": {
+      "title": "Reconstructedat",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "snapshotId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Snapshotid"
+    },
+    "snapshotSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Snapshotsequence"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "mode",
+    "appliedFromSequence",
+    "appliedToSequence",
+    "appliedEventCount",
+    "reconstructedAt"
+  ],
+  "title": "ReplayProvenanceV1",
+  "type": "object"
+}

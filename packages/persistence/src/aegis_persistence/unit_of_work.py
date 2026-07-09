@@ -36,6 +36,7 @@ from aegis_persistence.repositories.postgres import (
     create_outbox_row,
 )
 from aegis_persistence.repositories.proposals import PostgresProposalRepository
+from aegis_persistence.repositories.replay import PostgresReplaySnapshotRepository
 from aegis_persistence.repositories.reports import PostgresReportRepository
 
 
@@ -79,6 +80,7 @@ class PostgresUnitOfWork:
         self._approvals = PostgresApprovalRepository(self._session)
         self._executed_actions = PostgresExecutedActionRepository(self._session)
         self._reports = PostgresReportRepository(self._session)
+        self._replay_snapshots = PostgresReplaySnapshotRepository(self._session)
         self._investigation = PostgresInvestigationRepository(
             self._session,
             oracle_repository=self._oracle_hypotheses,
@@ -197,6 +199,10 @@ class PostgresUnitOfWork:
     @property
     def reports(self) -> PostgresReportRepository:
         return self._reports
+
+    @property
+    def replay_snapshots(self) -> PostgresReplaySnapshotRepository:
+        return self._replay_snapshots
 
     @property
     def investigation(self) -> PostgresInvestigationRepository:

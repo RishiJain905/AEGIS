@@ -18,8 +18,8 @@ export default function ReplayPage({ params }: ReplayPageProps) {
       <CommandCentreShell runId={runId}>
         <Panel title="Replay workspace" description="Historical playback — Phase 26">
           <EmptyState
-            title="Replay engine not connected"
-            description="Snapshot and replay controls arrive in later phases. Timeline cursor remains fixture-backed."
+            title="Replay UI not connected"
+            description="Phase 25 backend snapshot/replay APIs exist under /api/v1/replay. Scrubbing controls and timeline UI arrive in Phase 26. Timeline cursor remains fixture-backed."
           />
         </Panel>
       </CommandCentreShell>
