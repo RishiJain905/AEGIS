@@ -1,22 +1,26 @@
 import type {
+  AfterActionReportV1,
   AgentSessionDetailV1,
   AlertV1,
   AssetRiskScoreV1,
   GraphSnapshotV1,
   IncidentV1,
   InvestigationDetailV1,
+  ReportVersionV1,
   RunV1,
   ScenarioV1,
   ScenarioVersionV1,
 } from '@aegis/contracts-ts';
 
 export type {
+  AfterActionReportV1,
   AgentSessionDetailV1,
   AlertV1,
   AssetRiskScoreV1,
   GraphSnapshotV1,
   IncidentV1,
   InvestigationDetailV1,
+  ReportVersionV1,
   RunV1,
   ScenarioV1,
   ScenarioVersionV1,
@@ -52,6 +56,8 @@ export interface AegisApiClient {
   listAlerts(runId: string, signal?: AbortSignal): Promise<AlertV1[]>;
   listRiskScores(runId: string, signal?: AbortSignal): Promise<AssetRiskScoreV1[]>;
   getRunGraph(runId: string, signal?: AbortSignal): Promise<RunGraphResult>;
+  getAfterActionReport(runId: string, signal?: AbortSignal): Promise<AfterActionReportV1>;
+  listAfterActionReportVersions(runId: string, signal?: AbortSignal): Promise<ReportVersionV1[]>;
   getConnectionStatus(signal?: AbortSignal): Promise<ConnectionStatus>;
   isReadOnly(runId: string, signal?: AbortSignal): Promise<boolean>;
 }

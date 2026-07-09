@@ -17,6 +17,7 @@ members = [
     "aegis-observability",
     "aegis-persistence",
     "aegis-policy",
+    "aegis-reports",
     "aegis-scenario-sdk",
     "aegis-simulation",
     "aegis-simulation-domain",
@@ -75,6 +76,7 @@ dependencies = [
     { name = "aegis-model-provider" },
     { name = "aegis-persistence" },
     { name = "aegis-policy" },
+    { name = "aegis-reports" },
     { name = "jsonschema" },
 ]
 
@@ -84,6 +86,7 @@ requires-dist = [
     { name = "aegis-model-provider", editable = "packages/model-provider" },
     { name = "aegis-persistence", editable = "packages/persistence" },
     { name = "aegis-policy", editable = "packages/policy" },
+    { name = "aegis-reports", editable = "services/reports" },
     { name = "jsonschema", specifier = ">=4.23" },
 ]
 
@@ -98,6 +101,7 @@ dependencies = [
     { name = "aegis-incidents" },
     { name = "aegis-ml" },
     { name = "aegis-persistence" },
+    { name = "aegis-reports" },
     { name = "aegis-simulation" },
     { name = "fastapi" },
     { name = "uvicorn", extra = ["standard"] },
@@ -111,6 +115,7 @@ requires-dist = [
     { name = "aegis-incidents", editable = "services/incidents" },
     { name = "aegis-ml", editable = "services/ml" },
     { name = "aegis-persistence", editable = "packages/persistence" },
+    { name = "aegis-reports", editable = "services/reports" },
     { name = "aegis-simulation", editable = "services/simulation" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
@@ -286,6 +291,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "aegis-contracts", editable = "packages/contracts-python" }]
+
+[[package]]
+name = "aegis-reports"
+version = "0.0.0"
+source = { editable = "services/reports" }
+dependencies = [
+    { name = "aegis-contracts" },
+    { name = "aegis-persistence" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aegis-contracts", editable = "packages/contracts-python" },
+    { name = "aegis-persistence", editable = "packages/persistence" },
+]
 
 [[package]]
 name = "aegis-scenario-sdk"

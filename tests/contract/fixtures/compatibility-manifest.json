@@ -1,11 +1,21 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase22",
+  "workspaceVersion": "0.0.0-phase23",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",
       "sha256": "6a72bb7145e5db4beff075808ce97d5a8215325d8d1de9dc4b59afc2d4813873",
       "schemaVersion": 2
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/after_action_report_source_v1.schema.json",
+      "sha256": "616f5cb57ec8db049439bb114ccd899b40315c50babc2541dc396cdec19e184c",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/after_action_report_v1.schema.json",
+      "sha256": "4a605a2dba2ab0455405d546c0ff0fdc863f4b6df8b3a62bac61609588d0b57e",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_artifact_v1.schema.json",
@@ -228,6 +238,11 @@
       "schemaVersion": 1
     },
     {
+      "path": "tests/contract/fixtures/schemas/grounding_validation_result_v1.schema.json",
+      "sha256": "909843a95d187336a6dc0a5256ee1870023b78f0bcfb3f709708e9b1c5b2def5",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/hypothesis_v1.schema.json",
       "sha256": "5c8a5468124cd6be387319b2ee03707fef45a0a1be9040224aa87c2da6f07932",
       "schemaVersion": 1
@@ -250,7 +265,7 @@
     {
       "path": "tests/contract/fixtures/schemas/investigation_detail_v1.schema.json",
       "sha256": "1e0323fbe7a38672083446676c4f80e32d7dd31af7fb818ad03a8ea6ecd3fa29",
-      "schemaVersion": 1
+      "schemaVersion": 3
     },
     {
       "path": "tests/contract/fixtures/schemas/investigation_note_v1.schema.json",
@@ -370,6 +385,31 @@
     {
       "path": "tests/contract/fixtures/schemas/recorded_response_key_v1.schema.json",
       "sha256": "91285f21cdfb36552711ee75f79f3cbd6e90bcceaf378559354c604cf025f1bd",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/report_citation_v1.schema.json",
+      "sha256": "241e62c0967bf8ca077f8b7ed983a1864ac06f353f71703ef50060bada0dbb3d",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/report_claim_v1.schema.json",
+      "sha256": "ad6b6162bb3f5e3342732e99d0087727ef8220f314787ccf30915bbbdc1b216e",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/report_export_artifact_v1.schema.json",
+      "sha256": "12c5d30f0358b4817853badd58eecde5b5fac3fb5dd583e921cf0fc665afe978",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/report_timeline_entry_v1.schema.json",
+      "sha256": "aa6af1ccc880a129382a4413015a78417dd1c4385343e4ec9408f2200e3155e6",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/report_version_v1.schema.json",
+      "sha256": "b8e64c8cbd2f98a1c77f4cfafe9a45023392630d93e96d7d30aa615a18d2efcd",
       "schemaVersion": 1
     },
     {
@@ -513,6 +553,11 @@
       "schemaVersion": 1
     },
     {
+      "path": "tests/contract/fixtures/schemas/trigger_scribe_request_v1.schema.json",
+      "sha256": "76ebd9fb463079ddfa8a0af56a2abd571e745eaf6597177fb4e52ec7c4d5d494",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/trigger_warden_request_v1.schema.json",
       "sha256": "ca3deaf3999c9f5ce1d2a9db738183f74d051de046382807e666699bba05a0ea",
       "schemaVersion": 1
@@ -536,6 +581,16 @@
       "path": "tests/contract/fixtures/valid/action_proposal_v1.json",
       "sha256": "5332895b11c3ab23ab5523efc2525be07285f02da895c28bcfbf27eb6555f1dc",
       "schemaVersion": 2
+    },
+    {
+      "path": "tests/contract/fixtures/valid/after_action_report_source_v1.json",
+      "sha256": "5058dbd8ebd032cf54ad60bf7fd4a9477198d6425ae6e4e9d3a6a410ebebd429",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/after_action_report_v1.json",
+      "sha256": "359574f953a51a9355194c8b360b23c7fc410a590548e5761db08f16c4e5005d",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/agent_artifact_v1.json",
@@ -758,6 +813,11 @@
       "schemaVersion": 1
     },
     {
+      "path": "tests/contract/fixtures/valid/grounding_validation_result_v1.json",
+      "sha256": "564cfb0984ad25c6edd3afa2e98319c07b9f490346ee7629bfcf1d0ce6229d7d",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/hypothesis_v1.json",
       "sha256": "022cff60fb02c9db9863ec669bd7d6b2cb5b876ff721118a3795062e5aa651d4",
       "schemaVersion": 1
@@ -903,6 +963,31 @@
       "schemaVersion": 1
     },
     {
+      "path": "tests/contract/fixtures/valid/report_citation_v1.json",
+      "sha256": "ceb15ff1c3befd502a98fff92014f6527d012b1b35bbd72cb678a64dd88bf27a",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/report_claim_v1.json",
+      "sha256": "b98631968430200b7bfbe8233fde662f25e575f6749d7c587ac3417778a7b51f",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/report_export_artifact_v1.json",
+      "sha256": "cb8e1e86bb3d5570eee72524e8d4a8db6663222b57d109f4b84d5db90cc923b6",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/report_timeline_entry_v1.json",
+      "sha256": "478a9191aca666deea8b78d9d5f0303c687d882513c293df46b65076d589308d",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/report_version_v1.json",
+      "sha256": "79a1912852d4c55c967f48833a13ed818d5409fb345068f26e970bbde74ceed5",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/response_option_v1.json",
       "sha256": "d1bf37ea28d802da1803e3d4e3d7f7314477ee2d5c5d819a683d45c3e1659364",
       "schemaVersion": 1
@@ -1040,6 +1125,11 @@
     {
       "path": "tests/contract/fixtures/valid/trigger_bastion_request_v1.json",
       "sha256": "a16426cfc8faea3d0fcd55a78c2842117ac619759780a2fde288f5a9008e182b",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/trigger_scribe_request_v1.json",
+      "sha256": "e670aa18f9f95e5fbfa155483644e43004adf726e27d998c6cd7f147c58ac237",
       "schemaVersion": 1
     },
     {

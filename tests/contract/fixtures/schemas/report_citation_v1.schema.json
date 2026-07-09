@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "ReportCitationKindV1": {
+      "enum": [
+        "event",
+        "evidence",
+        "hypothesis",
+        "proposal",
+        "policy_decision",
+        "model_score",
+        "agent_task",
+        "agent_session",
+        "alert",
+        "asset"
+      ],
+      "title": "ReportCitationKindV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "$ref": "#/$defs/ReportCitationKindV1"
+    },
+    "label": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "rationale": {
+      "default": "",
+      "maxLength": 2048,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "referenceId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Referenceid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sequence"
+    }
+  },
+  "required": ["schemaVersion", "kind", "referenceId", "label"],
+  "title": "ReportCitationV1",
+  "type": "object"
+}

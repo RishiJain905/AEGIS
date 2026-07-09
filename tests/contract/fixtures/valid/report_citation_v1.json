@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "kind": "event",
+  "referenceId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "label": "Authentication failure telemetry",
+  "sequence": 12,
+  "rationale": ""
+}

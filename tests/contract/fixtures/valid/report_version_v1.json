@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "rpv_01ARZ3NDEKTSV4RRFFQ69G5FBE",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "incidentId": "incident:inc_synthetic_001",
+  "versionNumber": 1,
+  "reportId": "aar_01ARZ3NDEKTSV4RRFFQ69G5FBW",
+  "status": "completed",
+  "sourceSequenceFrom": 1,
+  "sourceSequenceTo": 42,
+  "providerId": "mock",
+  "promptVersion": "phase23-scribe-v1",
+  "sessionId": "agent-session:ags_scribe_001",
+  "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FBD",
+  "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "groundingFallback": false,
+  "createdAt": "2026-06-30T02:30:00Z"
+}

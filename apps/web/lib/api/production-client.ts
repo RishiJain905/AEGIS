@@ -1,9 +1,11 @@
 import {
+  afterActionReportSchema,
   agentSessionDetailSchema,
   apiErrorEnvelopeSchema,
   graphSnapshotSchema,
   investigationDetailSchema,
   parseContract,
+  reportVersionSchema,
   riskScoresListResponseSchema,
 } from '@aegis/contracts-ts';
 
@@ -85,6 +87,17 @@ export function createProductionClient(): AegisApiClient {
         }
         throw error;
       }
+    },
+    getAfterActionReport: (runId, signal) =>
+      fetchJson(`/api/v1/runs/${runId}/after-action-report`, signal, (data) =>
+        parseContract(afterActionReportSchema, data),
+      ),
+    listAfterActionReportVersions: async (runId, signal) => {
+      const data = await fetchJson<unknown[]>(
+        `/api/v1/runs/${runId}/after-action-report/versions`,
+        signal,
+      );
+      return data.map((item) => parseContract(reportVersionSchema, item));
     },
     getConnectionStatus: async (signal): Promise<ConnectionStatus> => {
       try {

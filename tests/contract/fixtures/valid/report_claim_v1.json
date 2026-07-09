@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "claimId": "claim_001",
+  "category": "observed_fact",
+  "text": "Repeated authentication failures were observed on the logistics workstation asset.",
+  "confidence": 0.91,
+  "uncertainty": null,
+  "citations": [
+    {
+      "schemaVersion": 1,
+      "kind": "event",
+      "referenceId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "label": "Authentication failure telemetry",
+      "sequence": 12,
+      "rationale": ""
+    }
+  ],
+  "grounded": true,
+  "rejectionReason": null
+}

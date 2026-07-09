@@ -277,6 +277,20 @@ class PostgresEventRepository:
         current = result.scalar_one_or_none()
         return 0 if current is None else int(current) + 1
 
+    async def list_by_run(
+        self,
+        run_id: str,
+        *,
+        limit: int = 10_000,
+    ) -> list[DomainEventEnvelopeV1]:
+        result = await self._session.execute(
+            select(DomainEventRow)
+            .where(DomainEventRow.run_id == run_id)
+            .order_by(DomainEventRow.sequence.asc())
+            .limit(limit)
+        )
+        return [event_to_domain(row) for row in result.scalars().all()]
+
 
 class PostgresAlertRepository:
     def __init__(self, session: AsyncSession) -> None:

@@ -259,6 +259,8 @@ class TaskExecutor:
             if role_handler is not None and session.role.value == "BASTION"
             else "Explain policy evaluation context for pending proposals."
             if role_handler is not None and session.role.value == "WARDEN"
+            else "Generate an evidence-linked after-action incident summary."
+            if role_handler is not None and session.role.value == "SCRIBE"
             else "Perform one investigation step for the incident."
         )
 
@@ -377,6 +379,13 @@ class TaskExecutor:
                 ]
             elif role_handler is not None and session.role.value == "WARDEN":
                 tool_requests = [{"name": "list_proposals", "arguments": {}}]
+            elif role_handler is not None and session.role.value == "SCRIBE":
+                tool_requests = [
+                    {"name": "list_existing_evidence", "arguments": {}},
+                    {"name": "list_hypotheses", "arguments": {}},
+                    {"name": "list_proposals", "arguments": {}},
+                    {"name": "search_events", "arguments": {"limit": 200}},
+                ]
             else:
                 tool_requests = [{"name": "list_evidence", "arguments": {}}]
 

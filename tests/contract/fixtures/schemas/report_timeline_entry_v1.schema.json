@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "title": "Eventid",
+      "type": "string"
+    },
+    "eventType": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Eventtype",
+      "type": "string"
+    },
+    "label": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "relatedEvidenceIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Relatedevidenceids",
+      "type": "array"
+    },
+    "relatedHypothesisIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Relatedhypothesisids",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "status": {
+      "default": "normal",
+      "maxLength": 64,
+      "title": "Status",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "sequence", "eventId", "eventType", "label", "timestamp"],
+  "title": "ReportTimelineEntryV1",
+  "type": "object"
+}

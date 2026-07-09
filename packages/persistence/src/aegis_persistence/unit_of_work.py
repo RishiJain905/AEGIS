@@ -32,6 +32,7 @@ from aegis_persistence.repositories.postgres import (
     create_outbox_row,
 )
 from aegis_persistence.repositories.proposals import PostgresProposalRepository
+from aegis_persistence.repositories.reports import PostgresReportRepository
 
 
 class PostgresUnitOfWork:
@@ -71,6 +72,7 @@ class PostgresUnitOfWork:
         self._action_proposals = PostgresActionProposalRepository(self._session)
         self._oracle_hypotheses = PostgresOracleHypothesisRepository(self._session)
         self._proposals = PostgresProposalRepository(self._session)
+        self._reports = PostgresReportRepository(self._session)
         self._investigation = PostgresInvestigationRepository(
             self._session,
             oracle_repository=self._oracle_hypotheses,
@@ -177,6 +179,10 @@ class PostgresUnitOfWork:
         return self._proposals
 
     @property
+    def reports(self) -> PostgresReportRepository:
+        return self._reports
+
+    @property
     def investigation(self) -> PostgresInvestigationRepository:
         return self._investigation
 
@@ -214,6 +220,14 @@ class EventRepositoryProxy:
 
     async def next_sequence(self, run_id: str) -> int:
         return await self._repository.next_sequence(run_id)
+
+    async def list_by_run(
+        self,
+        run_id: str,
+        *,
+        limit: int = 10_000,
+    ) -> list[DomainEventEnvelopeV1]:
+        return await self._repository.list_by_run(run_id, limit=limit)
 
     async def append(self, envelope: DomainEventEnvelopeV1) -> DomainEventEnvelopeV1:
         msg = "Use UnitOfWork.append_event to persist events with outbox rows"

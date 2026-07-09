@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "incidentId": "incident:inc_synthetic_001",
+  "sourceSequenceFrom": 1,
+  "sourceSequenceTo": 42,
+  "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAW"],
+  "evidenceIds": ["evidence:evt_auth_fail_001"],
+  "hypothesisIds": ["hyp_01ARZ3NDEKTSV4RRFFQ69G5FBW"],
+  "proposalIds": ["prp_01ARZ3NDEKTSV4RRFFQ69G5FB9"],
+  "policyDecisionIds": ["pdc_01ARZ3NDEKTSV4RRFFQ69G5FBA"],
+  "affectedAssetIds": ["asset:device-workstation-01"],
+  "alertIds": ["alert:alt_synthetic_001"],
+  "agentSessionIds": ["agent-session:ags_scribe_001"],
+  "timeline": [],
+  "investigationSummary": {
+    "incidentTitle": "Operation Silent Relay \u2014 After-action report",
+    "incidentState": "approval_pending"
+  }
+}

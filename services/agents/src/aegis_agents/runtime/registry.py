@@ -70,13 +70,22 @@ _WARDEN_TOOLS = [
     "get_risk_scores",
 ]
 
+_SCRIBE_TOOLS = [
+    "get_incident",
+    "list_existing_evidence",
+    "list_hypotheses",
+    "list_proposals",
+    "search_events",
+    "list_alerts",
+]
+
 _ROLE_TOOLS: dict[AgentRole, list[str]] = {
     AgentRole.WATCHTOWER: _WATCHTOWER_TOOLS,
     AgentRole.TRACE: _TRACE_TOOLS,
     AgentRole.ORACLE: _ORACLE_TOOLS,
     AgentRole.BASTION: _BASTION_TOOLS,
     AgentRole.WARDEN: _WARDEN_TOOLS,
-    AgentRole.SCRIBE: _BASE_TOOLS,
+    AgentRole.SCRIBE: _SCRIBE_TOOLS,
 }
 
 

@@ -1,0 +1,489 @@
+{
+  "$defs": {
+    "AfterActionReportSourceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "affectedAssetIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Affectedassetids",
+          "type": "array"
+        },
+        "agentSessionIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Agentsessionids",
+          "type": "array"
+        },
+        "alertIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Alertids",
+          "type": "array"
+        },
+        "eventIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Eventids",
+          "type": "array"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "hypothesisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hypothesisids",
+          "type": "array"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "investigationSummary": {
+          "additionalProperties": true,
+          "title": "Investigationsummary",
+          "type": "object"
+        },
+        "policyDecisionIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Policydecisionids",
+          "type": "array"
+        },
+        "proposalIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Proposalids",
+          "type": "array"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sourceSequenceFrom": {
+          "minimum": 0,
+          "title": "Sourcesequencefrom",
+          "type": "integer"
+        },
+        "sourceSequenceTo": {
+          "minimum": 0,
+          "title": "Sourcesequenceto",
+          "type": "integer"
+        },
+        "timeline": {
+          "items": {
+            "$ref": "#/$defs/ReportTimelineEntryV1"
+          },
+          "title": "Timeline",
+          "type": "array"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "incidentId",
+        "sourceSequenceFrom",
+        "sourceSequenceTo"
+      ],
+      "title": "AfterActionReportSourceV1",
+      "type": "object"
+    },
+    "ReportCitationKindV1": {
+      "enum": [
+        "event",
+        "evidence",
+        "hypothesis",
+        "proposal",
+        "policy_decision",
+        "model_score",
+        "agent_task",
+        "agent_session",
+        "alert",
+        "asset"
+      ],
+      "title": "ReportCitationKindV1",
+      "type": "string"
+    },
+    "ReportCitationV1": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/ReportCitationKindV1"
+        },
+        "label": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "rationale": {
+          "default": "",
+          "maxLength": 2048,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "referenceId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Referenceid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sequence"
+        }
+      },
+      "required": ["schemaVersion", "kind", "referenceId", "label"],
+      "title": "ReportCitationV1",
+      "type": "object"
+    },
+    "ReportClaimCategoryV1": {
+      "enum": [
+        "observed_fact",
+        "persisted_event",
+        "detection_score",
+        "graph_risk",
+        "investigation_evidence",
+        "oracle_hypothesis",
+        "bastion_proposal",
+        "warden_policy_decision",
+        "human_decision",
+        "agent_inference",
+        "unsupported",
+        "uncertain"
+      ],
+      "title": "ReportClaimCategoryV1",
+      "type": "string"
+    },
+    "ReportClaimV1": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/ReportClaimCategoryV1"
+        },
+        "citations": {
+          "items": {
+            "$ref": "#/$defs/ReportCitationV1"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "claimId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Claimid",
+          "type": "string"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "grounded": {
+          "default": true,
+          "title": "Grounded",
+          "type": "boolean"
+        },
+        "rejectionReason": {
+          "anyOf": [
+            {
+              "maxLength": 1024,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rejectionreason"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "text": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "uncertainty": {
+          "anyOf": [
+            {
+              "maxLength": 1024,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uncertainty"
+        }
+      },
+      "required": ["schemaVersion", "claimId", "category", "text"],
+      "title": "ReportClaimV1",
+      "type": "object"
+    },
+    "ReportTimelineEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "eventId": {
+          "title": "Eventid",
+          "type": "string"
+        },
+        "eventType": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Eventtype",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "relatedEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Relatedevidenceids",
+          "type": "array"
+        },
+        "relatedHypothesisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Relatedhypothesisids",
+          "type": "array"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "status": {
+          "default": "normal",
+          "maxLength": 64,
+          "title": "Status",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": ["schemaVersion", "sequence", "eventId", "eventType", "label", "timestamp"],
+      "title": "ReportTimelineEntryV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "checksum": {
+      "maxLength": 64,
+      "minLength": 64,
+      "title": "Checksum",
+      "type": "string"
+    },
+    "chronologySummary": {
+      "maxLength": 8192,
+      "minLength": 1,
+      "title": "Chronologysummary",
+      "type": "string"
+    },
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/ReportClaimV1"
+      },
+      "title": "Claims",
+      "type": "array"
+    },
+    "contradictions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Contradictions",
+      "type": "array"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "executiveSummary": {
+      "maxLength": 8192,
+      "minLength": 1,
+      "title": "Executivesummary",
+      "type": "string"
+    },
+    "groundingFallback": {
+      "default": false,
+      "title": "Groundingfallback",
+      "type": "boolean"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "lessons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Lessons",
+      "type": "array"
+    },
+    "narrativePromptVersion": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Narrativepromptversion"
+    },
+    "narrativeProviderId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Narrativeproviderid"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sessionid"
+    },
+    "source": {
+      "$ref": "#/$defs/AfterActionReportSourceV1"
+    },
+    "taskId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Taskid"
+    },
+    "timeline": {
+      "items": {
+        "$ref": "#/$defs/ReportTimelineEntryV1"
+      },
+      "title": "Timeline",
+      "type": "array"
+    },
+    "title": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "uncertainties": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Uncertainties",
+      "type": "array"
+    },
+    "versionNumber": {
+      "minimum": 1,
+      "title": "Versionnumber",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "runId",
+    "incidentId",
+    "versionNumber",
+    "title",
+    "executiveSummary",
+    "chronologySummary",
+    "source",
+    "checksum",
+    "createdAt"
+  ],
+  "title": "AfterActionReportV1",
+  "type": "object"
+}

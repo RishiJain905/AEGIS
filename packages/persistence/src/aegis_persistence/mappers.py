@@ -44,6 +44,11 @@ from aegis_contracts.investigation import (
     WatchtowerTriageResultV1,
 )
 from aegis_contracts.proposals import PolicyDecisionV1, ProposalRevisionV1
+from aegis_contracts.reports import (
+    AfterActionReportV1,
+    ReportExportArtifactV1,
+    ReportVersionV1,
+)
 
 from aegis_persistence.orm.tables import (
     ActionProposalRow,
@@ -72,6 +77,8 @@ from aegis_persistence.orm.tables import (
     ModelScoreRow,
     PolicyDecisionRow,
     ProposalRevisionRow,
+    ReportExportArtifactRow,
+    ReportVersionRow,
     RunRow,
     ScenarioRow,
     ScenarioVersionRow,
@@ -247,3 +254,20 @@ def proposal_revision_to_domain(row: ProposalRevisionRow) -> ProposalRevisionV1:
 
 def policy_decision_to_domain(row: PolicyDecisionRow) -> PolicyDecisionV1:
     return parse_contract(PolicyDecisionV1, row.payload)
+
+
+def report_version_to_domain(row: ReportVersionRow) -> ReportVersionV1:
+    version_payload = row.payload.get("version", row.payload)
+    return parse_contract(ReportVersionV1, version_payload)
+
+
+def after_action_report_to_domain(row: ReportVersionRow) -> AfterActionReportV1:
+    report_payload = row.payload.get("report")
+    if report_payload is None:
+        msg = f"Report payload missing for version row {row.id}"
+        raise KeyError(msg)
+    return parse_contract(AfterActionReportV1, report_payload)
+
+
+def report_export_artifact_to_domain(row: ReportExportArtifactRow) -> ReportExportArtifactV1:
+    return parse_contract(ReportExportArtifactV1, row.payload)

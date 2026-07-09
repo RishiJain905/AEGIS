@@ -5,6 +5,7 @@ import { Badge, Button, EmptyState, ErrorState, LoadingState, Panel } from '@aeg
 import { GraphEntityInspector, IncidentContextInspector } from '@/features/inspector';
 import { InvestigationPanel } from '@/features/investigation';
 import { ProposalsPanel } from '@/features/proposals/proposals-panel';
+import { ReportsPanel } from '@/features/reports/reports-panel';
 import { RiskExplanationPanel } from '@/features/risk';
 import {
   useIncident,
@@ -133,6 +134,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
             {incidentId ? <InvestigationPanel incidentId={incidentId} /> : null}
             {incidentId ? <ProposalsPanel incidentId={incidentId} /> : null}
+            {runId ? <ReportsPanel runId={runId} /> : null}
 
             {incidentQuery.data ? (
               <Panel title="Incident" density="compact">
