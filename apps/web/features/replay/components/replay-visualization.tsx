@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic';
 
 import { EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
+import { GraphViewModeToggle, useCinematicGraphStore } from '@/features/cinematic-graph';
+import { GraphViewMode } from '@/features/cinematic-graph/contracts';
 import { useReplay } from '@/features/replay/replay-provider';
 import { useReplayStore } from '@/stores/replay-store';
 
@@ -18,6 +20,14 @@ const OperationalGraphView = dynamic(
   },
 );
 
+const CinematicGraphView = dynamic(
+  () => import('@/features/cinematic-graph').then((module) => module.CinematicGraphView),
+  {
+    ssr: false,
+    loading: () => <LoadingState message="Loading historical 3D semantic renderer…" />,
+  },
+);
+
 export function ReplayVisualization() {
   const replay = useReplay();
   const state = useReplayStore((store) => store.reconstructedState);
@@ -25,6 +35,7 @@ export function ReplayVisualization() {
   const errorMessage = useReplayStore((store) => store.errorMessage);
   const errorCode = useReplayStore((store) => store.errorCode);
   const cursor = useReplayStore((store) => store.cursor);
+  const viewMode = useCinematicGraphStore((store) => store.viewMode);
 
   if (loadStatus === 'loading' && !state) {
     return (
@@ -75,18 +86,51 @@ export function ReplayVisualization() {
     );
   }
 
+  const evidenceNodeIds = state.evidence
+    .map((item) => item.assetId)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+  const incidentNodeIds = state.graph.nodes
+    .filter(
+      (node) =>
+        node.status === 'under_investigation' ||
+        node.status === 'compromised' ||
+        node.status === 'contained',
+    )
+    .map((node) => node.id);
+
   return (
     <Panel
-      title="Operational graph"
-      description={`Historical · sequence ${String(cursor.sequence)}`}
+      title={viewMode === GraphViewMode.THREE_D ? 'Semantic 3D graph' : 'Operational graph'}
+      description={
+        viewMode === GraphViewMode.THREE_D
+          ? `Historical 3D · sequence ${String(cursor.sequence)}`
+          : `Historical · sequence ${String(cursor.sequence)}`
+      }
       data-testid="visualization-slot"
     >
-      <OperationalGraphView
-        runId={replay.runId}
-        snapshot={state.graph}
-        graphStore={replay.graphStore}
-        graphRevision={replay.graphRevision}
-      />
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="text-xs text-[var(--aegis-text-secondary)]">
+          2D and 3D share the same reconstructed GraphStore at this replay cursor.
+        </p>
+        <GraphViewModeToggle />
+      </div>
+      {viewMode === GraphViewMode.THREE_D ? (
+        <CinematicGraphView
+          runId={replay.runId}
+          snapshot={state.graph}
+          graphStore={replay.graphStore}
+          graphRevision={replay.graphRevision}
+          evidenceNodeIds={evidenceNodeIds}
+          incidentNodeIds={incidentNodeIds}
+        />
+      ) : (
+        <OperationalGraphView
+          runId={replay.runId}
+          snapshot={state.graph}
+          graphStore={replay.graphStore}
+          graphRevision={replay.graphRevision}
+        />
+      )}
     </Panel>
   );
 }
