@@ -33,7 +33,12 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "runId", "fromSequence", "toSequence"],
+  "required": [
+    "schemaVersion",
+    "runId",
+    "fromSequence",
+    "toSequence"
+  ],
   "title": "ReplayCursorRangeV1",
   "type": "object"
 }

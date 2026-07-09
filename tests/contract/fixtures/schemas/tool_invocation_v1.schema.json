@@ -1,12 +1,21 @@
 {
   "$defs": {
     "AgentToolClass": {
-      "enum": ["read", "analysis_write", "proposal", "execution"],
+      "enum": [
+        "read",
+        "analysis_write",
+        "proposal",
+        "execution"
+      ],
       "title": "AgentToolClass",
       "type": "string"
     },
     "ToolInvocationStatus": {
-      "enum": ["success", "failed", "rejected"],
+      "enum": [
+        "success",
+        "failed",
+        "rejected"
+      ],
       "title": "ToolInvocationStatus",
       "type": "string"
     }

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "leftSequence": 400,
+  "rightSequence": 500,
+  "leftLabel": "Before escalation",
+  "rightLabel": "After escalation",
+  "diff": {
+    "schemaVersion": 1,
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "fromCursor": {
+      "schemaVersion": 1,
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "sequence": 400,
+      "simTime": "2026-01-01T18:40:00.000Z",
+      "incidentId": null
+    },
+    "toCursor": {
+      "schemaVersion": 1,
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "sequence": 500,
+      "simTime": "2026-01-01T18:42:03.420Z",
+      "incidentId": null
+    },
+    "entries": [
+      {
+        "path": "incidents[0].state",
+        "changeType": "updated",
+        "before": "open",
+        "after": "investigating"
+      }
+    ],
+    "fromDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "toDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "equivalent": false
+  },
+  "loading": false,
+  "errorCode": null,
+  "errorMessage": null
+}

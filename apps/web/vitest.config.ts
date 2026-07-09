@@ -16,6 +16,8 @@ export default defineConfig({
       'stores/**/*.test.ts',
       '../../tests/performance/graph/**/*.test.ts',
       '../../tests/unit/graph-fixtures/**/*.test.ts',
+      '../../tests/unit/replay-ui/**/*.test.ts',
+      'fixtures/**/*.test.ts',
     ],
     setupFiles: ['./tests/setup.ts'],
   },

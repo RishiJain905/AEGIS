@@ -42,12 +42,19 @@
           "title": "Simtime"
         }
       },
-      "required": ["schemaVersion", "runId", "sequence"],
+      "required": [
+        "schemaVersion",
+        "runId",
+        "sequence"
+      ],
       "title": "ReplayCursorV1",
       "type": "object"
     },
     "ReplayModeV1": {
-      "enum": ["from_events", "from_snapshot_plus_events"],
+      "enum": [
+        "from_events",
+        "from_snapshot_plus_events"
+      ],
       "title": "ReplayModeV1",
       "type": "string"
     },
@@ -172,7 +179,10 @@
           "type": "string"
         }
       },
-      "required": ["path", "changeType"],
+      "required": [
+        "path",
+        "changeType"
+      ],
       "title": "StateDiffEntryV1",
       "type": "object"
     },

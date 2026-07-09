@@ -83,7 +83,13 @@
       "type": "boolean"
     }
   },
-  "required": ["schemaVersion", "executedAction", "resultEventId", "commandId", "success"],
+  "required": [
+    "schemaVersion",
+    "executedAction",
+    "resultEventId",
+    "commandId",
+    "success"
+  ],
   "title": "ExecutionResultV1",
   "type": "object"
 }

@@ -1,7 +1,14 @@
 {
   "$defs": {
     "AgentTaskStatus": {
-      "enum": ["queued", "running", "completed", "failed", "cancelled", "timed_out"],
+      "enum": [
+        "queued",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "timed_out"
+      ],
       "title": "AgentTaskStatus",
       "type": "string"
     }

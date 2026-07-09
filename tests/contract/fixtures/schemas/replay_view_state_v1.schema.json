@@ -1,0 +1,693 @@
+{
+  "$defs": {
+    "HistoricalGraphAdapterV1": {
+      "additionalProperties": false,
+      "description": "Serializable binding of reconstructed graph state for historical rendering.",
+      "properties": {
+        "graphRevision": {
+          "minimum": 0,
+          "title": "Graphrevision",
+          "type": "integer"
+        },
+        "readOnly": {
+          "default": true,
+          "title": "Readonly",
+          "type": "boolean"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "source": {
+          "default": "replay_state_graph",
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "stateDigest": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Statedigest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "sequence",
+        "graphRevision",
+        "stateDigest"
+      ],
+      "title": "HistoricalGraphAdapterV1",
+      "type": "object"
+    },
+    "ReplayComparisonV1": {
+      "additionalProperties": false,
+      "description": "Two-cursor comparison view over a StateDiffV1.",
+      "properties": {
+        "diff": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StateDiffV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReplayErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "errorMessage": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errormessage"
+        },
+        "leftLabel": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Leftlabel"
+        },
+        "leftSequence": {
+          "minimum": 0,
+          "title": "Leftsequence",
+          "type": "integer"
+        },
+        "loading": {
+          "default": false,
+          "title": "Loading",
+          "type": "boolean"
+        },
+        "rightLabel": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rightlabel"
+        },
+        "rightSequence": {
+          "minimum": 0,
+          "title": "Rightsequence",
+          "type": "integer"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "leftSequence",
+        "rightSequence"
+      ],
+      "title": "ReplayComparisonV1",
+      "type": "object"
+    },
+    "ReplayCursorV1": {
+      "additionalProperties": false,
+      "properties": {
+        "incidentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Incidentid"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "simTime": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Simtime"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "sequence"
+      ],
+      "title": "ReplayCursorV1",
+      "type": "object"
+    },
+    "ReplayErrorCode": {
+      "enum": [
+        "SNAPSHOT_CHECKSUM_MISMATCH",
+        "SNAPSHOT_INCOMPATIBLE",
+        "SNAPSHOT_MISSING",
+        "REPLAY_SEQUENCE_GAP",
+        "REPLAY_DUPLICATE_EVENT",
+        "REPLAY_LIVE_MUTATION_FORBIDDEN",
+        "REPLAY_VALIDATION_FAILED",
+        "REPLAY_NOT_FOUND"
+      ],
+      "title": "ReplayErrorCode",
+      "type": "string"
+    },
+    "ReplayLoadStatusV1": {
+      "enum": [
+        "idle",
+        "loading",
+        "ready",
+        "unavailable",
+        "error"
+      ],
+      "title": "ReplayLoadStatusV1",
+      "type": "string"
+    },
+    "ReplayModeV1": {
+      "enum": [
+        "from_events",
+        "from_snapshot_plus_events"
+      ],
+      "title": "ReplayModeV1",
+      "type": "string"
+    },
+    "ReplayPlaybackSpeedV1": {
+      "enum": [
+        "0.5x",
+        "1x",
+        "2x",
+        "4x"
+      ],
+      "title": "ReplayPlaybackSpeedV1",
+      "type": "string"
+    },
+    "ReplayPlaybackStatusV1": {
+      "enum": [
+        "idle",
+        "playing",
+        "paused"
+      ],
+      "title": "ReplayPlaybackStatusV1",
+      "type": "string"
+    },
+    "ReplayProvenanceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "appliedEventCount": {
+          "minimum": 0,
+          "title": "Appliedeventcount",
+          "type": "integer"
+        },
+        "appliedFromSequence": {
+          "minimum": 0,
+          "title": "Appliedfromsequence",
+          "type": "integer"
+        },
+        "appliedToSequence": {
+          "minimum": 0,
+          "title": "Appliedtosequence",
+          "type": "integer"
+        },
+        "fallbackReason": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fallbackreason"
+        },
+        "mode": {
+          "$ref": "#/$defs/ReplayModeV1"
+        },
+        "reconstructedAt": {
+          "title": "Reconstructedat",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "snapshotId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snapshotid"
+        },
+        "snapshotSequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snapshotsequence"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "mode",
+        "appliedFromSequence",
+        "appliedToSequence",
+        "appliedEventCount",
+        "reconstructedAt"
+      ],
+      "title": "ReplayProvenanceV1",
+      "type": "object"
+    },
+    "ReplayViewModeV1": {
+      "enum": [
+        "historical",
+        "playback"
+      ],
+      "title": "ReplayViewModeV1",
+      "type": "string"
+    },
+    "StateDiffEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "After"
+        },
+        "before": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Before"
+        },
+        "changeType": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Changetype",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "changeType"
+      ],
+      "title": "StateDiffEntryV1",
+      "type": "object"
+    },
+    "StateDiffV1": {
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/StateDiffEntryV1"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "equivalent": {
+          "title": "Equivalent",
+          "type": "boolean"
+        },
+        "fromCursor": {
+          "$ref": "#/$defs/ReplayCursorV1"
+        },
+        "fromDigest": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Fromdigest",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "toCursor": {
+          "$ref": "#/$defs/ReplayCursorV1"
+        },
+        "toDigest": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Todigest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "fromCursor",
+        "toCursor",
+        "fromDigest",
+        "toDigest",
+        "equivalent"
+      ],
+      "title": "StateDiffV1",
+      "type": "object"
+    },
+    "TimelineFilterV1": {
+      "additionalProperties": false,
+      "description": "Filter/virtualization controls for the historical timeline.",
+      "properties": {
+        "eventTypes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Eventtypes",
+          "type": "array"
+        },
+        "fromSequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fromsequence"
+        },
+        "incidentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Incidentid"
+        },
+        "includeBookmarksOnly": {
+          "default": false,
+          "title": "Includebookmarksonly",
+          "type": "boolean"
+        },
+        "query": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Query"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "toSequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tosequence"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId"
+      ],
+      "title": "TimelineFilterV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Frontend historical/playback session state (not a reconstruction engine).",
+  "properties": {
+    "comparison": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReplayComparisonV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "cursor": {
+      "$ref": "#/$defs/ReplayCursorV1"
+    },
+    "errorCode": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReplayErrorCode"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "errorMessage": {
+      "anyOf": [
+        {
+          "maxLength": 512,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Errormessage"
+    },
+    "historicalGraph": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HistoricalGraphAdapterV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "lastReconstructedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lastreconstructedat"
+    },
+    "loadStatus": {
+      "$ref": "#/$defs/ReplayLoadStatusV1"
+    },
+    "maxSequence": {
+      "minimum": 0,
+      "title": "Maxsequence",
+      "type": "integer"
+    },
+    "minSequence": {
+      "minimum": 0,
+      "title": "Minsequence",
+      "type": "integer"
+    },
+    "mode": {
+      "$ref": "#/$defs/ReplayViewModeV1"
+    },
+    "playbackStatus": {
+      "$ref": "#/$defs/ReplayPlaybackStatusV1"
+    },
+    "provenance": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReplayProvenanceV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reducedMotion": {
+      "default": false,
+      "title": "Reducedmotion",
+      "type": "boolean"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "selectedBookmarkId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selectedbookmarkid"
+    },
+    "speed": {
+      "$ref": "#/$defs/ReplayPlaybackSpeedV1"
+    },
+    "stateDigest": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Statedigest"
+    },
+    "timelineFilter": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TimelineFilterV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "mode",
+    "cursor",
+    "minSequence",
+    "maxSequence",
+    "playbackStatus",
+    "speed",
+    "loadStatus"
+  ],
+  "title": "ReplayViewStateV1",
+  "type": "object"
+}

@@ -1,0 +1,262 @@
+{
+  "$defs": {
+    "ReplayCursorV1": {
+      "additionalProperties": false,
+      "properties": {
+        "incidentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Incidentid"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "simTime": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Simtime"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "sequence"
+      ],
+      "title": "ReplayCursorV1",
+      "type": "object"
+    },
+    "ReplayErrorCode": {
+      "enum": [
+        "SNAPSHOT_CHECKSUM_MISMATCH",
+        "SNAPSHOT_INCOMPATIBLE",
+        "SNAPSHOT_MISSING",
+        "REPLAY_SEQUENCE_GAP",
+        "REPLAY_DUPLICATE_EVENT",
+        "REPLAY_LIVE_MUTATION_FORBIDDEN",
+        "REPLAY_VALIDATION_FAILED",
+        "REPLAY_NOT_FOUND"
+      ],
+      "title": "ReplayErrorCode",
+      "type": "string"
+    },
+    "StateDiffEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "After"
+        },
+        "before": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Before"
+        },
+        "changeType": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Changetype",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "changeType"
+      ],
+      "title": "StateDiffEntryV1",
+      "type": "object"
+    },
+    "StateDiffV1": {
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/StateDiffEntryV1"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "equivalent": {
+          "title": "Equivalent",
+          "type": "boolean"
+        },
+        "fromCursor": {
+          "$ref": "#/$defs/ReplayCursorV1"
+        },
+        "fromDigest": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Fromdigest",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "toCursor": {
+          "$ref": "#/$defs/ReplayCursorV1"
+        },
+        "toDigest": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Todigest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "fromCursor",
+        "toCursor",
+        "fromDigest",
+        "toDigest",
+        "equivalent"
+      ],
+      "title": "StateDiffV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Two-cursor comparison view over a StateDiffV1.",
+  "properties": {
+    "diff": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StateDiffV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "errorCode": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReplayErrorCode"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "errorMessage": {
+      "anyOf": [
+        {
+          "maxLength": 512,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Errormessage"
+    },
+    "leftLabel": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Leftlabel"
+    },
+    "leftSequence": {
+      "minimum": 0,
+      "title": "Leftsequence",
+      "type": "integer"
+    },
+    "loading": {
+      "default": false,
+      "title": "Loading",
+      "type": "boolean"
+    },
+    "rightLabel": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rightlabel"
+    },
+    "rightSequence": {
+      "minimum": 0,
+      "title": "Rightsequence",
+      "type": "integer"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "leftSequence",
+    "rightSequence"
+  ],
+  "title": "ReplayComparisonV1",
+  "type": "object"
+}

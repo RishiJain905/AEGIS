@@ -13,6 +13,12 @@ import {
   getAgentSessionFixture,
   getInvestigationDetailFixture,
 } from '@/fixtures/investigation-fixture';
+import {
+  getReplayCursorFixture,
+  getReplayDiffFixture,
+  getReplayStateFixture,
+  listReplaySnapshotsFixture,
+} from '@/fixtures/replay-fixture';
 import { getAfterActionReportFixture, getReportVersionsFixture } from '@/fixtures/report-fixture';
 import shellDataset from '@/fixtures/shell-dataset.json';
 import { FIXTURE_RISK_SCORES } from '@/fixtures/risk-scores-fixture';
@@ -173,6 +179,25 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
     async getRun(runId, signal) {
       const run = dataset.runs.find((item) => item.id === runId);
       if (!run) {
+        if (
+          runId === 'run_replay_unavailable' ||
+          runId === 'run_replay_corrupt' ||
+          runId === 'run_replay_incompatible'
+        ) {
+          return applyProfile(
+            parseContract(runSchema, {
+              schemaVersion: 1,
+              id: runId,
+              scenarioVersionId: 'scenario-version:v1.0.0-synthetic',
+              seed: 1,
+              status: 'failed',
+              startedAt: '2026-06-30T02:00:00.000Z',
+              simTime: '2026-01-01T18:00:00.000Z',
+              revision: 1,
+            }),
+            signal,
+          );
+        }
         throw new ApiClientError({
           code: 'NOT_FOUND',
           message: `Run not found: ${runId}`,
@@ -281,6 +306,65 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
     async isReadOnly(runId, signal) {
       await this.getRun(runId, signal);
       return profile.readOnly;
+    },
+
+    async getReplayState(runId, params, signal) {
+      try {
+        const state = getReplayStateFixture(runId, params);
+        return applyProfile(state, signal);
+      } catch (error) {
+        const code =
+          error && typeof error === 'object' && 'code' in error
+            ? String((error as { code: string }).code)
+            : 'REPLAY_NOT_FOUND';
+        const status =
+          error && typeof error === 'object' && 'status' in error
+            ? Number((error as { status: number }).status)
+            : 404;
+        throw new ApiClientError({
+          code,
+          message: error instanceof Error ? error.message : 'Replay state unavailable',
+          status,
+        });
+      }
+    },
+
+    async getReplayCursor(runId, params, signal) {
+      try {
+        const cursor = getReplayCursorFixture(runId, params);
+        return applyProfile(cursor, signal);
+      } catch (error) {
+        const code =
+          error && typeof error === 'object' && 'code' in error
+            ? String((error as { code: string }).code)
+            : 'REPLAY_NOT_FOUND';
+        const status =
+          error && typeof error === 'object' && 'status' in error
+            ? Number((error as { status: number }).status)
+            : 404;
+        throw new ApiClientError({
+          code,
+          message: error instanceof Error ? error.message : 'Replay cursor unavailable',
+          status,
+        });
+      }
+    },
+
+    async getReplayDiff(runId, fromSequence, toSequence, signal) {
+      try {
+        const diff = getReplayDiffFixture(runId, fromSequence, toSequence);
+        return applyProfile(diff, signal);
+      } catch (error) {
+        throw new ApiClientError({
+          code: 'REPLAY_VALIDATION_FAILED',
+          message: error instanceof Error ? error.message : 'Replay diff unavailable',
+          status: 400,
+        });
+      }
+    },
+
+    async listReplaySnapshots(runId, signal) {
+      return applyProfile(listReplaySnapshotsFixture(runId), signal);
     },
   };
 }

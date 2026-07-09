@@ -57,7 +57,11 @@
       "title": "Traceid"
     }
   },
-  "required": ["schemaVersion", "code", "message"],
+  "required": [
+    "schemaVersion",
+    "code",
+    "message"
+  ],
   "title": "ProviderErrorV1",
   "type": "object"
 }

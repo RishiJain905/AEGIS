@@ -177,6 +177,7 @@ export * from './proposals';
 export * from './approvals';
 export * from './reports';
 export * from './replay';
+export * from './replay-frontend';
 
 import {
   afterActionReportSchema,
@@ -214,6 +215,14 @@ import {
   snapshotManifestSchema,
   stateDiffSchema,
 } from './replay';
+import {
+  historicalGraphAdapterSchema,
+  replayBookmarkSchema,
+  replayComparisonSchema,
+  replayViewStateSchema,
+  returnToLiveResultSchema,
+  timelineFilterSchema,
+} from './replay-frontend';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
@@ -345,4 +354,10 @@ export const FIXTURE_SCHEMA_MAP = {
   snapshot_manifest_v1: snapshotManifestSchema,
   state_diff_v1: stateDiffSchema,
   replay_equivalence_result_v1: replayEquivalenceResultSchema,
+  replay_view_state_v1: replayViewStateSchema,
+  replay_bookmark_v1: replayBookmarkSchema,
+  replay_comparison_v1: replayComparisonSchema,
+  timeline_filter_v1: timelineFilterSchema,
+  historical_graph_adapter_v1: historicalGraphAdapterSchema,
+  return_to_live_result_v1: returnToLiveResultSchema,
 } as const;

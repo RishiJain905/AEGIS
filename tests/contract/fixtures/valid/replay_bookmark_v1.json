@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "bm_incident_silent_relay_001",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "label": "Silent Relay detection",
+  "kind": "incident",
+  "sequence": 120,
+  "toSequence": 180,
+  "incidentId": "incident:inc_synthetic_001",
+  "description": "Jump to the first detection window for Operation Silent Relay."
+}

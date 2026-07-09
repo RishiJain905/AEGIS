@@ -1,7 +1,10 @@
 {
   "$defs": {
     "SnapshotCompressionV1": {
-      "enum": ["none", "gzip"],
+      "enum": [
+        "none",
+        "gzip"
+      ],
       "title": "SnapshotCompressionV1",
       "type": "string"
     },

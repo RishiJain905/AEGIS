@@ -6,10 +6,14 @@ import type {
   GraphSnapshotV1,
   IncidentV1,
   InvestigationDetailV1,
+  ReplayCursorV1,
+  ReplayStateV1,
   ReportVersionV1,
   RunV1,
   ScenarioV1,
   ScenarioVersionV1,
+  SnapshotManifestV1,
+  StateDiffV1,
 } from '@aegis/contracts-ts';
 
 export type {
@@ -20,11 +24,22 @@ export type {
   GraphSnapshotV1,
   IncidentV1,
   InvestigationDetailV1,
+  ReplayCursorV1,
+  ReplayStateV1,
   ReportVersionV1,
   RunV1,
   ScenarioV1,
   ScenarioVersionV1,
+  SnapshotManifestV1,
+  StateDiffV1,
 };
+
+export interface ReplayQueryParams {
+  sequence?: number;
+  simTime?: string;
+  incidentId?: string | null;
+  preferSnapshot?: boolean;
+}
 
 export type ConnectionStatus = 'connected' | 'reconnecting' | 'offline';
 
@@ -60,6 +75,23 @@ export interface AegisApiClient {
   listAfterActionReportVersions(runId: string, signal?: AbortSignal): Promise<ReportVersionV1[]>;
   getConnectionStatus(signal?: AbortSignal): Promise<ConnectionStatus>;
   isReadOnly(runId: string, signal?: AbortSignal): Promise<boolean>;
+  getReplayState(
+    runId: string,
+    params?: ReplayQueryParams,
+    signal?: AbortSignal,
+  ): Promise<ReplayStateV1>;
+  getReplayCursor(
+    runId: string,
+    params?: ReplayQueryParams,
+    signal?: AbortSignal,
+  ): Promise<ReplayCursorV1>;
+  getReplayDiff(
+    runId: string,
+    fromSequence: number,
+    toSequence: number,
+    signal?: AbortSignal,
+  ): Promise<StateDiffV1>;
+  listReplaySnapshots(runId: string, signal?: AbortSignal): Promise<SnapshotManifestV1[]>;
 }
 
 export class ApiClientError extends Error {

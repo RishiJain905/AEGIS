@@ -92,7 +92,11 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "message", "proposalId"],
+  "required": [
+    "schemaVersion",
+    "message",
+    "proposalId"
+  ],
   "title": "StaleProposalErrorV1",
   "type": "object"
 }

@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase25"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase26"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -169,6 +169,12 @@ REPLAY_SNAPSHOT_SCHEMA_VERSION: Final[int] = 1
 SNAPSHOT_MANIFEST_SCHEMA_VERSION: Final[int] = 1
 STATE_DIFF_SCHEMA_VERSION: Final[int] = 1
 REPLAY_EQUIVALENCE_RESULT_SCHEMA_VERSION: Final[int] = 1
+REPLAY_VIEW_STATE_SCHEMA_VERSION: Final[int] = 1
+REPLAY_BOOKMARK_SCHEMA_VERSION: Final[int] = 1
+REPLAY_COMPARISON_SCHEMA_VERSION: Final[int] = 1
+TIMELINE_FILTER_SCHEMA_VERSION: Final[int] = 1
+HISTORICAL_GRAPH_ADAPTER_SCHEMA_VERSION: Final[int] = 1
+RETURN_TO_LIVE_RESULT_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -323,6 +329,12 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "snapshot_manifest": frozenset({SNAPSHOT_MANIFEST_SCHEMA_VERSION}),
     "state_diff": frozenset({STATE_DIFF_SCHEMA_VERSION}),
     "replay_equivalence_result": frozenset({REPLAY_EQUIVALENCE_RESULT_SCHEMA_VERSION}),
+    "replay_view_state": frozenset({REPLAY_VIEW_STATE_SCHEMA_VERSION}),
+    "replay_bookmark": frozenset({REPLAY_BOOKMARK_SCHEMA_VERSION}),
+    "replay_comparison": frozenset({REPLAY_COMPARISON_SCHEMA_VERSION}),
+    "timeline_filter": frozenset({TIMELINE_FILTER_SCHEMA_VERSION}),
+    "historical_graph_adapter": frozenset({HISTORICAL_GRAPH_ADAPTER_SCHEMA_VERSION}),
+    "return_to_live_result": frozenset({RETURN_TO_LIVE_RESULT_SCHEMA_VERSION}),
 }
 
 
