@@ -69,7 +69,11 @@
       "type": "boolean"
     }
   },
-  "required": ["schemaVersion", "claimId", "valid"],
+  "required": [
+    "schemaVersion",
+    "claimId",
+    "valid"
+  ],
   "title": "GroundingValidationResultV1",
   "type": "object"
 }

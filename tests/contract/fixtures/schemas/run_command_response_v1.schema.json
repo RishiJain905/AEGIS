@@ -32,7 +32,10 @@
           "type": "integer"
         }
       },
-      "required": ["schemaVersion", "idempotencyKey"],
+      "required": [
+        "schemaVersion",
+        "idempotencyKey"
+      ],
       "title": "IdempotencyMetadataV1",
       "type": "object"
     },
@@ -114,7 +117,11 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "run", "eventsEmitted"],
+  "required": [
+    "schemaVersion",
+    "run",
+    "eventsEmitted"
+  ],
   "title": "RunCommandResponseV1",
   "type": "object"
 }

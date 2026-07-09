@@ -40,7 +40,12 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "maxTokens", "maxLatencyMs", "maxCostUsd"],
+  "required": [
+    "schemaVersion",
+    "maxTokens",
+    "maxLatencyMs",
+    "maxCostUsd"
+  ],
   "title": "AgentBudgetV1",
   "type": "object"
 }

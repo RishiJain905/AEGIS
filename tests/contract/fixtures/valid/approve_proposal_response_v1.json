@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "approval": {
+    "schemaVersion": 1,
+    "id": "apr_01ARZ3NDEKTSV4RRFFQ69G5FAZ",
+    "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+    "decision": "approved",
+    "approverId": "asset:operator-console",
+    "proposalRevision": 1,
+    "decidedAt": "2026-06-30T02:42:00.000Z"
+  },
+  "finalPolicyCheck": {
+    "schemaVersion": 1,
+    "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+    "proposalRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+    "currentRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+    "outcome": "approval_required",
+    "decision": {
+      "schemaVersion": 1,
+      "id": "pdc_01ARZ3NDEKTSV4RRFFQ69G5FBC",
+      "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+      "proposalRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+      "incidentId": "incident:inc_synthetic_001",
+      "sessionId": "agent-session:ags_warden_001",
+      "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FBD",
+      "outcome": "approval_required",
+      "reasonCodes": ["approval_required_operational"],
+      "approvalRequirement": {
+        "schemaVersion": 1,
+        "required": true,
+        "approverRoles": ["incident_commander", "security_lead"],
+        "rationale": "Class 2/3 simulated actions require explicit human approval before execution."
+      },
+      "policyInput": {
+        "schemaVersion": 1,
+        "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+        "proposalRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+        "proposalRevisionNumber": 1,
+        "currentRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+        "actionClass": "class_2",
+        "scenarioCommand": "isolate",
+        "agentRole": "BASTION",
+        "targetAssetId": "asset:svc-api-gateway",
+        "assetCriticality": 0.82,
+        "reversibility": "Reversible after approval and verification.",
+        "incidentState": "approval_pending",
+        "scenarioRestricted": true,
+        "hypothesisConfidenceMin": 0.72
+      },
+      "explanationProse": "Final pre-execution policy recheck still requires human approval.",
+      "evaluatedAt": "2026-06-30T02:41:00.000Z"
+    },
+    "executable": true,
+    "checkedAt": "2026-06-30T02:41:00.000Z"
+  },
+  "execution": {
+    "schemaVersion": 1,
+    "executedAction": {
+      "schemaVersion": 1,
+      "id": "act_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+      "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "resultEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "idempotencyKey": "idem_approve_001",
+      "executedAt": "2026-06-30T02:42:05.000Z"
+    },
+    "resultEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+    "commandId": "cmd_approve_prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+    "success": true,
+    "replayed": false,
+    "message": "Authorized simulation command executed"
+  },
+  "proposalStatus": "executed",
+  "replayed": false
+}

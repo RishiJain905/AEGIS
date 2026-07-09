@@ -1,12 +1,19 @@
 {
   "$defs": {
     "RiskSignalSourceType": {
-      "enum": ["rule", "model"],
+      "enum": [
+        "rule",
+        "model"
+      ],
       "title": "RiskSignalSourceType",
       "type": "string"
     },
     "RiskSignalStatus": {
-      "enum": ["active", "resolved", "expired"],
+      "enum": [
+        "active",
+        "resolved",
+        "expired"
+      ],
       "title": "RiskSignalStatus",
       "type": "string"
     }

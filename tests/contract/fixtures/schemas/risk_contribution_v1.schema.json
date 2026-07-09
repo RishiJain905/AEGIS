@@ -1,7 +1,13 @@
 {
   "$defs": {
     "RelationshipType": {
-      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
+      "enum": [
+        "COMMUNICATED_WITH",
+        "AUTHENTICATED_TO",
+        "DEPENDS_ON",
+        "ADMINISTERS",
+        "HOSTS"
+      ],
       "title": "RelationshipType",
       "type": "string"
     },
@@ -123,7 +129,14 @@
           "type": "string"
         }
       },
-      "required": ["edgeId", "sourceId", "targetId", "relationshipType", "edgeWeight", "hopIndex"],
+      "required": [
+        "edgeId",
+        "sourceId",
+        "targetId",
+        "relationshipType",
+        "edgeWeight",
+        "hopIndex"
+      ],
       "title": "RiskPathHopV1",
       "type": "object"
     }

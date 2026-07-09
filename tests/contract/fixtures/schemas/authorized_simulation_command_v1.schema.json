@@ -1,0 +1,89 @@
+{
+  "$defs": {
+    "ScenarioCommandTemplateV1": {
+      "enum": [
+        "observe",
+        "increase_monitoring",
+        "isolate",
+        "revoke_credentials",
+        "restrict_access",
+        "restart_service",
+        "rollback_deployment"
+      ],
+      "title": "ScenarioCommandTemplateV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actorId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Actorid",
+      "type": "string"
+    },
+    "approvalId": {
+      "title": "Approvalid",
+      "type": "string"
+    },
+    "authorizationToken": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Authorizationtoken",
+      "type": "string"
+    },
+    "commandId": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Commandid",
+      "type": "string"
+    },
+    "config": {
+      "additionalProperties": true,
+      "title": "Config",
+      "type": "object"
+    },
+    "pluginId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Pluginid",
+      "type": "string"
+    },
+    "proposalId": {
+      "title": "Proposalid",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "scenarioCommand": {
+      "$ref": "#/$defs/ScenarioCommandTemplateV1"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "targetAssetId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Targetassetid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "proposalId",
+    "approvalId",
+    "runId",
+    "scenarioCommand",
+    "pluginId",
+    "targetAssetId",
+    "commandId",
+    "authorizationToken",
+    "actorId"
+  ],
+  "title": "AuthorizedSimulationCommandV1",
+  "type": "object"
+}

@@ -31,6 +31,10 @@ from aegis_persistence.repositories.postgres import (
     PostgresToolInvocationRepository,
     create_outbox_row,
 )
+from aegis_persistence.repositories.approvals import (
+    PostgresApprovalRepository,
+    PostgresExecutedActionRepository,
+)
 from aegis_persistence.repositories.proposals import PostgresProposalRepository
 from aegis_persistence.repositories.reports import PostgresReportRepository
 
@@ -72,11 +76,15 @@ class PostgresUnitOfWork:
         self._action_proposals = PostgresActionProposalRepository(self._session)
         self._oracle_hypotheses = PostgresOracleHypothesisRepository(self._session)
         self._proposals = PostgresProposalRepository(self._session)
+        self._approvals = PostgresApprovalRepository(self._session)
+        self._executed_actions = PostgresExecutedActionRepository(self._session)
         self._reports = PostgresReportRepository(self._session)
         self._investigation = PostgresInvestigationRepository(
             self._session,
             oracle_repository=self._oracle_hypotheses,
             proposal_repository=self._proposals,
+            approval_repository=self._approvals,
+            executed_action_repository=self._executed_actions,
         )
         return self
 
@@ -177,6 +185,14 @@ class PostgresUnitOfWork:
     @property
     def proposals(self) -> PostgresProposalRepository:
         return self._proposals
+
+    @property
+    def approvals(self) -> PostgresApprovalRepository:
+        return self._approvals
+
+    @property
+    def executed_actions(self) -> PostgresExecutedActionRepository:
+        return self._executed_actions
 
     @property
     def reports(self) -> PostgresReportRepository:

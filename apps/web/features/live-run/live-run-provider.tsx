@@ -131,7 +131,10 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.runs.riskScores(runId) });
         void queryClient.invalidateQueries({ queryKey: queryKeys.runs.graph(runId) });
       }
-      if (envelope.event.type.startsWith('action.proposal.')) {
+      if (
+        envelope.event.type.startsWith('action.proposal.') ||
+        envelope.event.type === 'action.executed'
+      ) {
         const incidentId = envelope.event.payload.incidentId;
         if (typeof incidentId === 'string' && incidentId.length > 0) {
           void queryClient.invalidateQueries({

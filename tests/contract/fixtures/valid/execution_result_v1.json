@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "executedAction": {
+    "schemaVersion": 1,
+    "id": "act_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+    "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "resultEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+    "idempotencyKey": "idem_synthetic_fixture_001",
+    "executedAt": "2026-06-30T02:30:00.000Z"
+  },
+  "resultEventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "commandId": "cmd_approve_prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "success": true,
+  "replayed": false,
+  "message": "Authorized simulation command executed"
+}

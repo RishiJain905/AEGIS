@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "ApprovalErrorCode": {
+      "enum": [
+        "STALE_PROPOSAL",
+        "UNAUTHORIZED",
+        "POLICY_BLOCKED",
+        "VALIDATION_FAILED",
+        "CONFLICT",
+        "NOT_FOUND",
+        "ALREADY_DECIDED",
+        "EXECUTION_FAILED"
+      ],
+      "title": "ApprovalErrorCode",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actualRevision": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actualrevision"
+    },
+    "actualRevisionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actualrevisionid"
+    },
+    "code": {
+      "$ref": "#/$defs/ApprovalErrorCode",
+      "default": "STALE_PROPOSAL"
+    },
+    "details": {
+      "additionalProperties": true,
+      "title": "Details",
+      "type": "object"
+    },
+    "expectedRevision": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expectedrevision"
+    },
+    "expectedRevisionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expectedrevisionid"
+    },
+    "message": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Message",
+      "type": "string"
+    },
+    "proposalId": {
+      "title": "Proposalid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "message",
+    "proposalId"
+  ],
+  "title": "StaleProposalErrorV1",
+  "type": "object"
+}

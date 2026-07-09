@@ -1,0 +1,95 @@
+{
+  "$defs": {
+    "ExecutedActionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "executedAt": {
+          "title": "Executedat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "minLength": 1,
+          "title": "Idempotencykey",
+          "type": "string"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "resultEventId": {
+          "title": "Resulteventid",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "runId",
+        "resultEventId",
+        "idempotencyKey",
+        "executedAt"
+      ],
+      "title": "ExecutedActionV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "commandId": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Commandid",
+      "type": "string"
+    },
+    "executedAction": {
+      "$ref": "#/$defs/ExecutedActionV1"
+    },
+    "message": {
+      "default": "",
+      "maxLength": 1024,
+      "title": "Message",
+      "type": "string"
+    },
+    "replayed": {
+      "default": false,
+      "title": "Replayed",
+      "type": "boolean"
+    },
+    "resultEventId": {
+      "title": "Resulteventid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "success": {
+      "title": "Success",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "executedAction",
+    "resultEventId",
+    "commandId",
+    "success"
+  ],
+  "title": "ExecutionResultV1",
+  "type": "object"
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "approvalId": "apr_01ARZ3NDEKTSV4RRFFQ69G5FAZ",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "scenarioCommand": "isolate",
+  "pluginId": "effect.set_asset_status",
+  "targetAssetId": "asset:svc-api-gateway",
+  "config": {
+    "assetId": "asset:svc-api-gateway",
+    "status": "isolated",
+    "scenarioCommand": "isolate"
+  },
+  "commandId": "cmd_approve_prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "authorizationToken": "synthetic-operator-token",
+  "actorId": "asset:operator-console"
+}

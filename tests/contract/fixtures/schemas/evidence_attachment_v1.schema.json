@@ -44,12 +44,22 @@
           "type": "string"
         }
       },
-      "required": ["sourceType", "sourceId", "summary"],
+      "required": [
+        "sourceType",
+        "sourceId",
+        "summary"
+      ],
       "title": "EvidenceProvenanceV1",
       "type": "object"
     },
     "EvidenceSourceType": {
-      "enum": ["event", "alert", "asset", "risk_path", "existing_evidence"],
+      "enum": [
+        "event",
+        "alert",
+        "asset",
+        "risk_path",
+        "existing_evidence"
+      ],
       "title": "EvidenceSourceType",
       "type": "string"
     }

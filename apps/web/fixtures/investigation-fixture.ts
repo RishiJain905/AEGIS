@@ -37,7 +37,7 @@ const PROPOSAL_REVISION_BLOCKED_ID = 'prv_01ARZ3NDEKTSV4RRFFQ69G5FC1';
 const PROPOSAL_REVISION_STALE_ID = 'prv_01ARZ3NDEKTSV4RRFFQ69G5FC2';
 
 const syntheticInvestigationDetail = parseContract(investigationDetailSchema, {
-  schemaVersion: 3,
+  schemaVersion: 4,
   incidentId: SYNTHETIC_INCIDENT_ID,
   runId: SYNTHETIC_RUN_ID,
   triageResults: [
@@ -625,6 +625,8 @@ const syntheticInvestigationDetail = parseContract(investigationDetailSchema, {
       evaluatedAt: '2026-06-30T02:09:40.000Z',
     },
   ],
+  approvals: [],
+  executedActions: [],
 });
 
 const watchtowerSessionDetail = parseContract(agentSessionDetailSchema, {

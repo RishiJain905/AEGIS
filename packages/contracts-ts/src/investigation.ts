@@ -16,9 +16,8 @@ import {
   hypothesisRevisionSchema,
   verificationRequestSchema,
 } from './hypothesis';
-import { actionProposalSchema } from './entities';
+import { actionProposalSchema, approvalSchema, executedActionSchema, hypothesisSchema } from './entities';
 import { policyDecisionSchema, proposalRevisionSchema } from './proposals';
-import { hypothesisSchema } from './entities';
 import {
   AGENT_GRAPH_OVERLAY_SCHEMA_VERSION,
   CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION,
@@ -193,11 +192,14 @@ export const investigationDetailSchema = z
     proposals: z.array(actionProposalSchema).default([]),
     proposalRevisions: z.array(proposalRevisionSchema).default([]),
     policyDecisions: z.array(policyDecisionSchema).default([]),
+    approvals: z.array(approvalSchema).default([]),
+    executedActions: z.array(executedActionSchema).default([]),
   })
   .superRefine((value, ctx) => {
     if (
       value.schemaVersion !== 1 &&
       value.schemaVersion !== 2 &&
+      value.schemaVersion !== 3 &&
       value.schemaVersion !== INVESTIGATION_DETAIL_SCHEMA_VERSION
     ) {
       ctx.addIssue({

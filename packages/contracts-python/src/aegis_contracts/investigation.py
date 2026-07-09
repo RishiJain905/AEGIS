@@ -25,6 +25,7 @@ from aegis_contracts.primitives import (
     TraceId,
     UtcTimestamp,
 )
+from aegis_contracts.entities import ApprovalV1, ExecutedActionV1
 from aegis_contracts.proposals import PolicyDecisionV1, ProposalRevisionV1
 from aegis_contracts.versioning import (
     AGENT_GRAPH_OVERLAY_SCHEMA_VERSION,
@@ -311,11 +312,16 @@ class InvestigationDetailV1(BaseModel):
         alias="policyDecisions",
         default_factory=list,
     )
+    approvals: list[ApprovalV1] = Field(default_factory=list)
+    executed_actions: list[ExecutedActionV1] = Field(
+        alias="executedActions",
+        default_factory=list,
+    )
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> InvestigationDetailV1:
         assert_supported_schema_version("investigation_detail", self.schema_version)
-        if self.schema_version not in {1, 2, INVESTIGATION_DETAIL_SCHEMA_VERSION}:
+        if self.schema_version not in {1, 2, 3, INVESTIGATION_DETAIL_SCHEMA_VERSION}:
             raise ContractValidationError(
                 code=ContractErrorCode.SCHEMA_VERSION_UNSUPPORTED,
                 message=f"Unsupported investigation detail schema: {self.schema_version}",

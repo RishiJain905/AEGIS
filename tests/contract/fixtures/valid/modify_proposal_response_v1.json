@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "modification": {
+    "schemaVersion": 1,
+    "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+    "previousRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+    "newRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+    "selectedOptionId": "opt-isolate-gateway",
+    "responseOptions": null,
+    "rationale": "Operator narrowed isolation scope after reviewing collateral risk.",
+    "riskTradeoffs": "Slightly slower containment in exchange for lower service disruption.",
+    "comment": "Prefer isolate over revoke for first response.",
+    "modifiedBy": "asset:operator-console",
+    "modifiedAt": "2026-06-30T02:40:00.000Z"
+  },
+  "policyDecision": {
+    "schemaVersion": 1,
+    "id": "pdc_01ARZ3NDEKTSV4RRFFQ69G5FBE",
+    "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+    "proposalRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+    "incidentId": "incident:inc_synthetic_001",
+    "sessionId": "agent-session:ags_warden_001",
+    "taskId": "atk_01ARZ3NDEKTSV4RRFFQ69G5FBF",
+    "outcome": "approval_required",
+    "reasonCodes": ["approval_required_operational"],
+    "approvalRequirement": {
+      "schemaVersion": 1,
+      "required": true,
+      "approverRoles": ["incident_commander", "security_lead"],
+      "rationale": "Class 2/3 simulated actions require explicit human approval before execution."
+    },
+    "policyInput": {
+      "schemaVersion": 1,
+      "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+      "proposalRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+      "proposalRevisionNumber": 2,
+      "currentRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+      "actionClass": "class_2",
+      "scenarioCommand": "isolate",
+      "agentRole": "BASTION",
+      "targetAssetId": "asset:svc-api-gateway",
+      "assetCriticality": 0.82,
+      "reversibility": "Reversible after approval and verification.",
+      "incidentState": "approval_pending",
+      "scenarioRestricted": true,
+      "hypothesisConfidenceMin": 0.72
+    },
+    "explanationProse": "Modified proposal re-evaluated; human approval still required.",
+    "evaluatedAt": "2026-06-30T02:40:05.000Z"
+  },
+  "proposalStatus": "pending",
+  "replayed": false
+}

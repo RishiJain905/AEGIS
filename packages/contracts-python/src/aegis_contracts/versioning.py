@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase23"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase24"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -123,7 +123,7 @@ EVIDENCE_ATTACHMENT_SCHEMA_VERSION: Final[int] = 1
 CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION: Final[int] = 1
 INVESTIGATION_NOTE_SCHEMA_VERSION: Final[int] = 1
 AGENT_GRAPH_OVERLAY_SCHEMA_VERSION: Final[int] = 1
-INVESTIGATION_DETAIL_SCHEMA_VERSION: Final[int] = 3
+INVESTIGATION_DETAIL_SCHEMA_VERSION: Final[int] = 4
 TRIGGER_WATCHTOWER_REQUEST_SCHEMA_VERSION: Final[int] = 1
 HYPOTHESIS_CLAIM_SCHEMA_VERSION: Final[int] = 1
 CONFIDENCE_ASSESSMENT_SCHEMA_VERSION: Final[int] = 1
@@ -148,6 +148,18 @@ REPORT_VERSION_SCHEMA_VERSION: Final[int] = 1
 REPORT_EXPORT_ARTIFACT_SCHEMA_VERSION: Final[int] = 1
 GROUNDING_VALIDATION_RESULT_SCHEMA_VERSION: Final[int] = 1
 TRIGGER_SCRIBE_REQUEST_SCHEMA_VERSION: Final[int] = 1
+STALE_PROPOSAL_ERROR_SCHEMA_VERSION: Final[int] = 1
+PROPOSAL_MODIFICATION_SCHEMA_VERSION: Final[int] = 1
+FINAL_POLICY_CHECK_SCHEMA_VERSION: Final[int] = 1
+AUTHORIZED_SIMULATION_COMMAND_SCHEMA_VERSION: Final[int] = 1
+EXECUTION_RESULT_SCHEMA_VERSION: Final[int] = 1
+APPROVE_PROPOSAL_REQUEST_SCHEMA_VERSION: Final[int] = 1
+REJECT_PROPOSAL_REQUEST_SCHEMA_VERSION: Final[int] = 1
+MODIFY_PROPOSAL_REQUEST_SCHEMA_VERSION: Final[int] = 1
+CANCEL_PROPOSAL_REQUEST_SCHEMA_VERSION: Final[int] = 1
+APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -279,7 +291,19 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "candidate_affected_asset": frozenset({CANDIDATE_AFFECTED_ASSET_SCHEMA_VERSION}),
     "investigation_note": frozenset({INVESTIGATION_NOTE_SCHEMA_VERSION}),
     "agent_graph_overlay": frozenset({AGENT_GRAPH_OVERLAY_SCHEMA_VERSION}),
-    "investigation_detail": frozenset({1, 2, INVESTIGATION_DETAIL_SCHEMA_VERSION}),
+    "investigation_detail": frozenset({1, 2, 3, INVESTIGATION_DETAIL_SCHEMA_VERSION}),
+    "stale_proposal_error": frozenset({STALE_PROPOSAL_ERROR_SCHEMA_VERSION}),
+    "proposal_modification": frozenset({PROPOSAL_MODIFICATION_SCHEMA_VERSION}),
+    "final_policy_check": frozenset({FINAL_POLICY_CHECK_SCHEMA_VERSION}),
+    "authorized_simulation_command": frozenset({AUTHORIZED_SIMULATION_COMMAND_SCHEMA_VERSION}),
+    "execution_result": frozenset({EXECUTION_RESULT_SCHEMA_VERSION}),
+    "approve_proposal_request": frozenset({APPROVE_PROPOSAL_REQUEST_SCHEMA_VERSION}),
+    "reject_proposal_request": frozenset({REJECT_PROPOSAL_REQUEST_SCHEMA_VERSION}),
+    "modify_proposal_request": frozenset({MODIFY_PROPOSAL_REQUEST_SCHEMA_VERSION}),
+    "cancel_proposal_request": frozenset({CANCEL_PROPOSAL_REQUEST_SCHEMA_VERSION}),
+    "approve_proposal_response": frozenset({APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION}),
+    "reject_proposal_response": frozenset({REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION}),
+    "modify_proposal_response": frozenset({MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION}),
     "trigger_watchtower_request": frozenset({TRIGGER_WATCHTOWER_REQUEST_SCHEMA_VERSION}),
 }
 

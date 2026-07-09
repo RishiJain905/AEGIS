@@ -43,7 +43,12 @@
       "type": "string"
     }
   },
-  "required": ["schemaVersion", "runId", "traceId", "idempotencyKey"],
+  "required": [
+    "schemaVersion",
+    "runId",
+    "traceId",
+    "idempotencyKey"
+  ],
   "title": "TriggerScribeRequestV1",
   "type": "object"
 }

@@ -1,7 +1,11 @@
 {
   "$defs": {
     "FeatureDataType": {
-      "enum": ["float", "int", "categorical"],
+      "enum": [
+        "float",
+        "int",
+        "categorical"
+      ],
       "title": "FeatureDataType",
       "type": "string"
     },
@@ -85,7 +89,13 @@
           "type": "string"
         }
       },
-      "required": ["name", "orderIndex", "dtype", "unit", "missingSentinel"],
+      "required": [
+        "name",
+        "orderIndex",
+        "dtype",
+        "unit",
+        "missingSentinel"
+      ],
       "title": "FeatureDefinitionV1",
       "type": "object"
     }

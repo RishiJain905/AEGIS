@@ -79,7 +79,11 @@
       "type": "object"
     },
     "AnomalyRiskBand": {
-      "enum": ["normal", "elevated", "high"],
+      "enum": [
+        "normal",
+        "elevated",
+        "high"
+      ],
       "title": "AnomalyRiskBand",
       "type": "string"
     },
@@ -147,7 +151,12 @@
           "type": "integer"
         }
       },
-      "required": ["windowStartEpoch", "windowEndEpoch", "simTimeStart", "simTimeEnd"],
+      "required": [
+        "windowStartEpoch",
+        "windowEndEpoch",
+        "simTimeStart",
+        "simTimeEnd"
+      ],
       "title": "SourceWindowV1",
       "type": "object"
     }

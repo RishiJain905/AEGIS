@@ -1,7 +1,12 @@
 {
   "$defs": {
     "AgentArtifactType": {
-      "enum": ["step_result", "hypothesis", "proposal", "audit"],
+      "enum": [
+        "step_result",
+        "hypothesis",
+        "proposal",
+        "audit"
+      ],
       "title": "AgentArtifactType",
       "type": "string"
     }
@@ -50,7 +55,14 @@
       "type": "string"
     }
   },
-  "required": ["schemaVersion", "id", "taskId", "sessionId", "artifactType", "createdAt"],
+  "required": [
+    "schemaVersion",
+    "id",
+    "taskId",
+    "sessionId",
+    "artifactType",
+    "createdAt"
+  ],
   "title": "AgentArtifactV1",
   "type": "object"
 }

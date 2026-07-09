@@ -1,0 +1,547 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "enum": [
+        "class_0",
+        "class_1",
+        "class_2",
+        "class_3"
+      ],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "AgentRole": {
+      "enum": [
+        "WATCHTOWER",
+        "TRACE",
+        "ORACLE",
+        "BASTION",
+        "WARDEN",
+        "SCRIBE"
+      ],
+      "title": "AgentRole",
+      "type": "string"
+    },
+    "ApprovalDecision": {
+      "enum": [
+        "approved",
+        "rejected"
+      ],
+      "title": "ApprovalDecision",
+      "type": "string"
+    },
+    "ApprovalRequirementV1": {
+      "additionalProperties": false,
+      "properties": {
+        "approverRoles": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Approverroles",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "required",
+        "rationale"
+      ],
+      "title": "ApprovalRequirementV1",
+      "type": "object"
+    },
+    "ApprovalV1": {
+      "additionalProperties": false,
+      "properties": {
+        "approverId": {
+          "minLength": 1,
+          "title": "Approverid",
+          "type": "string"
+        },
+        "decidedAt": {
+          "title": "Decidedat",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/ApprovalDecision"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "proposalRevision": {
+          "minimum": 0,
+          "title": "Proposalrevision",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "decision",
+        "approverId",
+        "proposalRevision",
+        "decidedAt"
+      ],
+      "title": "ApprovalV1",
+      "type": "object"
+    },
+    "ExecutedActionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "executedAt": {
+          "title": "Executedat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "minLength": 1,
+          "title": "Idempotencykey",
+          "type": "string"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "resultEventId": {
+          "title": "Resulteventid",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "runId",
+        "resultEventId",
+        "idempotencyKey",
+        "executedAt"
+      ],
+      "title": "ExecutedActionV1",
+      "type": "object"
+    },
+    "ExecutionResultV1": {
+      "additionalProperties": false,
+      "properties": {
+        "commandId": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Commandid",
+          "type": "string"
+        },
+        "executedAction": {
+          "$ref": "#/$defs/ExecutedActionV1"
+        },
+        "message": {
+          "default": "",
+          "maxLength": 1024,
+          "title": "Message",
+          "type": "string"
+        },
+        "replayed": {
+          "default": false,
+          "title": "Replayed",
+          "type": "boolean"
+        },
+        "resultEventId": {
+          "title": "Resulteventid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "success": {
+          "title": "Success",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "executedAction",
+        "resultEventId",
+        "commandId",
+        "success"
+      ],
+      "title": "ExecutionResultV1",
+      "type": "object"
+    },
+    "FinalPolicyCheckV1": {
+      "additionalProperties": false,
+      "properties": {
+        "checkedAt": {
+          "title": "Checkedat",
+          "type": "string"
+        },
+        "currentRevisionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Currentrevisionid",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/PolicyDecisionV1"
+        },
+        "executable": {
+          "title": "Executable",
+          "type": "boolean"
+        },
+        "outcome": {
+          "$ref": "#/$defs/PolicyOutcomeV1"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "proposalRevisionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Proposalrevisionid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "proposalId",
+        "proposalRevisionId",
+        "currentRevisionId",
+        "outcome",
+        "decision",
+        "executable",
+        "checkedAt"
+      ],
+      "title": "FinalPolicyCheckV1",
+      "type": "object"
+    },
+    "IncidentState": {
+      "enum": [
+        "open",
+        "triaged",
+        "investigating",
+        "containment_proposed",
+        "approval_pending",
+        "containing",
+        "monitoring",
+        "resolved",
+        "closed"
+      ],
+      "title": "IncidentState",
+      "type": "string"
+    },
+    "PolicyDecisionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "approvalRequirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ApprovalRequirementV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evaluatedAt": {
+          "title": "Evaluatedat",
+          "type": "string"
+        },
+        "explanationProse": {
+          "default": "",
+          "maxLength": 4096,
+          "title": "Explanationprose",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/PolicyOutcomeV1"
+        },
+        "policyInput": {
+          "$ref": "#/$defs/PolicyInputV1"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "proposalRevisionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Proposalrevisionid",
+          "type": "string"
+        },
+        "reasonCodes": {
+          "items": {
+            "$ref": "#/$defs/PolicyReasonCodeV1"
+          },
+          "minItems": 1,
+          "title": "Reasoncodes",
+          "type": "array"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sessionId": {
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "taskId": {
+          "title": "Taskid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "proposalRevisionId",
+        "incidentId",
+        "sessionId",
+        "taskId",
+        "outcome",
+        "reasonCodes",
+        "policyInput",
+        "evaluatedAt"
+      ],
+      "title": "PolicyDecisionV1",
+      "type": "object"
+    },
+    "PolicyInputV1": {
+      "additionalProperties": false,
+      "properties": {
+        "actionClass": {
+          "$ref": "#/$defs/ActionClass"
+        },
+        "agentRole": {
+          "$ref": "#/$defs/AgentRole"
+        },
+        "assetCriticality": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Assetcriticality",
+          "type": "number"
+        },
+        "currentRevisionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Currentrevisionid",
+          "type": "string"
+        },
+        "hypothesisConfidenceMin": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hypothesisconfidencemin"
+        },
+        "incidentState": {
+          "$ref": "#/$defs/IncidentState"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "proposalRevisionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Proposalrevisionid",
+          "type": "string"
+        },
+        "proposalRevisionNumber": {
+          "minimum": 1,
+          "title": "Proposalrevisionnumber",
+          "type": "integer"
+        },
+        "reversibility": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "title": "Reversibility",
+          "type": "string"
+        },
+        "scenarioCommand": {
+          "$ref": "#/$defs/ScenarioCommandTemplateV1"
+        },
+        "scenarioRestricted": {
+          "default": false,
+          "title": "Scenariorestricted",
+          "type": "boolean"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "proposalId",
+        "proposalRevisionId",
+        "proposalRevisionNumber",
+        "currentRevisionId",
+        "actionClass",
+        "scenarioCommand",
+        "agentRole",
+        "targetAssetId",
+        "assetCriticality",
+        "reversibility",
+        "incidentState"
+      ],
+      "title": "PolicyInputV1",
+      "type": "object"
+    },
+    "PolicyOutcomeV1": {
+      "enum": [
+        "allow",
+        "block",
+        "approval_required"
+      ],
+      "title": "PolicyOutcomeV1",
+      "type": "string"
+    },
+    "PolicyReasonCodeV1": {
+      "enum": [
+        "allowed_read_only",
+        "allowed_low_impact",
+        "approval_required_operational",
+        "approval_required_critical",
+        "blocked_unknown_command",
+        "blocked_malformed_command",
+        "blocked_scenario_restriction",
+        "blocked_criticality_threshold",
+        "blocked_stale_revision",
+        "blocked_invalid_action_class",
+        "blocked_incident_state"
+      ],
+      "title": "PolicyReasonCodeV1",
+      "type": "string"
+    },
+    "ProposalStatus": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "executed",
+        "cancelled"
+      ],
+      "title": "ProposalStatus",
+      "type": "string"
+    },
+    "ScenarioCommandTemplateV1": {
+      "enum": [
+        "observe",
+        "increase_monitoring",
+        "isolate",
+        "revoke_credentials",
+        "restrict_access",
+        "restart_service",
+        "rollback_deployment"
+      ],
+      "title": "ScenarioCommandTemplateV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "approval": {
+      "$ref": "#/$defs/ApprovalV1"
+    },
+    "execution": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExecutionResultV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "finalPolicyCheck": {
+      "$ref": "#/$defs/FinalPolicyCheckV1"
+    },
+    "proposalStatus": {
+      "$ref": "#/$defs/ProposalStatus"
+    },
+    "replayed": {
+      "default": false,
+      "title": "Replayed",
+      "type": "boolean"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "approval",
+    "finalPolicyCheck",
+    "proposalStatus"
+  ],
+  "title": "ApproveProposalResponseV1",
+  "type": "object"
+}

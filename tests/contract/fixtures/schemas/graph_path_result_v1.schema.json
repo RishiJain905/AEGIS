@@ -34,7 +34,13 @@
       "type": "string"
     }
   },
-  "required": ["schemaVersion", "runId", "sourceId", "targetId", "paths"],
+  "required": [
+    "schemaVersion",
+    "runId",
+    "sourceId",
+    "targetId",
+    "paths"
+  ],
   "title": "GraphPathResultV1",
   "type": "object"
 }

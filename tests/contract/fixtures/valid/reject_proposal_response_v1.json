@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "approval": {
+    "schemaVersion": 1,
+    "id": "apr_01ARZ3NDEKTSV4RRFFQ69G5FAZ",
+    "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+    "decision": "rejected",
+    "approverId": "asset:operator-console",
+    "proposalRevision": 1,
+    "decidedAt": "2026-06-30T02:43:00.000Z"
+  },
+  "proposalStatus": "rejected",
+  "replayed": false
+}
