@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "previousRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "newRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+  "selectedOptionId": "opt-isolate-gateway",
+  "responseOptions": null,
+  "rationale": "Operator narrowed isolation scope after reviewing collateral risk.",
+  "riskTradeoffs": "Slightly slower containment in exchange for lower service disruption.",
+  "comment": "Prefer isolate over revoke for first response.",
+  "modifiedBy": "asset:operator-console",
+  "modifiedAt": "2026-06-30T02:40:00.000Z"
+}

@@ -261,20 +261,26 @@ class RunCommandService:
         )
         runtime.start()
         db_events = await PostgresEventQueryRepository(uow.session).list_by_run(run_id)
-        target_count = len(db_events)
+        # Approval/agent domain events share the run stream; only sim.* events are
+        # produced by stepping the engine and should drive restore targets.
+        sim_event_count = sum(1 for event in db_events if event.type.startswith("sim."))
         guard = 0
-        while len(runtime.events) < target_count and guard < target_count + 1000:
+        while len(runtime.events) < sim_event_count and guard < sim_event_count + 1000:
             runtime.step()
             guard += 1
-        if len(runtime.events) < target_count:
+        if len(runtime.events) < sim_event_count:
             raise SimulationError(
                 code=SimulationErrorCode.VALIDATION_FAILED,
                 message="Failed to restore runtime from persisted events",
                 details={
-                    "expectedEvents": target_count,
+                    "expectedEvents": sim_event_count,
                     "restoredEvents": len(runtime.events),
                 },
             )
+        # Keep sequence monotonic across mixed sim + approval/agent event streams.
+        next_persisted = await uow.events.next_sequence(run_id)
+        if next_persisted > runtime.world.next_sequence:
+            runtime.world.next_sequence = next_persisted
 
         self.runtime_cache[run_id] = RuntimeCacheEntry(runtime=runtime, package_dir=package_dir)
         return runtime

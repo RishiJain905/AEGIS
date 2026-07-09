@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from aegis_contracts.entities import ActionProposalV1, HypothesisV1
+from aegis_contracts.entities import ActionProposalV1, ApprovalV1, ExecutedActionV1, HypothesisV1
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 from aegis_contracts.hypothesis import (
     HypothesisComparisonV1,
@@ -311,11 +311,16 @@ class InvestigationDetailV1(BaseModel):
         alias="policyDecisions",
         default_factory=list,
     )
+    approvals: list[ApprovalV1] = Field(default_factory=list)
+    executed_actions: list[ExecutedActionV1] = Field(
+        alias="executedActions",
+        default_factory=list,
+    )
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> InvestigationDetailV1:
         assert_supported_schema_version("investigation_detail", self.schema_version)
-        if self.schema_version not in {1, 2, INVESTIGATION_DETAIL_SCHEMA_VERSION}:
+        if self.schema_version not in {1, 2, 3, INVESTIGATION_DETAIL_SCHEMA_VERSION}:
             raise ContractValidationError(
                 code=ContractErrorCode.SCHEMA_VERSION_UNSUPPORTED,
                 message=f"Unsupported investigation detail schema: {self.schema_version}",

@@ -174,6 +174,7 @@ export * from './agent-runtime';
 export * from './investigation';
 export * from './hypothesis';
 export * from './proposals';
+export * from './approvals';
 export * from './reports';
 
 import {
@@ -187,6 +188,21 @@ import {
   reportVersionSchema,
   triggerScribeRequestSchema,
 } from './reports';
+import {
+  approveProposalRequestSchema,
+  approveProposalResponseSchema,
+  authorizedSimulationCommandSchema,
+  cancelProposalRequestSchema,
+  cancelProposalResponseSchema,
+  executionResultSchema,
+  finalPolicyCheckSchema,
+  modifyProposalRequestSchema,
+  modifyProposalResponseSchema,
+  proposalModificationSchema,
+  rejectProposalRequestSchema,
+  rejectProposalResponseSchema,
+  staleProposalErrorSchema,
+} from './approvals';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
@@ -297,4 +313,17 @@ export const FIXTURE_SCHEMA_MAP = {
   report_export_artifact_v1: reportExportArtifactSchema,
   grounding_validation_result_v1: groundingValidationResultSchema,
   trigger_scribe_request_v1: triggerScribeRequestSchema,
+  stale_proposal_error_v1: staleProposalErrorSchema,
+  proposal_modification_v1: proposalModificationSchema,
+  final_policy_check_v1: finalPolicyCheckSchema,
+  authorized_simulation_command_v1: authorizedSimulationCommandSchema,
+  execution_result_v1: executionResultSchema,
+  approve_proposal_request_v1: approveProposalRequestSchema,
+  reject_proposal_request_v1: rejectProposalRequestSchema,
+  modify_proposal_request_v1: modifyProposalRequestSchema,
+  cancel_proposal_request_v1: cancelProposalRequestSchema,
+  approve_proposal_response_v1: approveProposalResponseSchema,
+  reject_proposal_response_v1: rejectProposalResponseSchema,
+  modify_proposal_response_v1: modifyProposalResponseSchema,
+  cancel_proposal_response_v1: cancelProposalResponseSchema,
 } as const;

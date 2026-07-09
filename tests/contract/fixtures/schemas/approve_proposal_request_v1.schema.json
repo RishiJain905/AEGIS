@@ -1,0 +1,59 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "actorId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actorid"
+    },
+    "comment": {
+      "default": "",
+      "maxLength": 2048,
+      "title": "Comment",
+      "type": "string"
+    },
+    "expectedRevision": {
+      "minimum": 0,
+      "title": "Expectedrevision",
+      "type": "integer"
+    },
+    "expectedRevisionId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Expectedrevisionid",
+      "type": "string"
+    },
+    "idempotencyKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Idempotencykey",
+      "type": "string"
+    },
+    "proposalId": {
+      "title": "Proposalid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "proposalId",
+    "expectedRevisionId",
+    "expectedRevision",
+    "idempotencyKey"
+  ],
+  "title": "ApproveProposalRequestV1",
+  "type": "object"
+}

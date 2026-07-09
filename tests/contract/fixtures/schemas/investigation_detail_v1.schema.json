@@ -201,6 +201,11 @@
       "title": "AlertCorrelationDecisionV1",
       "type": "object"
     },
+    "ApprovalDecision": {
+      "enum": ["approved", "rejected"],
+      "title": "ApprovalDecision",
+      "type": "string"
+    },
     "ApprovalRequirementV1": {
       "additionalProperties": false,
       "properties": {
@@ -229,6 +234,52 @@
       },
       "required": ["schemaVersion", "required", "rationale"],
       "title": "ApprovalRequirementV1",
+      "type": "object"
+    },
+    "ApprovalV1": {
+      "additionalProperties": false,
+      "properties": {
+        "approverId": {
+          "minLength": 1,
+          "title": "Approverid",
+          "type": "string"
+        },
+        "decidedAt": {
+          "title": "Decidedat",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/ApprovalDecision"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "proposalRevision": {
+          "minimum": 0,
+          "title": "Proposalrevision",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "decision",
+        "approverId",
+        "proposalRevision",
+        "decidedAt"
+      ],
+      "title": "ApprovalV1",
       "type": "object"
     },
     "CandidateAffectedAssetV1": {
@@ -545,6 +596,52 @@
       "enum": ["event", "alert", "asset", "risk_path", "existing_evidence"],
       "title": "EvidenceSourceType",
       "type": "string"
+    },
+    "ExecutedActionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "executedAt": {
+          "title": "Executedat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "minLength": 1,
+          "title": "Idempotencykey",
+          "type": "string"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "resultEventId": {
+          "title": "Resulteventid",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "runId",
+        "resultEventId",
+        "idempotencyKey",
+        "executedAt"
+      ],
+      "title": "ExecutedActionV1",
+      "type": "object"
     },
     "GraphOverlayHighlightV1": {
       "additionalProperties": false,
@@ -1790,6 +1887,13 @@
   },
   "additionalProperties": false,
   "properties": {
+    "approvals": {
+      "items": {
+        "$ref": "#/$defs/ApprovalV1"
+      },
+      "title": "Approvals",
+      "type": "array"
+    },
     "candidateAssets": {
       "items": {
         "$ref": "#/$defs/CandidateAffectedAssetV1"
@@ -1802,6 +1906,13 @@
         "$ref": "#/$defs/EvidenceAttachmentV1"
       },
       "title": "Evidenceattachments",
+      "type": "array"
+    },
+    "executedActions": {
+      "items": {
+        "$ref": "#/$defs/ExecutedActionV1"
+      },
+      "title": "Executedactions",
       "type": "array"
     },
     "hypotheses": {

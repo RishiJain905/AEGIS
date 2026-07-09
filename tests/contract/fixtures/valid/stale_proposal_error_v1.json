@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "code": "STALE_PROPOSAL",
+  "message": "Proposal revision no longer matches the current revision",
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "expectedRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "actualRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB1",
+  "expectedRevision": 1,
+  "actualRevision": 2,
+  "details": {
+    "reason": "currentRevisionId mismatch"
+  }
+}

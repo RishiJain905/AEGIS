@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "expectedRevisionId": "prv_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "expectedRevision": 1,
+  "comment": "Approved after reviewing evidence and WARDEN outcome.",
+  "idempotencyKey": "idem_approve_001",
+  "actorId": "asset:operator-console"
+}

@@ -35,9 +35,13 @@ const POLICY_DECISION_THREE_ID = 'pdc_01ARZ3NDEKTSV4RRFFQ69G5FBF';
 const PROPOSAL_BLOCKED_ID = 'prp_01ARZ3NDEKTSV4RRFFQ69G5FC0';
 const PROPOSAL_REVISION_BLOCKED_ID = 'prv_01ARZ3NDEKTSV4RRFFQ69G5FC1';
 const PROPOSAL_REVISION_STALE_ID = 'prv_01ARZ3NDEKTSV4RRFFQ69G5FC2';
+const APPROVAL_REJECTED_DEMO_ID = 'apr_01ARZ3NDEKTSV4RRFFQ69G5FC3';
+const APPROVAL_APPROVED_DEMO_ID = 'apr_01ARZ3NDEKTSV4RRFFQ69G5FC4';
+const EXECUTED_ACTION_DEMO_ID = 'act_01ARZ3NDEKTSV4RRFFQ69G5FC5';
+const EXECUTED_RESULT_EVENT_ID = 'evt_01ARZ3NDEKTSV4RRFFQ69G5FC6';
 
 const syntheticInvestigationDetail = parseContract(investigationDetailSchema, {
-  schemaVersion: 3,
+  schemaVersion: 4,
   incidentId: SYNTHETIC_INCIDENT_ID,
   runId: SYNTHETIC_RUN_ID,
   triageResults: [
@@ -623,6 +627,37 @@ const syntheticInvestigationDetail = parseContract(investigationDetailSchema, {
       },
       explanationProse: 'Stale or malformed proposal blocked by deterministic policy.',
       evaluatedAt: '2026-06-30T02:09:40.000Z',
+    },
+  ],
+  approvals: [
+    {
+      schemaVersion: 1,
+      id: APPROVAL_REJECTED_DEMO_ID,
+      proposalId: PROPOSAL_BLOCKED_ID,
+      decision: 'rejected',
+      approverId: 'asset:operator-console',
+      proposalRevision: 1,
+      decidedAt: '2026-06-30T02:10:00.000Z',
+    },
+    {
+      schemaVersion: 1,
+      id: APPROVAL_APPROVED_DEMO_ID,
+      proposalId: PROPOSAL_TWO_ID,
+      decision: 'approved',
+      approverId: 'asset:operator-console',
+      proposalRevision: 1,
+      decidedAt: '2026-06-30T02:10:15.000Z',
+    },
+  ],
+  executedActions: [
+    {
+      schemaVersion: 1,
+      id: EXECUTED_ACTION_DEMO_ID,
+      proposalId: PROPOSAL_TWO_ID,
+      runId: SYNTHETIC_RUN_ID,
+      resultEventId: EXECUTED_RESULT_EVENT_ID,
+      idempotencyKey: 'approval:fixture:execute:observe:001',
+      executedAt: '2026-06-30T02:10:16.000Z',
     },
   ],
 });

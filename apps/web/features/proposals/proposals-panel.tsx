@@ -11,6 +11,7 @@ import type {
 } from '@aegis/contracts-ts';
 import { Alert, Badge, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
+import { ApprovalControls } from '@/features/approval/approval-controls';
 import { useInvestigationDetail } from '@/features/investigation/use-investigation-queries';
 
 export interface ProposalsPanelProps {
@@ -42,10 +43,12 @@ function selectedOption(revision: ProposalRevisionV1 | undefined): ResponseOptio
 }
 
 function ProposalCard({
+  incidentId,
   proposal,
   revision,
   decisions,
 }: {
+  incidentId: string;
   proposal: ActionProposalV1;
   revision: ProposalRevisionV1 | undefined;
   decisions: PolicyDecisionV1[];
@@ -64,6 +67,12 @@ function ProposalCard({
         {proposal.scenarioCommand ? <Badge>{proposal.scenarioCommand}</Badge> : null}
       </div>
       <p className="mt-2 text-sm">{proposal.rationale}</p>
+      {revision ? (
+        <p className="mt-2 text-xs text-[var(--aegis-text-secondary)]">
+          <span className="font-medium text-[var(--aegis-text-primary)]">Risk tradeoffs:</span>{' '}
+          {revision.riskTradeoffs}
+        </p>
+      ) : null}
       {option ? (
         <div className="mt-3 space-y-2 text-xs text-[var(--aegis-text-secondary)]">
           <p>
@@ -95,6 +104,7 @@ function ProposalCard({
           <details>
             <summary className="cursor-pointer">Evidence & monitoring</summary>
             <p className="mt-1">Evidence: {option.evidenceIds.join(', ')}</p>
+            <p className="mt-1">Hypotheses: {option.hypothesisIds.join(', ')}</p>
             <p className="mt-1">Monitoring: {option.monitoringPlan}</p>
           </details>
         </div>
@@ -111,18 +121,30 @@ function ProposalCard({
             ) : null}
             {latestDecision.approvalRequirement?.required ? (
               <p className="mt-2 text-xs font-medium">
-                Awaiting human approval (Phase 24) — approvers:{' '}
+                Human approval required — approvers:{' '}
                 {latestDecision.approvalRequirement.approverRoles.join(', ')}
               </p>
             ) : null}
           </Alert>
         </div>
       ) : null}
+      <ApprovalControls
+        incidentId={incidentId}
+        proposal={proposal}
+        revision={revision}
+        latestDecision={latestDecision}
+      />
     </li>
   );
 }
 
-function ProposalsContent({ detail }: { detail: InvestigationDetailV1 }) {
+function ProposalsContent({
+  incidentId,
+  detail,
+}: {
+  incidentId: string;
+  detail: InvestigationDetailV1;
+}) {
   const [selectedProposalId, setSelectedProposalId] = useState<string | null>(
     detail.proposals[0]?.id ?? null,
   );
@@ -164,6 +186,7 @@ function ProposalsContent({ detail }: { detail: InvestigationDetailV1 }) {
               aria-pressed={selectedProposalId === proposal.id}
             >
               <ProposalCard
+                incidentId={incidentId}
                 proposal={proposal}
                 revision={revisionsByProposal.get(proposal.id)}
                 decisions={decisionsByProposal.get(proposal.id) ?? []}
@@ -186,6 +209,21 @@ function ProposalsContent({ detail }: { detail: InvestigationDetailV1 }) {
           {detail.policyDecisions.map((decision) => (
             <li key={decision.id} className="font-mono">
               policy {decision.id} · {decision.outcome} · {decision.evaluatedAt}
+            </li>
+          ))}
+          {detail.approvals.map((approval) => (
+            <li
+              key={approval.id}
+              className="font-mono"
+              data-testid={`approval-audit-${approval.id}`}
+            >
+              approval {approval.id} · {approval.decision} · {approval.approverId} ·{' '}
+              {approval.decidedAt}
+            </li>
+          ))}
+          {detail.executedActions.map((action) => (
+            <li key={action.id} className="font-mono" data-testid={`execution-audit-${action.id}`}>
+              executed {action.id} · proposal={action.proposalId} · {action.executedAt}
             </li>
           ))}
         </ul>
@@ -212,5 +250,5 @@ export function ProposalsPanel({ incidentId }: ProposalsPanelProps) {
     );
   }
 
-  return <ProposalsContent detail={detail} />;
+  return <ProposalsContent incidentId={incidentId} detail={detail} />;
 }

@@ -32,6 +32,10 @@ from aegis_persistence.orm.tables import (
     TraceInvestigationPlanRow,
     WatchtowerTriageResultRow,
 )
+from aegis_persistence.repositories.approvals import (
+    PostgresApprovalRepository,
+    PostgresExecutedActionRepository,
+)
 from aegis_persistence.repositories.hypothesis import PostgresOracleHypothesisRepository
 from aegis_persistence.repositories.proposals import PostgresProposalRepository
 
@@ -43,10 +47,16 @@ class PostgresInvestigationRepository:
         *,
         oracle_repository: PostgresOracleHypothesisRepository | None = None,
         proposal_repository: PostgresProposalRepository | None = None,
+        approval_repository: PostgresApprovalRepository | None = None,
+        executed_action_repository: PostgresExecutedActionRepository | None = None,
     ) -> None:
         self._session = session
         self._oracle = oracle_repository or PostgresOracleHypothesisRepository(session)
         self._proposals = proposal_repository or PostgresProposalRepository(session)
+        self._approvals = approval_repository or PostgresApprovalRepository(session)
+        self._executed_actions = (
+            executed_action_repository or PostgresExecutedActionRepository(session)
+        )
 
     async def get_triage_by_idempotency(
         self,
@@ -220,4 +230,6 @@ class PostgresInvestigationRepository:
             proposals=await self._proposals.list_proposals_for_incident(incident_id),
             proposal_revisions=await self._proposals.list_revisions_for_incident(incident_id),
             policy_decisions=await self._proposals.list_policy_decisions_for_incident(incident_id),
+            approvals=await self._approvals.list_for_incident(incident_id),
+            executed_actions=await self._executed_actions.list_for_incident(incident_id),
         )

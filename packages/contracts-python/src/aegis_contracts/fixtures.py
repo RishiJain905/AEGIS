@@ -19,6 +19,21 @@ from aegis_contracts.agent_runtime import (
     ToolResultV1,
 )
 from aegis_contracts.api import CursorPaginationV1, IdempotencyMetadataV1
+from aegis_contracts.approvals import (
+    ApproveProposalRequestV1,
+    ApproveProposalResponseV1,
+    AuthorizedSimulationCommandV1,
+    CancelProposalRequestV1,
+    CancelProposalResponseV1,
+    ExecutionResultV1,
+    FinalPolicyCheckV1,
+    ModifyProposalRequestV1,
+    ModifyProposalResponseV1,
+    ProposalModificationV1,
+    RejectProposalRequestV1,
+    RejectProposalResponseV1,
+    StaleProposalErrorV1,
+)
 from aegis_contracts.entities import (
     ActionProposalV1,
     AgentSessionV1,
@@ -260,4 +275,17 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "report_export_artifact_v1": ReportExportArtifactV1,
     "grounding_validation_result_v1": GroundingValidationResultV1,
     "trigger_scribe_request_v1": TriggerScribeRequestV1,
+    "stale_proposal_error_v1": StaleProposalErrorV1,
+    "proposal_modification_v1": ProposalModificationV1,
+    "final_policy_check_v1": FinalPolicyCheckV1,
+    "authorized_simulation_command_v1": AuthorizedSimulationCommandV1,
+    "execution_result_v1": ExecutionResultV1,
+    "approve_proposal_request_v1": ApproveProposalRequestV1,
+    "reject_proposal_request_v1": RejectProposalRequestV1,
+    "modify_proposal_request_v1": ModifyProposalRequestV1,
+    "cancel_proposal_request_v1": CancelProposalRequestV1,
+    "approve_proposal_response_v1": ApproveProposalResponseV1,
+    "reject_proposal_response_v1": RejectProposalResponseV1,
+    "modify_proposal_response_v1": ModifyProposalResponseV1,
+    "cancel_proposal_response_v1": CancelProposalResponseV1,
 }
