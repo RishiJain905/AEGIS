@@ -5,12 +5,42 @@ import {
   graphSnapshotSchema,
   investigationDetailSchema,
   parseContract,
+  replayCursorSchema,
+  replayStateSchema,
   reportVersionSchema,
   riskScoresListResponseSchema,
+  snapshotManifestSchema,
+  stateDiffSchema,
 } from '@aegis/contracts-ts';
 
-import type { AegisApiClient, ConnectionStatus, RunGraphResult } from '@/lib/api/types';
+import type {
+  AegisApiClient,
+  ConnectionStatus,
+  ReplayQueryParams,
+  RunGraphResult,
+} from '@/lib/api/types';
 import { ApiClientError } from '@/lib/api/types';
+
+function buildReplayQuery(params?: ReplayQueryParams): string {
+  if (!params) {
+    return '';
+  }
+  const search = new URLSearchParams();
+  if (params.sequence != null) {
+    search.set('sequence', String(params.sequence));
+  }
+  if (params.simTime) {
+    search.set('simTime', params.simTime);
+  }
+  if (params.incidentId) {
+    search.set('incidentId', params.incidentId);
+  }
+  if (params.preferSnapshot != null) {
+    search.set('preferSnapshot', String(params.preferSnapshot));
+  }
+  const query = search.toString();
+  return query ? `?${query}` : '';
+}
 
 function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
@@ -110,6 +140,24 @@ export function createProductionClient(): AegisApiClient {
     isReadOnly: async (_runId, signal) => {
       const status = await fetchJson<{ readOnly?: boolean }>('/api/v1/workspace/status', signal);
       return Boolean(status.readOnly);
+    },
+    getReplayState: (runId, params, signal) =>
+      fetchJson(`/api/v1/replay/runs/${runId}/state${buildReplayQuery(params)}`, signal, (data) =>
+        parseContract(replayStateSchema, data),
+      ),
+    getReplayCursor: (runId, params, signal) =>
+      fetchJson(`/api/v1/replay/runs/${runId}/cursor${buildReplayQuery(params)}`, signal, (data) =>
+        parseContract(replayCursorSchema, data),
+      ),
+    getReplayDiff: (runId, fromSequence, toSequence, signal) =>
+      fetchJson(
+        `/api/v1/replay/runs/${runId}/diff?fromSequence=${String(fromSequence)}&toSequence=${String(toSequence)}`,
+        signal,
+        (data) => parseContract(stateDiffSchema, data),
+      ),
+    listReplaySnapshots: async (runId, signal) => {
+      const data = await fetchJson<unknown[]>(`/api/v1/replay/runs/${runId}/snapshots`, signal);
+      return data.map((item) => parseContract(snapshotManifestSchema, item));
     },
   };
 }

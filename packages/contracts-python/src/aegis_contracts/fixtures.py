@@ -137,6 +137,14 @@ from aegis_contracts.replay import (
     SnapshotManifestV1,
     StateDiffV1,
 )
+from aegis_contracts.replay_frontend import (
+    HistoricalGraphAdapterV1,
+    ReplayBookmarkV1,
+    ReplayComparisonV1,
+    ReplayViewStateV1,
+    ReturnToLiveResultV1,
+    TimelineFilterV1,
+)
 from aegis_contracts.reports import (
     AfterActionReportSourceV1,
     AfterActionReportV1,
@@ -306,4 +314,10 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "snapshot_manifest_v1": SnapshotManifestV1,
     "state_diff_v1": StateDiffV1,
     "replay_equivalence_result_v1": ReplayEquivalenceResultV1,
+    "replay_view_state_v1": ReplayViewStateV1,
+    "replay_bookmark_v1": ReplayBookmarkV1,
+    "replay_comparison_v1": ReplayComparisonV1,
+    "timeline_filter_v1": TimelineFilterV1,
+    "historical_graph_adapter_v1": HistoricalGraphAdapterV1,
+    "return_to_live_result_v1": ReturnToLiveResultV1,
 }

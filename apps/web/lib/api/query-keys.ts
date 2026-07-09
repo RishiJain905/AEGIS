@@ -25,4 +25,12 @@ export const queryKeys = {
   connection: {
     status: ['connection', 'status'] as const,
   },
+  replay: {
+    state: (runId: string, sequence: number, incidentId?: string | null) =>
+      ['replay', runId, 'state', sequence, incidentId ?? null] as const,
+    cursor: (runId: string, sequence: number) => ['replay', runId, 'cursor', sequence] as const,
+    diff: (runId: string, fromSequence: number, toSequence: number) =>
+      ['replay', runId, 'diff', fromSequence, toSequence] as const,
+    snapshots: (runId: string) => ['replay', runId, 'snapshots'] as const,
+  },
 } as const;

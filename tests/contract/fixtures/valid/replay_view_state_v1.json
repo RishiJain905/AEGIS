@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "mode": "historical",
+  "cursor": {
+    "schemaVersion": 1,
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "sequence": 250,
+    "simTime": "2026-01-01T18:35:00.000Z",
+    "incidentId": null
+  },
+  "minSequence": 0,
+  "maxSequence": 500,
+  "playbackStatus": "paused",
+  "speed": "1x",
+  "loadStatus": "ready",
+  "reducedMotion": false,
+  "selectedBookmarkId": null,
+  "timelineFilter": {
+    "schemaVersion": 1,
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "eventTypes": [],
+    "incidentId": null,
+    "query": null,
+    "fromSequence": null,
+    "toSequence": null,
+    "includeBookmarksOnly": false
+  },
+  "comparison": null,
+  "historicalGraph": {
+    "schemaVersion": 1,
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "sequence": 250,
+    "graphRevision": 12,
+    "stateDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "source": "replay_state_graph",
+    "readOnly": true
+  },
+  "provenance": {
+    "schemaVersion": 1,
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "mode": "from_snapshot_plus_events",
+    "snapshotId": "rps_01ARZ3NDEKTSV4RRFFQ69G5FC0",
+    "snapshotSequence": 200,
+    "appliedFromSequence": 201,
+    "appliedToSequence": 250,
+    "appliedEventCount": 50,
+    "fallbackReason": null,
+    "reconstructedAt": "2026-06-30T03:00:00.000Z"
+  },
+  "stateDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "errorCode": null,
+  "errorMessage": null,
+  "lastReconstructedAt": "2026-06-30T03:00:00.000Z"
+}

@@ -1,0 +1,81 @@
+{
+  "additionalProperties": false,
+  "description": "Filter/virtualization controls for the historical timeline.",
+  "properties": {
+    "eventTypes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Eventtypes",
+      "type": "array"
+    },
+    "fromSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fromsequence"
+    },
+    "incidentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "includeBookmarksOnly": {
+      "default": false,
+      "title": "Includebookmarksonly",
+      "type": "boolean"
+    },
+    "query": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Query"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "toSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tosequence"
+    }
+  },
+  "required": ["schemaVersion", "runId"],
+  "title": "TimelineFilterV1",
+  "type": "object"
+}

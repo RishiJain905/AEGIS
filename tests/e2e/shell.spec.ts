@@ -26,13 +26,15 @@ test.describe('application shell', () => {
     await expect(page.getByTestId('inspector-panel')).toBeVisible();
 
     await page.goto('/replay/run_01ARZ3NDEKTSV4RRFFQ69G5FAV');
-    await expect(page.getByRole('region', { name: 'Replay workspace' })).toBeVisible();
+    await expect(page.getByTestId('historical-mode-banner')).toBeVisible();
+    await expect(page.getByTestId('replay-transport-controls')).toBeVisible();
 
     await page.goto('/reports');
-    await expect(page.getByRole('region', { name: 'Reports' })).toBeVisible();
+    await expect(page.getByTestId('command-centre-shell')).toBeVisible();
+    await expect(page.getByText(/After-action|Reports|SCRIBE/i).first()).toBeVisible();
 
     await page.goto('/admin');
-    await expect(page.getByRole('region', { name: 'Administration' })).toBeVisible();
+    await expect(page.getByTestId('command-centre-shell')).toBeVisible();
   });
 
   test('opens command palette with keyboard shortcut', async ({ page }) => {

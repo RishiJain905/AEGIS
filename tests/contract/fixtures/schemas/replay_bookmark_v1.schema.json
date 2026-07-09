@@ -1,0 +1,83 @@
+{
+  "$defs": {
+    "ReplayBookmarkKindV1": {
+      "enum": ["incident", "snapshot", "detection", "approval", "report", "custom"],
+      "title": "ReplayBookmarkKindV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Named jump point for historical scrubbing.",
+  "properties": {
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 512,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "incidentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "kind": {
+      "$ref": "#/$defs/ReplayBookmarkKindV1"
+    },
+    "label": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "toSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tosequence"
+    }
+  },
+  "required": ["schemaVersion", "id", "runId", "label", "kind", "sequence"],
+  "title": "ReplayBookmarkV1",
+  "type": "object"
+}

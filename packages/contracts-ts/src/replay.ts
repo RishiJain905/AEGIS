@@ -244,3 +244,19 @@ export const replayEquivalenceResultSchema = z
     checkedAt: utcTimestampSchema,
   })
   .strict();
+
+export type ReplayCursorV1 = z.infer<typeof replayCursorSchema>;
+export type ReplayCursorRangeV1 = z.infer<typeof replayCursorRangeSchema>;
+export type ReplayProvenanceV1 = z.infer<typeof replayProvenanceSchema>;
+export type ReplayStateV1 = z.infer<typeof replayStateSchema>;
+export type ReplaySnapshotV1 = z.infer<typeof replaySnapshotSchema>;
+export type SnapshotManifestV1 = z.infer<typeof snapshotManifestSchema>;
+export type StateDiffEntryV1 = z.infer<typeof stateDiffEntrySchema>;
+export type StateDiffV1 = z.infer<typeof stateDiffSchema>;
+export type ReplayEquivalenceResultV1 = z.infer<typeof replayEquivalenceResultSchema>;
+export type ReplayModeV1 = z.infer<typeof replayModeSchema>;
+export type ReplayErrorCode = z.infer<typeof replayErrorCodeSchema>;
+export type ReplayAuditEventRefV1 = z.infer<typeof replayAuditEventRefSchema>;
+export type ReplayRiskScoreV1 = z.infer<typeof replayRiskScoreSchema>;
+export type ReplayReportRefV1 = z.infer<typeof replayReportRefSchema>;
+export type ReplayAgentArtifactRefV1 = z.infer<typeof replayAgentArtifactRefSchema>;

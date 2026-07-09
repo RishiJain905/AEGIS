@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "description": "Explicit exit from historical mode requiring authoritative live resync.",
+  "properties": {
+    "authoritativeResyncRequired": {
+      "title": "Authoritativeresyncrequired",
+      "type": "boolean"
+    },
+    "completedAt": {
+      "title": "Completedat",
+      "type": "string"
+    },
+    "fromSequence": {
+      "minimum": 0,
+      "title": "Fromsequence",
+      "type": "integer"
+    },
+    "liveRoute": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Liveroute",
+      "type": "string"
+    },
+    "replayStoreCleared": {
+      "title": "Replaystorecleared",
+      "type": "boolean"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "fromSequence",
+    "liveRoute",
+    "authoritativeResyncRequired",
+    "replayStoreCleared",
+    "completedAt"
+  ],
+  "title": "ReturnToLiveResultV1",
+  "type": "object"
+}

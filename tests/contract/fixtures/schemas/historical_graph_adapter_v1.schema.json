@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "description": "Serializable binding of reconstructed graph state for historical rendering.",
+  "properties": {
+    "graphRevision": {
+      "minimum": 0,
+      "title": "Graphrevision",
+      "type": "integer"
+    },
+    "readOnly": {
+      "default": true,
+      "title": "Readonly",
+      "type": "boolean"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "source": {
+      "default": "replay_state_graph",
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+    },
+    "stateDigest": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Statedigest",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "runId", "sequence", "graphRevision", "stateDigest"],
+  "title": "HistoricalGraphAdapterV1",
+  "type": "object"
+}
