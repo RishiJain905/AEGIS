@@ -34,7 +34,14 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "objectKey", "checksum", "contentType", "sizeBytes", "createdAt"],
+  "required": [
+    "schemaVersion",
+    "objectKey",
+    "checksum",
+    "contentType",
+    "sizeBytes",
+    "createdAt"
+  ],
   "title": "ObjectMetadataReferenceV1",
   "type": "object"
 }

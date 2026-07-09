@@ -1,0 +1,1242 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "enum": ["class_0", "class_1", "class_2", "class_3"],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "ActionProposalV1": {
+      "additionalProperties": false,
+      "properties": {
+        "actionClass": {
+          "$ref": "#/$defs/ActionClass"
+        },
+        "agentSessionId": {
+          "title": "Agentsessionid",
+          "type": "string"
+        },
+        "command": {
+          "minLength": 1,
+          "title": "Command",
+          "type": "string"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "currentRevisionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currentrevisionid"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "rationale": {
+          "default": "",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "scenarioCommand": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scenariocommand"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/ProposalStatus"
+        },
+        "targetAssetId": {
+          "title": "Targetassetid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "incidentId",
+        "agentSessionId",
+        "actionClass",
+        "targetAssetId",
+        "command",
+        "status",
+        "revision",
+        "createdAt"
+      ],
+      "title": "ActionProposalV1",
+      "type": "object"
+    },
+    "AgentRole": {
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
+      "title": "AgentRole",
+      "type": "string"
+    },
+    "AgentSessionState": {
+      "enum": [
+        "queued",
+        "gathering",
+        "hypothesizing",
+        "verifying",
+        "proposing",
+        "approval_pending",
+        "executing",
+        "completed",
+        "failed",
+        "cancelled"
+      ],
+      "title": "AgentSessionState",
+      "type": "string"
+    },
+    "AgentSessionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "incidentId": {
+          "title": "Incidentid",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/AgentRole"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/$defs/AgentSessionState"
+        },
+        "traceId": {
+          "title": "Traceid",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "incidentId",
+        "role",
+        "state",
+        "traceId",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "AgentSessionV1",
+      "type": "object"
+    },
+    "ApprovalDecision": {
+      "enum": ["approved", "rejected"],
+      "title": "ApprovalDecision",
+      "type": "string"
+    },
+    "ApprovalV1": {
+      "additionalProperties": false,
+      "properties": {
+        "approverId": {
+          "minLength": 1,
+          "title": "Approverid",
+          "type": "string"
+        },
+        "decidedAt": {
+          "title": "Decidedat",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/ApprovalDecision"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "proposalRevision": {
+          "minimum": 0,
+          "title": "Proposalrevision",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "decision",
+        "approverId",
+        "proposalRevision",
+        "decidedAt"
+      ],
+      "title": "ApprovalV1",
+      "type": "object"
+    },
+    "AssetType": {
+      "enum": [
+        "service",
+        "device",
+        "user",
+        "identity",
+        "database",
+        "control",
+        "ai_model"
+      ],
+      "title": "AssetType",
+      "type": "string"
+    },
+    "EntityType": {
+      "enum": ["asset", "cluster"],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "EvidenceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "assetId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assetid"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sourceEventId": {
+          "title": "Sourceeventid",
+          "type": "string"
+        },
+        "summary": {
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "runId",
+        "sourceEventId",
+        "summary",
+        "createdAt"
+      ],
+      "title": "EvidenceV1",
+      "type": "object"
+    },
+    "ExecutedActionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "executedAt": {
+          "title": "Executedat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "minLength": 1,
+          "title": "Idempotencykey",
+          "type": "string"
+        },
+        "proposalId": {
+          "title": "Proposalid",
+          "type": "string"
+        },
+        "resultEventId": {
+          "title": "Resulteventid",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "proposalId",
+        "runId",
+        "resultEventId",
+        "idempotencyKey",
+        "executedAt"
+      ],
+      "title": "ExecutedActionV1",
+      "type": "object"
+    },
+    "GraphClusterV1": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "memberNodeIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Membernodeids",
+          "type": "array"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": ["schemaVersion", "id", "label", "memberNodeIds", "revision"],
+      "title": "GraphClusterV1",
+      "type": "object"
+    },
+    "GraphEdgeV1": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "directed": {
+          "title": "Directed",
+          "type": "boolean"
+        },
+        "eventCount": {
+          "minimum": 0,
+          "title": "Eventcount",
+          "type": "integer"
+        },
+        "firstSeenAt": {
+          "title": "Firstseenat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "title": "Lastseenat",
+          "type": "string"
+        },
+        "relationshipType": {
+          "$ref": "#/$defs/RelationshipType"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "riskContribution": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Riskcontribution",
+          "type": "number"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "source",
+        "target",
+        "relationshipType",
+        "directed",
+        "confidence",
+        "riskContribution",
+        "firstSeenAt",
+        "lastSeenAt",
+        "eventCount",
+        "revision"
+      ],
+      "title": "GraphEdgeV1",
+      "type": "object"
+    },
+    "GraphNodeV1": {
+      "additionalProperties": false,
+      "properties": {
+        "assetType": {
+          "$ref": "#/$defs/AssetType"
+        },
+        "clusterId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Clusterid"
+        },
+        "criticality": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Criticality",
+          "type": "number"
+        },
+        "entityType": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "riskScore": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Riskscore",
+          "type": "number"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/NodeStatus"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "entityType",
+        "assetType",
+        "label",
+        "riskScore",
+        "criticality",
+        "status",
+        "revision"
+      ],
+      "title": "GraphNodeV1",
+      "type": "object"
+    },
+    "GraphSnapshotV1": {
+      "additionalProperties": false,
+      "properties": {
+        "capturedAt": {
+          "title": "Capturedat",
+          "type": "string"
+        },
+        "clusters": {
+          "items": {
+            "$ref": "#/$defs/GraphClusterV1"
+          },
+          "title": "Clusters",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/GraphEdgeV1"
+          },
+          "title": "Edges",
+          "type": "array"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/GraphNodeV1"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "sequence",
+        "capturedAt",
+        "nodes",
+        "edges",
+        "revision"
+      ],
+      "title": "GraphSnapshotV1",
+      "type": "object"
+    },
+    "IncidentState": {
+      "enum": [
+        "open",
+        "triaged",
+        "investigating",
+        "containment_proposed",
+        "approval_pending",
+        "containing",
+        "monitoring",
+        "resolved",
+        "closed"
+      ],
+      "title": "IncidentState",
+      "type": "string"
+    },
+    "IncidentV1": {
+      "additionalProperties": false,
+      "properties": {
+        "alertIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Alertids",
+          "type": "array"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/$defs/IncidentState"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "runId",
+        "title",
+        "state",
+        "alertIds",
+        "createdAt",
+        "updatedAt",
+        "revision"
+      ],
+      "title": "IncidentV1",
+      "type": "object"
+    },
+    "NodeStatus": {
+      "enum": [
+        "normal",
+        "suspicious",
+        "under_investigation",
+        "contained",
+        "compromised"
+      ],
+      "title": "NodeStatus",
+      "type": "string"
+    },
+    "ProposalStatus": {
+      "enum": ["pending", "approved", "rejected", "executed", "cancelled"],
+      "title": "ProposalStatus",
+      "type": "string"
+    },
+    "RelationshipType": {
+      "enum": [
+        "COMMUNICATED_WITH",
+        "AUTHENTICATED_TO",
+        "DEPENDS_ON",
+        "ADMINISTERS",
+        "HOSTS"
+      ],
+      "title": "RelationshipType",
+      "type": "string"
+    },
+    "ReplayAgentArtifactRefV1": {
+      "additionalProperties": false,
+      "description": "Persisted agent/LLM artifact reference \u2014 never regenerated during replay.",
+      "properties": {
+        "agentSessionId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Agentsessionid",
+          "type": "string"
+        },
+        "artifactId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Artifactid",
+          "type": "string"
+        },
+        "artifactType": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Artifacttype",
+          "type": "string"
+        },
+        "checksum": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checksum"
+        },
+        "objectKey": {
+          "anyOf": [
+            {
+              "maxLength": 1024,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Objectkey"
+        }
+      },
+      "required": ["artifactId", "agentSessionId", "artifactType"],
+      "title": "ReplayAgentArtifactRefV1",
+      "type": "object"
+    },
+    "ReplayAuditEventRefV1": {
+      "additionalProperties": false,
+      "description": "Audit-relevant event reference reconstructed from authoritative history.",
+      "properties": {
+        "eventId": {
+          "title": "Eventid",
+          "type": "string"
+        },
+        "eventType": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Eventtype",
+          "type": "string"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "summary": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": ["eventId", "sequence", "eventType", "summary"],
+      "title": "ReplayAuditEventRefV1",
+      "type": "object"
+    },
+    "ReplayCursorV1": {
+      "additionalProperties": false,
+      "properties": {
+        "incidentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Incidentid"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "simTime": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Simtime"
+        }
+      },
+      "required": ["schemaVersion", "runId", "sequence"],
+      "title": "ReplayCursorV1",
+      "type": "object"
+    },
+    "ReplayModeV1": {
+      "enum": ["from_events", "from_snapshot_plus_events"],
+      "title": "ReplayModeV1",
+      "type": "string"
+    },
+    "ReplayProvenanceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "appliedEventCount": {
+          "minimum": 0,
+          "title": "Appliedeventcount",
+          "type": "integer"
+        },
+        "appliedFromSequence": {
+          "minimum": 0,
+          "title": "Appliedfromsequence",
+          "type": "integer"
+        },
+        "appliedToSequence": {
+          "minimum": 0,
+          "title": "Appliedtosequence",
+          "type": "integer"
+        },
+        "fallbackReason": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fallbackreason"
+        },
+        "mode": {
+          "$ref": "#/$defs/ReplayModeV1"
+        },
+        "reconstructedAt": {
+          "title": "Reconstructedat",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "snapshotId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snapshotid"
+        },
+        "snapshotSequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snapshotsequence"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "mode",
+        "appliedFromSequence",
+        "appliedToSequence",
+        "appliedEventCount",
+        "reconstructedAt"
+      ],
+      "title": "ReplayProvenanceV1",
+      "type": "object"
+    },
+    "ReplayReportRefV1": {
+      "additionalProperties": false,
+      "description": "Persisted report reference reconstructed during replay (no regeneration).",
+      "properties": {
+        "checksum": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checksum"
+        },
+        "incidentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Incidentid"
+        },
+        "reportId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Reportid",
+          "type": "string"
+        },
+        "reportVersionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Reportversionid",
+          "type": "string"
+        },
+        "status": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": ["reportId", "reportVersionId", "status"],
+      "title": "ReplayReportRefV1",
+      "type": "object"
+    },
+    "ReplayRiskScoreV1": {
+      "additionalProperties": false,
+      "description": "Compact risk projection entry for replay state.",
+      "properties": {
+        "assetId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Assetid",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": ["assetId", "score", "revision"],
+      "title": "ReplayRiskScoreV1",
+      "type": "object"
+    },
+    "ReplayStateV1": {
+      "additionalProperties": false,
+      "properties": {
+        "agentArtifacts": {
+          "items": {
+            "$ref": "#/$defs/ReplayAgentArtifactRefV1"
+          },
+          "title": "Agentartifacts",
+          "type": "array"
+        },
+        "agentSessions": {
+          "items": {
+            "$ref": "#/$defs/AgentSessionV1"
+          },
+          "title": "Agentsessions",
+          "type": "array"
+        },
+        "approvals": {
+          "items": {
+            "$ref": "#/$defs/ApprovalV1"
+          },
+          "title": "Approvals",
+          "type": "array"
+        },
+        "auditEvents": {
+          "items": {
+            "$ref": "#/$defs/ReplayAuditEventRefV1"
+          },
+          "title": "Auditevents",
+          "type": "array"
+        },
+        "cursor": {
+          "$ref": "#/$defs/ReplayCursorV1"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceV1"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "executedActions": {
+          "items": {
+            "$ref": "#/$defs/ExecutedActionV1"
+          },
+          "title": "Executedactions",
+          "type": "array"
+        },
+        "graph": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GraphSnapshotV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "incidents": {
+          "items": {
+            "$ref": "#/$defs/IncidentV1"
+          },
+          "title": "Incidents",
+          "type": "array"
+        },
+        "proposals": {
+          "items": {
+            "$ref": "#/$defs/ActionProposalV1"
+          },
+          "title": "Proposals",
+          "type": "array"
+        },
+        "provenance": {
+          "$ref": "#/$defs/ReplayProvenanceV1"
+        },
+        "reports": {
+          "items": {
+            "$ref": "#/$defs/ReplayReportRefV1"
+          },
+          "title": "Reports",
+          "type": "array"
+        },
+        "riskScores": {
+          "items": {
+            "$ref": "#/$defs/ReplayRiskScoreV1"
+          },
+          "title": "Riskscores",
+          "type": "array"
+        },
+        "run": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RunV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "stateDigest": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Statedigest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "cursor",
+        "stateDigest",
+        "provenance"
+      ],
+      "title": "ReplayStateV1",
+      "type": "object"
+    },
+    "RunV1": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "scenarioVersionId": {
+          "title": "Scenarioversionid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "seed": {
+          "title": "Seed",
+          "type": "integer"
+        },
+        "simTime": {
+          "title": "Simtime",
+          "type": "string"
+        },
+        "startedAt": {
+          "title": "Startedat",
+          "type": "string"
+        },
+        "status": {
+          "minLength": 1,
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "scenarioVersionId",
+        "seed",
+        "status",
+        "startedAt",
+        "simTime",
+        "revision"
+      ],
+      "title": "RunV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Durable multi-domain projection used as a replay acceleration artifact.",
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "engineVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Engineversion",
+      "type": "string"
+    },
+    "eventRangeFrom": {
+      "minimum": 0,
+      "title": "Eventrangefrom",
+      "type": "integer"
+    },
+    "eventRangeTo": {
+      "minimum": 0,
+      "title": "Eventrangeto",
+      "type": "integer"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "projectorVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Projectorversion",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "scenarioVersionId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Scenarioversionid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/ReplayStateV1"
+    },
+    "stateDigest": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Statedigest",
+      "type": "string"
+    },
+    "workspaceVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Workspaceversion",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "runId",
+    "sequence",
+    "simTime",
+    "scenarioVersionId",
+    "engineVersion",
+    "projectorVersion",
+    "workspaceVersion",
+    "eventRangeFrom",
+    "eventRangeTo",
+    "state",
+    "stateDigest",
+    "createdAt"
+  ],
+  "title": "ReplaySnapshotV1",
+  "type": "object"
+}

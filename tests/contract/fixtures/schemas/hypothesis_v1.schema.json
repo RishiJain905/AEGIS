@@ -84,7 +84,12 @@
       "type": "string"
     }
   },
-  "required": ["schemaVersion", "id", "incidentId", "createdAt"],
+  "required": [
+    "schemaVersion",
+    "id",
+    "incidentId",
+    "createdAt"
+  ],
   "title": "HypothesisV1",
   "type": "object"
 }

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "mode": "from_snapshot_plus_events",
+  "snapshotId": "rps_01ARZ3NDEKTSV4RRFFQ69G5FC0",
+  "snapshotSequence": 400,
+  "appliedFromSequence": 401,
+  "appliedToSequence": 500,
+  "appliedEventCount": 100,
+  "fallbackReason": null,
+  "reconstructedAt": "2026-06-30T03:00:00.000Z"
+}

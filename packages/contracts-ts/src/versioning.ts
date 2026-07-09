@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase24' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase25' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -153,6 +153,14 @@ export const APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION = 1;
 export const REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION = 1;
 export const MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION = 1;
 export const CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION = 1;
+export const REPLAY_CURSOR_SCHEMA_VERSION = 1;
+export const REPLAY_CURSOR_RANGE_SCHEMA_VERSION = 1;
+export const REPLAY_PROVENANCE_SCHEMA_VERSION = 1;
+export const REPLAY_STATE_SCHEMA_VERSION = 1;
+export const REPLAY_SNAPSHOT_SCHEMA_VERSION = 1;
+export const SNAPSHOT_MANIFEST_SCHEMA_VERSION = 1;
+export const STATE_DIFF_SCHEMA_VERSION = 1;
+export const REPLAY_EQUIVALENCE_RESULT_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -300,4 +308,12 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   reject_proposal_response: [REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION],
   modify_proposal_response: [MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION],
   cancel_proposal_response: [CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION],
+  replay_cursor: [REPLAY_CURSOR_SCHEMA_VERSION],
+  replay_cursor_range: [REPLAY_CURSOR_RANGE_SCHEMA_VERSION],
+  replay_provenance: [REPLAY_PROVENANCE_SCHEMA_VERSION],
+  replay_state: [REPLAY_STATE_SCHEMA_VERSION],
+  replay_snapshot: [REPLAY_SNAPSHOT_SCHEMA_VERSION],
+  snapshot_manifest: [SNAPSHOT_MANIFEST_SCHEMA_VERSION],
+  state_diff: [STATE_DIFF_SCHEMA_VERSION],
+  replay_equivalence_result: [REPLAY_EQUIVALENCE_RESULT_SCHEMA_VERSION],
 };

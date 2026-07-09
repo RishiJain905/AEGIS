@@ -21,7 +21,10 @@
           "type": "string"
         }
       },
-      "required": ["toolName", "purpose"],
+      "required": [
+        "toolName",
+        "purpose"
+      ],
       "title": "TraceSearchStepV1",
       "type": "object"
     }

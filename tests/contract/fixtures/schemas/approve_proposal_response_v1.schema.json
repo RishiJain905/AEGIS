@@ -1,17 +1,32 @@
 {
   "$defs": {
     "ActionClass": {
-      "enum": ["class_0", "class_1", "class_2", "class_3"],
+      "enum": [
+        "class_0",
+        "class_1",
+        "class_2",
+        "class_3"
+      ],
       "title": "ActionClass",
       "type": "string"
     },
     "AgentRole": {
-      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
+      "enum": [
+        "WATCHTOWER",
+        "TRACE",
+        "ORACLE",
+        "BASTION",
+        "WARDEN",
+        "SCRIBE"
+      ],
       "title": "AgentRole",
       "type": "string"
     },
     "ApprovalDecision": {
-      "enum": ["approved", "rejected"],
+      "enum": [
+        "approved",
+        "rejected"
+      ],
       "title": "ApprovalDecision",
       "type": "string"
     },
@@ -41,7 +56,11 @@
           "type": "integer"
         }
       },
-      "required": ["schemaVersion", "required", "rationale"],
+      "required": [
+        "schemaVersion",
+        "required",
+        "rationale"
+      ],
       "title": "ApprovalRequirementV1",
       "type": "object"
     },
@@ -174,7 +193,13 @@
           "type": "boolean"
         }
       },
-      "required": ["schemaVersion", "executedAction", "resultEventId", "commandId", "success"],
+      "required": [
+        "schemaVersion",
+        "executedAction",
+        "resultEventId",
+        "commandId",
+        "success"
+      ],
       "title": "ExecutionResultV1",
       "type": "object"
     },
@@ -428,7 +453,11 @@
       "type": "object"
     },
     "PolicyOutcomeV1": {
-      "enum": ["allow", "block", "approval_required"],
+      "enum": [
+        "allow",
+        "block",
+        "approval_required"
+      ],
       "title": "PolicyOutcomeV1",
       "type": "string"
     },
@@ -450,7 +479,13 @@
       "type": "string"
     },
     "ProposalStatus": {
-      "enum": ["pending", "approved", "rejected", "executed", "cancelled"],
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "executed",
+        "cancelled"
+      ],
       "title": "ProposalStatus",
       "type": "string"
     },
@@ -501,7 +536,12 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "approval", "finalPolicyCheck", "proposalStatus"],
+  "required": [
+    "schemaVersion",
+    "approval",
+    "finalPolicyCheck",
+    "proposalStatus"
+  ],
   "title": "ApproveProposalResponseV1",
   "type": "object"
 }

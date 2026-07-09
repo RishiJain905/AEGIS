@@ -915,3 +915,43 @@ class ReportExportArtifactRow(Base):
         ),
         Index("ix_report_export_artifacts_run_format", "run_id", "format"),
     )
+
+
+class ReplaySnapshotManifestRow(Base):
+    __tablename__ = "replay_snapshot_manifests"
+
+    snapshot_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    sim_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    scenario_version_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    engine_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    projector_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    workspace_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    event_range_from: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_range_to: Mapped[int] = mapped_column(Integer, nullable=False)
+    checksum: Mapped[str] = mapped_column(String(128), nullable=False)
+    compression: Mapped[str] = mapped_column(String(16), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(256), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    object_key: Mapped[str] = mapped_column(String(1024), nullable=False)
+    state_digest: Mapped[str] = mapped_column(String(128), nullable=False)
+    trigger_reason: Mapped[str] = mapped_column(String(64), nullable=False)
+    retention_class: Mapped[str] = mapped_column(String(64), nullable=False)
+    compatible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "sequence",
+            name="uq_replay_snapshot_manifests_run_sequence",
+        ),
+        Index("ix_replay_snapshot_manifests_run_sequence", "run_id", "sequence"),
+        Index("ix_replay_snapshot_manifests_object_key", "object_key", unique=True),
+    )

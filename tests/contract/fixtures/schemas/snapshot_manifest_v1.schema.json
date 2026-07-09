@@ -1,0 +1,153 @@
+{
+  "$defs": {
+    "SnapshotCompressionV1": {
+      "enum": ["none", "gzip"],
+      "title": "SnapshotCompressionV1",
+      "type": "string"
+    },
+    "SnapshotTriggerReasonV1": {
+      "enum": [
+        "sequence_interval",
+        "run_paused",
+        "run_completed",
+        "explicit_request",
+        "worker_backfill"
+      ],
+      "title": "SnapshotTriggerReasonV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "checksum": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Checksum",
+      "type": "string"
+    },
+    "compatible": {
+      "default": true,
+      "title": "Compatible",
+      "type": "boolean"
+    },
+    "compression": {
+      "$ref": "#/$defs/SnapshotCompressionV1"
+    },
+    "contentType": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Contenttype",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "engineVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Engineversion",
+      "type": "string"
+    },
+    "eventRangeFrom": {
+      "minimum": 0,
+      "title": "Eventrangefrom",
+      "type": "integer"
+    },
+    "eventRangeTo": {
+      "minimum": 0,
+      "title": "Eventrangeto",
+      "type": "integer"
+    },
+    "objectKey": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Objectkey",
+      "type": "string"
+    },
+    "projectorVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Projectorversion",
+      "type": "string"
+    },
+    "retentionClass": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Retentionclass",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "scenarioVersionId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Scenarioversionid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "sizeBytes": {
+      "minimum": 0,
+      "title": "Sizebytes",
+      "type": "integer"
+    },
+    "snapshotId": {
+      "title": "Snapshotid",
+      "type": "string"
+    },
+    "stateDigest": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Statedigest",
+      "type": "string"
+    },
+    "triggerReason": {
+      "$ref": "#/$defs/SnapshotTriggerReasonV1"
+    },
+    "workspaceVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Workspaceversion",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "snapshotId",
+    "runId",
+    "sequence",
+    "simTime",
+    "scenarioVersionId",
+    "engineVersion",
+    "projectorVersion",
+    "workspaceVersion",
+    "eventRangeFrom",
+    "eventRangeTo",
+    "checksum",
+    "compression",
+    "contentType",
+    "sizeBytes",
+    "objectKey",
+    "stateDigest",
+    "triggerReason",
+    "retentionClass",
+    "createdAt"
+  ],
+  "title": "SnapshotManifestV1",
+  "type": "object"
+}

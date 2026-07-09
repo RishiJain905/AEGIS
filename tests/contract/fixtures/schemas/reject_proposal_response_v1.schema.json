@@ -1,7 +1,10 @@
 {
   "$defs": {
     "ApprovalDecision": {
-      "enum": ["approved", "rejected"],
+      "enum": [
+        "approved",
+        "rejected"
+      ],
       "title": "ApprovalDecision",
       "type": "string"
     },
@@ -52,7 +55,13 @@
       "type": "object"
     },
     "ProposalStatus": {
-      "enum": ["pending", "approved", "rejected", "executed", "cancelled"],
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "executed",
+        "cancelled"
+      ],
       "title": "ProposalStatus",
       "type": "string"
     }
@@ -76,7 +85,11 @@
       "type": "integer"
     }
   },
-  "required": ["schemaVersion", "approval", "proposalStatus"],
+  "required": [
+    "schemaVersion",
+    "approval",
+    "proposalStatus"
+  ],
   "title": "RejectProposalResponseV1",
   "type": "object"
 }

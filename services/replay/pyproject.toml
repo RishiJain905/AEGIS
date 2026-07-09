@@ -1,0 +1,24 @@
+[project]
+name = "aegis-replay"
+version = "0.0.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "aegis-contracts",
+    "aegis-persistence",
+    "aegis-simulation-domain",
+]
+
+[tool.uv.sources]
+aegis-contracts = { workspace = true }
+aegis-persistence = { workspace = true }
+aegis-simulation-domain = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aegis_replay"]
+
+[project.scripts]
+aegis-replay = "aegis_replay.cli:main"

@@ -1,7 +1,11 @@
 {
   "$defs": {
     "ReportExportFormatV1": {
-      "enum": ["markdown", "json", "html"],
+      "enum": [
+        "markdown",
+        "json",
+        "html"
+      ],
       "title": "ReportExportFormatV1",
       "type": "string"
     }

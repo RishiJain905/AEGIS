@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "fromSequence": 100,
+  "toSequence": 500,
+  "incidentId": "incident:inc_synthetic_001"
+}

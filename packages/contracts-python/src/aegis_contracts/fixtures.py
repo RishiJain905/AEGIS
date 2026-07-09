@@ -127,6 +127,16 @@ from aegis_contracts.realtime import (
     DeadLetterRecordV1,
     RealtimeMessageEnvelopeV1,
 )
+from aegis_contracts.replay import (
+    ReplayCursorRangeV1,
+    ReplayCursorV1,
+    ReplayEquivalenceResultV1,
+    ReplayProvenanceV1,
+    ReplaySnapshotV1,
+    ReplayStateV1,
+    SnapshotManifestV1,
+    StateDiffV1,
+)
 from aegis_contracts.reports import (
     AfterActionReportSourceV1,
     AfterActionReportV1,
@@ -288,4 +298,12 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "reject_proposal_response_v1": RejectProposalResponseV1,
     "modify_proposal_response_v1": ModifyProposalResponseV1,
     "cancel_proposal_response_v1": CancelProposalResponseV1,
+    "replay_cursor_v1": ReplayCursorV1,
+    "replay_cursor_range_v1": ReplayCursorRangeV1,
+    "replay_provenance_v1": ReplayProvenanceV1,
+    "replay_state_v1": ReplayStateV1,
+    "replay_snapshot_v1": ReplaySnapshotV1,
+    "snapshot_manifest_v1": SnapshotManifestV1,
+    "state_diff_v1": StateDiffV1,
+    "replay_equivalence_result_v1": ReplayEquivalenceResultV1,
 }

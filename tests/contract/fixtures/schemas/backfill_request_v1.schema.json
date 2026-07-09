@@ -63,7 +63,9 @@
       "title": "Tosequence"
     }
   },
-  "required": ["schemaVersion"],
+  "required": [
+    "schemaVersion"
+  ],
   "title": "BackfillRequestV1",
   "type": "object"
 }

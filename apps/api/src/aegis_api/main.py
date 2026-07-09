@@ -24,6 +24,7 @@ from aegis_api.realtime.backfill import router as backfill_router
 from aegis_api.realtime.events import router as events_router
 from aegis_api.realtime.observability import router as observability_router
 from aegis_api.realtime.status import router as status_router
+from aegis_api.replay.router import router as replay_router
 from aegis_api.reports.router import router as reports_router
 from aegis_api.risk.observability import router as risk_observability_router
 from aegis_api.risk.router import router as risk_router
@@ -107,6 +108,7 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.include_router(investigation_router)
     app.include_router(approvals_router)
     app.include_router(reports_router)
+    app.include_router(replay_router)
     app.include_router(agents_observability_router)
     app.include_router(create_websocket_router(gateway))
     app.include_router(websocket_demo_router)

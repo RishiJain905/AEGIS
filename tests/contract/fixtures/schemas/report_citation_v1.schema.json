@@ -59,7 +59,12 @@
       "title": "Sequence"
     }
   },
-  "required": ["schemaVersion", "kind", "referenceId", "label"],
+  "required": [
+    "schemaVersion",
+    "kind",
+    "referenceId",
+    "label"
+  ],
   "title": "ReportCitationV1",
   "type": "object"
 }

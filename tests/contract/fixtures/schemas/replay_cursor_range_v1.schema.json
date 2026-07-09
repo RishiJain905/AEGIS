@@ -1,0 +1,39 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "fromSequence": {
+      "minimum": 0,
+      "title": "Fromsequence",
+      "type": "integer"
+    },
+    "incidentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "toSequence": {
+      "minimum": 0,
+      "title": "Tosequence",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "runId", "fromSequence", "toSequence"],
+  "title": "ReplayCursorRangeV1",
+  "type": "object"
+}

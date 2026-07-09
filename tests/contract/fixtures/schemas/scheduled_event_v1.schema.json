@@ -1,7 +1,10 @@
 {
   "$defs": {
     "ScheduledEventSourceType": {
-      "enum": ["scheduled", "generator"],
+      "enum": [
+        "scheduled",
+        "generator"
+      ],
       "title": "ScheduledEventSourceType",
       "type": "string"
     }
