@@ -21,8 +21,7 @@ const OperationalGraphView = dynamic(
 );
 
 const CinematicGraphView = dynamic(
-  () =>
-    import('@/features/cinematic-graph').then((module) => module.CinematicGraphView),
+  () => import('@/features/cinematic-graph').then((module) => module.CinematicGraphView),
   {
     ssr: false,
     loading: () => <LoadingState message="Loading historical 3D semantic renderer…" />,
@@ -87,14 +86,15 @@ export function ReplayVisualization() {
     );
   }
 
-  const evidenceNodeIds = (state.evidence ?? [])
+  const evidenceNodeIds = state.evidence
     .map((item) => item.assetId)
     .filter((id): id is string => typeof id === 'string' && id.length > 0);
   const incidentNodeIds = state.graph.nodes
-    .filter((node) =>
-      node.status === 'under_investigation' ||
-      node.status === 'compromised' ||
-      node.status === 'contained',
+    .filter(
+      (node) =>
+        node.status === 'under_investigation' ||
+        node.status === 'compromised' ||
+        node.status === 'contained',
     )
     .map((node) => node.id);
 

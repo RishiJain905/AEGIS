@@ -9,8 +9,7 @@ export const RenderQualityTier = {
   FALLBACK_2D: 'fallback2d',
 } as const;
 
-export type RenderQualityTierValue =
-  (typeof RenderQualityTier)[keyof typeof RenderQualityTier];
+export type RenderQualityTierValue = (typeof RenderQualityTier)[keyof typeof RenderQualityTier];
 
 export const renderQualityTierSchema = z.enum([
   RenderQualityTier.HIGH,

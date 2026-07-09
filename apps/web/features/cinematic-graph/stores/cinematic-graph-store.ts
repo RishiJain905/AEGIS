@@ -1,17 +1,8 @@
 import { create } from 'zustand';
 
-import {
-  GraphViewMode,
-  type GraphViewModeValue,
-} from '../contracts/graph-view-mode';
-import {
-  defaultCameraBookmark3D,
-  type CameraBookmark3D,
-} from '../contracts/camera-bookmark-3d';
-import {
-  defaultCapabilityReport,
-  type CapabilityReport,
-} from '../contracts/capability-report';
+import { GraphViewMode, type GraphViewModeValue } from '../contracts/graph-view-mode';
+import { defaultCameraBookmark3D, type CameraBookmark3D } from '../contracts/camera-bookmark-3d';
+import { defaultCapabilityReport, type CapabilityReport } from '../contracts/capability-report';
 import { RenderQualityTier, type RenderQualityTierValue } from '../contracts/render-quality-tier';
 
 export interface CinematicGraphUiState {
@@ -38,18 +29,28 @@ const initialState = {
 
 export const useCinematicGraphStore = create<CinematicGraphUiState>((set) => ({
   ...initialState,
-  setViewMode: (mode) => set({ viewMode: mode }),
-  setCapability: (report) =>
+  setViewMode: (mode) => {
+    set({ viewMode: mode });
+  },
+  setCapability: (report) => {
     set((state) => ({
       capability: report,
       qualityTier: report.recommendedTier,
-      viewMode:
-        report.recommendedTier === RenderQualityTier.FALLBACK_2D
-          ? GraphViewMode.TWO_D
-          : state.viewMode,
-    })),
-  setQualityTier: (tier) => set({ qualityTier: tier }),
-  setCamera: (bookmark) => set({ camera: bookmark }),
-  setLastError: (error) => set({ lastError: error }),
-  reset: () => set({ ...initialState }),
+      // Do not force viewMode here — only disable 3D entry when WebGL is unavailable.
+      // Operators may still open 3D to see the fallback notice when probing is inconclusive.
+      viewMode: state.viewMode,
+    }));
+  },
+  setQualityTier: (tier) => {
+    set({ qualityTier: tier });
+  },
+  setCamera: (bookmark) => {
+    set({ camera: bookmark });
+  },
+  setLastError: (error) => {
+    set({ lastError: error });
+  },
+  reset: () => {
+    set({ ...initialState });
+  },
 }));

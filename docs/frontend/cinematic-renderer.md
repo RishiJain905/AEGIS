@@ -32,26 +32,26 @@ Rules:
 
 ## Key modules
 
-| Path | Role |
-| --- | --- |
-| `apps/web/features/cinematic-graph/adapters/` | `SemanticSceneAdapter` projection + dispose |
-| `apps/web/features/cinematic-graph/contracts/` | SceneNode/Edge, CameraBookmark3D, quality tiers, capability |
-| `apps/web/features/cinematic-graph/components/` | R3F canvas, view, mode toggle, fallback notice |
-| `apps/web/features/cinematic-graph/lib/` | Capability probe, stable positions, semantic mapping |
-| `apps/web/features/shell/components/visualization-slot.tsx` | Live 2D/3D mount |
-| `apps/web/features/replay/components/replay-visualization.tsx` | Historical 2D/3D mount |
+| Path                                                           | Role                                                        |
+| -------------------------------------------------------------- | ----------------------------------------------------------- |
+| `apps/web/features/cinematic-graph/adapters/`                  | `SemanticSceneAdapter` projection + dispose                 |
+| `apps/web/features/cinematic-graph/contracts/`                 | SceneNode/Edge, CameraBookmark3D, quality tiers, capability |
+| `apps/web/features/cinematic-graph/components/`                | R3F canvas, view, mode toggle, fallback notice              |
+| `apps/web/features/cinematic-graph/lib/`                       | Capability probe, stable positions, semantic mapping        |
+| `apps/web/features/shell/components/visualization-slot.tsx`    | Live 2D/3D mount                                            |
+| `apps/web/features/replay/components/replay-visualization.tsx` | Historical 2D/3D mount                                      |
 
 ## Visual mapping
 
-| Canonical field | 3D presentation |
-| --- | --- |
-| `assetType` | Node base color (shared with Sigma semantic styles) |
-| `status` | Status marker sphere when status overlay enabled |
-| `riskScore` / risk band | Risk halo color when risk overlay enabled |
-| `clusterId` | Deterministic Z offset for cluster spatialization |
-| `eventCount` / `riskContribution` | Edge width/opacity |
-| Evidence / incident overlays | Marker cubes when overlay toggles + id sets provided |
-| Selection | Enlarged instance + HTML label |
+| Canonical field                   | 3D presentation                                      |
+| --------------------------------- | ---------------------------------------------------- |
+| `assetType`                       | Node base color (shared with Sigma semantic styles)  |
+| `status`                          | Status marker sphere when status overlay enabled     |
+| `riskScore` / risk band           | Risk halo color when risk overlay enabled            |
+| `clusterId`                       | Deterministic Z offset for cluster spatialization    |
+| `eventCount` / `riskContribution` | Edge width/opacity                                   |
+| Evidence / incident overlays      | Marker cubes when overlay toggles + id sets provided |
+| Selection                         | Enlarged instance + HTML label                       |
 
 ## Camera and navigation
 
@@ -62,12 +62,12 @@ Rules:
 
 ## Capability, quality, fallback
 
-| Tier | Behavior |
-| --- | --- |
-| `high` | Full antialias, DPR ≤ 1.75 |
-| `medium` | DPR ≤ 1.25 (also used under reduced motion) |
-| `low` | DPR = 1, demand frameloop |
-| `fallback2d` | Force Sigma 2D + capability notice |
+| Tier         | Behavior                                    |
+| ------------ | ------------------------------------------- |
+| `high`       | Full antialias, DPR ≤ 1.75                  |
+| `medium`     | DPR ≤ 1.25 (also used under reduced motion) |
+| `low`        | DPR = 1, demand frameloop                   |
+| `fallback2d` | Force Sigma 2D + capability notice          |
 
 ## Lifecycle and cleanup
 

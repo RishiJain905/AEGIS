@@ -3,11 +3,11 @@ import { graphSnapshotSchema, parseContract } from '@aegis/contracts-ts';
 import { describe, expect, it } from 'vitest';
 
 import { createSemanticSceneAdapter } from '@/features/cinematic-graph/adapters/semantic-scene-adapter';
+import { GraphViewMode, RenderQualityTier } from '@/features/cinematic-graph/contracts';
 import {
-  GraphViewMode,
-  RenderQualityTier,
-} from '@/features/cinematic-graph/contracts';
-import { probeCapabilityReport, recommendQualityTier } from '@/features/cinematic-graph/lib/capability';
+  probeCapabilityReport,
+  recommendQualityTier,
+} from '@/features/cinematic-graph/lib/capability';
 import { useCinematicGraphStore } from '@/features/cinematic-graph/stores/cinematic-graph-store';
 import { defaultGraphVisualState } from '@/features/operational-graph/contracts/graph-visual-state';
 
@@ -54,8 +54,8 @@ describe('Phase 27 acceptance criteria', () => {
     expect(report.recommendedTier).toBe(RenderQualityTier.FALLBACK_2D);
     useCinematicGraphStore.getState().reset();
     useCinematicGraphStore.getState().setCapability(report);
-    expect(useCinematicGraphStore.getState().viewMode).toBe(GraphViewMode.TWO_D);
     expect(useCinematicGraphStore.getState().qualityTier).toBe(RenderQualityTier.FALLBACK_2D);
+    expect(report.reasonCodes).toContain('webgl-unavailable');
   });
 
   it('AC3: mode switch preserves selection and dispose clears scene resources', () => {

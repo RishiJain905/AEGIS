@@ -40,17 +40,14 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
       );
     }
 
-    if (!snapshot || !Array.isArray(snapshot.nodes) || !Array.isArray(snapshot.edges)) {
+    if (!Array.isArray(snapshot.nodes) || !Array.isArray(snapshot.edges)) {
       throw new SemanticSceneAdapterError(
         'graph_snapshot_invalid',
         'Graph snapshot is missing required node or edge collections',
       );
     }
 
-    const qualityTier =
-      options.qualityTier ??
-      this.capabilityReport.recommendedTier ??
-      RenderQualityTier.MEDIUM;
+    const qualityTier = options.qualityTier ?? this.capabilityReport.recommendedTier;
 
     if (qualityTier === RenderQualityTier.FALLBACK_2D) {
       const empty: SceneProjection = {

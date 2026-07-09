@@ -38,11 +38,11 @@ function probeWebgl(): {
     let gl2: WebGL2RenderingContext | null = null;
     let gl: WebGLRenderingContext | null = null;
     try {
-      gl2 = originalGetContext('webgl2') as WebGL2RenderingContext | null;
+      gl2 = originalGetContext('webgl2') as unknown as WebGL2RenderingContext | null;
     } catch {
       gl2 = null;
     }
-    if (gl2 && typeof (gl2 as WebGL2RenderingContext).getParameter === 'function') {
+    if (gl2 && typeof gl2.getParameter === 'function') {
       const maxTextureSize = gl2.getParameter(gl2.MAX_TEXTURE_SIZE) as number;
       const lose = gl2.getExtension('WEBGL_lose_context');
       lose?.loseContext();
@@ -53,9 +53,11 @@ function probeWebgl(): {
       };
     }
     try {
+      const webglContext = originalGetContext('webgl') as unknown;
+      const experimentalContext = originalGetContext('experimental-webgl') as unknown;
       gl =
-        (originalGetContext('webgl') as WebGLRenderingContext | null) ??
-        (originalGetContext('experimental-webgl') as WebGLRenderingContext | null);
+        (webglContext as WebGLRenderingContext | null) ??
+        (experimentalContext as WebGLRenderingContext | null);
     } catch {
       gl = null;
     }
@@ -103,9 +105,7 @@ export function recommendQualityTier(input: {
   return { tier: RenderQualityTier.HIGH, reasonCodes };
 }
 
-export function probeCapabilityReport(
-  options: ProbeCapabilityOptions = {},
-): CapabilityReport {
+export function probeCapabilityReport(options: ProbeCapabilityOptions = {}): CapabilityReport {
   const reducedMotion = options.reducedMotion ?? false;
   const estimatedDeviceMemoryGb =
     options.estimatedDeviceMemoryGb === undefined
@@ -120,8 +120,7 @@ export function probeCapabilityReport(
     estimatedDeviceMemoryGb,
   });
   const dpr =
-    options.devicePixelRatio ??
-    (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
+    options.devicePixelRatio ?? (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
 
   return {
     schemaVersion: 1,

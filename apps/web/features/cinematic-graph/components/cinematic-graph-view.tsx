@@ -41,10 +41,7 @@ export interface CinematicGraphViewProps {
   incidentNodeIds?: string[];
 }
 
-function useGraphStoreInstance(
-  snapshot: GraphSnapshotV1,
-  externalStore?: GraphStore,
-): GraphStore {
+function useGraphStoreInstance(snapshot: GraphSnapshotV1, externalStore?: GraphStore): GraphStore {
   const internalStore = useMemo(() => {
     const store = createGraphStore();
     store.loadSnapshot(snapshot);
@@ -113,8 +110,7 @@ export function CinematicGraphView({
         selection: {
           ...useGraphVisualStore.getState().visualState.selection,
           primaryNodeId:
-            useGraphVisualStore.getState().visualState.selection.primaryNodeId ??
-            selectedEntityId,
+            useGraphVisualStore.getState().visualState.selection.primaryNodeId ?? selectedEntityId,
         },
       };
       const next = adapter.syncFromStore(store, filterSet as GraphFilterSet, visualState, {
@@ -184,7 +180,9 @@ export function CinematicGraphView({
     return (
       <CapabilityFallbackNotice
         reasonCodes={capability.reasonCodes}
-        onReturnTo2d={() => setViewMode(GraphViewMode.TWO_D)}
+        onReturnTo2d={() => {
+          setViewMode(GraphViewMode.TWO_D);
+        }}
       />
     );
   }
@@ -200,7 +198,9 @@ export function CinematicGraphView({
           type="button"
           className="mt-3 rounded border border-[var(--aegis-border)] px-2 py-1 text-xs"
           data-testid="cinematic-error-return-2d"
-          onClick={() => setViewMode(GraphViewMode.TWO_D)}
+          onClick={() => {
+            setViewMode(GraphViewMode.TWO_D);
+          }}
         >
           Return to 2D operational graph
         </button>
@@ -238,7 +238,9 @@ export function CinematicGraphView({
             type="button"
             className="rounded border border-[var(--aegis-border)] px-2 py-1"
             data-testid="cinematic-switch-2d"
-            onClick={() => setViewMode(GraphViewMode.TWO_D)}
+            onClick={() => {
+              setViewMode(GraphViewMode.TWO_D);
+            }}
           >
             Switch to 2D
           </button>
@@ -278,7 +280,9 @@ export function CinematicGraphView({
               className="w-full rounded px-2 py-1 text-left hover:bg-[var(--aegis-surface-elevated)]"
               data-testid={`cinematic-entity-${node.id}`}
               aria-pressed={selectedEntityId === node.id}
-              onClick={() => handleSelectNode(node.id)}
+              onClick={() => {
+                handleSelectNode(node.id);
+              }}
             >
               {node.label} · risk {node.riskScore.toFixed(2)} · {node.status}
             </button>

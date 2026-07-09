@@ -7,10 +7,7 @@ interface CapabilityFallbackProps {
   onReturnTo2d: () => void;
 }
 
-export function CapabilityFallbackNotice({
-  reasonCodes,
-  onReturnTo2d,
-}: CapabilityFallbackProps) {
+export function CapabilityFallbackNotice({ reasonCodes, onReturnTo2d }: CapabilityFallbackProps) {
   return (
     <Alert
       variant="warning"

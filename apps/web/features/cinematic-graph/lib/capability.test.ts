@@ -69,10 +69,16 @@ describe('stable 3D positions', () => {
 
     const first = resolveStablePositions(nodes, [], { 'asset:a': { x: 10, y: 20 } });
     const second = resolveStablePositions(nodes, [], { 'asset:a': { x: 10, y: 20 } });
-    expect(first['asset:a']).toEqual(second['asset:a']);
-    expect(first['asset:a'].x).toBe(10);
-    expect(first['asset:a'].y).toBe(20);
-    expect(first['asset:a'].z).toBe(clusterZ('business-unit:retail'));
-    expect(first['asset:b'].z).toBe(clusterZ('business-unit:retail'));
+    const firstA = first['asset:a'];
+    const secondA = second['asset:a'];
+    const firstB = first['asset:b'];
+    expect(firstA).toBeDefined();
+    expect(secondA).toBeDefined();
+    expect(firstB).toBeDefined();
+    expect(firstA).toEqual(secondA);
+    expect(firstA?.x).toBe(10);
+    expect(firstA?.y).toBe(20);
+    expect(firstA?.z).toBe(clusterZ('business-unit:retail'));
+    expect(firstB?.z).toBe(clusterZ('business-unit:retail'));
   });
 });

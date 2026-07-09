@@ -38,7 +38,7 @@ export function mapCanonicalNodeToSceneNode(input: {
     id: node.id,
     label: node.label,
     entityType: node.entityType === 'cluster' ? 'cluster' : 'asset',
-    assetType: node.assetType ?? null,
+    assetType: node.assetType,
     clusterId: node.clusterId ?? null,
     riskScore: node.riskScore,
     criticality: node.criticality,

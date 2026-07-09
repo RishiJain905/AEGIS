@@ -1,14 +1,29 @@
 'use client';
 
+import { useEffect } from 'react';
+
+import { useReducedMotion } from '@aegis/ui';
+
 import { GraphViewMode, type GraphViewModeValue } from '../contracts/graph-view-mode';
 import { RenderQualityTier } from '../contracts/render-quality-tier';
+import { probeCapabilityReport } from '../lib/capability';
 import { useCinematicGraphStore } from '../stores/cinematic-graph-store';
 
 export function GraphViewModeToggle() {
   const viewMode = useCinematicGraphStore((s) => s.viewMode);
   const qualityTier = useCinematicGraphStore((s) => s.qualityTier);
+  const capability = useCinematicGraphStore((s) => s.capability);
   const setViewMode = useCinematicGraphStore((s) => s.setViewMode);
-  const threeDisabled = qualityTier === RenderQualityTier.FALLBACK_2D;
+  const setCapability = useCinematicGraphStore((s) => s.setCapability);
+  const reducedMotion = useReducedMotion();
+  const threeDisabled =
+    qualityTier === RenderQualityTier.FALLBACK_2D &&
+    capability.reasonCodes.includes('webgl-unavailable');
+
+  useEffect(() => {
+    const report = probeCapabilityReport({ reducedMotion });
+    setCapability(report);
+  }, [reducedMotion, setCapability]);
 
   const setMode = (mode: GraphViewModeValue) => {
     if (mode === GraphViewMode.THREE_D && threeDisabled) {
@@ -29,7 +44,9 @@ export function GraphViewModeToggle() {
         className={`rounded px-2 py-1 ${viewMode === GraphViewMode.TWO_D ? 'bg-[var(--aegis-surface-elevated)] font-medium' : ''}`}
         aria-pressed={viewMode === GraphViewMode.TWO_D}
         data-testid="graph-view-mode-2d"
-        onClick={() => setMode(GraphViewMode.TWO_D)}
+        onClick={() => {
+          setMode(GraphViewMode.TWO_D);
+        }}
       >
         2D
       </button>
@@ -45,7 +62,9 @@ export function GraphViewModeToggle() {
             : 'Open Three.js semantic renderer'
         }
         data-testid="graph-view-mode-3d"
-        onClick={() => setMode(GraphViewMode.THREE_D)}
+        onClick={() => {
+          setMode(GraphViewMode.THREE_D);
+        }}
       >
         3D
       </button>

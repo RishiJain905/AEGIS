@@ -3,10 +3,7 @@ import { graphSnapshotSchema, parseContract } from '@aegis/contracts-ts';
 import { describe, expect, it } from 'vitest';
 
 import { createSemanticSceneAdapter } from '@/features/cinematic-graph/adapters/semantic-scene-adapter';
-import {
-  RenderQualityTier,
-  SemanticSceneAdapterError,
-} from '@/features/cinematic-graph/contracts';
+import { RenderQualityTier, SemanticSceneAdapterError } from '@/features/cinematic-graph/contracts';
 import { defaultGraphVisualState } from '@/features/operational-graph/contracts/graph-visual-state';
 
 import shellDataset from '@/fixtures/shell-dataset.json';

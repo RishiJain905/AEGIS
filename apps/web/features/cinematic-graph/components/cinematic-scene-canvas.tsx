@@ -235,8 +235,7 @@ export function CinematicSceneCanvas({
   onBackgroundClick,
 }: CinematicSceneCanvasProps) {
   const dpr = dprForTier(qualityTier, dprCap);
-  const frameloop =
-    qualityTier === RenderQualityTier.LOW || reducedMotion ? 'demand' : 'always';
+  const frameloop = qualityTier === RenderQualityTier.LOW || reducedMotion ? 'demand' : 'always';
 
   return (
     <div
@@ -255,7 +254,9 @@ export function CinematicSceneCanvas({
           far: 5000,
         }}
         gl={{ antialias: qualityTier === RenderQualityTier.HIGH, powerPreference: 'default' }}
-        onPointerMissed={() => onBackgroundClick()}
+        onPointerMissed={() => {
+          onBackgroundClick();
+        }}
         onCreated={({ gl }) => {
           gl.setClearColor(new THREE.Color('#0b1220'));
         }}

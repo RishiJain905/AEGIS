@@ -15,7 +15,11 @@ test.describe('Phase 27 cinematic semantic renderer', () => {
   test('3D mode renders semantic scene for Operation Silent Relay', async ({ page }) => {
     await page.goto(DEFAULT_RUN);
     await page.getByTestId('graph-view-mode-3d').click();
-    await expect(page.getByTestId('cinematic-graph-view').or(page.getByTestId('cinematic-capability-fallback'))).toBeVisible();
+    await expect(
+      page
+        .getByTestId('cinematic-graph-view')
+        .or(page.getByTestId('cinematic-capability-fallback')),
+    ).toBeVisible();
     const fallback = page.getByTestId('cinematic-capability-fallback');
     if (await fallback.isVisible()) {
       await expect(fallback).toContainText('3D semantic view unavailable');
@@ -52,7 +56,9 @@ test.describe('Phase 27 cinematic semantic renderer', () => {
     await expect(page.getByTestId('graph-view-mode-toggle')).toBeVisible();
     await page.getByTestId('graph-view-mode-3d').click();
     await expect(
-      page.getByTestId('cinematic-graph-view').or(page.getByTestId('cinematic-capability-fallback')),
+      page
+        .getByTestId('cinematic-graph-view')
+        .or(page.getByTestId('cinematic-capability-fallback')),
     ).toBeVisible();
   });
 
@@ -66,7 +72,9 @@ test.describe('Phase 27 cinematic semantic renderer', () => {
     }
     await page.getByTestId('graph-view-mode-3d').click();
     await expect(
-      page.getByTestId('cinematic-graph-view').or(page.getByTestId('cinematic-capability-fallback')),
+      page
+        .getByTestId('cinematic-graph-view')
+        .or(page.getByTestId('cinematic-capability-fallback')),
     ).toBeVisible();
   });
 });

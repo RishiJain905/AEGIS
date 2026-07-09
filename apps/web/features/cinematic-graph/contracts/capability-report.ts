@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
-import {
-  RENDER_QUALITY_TIER_SCHEMA_VERSION,
-  renderQualityTierSchema,
-} from './render-quality-tier';
+import { RENDER_QUALITY_TIER_SCHEMA_VERSION, renderQualityTierSchema } from './render-quality-tier';
 
 export const CAPABILITY_REPORT_SCHEMA_VERSION = 1;
 
