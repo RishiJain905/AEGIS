@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 from datetime import UTC, datetime, timedelta
 
 from aegis_agents.runtime.ids import new_runtime_id
@@ -47,14 +48,19 @@ async def _seed_scenario_version(uow: PostgresUnitOfWork) -> str:
 
 async def seed_investigation_run(
     uow: PostgresUnitOfWork,
+    *,
+    seed: int | None = None,
 ) -> tuple[str, str, list[str], str]:
     scenario_version_id = await _seed_scenario_version(uow)
     now = datetime(2026, 6, 30, 2, 0, 0, tzinfo=UTC)
+    # Unique seed avoids deterministic sim event_id collisions across integration runs
+    # (domain_events.event_id is globally unique).
+    run_seed = seed if seed is not None else secrets.randbelow(1_000_000_000) + 1
     run = RunV1(
         schema_version=RUN_SCHEMA_VERSION,
         id=new_runtime_id("run"),
         scenario_version_id=scenario_version_id,
-        seed=42,
+        seed=run_seed,
         status="running",
         started_at=now,
         sim_time=now,
