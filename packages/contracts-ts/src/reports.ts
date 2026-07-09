@@ -64,11 +64,7 @@ export const reportCitationKindSchema = z.enum([
 
 export const reportExportFormatSchema = z.enum(['markdown', 'json', 'html']);
 
-export const reportGenerationStatusSchema = z.enum([
-  'completed',
-  'grounding_fallback',
-  'failed',
-]);
+export const reportGenerationStatusSchema = z.enum(['completed', 'grounding_fallback', 'failed']);
 
 export const reportCitationSchema = z
   .object({

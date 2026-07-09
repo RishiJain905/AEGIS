@@ -55,9 +55,7 @@ function ClaimDetail({ claim }: { claim: ReportClaimV1 }) {
         <ul className="mt-3 space-y-1 text-xs text-[var(--aegis-text-secondary)]">
           {claim.citations.map((citation) => (
             <li key={`${claim.claimId}-${citation.referenceId}`}>
-              <span className="font-medium text-[var(--aegis-text-primary)]">
-                {citation.kind}
-              </span>{' '}
+              <span className="font-medium text-[var(--aegis-text-primary)]">{citation.kind}</span>{' '}
               {citation.referenceId}
               {citation.sequence !== null && citation.sequence !== undefined
                 ? ` · seq ${String(citation.sequence)}`

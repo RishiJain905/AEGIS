@@ -1,11 +1,7 @@
 {
   "$defs": {
     "ReportGenerationStatusV1": {
-      "enum": [
-        "completed",
-        "grounding_fallback",
-        "failed"
-      ],
+      "enum": ["completed", "grounding_fallback", "failed"],
       "title": "ReportGenerationStatusV1",
       "type": "string"
     }

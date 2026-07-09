@@ -60,10 +60,7 @@
       "type": "object"
     },
     "DetectorType": {
-      "enum": [
-        "deterministic",
-        "statistical_baseline"
-      ],
+      "enum": ["deterministic", "statistical_baseline"],
       "title": "DetectorType",
       "type": "string"
     },

@@ -64,12 +64,7 @@
           "type": "integer"
         }
       },
-      "required": [
-        "windowStartEpoch",
-        "windowEndEpoch",
-        "simTimeStart",
-        "simTimeEnd"
-      ],
+      "required": ["windowStartEpoch", "windowEndEpoch", "simTimeStart", "simTimeEnd"],
       "title": "SourceWindowV1",
       "type": "object"
     }

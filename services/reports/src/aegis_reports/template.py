@@ -130,7 +130,7 @@ def build_template_report(
         )
 
     for proposal in investigation.proposals[:6]:
-        revision = next(
+        proposal_revision = next(
             (
                 item
                 for item in investigation.proposal_revisions
@@ -155,11 +155,11 @@ def build_template_report(
                         [
                             _citation(
                                 kind=ReportCitationKindV1.PROPOSAL,
-                                reference_id=revision.id,
-                                label=f"Revision {revision.revision_number}",
+                                reference_id=proposal_revision.id,
+                                label=f"Revision {proposal_revision.revision_number}",
                             )
                         ]
-                        if revision
+                        if proposal_revision
                         else []
                     ),
                 ],

@@ -13,10 +13,7 @@ import {
   getAgentSessionFixture,
   getInvestigationDetailFixture,
 } from '@/fixtures/investigation-fixture';
-import {
-  getAfterActionReportFixture,
-  getReportVersionsFixture,
-} from '@/fixtures/report-fixture';
+import { getAfterActionReportFixture, getReportVersionsFixture } from '@/fixtures/report-fixture';
 import shellDataset from '@/fixtures/shell-dataset.json';
 import { FIXTURE_RISK_SCORES } from '@/fixtures/risk-scores-fixture';
 import type {

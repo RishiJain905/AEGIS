@@ -1,23 +1,12 @@
 {
   "$defs": {
     "AssetType": {
-      "enum": [
-        "service",
-        "device",
-        "user",
-        "identity",
-        "database",
-        "control",
-        "ai_model"
-      ],
+      "enum": ["service", "device", "user", "identity", "database", "control", "ai_model"],
       "title": "AssetType",
       "type": "string"
     },
     "EntityType": {
-      "enum": [
-        "asset",
-        "cluster"
-      ],
+      "enum": ["asset", "cluster"],
       "title": "EntityType",
       "type": "string"
     },
@@ -51,24 +40,12 @@
           "type": "integer"
         }
       },
-      "required": [
-        "schemaVersion",
-        "id",
-        "label",
-        "memberNodeIds",
-        "revision"
-      ],
+      "required": ["schemaVersion", "id", "label", "memberNodeIds", "revision"],
       "title": "GraphClusterV1",
       "type": "object"
     },
     "GraphDeltaOperation": {
-      "enum": [
-        "upsert_node",
-        "upsert_edge",
-        "delete_node",
-        "delete_edge",
-        "upsert_cluster"
-      ],
+      "enum": ["upsert_node", "upsert_edge", "delete_node", "delete_edge", "upsert_cluster"],
       "title": "GraphDeltaOperation",
       "type": "string"
     },
@@ -218,24 +195,12 @@
       "type": "object"
     },
     "NodeStatus": {
-      "enum": [
-        "normal",
-        "suspicious",
-        "under_investigation",
-        "contained",
-        "compromised"
-      ],
+      "enum": ["normal", "suspicious", "under_investigation", "contained", "compromised"],
       "title": "NodeStatus",
       "type": "string"
     },
     "RelationshipType": {
-      "enum": [
-        "COMMUNICATED_WITH",
-        "AUTHENTICATED_TO",
-        "DEPENDS_ON",
-        "ADMINISTERS",
-        "HOSTS"
-      ],
+      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
       "title": "RelationshipType",
       "type": "string"
     }
@@ -310,13 +275,7 @@
       "title": "Targetid"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId",
-    "sequence",
-    "revision",
-    "operation"
-  ],
+  "required": ["schemaVersion", "runId", "sequence", "revision", "operation"],
   "title": "GraphDeltaV1",
   "type": "object"
 }

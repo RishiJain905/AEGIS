@@ -23,31 +23,31 @@ Phase 23 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/23-scribe.md
 
 ## Files added
 
-| Area | Key paths |
-|------|-----------|
-| Contracts | `packages/contracts-python/src/aegis_contracts/reports.py`, `packages/contracts-ts/src/reports.ts` |
-| Reports service | `services/reports/src/aegis_reports/**` |
-| Migration | `migrations/versions/010_scribe_reports.py` |
-| Persistence | `packages/persistence/src/aegis_persistence/repositories/reports.py` |
-| SCRIBE | `services/agents/src/aegis_agents/roles/scribe/**` |
-| API | `apps/api/src/aegis_api/reports/router.py` |
-| Frontend | `apps/web/features/reports/**`, `apps/web/fixtures/report-fixture.ts` |
-| Tests | `tests/reports/**`, `tests/agents/scribe/**`, `tests/integration/agents/test_scribe_flow.py` |
-| Fixtures | `fixtures/model-responses/scribe/**`, `tests/contract/fixtures/valid/*report*` |
-| Scripts | `scripts/run_scribe_harness.py`, `apps/web/scripts/capture-scribe-demo.mjs` |
-| Docs | `docs/reports.md`, ADR `0024-scribe-evidence-linked-reporting.md` |
+| Area            | Key paths                                                                                          |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| Contracts       | `packages/contracts-python/src/aegis_contracts/reports.py`, `packages/contracts-ts/src/reports.ts` |
+| Reports service | `services/reports/src/aegis_reports/**`                                                            |
+| Migration       | `migrations/versions/010_scribe_reports.py`                                                        |
+| Persistence     | `packages/persistence/src/aegis_persistence/repositories/reports.py`                               |
+| SCRIBE          | `services/agents/src/aegis_agents/roles/scribe/**`                                                 |
+| API             | `apps/api/src/aegis_api/reports/router.py`                                                         |
+| Frontend        | `apps/web/features/reports/**`, `apps/web/fixtures/report-fixture.ts`                              |
+| Tests           | `tests/reports/**`, `tests/agents/scribe/**`, `tests/integration/agents/test_scribe_flow.py`       |
+| Fixtures        | `fixtures/model-responses/scribe/**`, `tests/contract/fixtures/valid/*report*`                     |
+| Scripts         | `scripts/run_scribe_harness.py`, `apps/web/scripts/capture-scribe-demo.mjs`                        |
+| Docs            | `docs/reports.md`, ADR `0024-scribe-evidence-linked-reporting.md`                                  |
 
 ## Contracts introduced or changed
 
-| Contract | Version | Notes |
-|----------|---------|-------|
-| `ReportCitationV1` / `ReportClaimV1` | schema v1 | Claim category taxonomy |
-| `AfterActionReportSourceV1` / `AfterActionReportV1` | schema v1 | Deterministic + structured report |
-| `ReportVersionV1` / `ReportExportArtifactV1` | schema v1 | Immutable versioning + exports |
-| `GroundingValidationResultV1` | schema v1 | Per-claim validation outcome |
-| `TriggerScribeRequestV1` | schema v1 | Idempotent trigger API |
-| Events `report.version.created`, `report.generation.completed`, `report.generation.failed` | schema v1 | Realtime delivery |
-| `WORKSPACE_VERSION` | `0.0.0-phase23` | Compatibility bump |
+| Contract                                                                                   | Version         | Notes                             |
+| ------------------------------------------------------------------------------------------ | --------------- | --------------------------------- |
+| `ReportCitationV1` / `ReportClaimV1`                                                       | schema v1       | Claim category taxonomy           |
+| `AfterActionReportSourceV1` / `AfterActionReportV1`                                        | schema v1       | Deterministic + structured report |
+| `ReportVersionV1` / `ReportExportArtifactV1`                                               | schema v1       | Immutable versioning + exports    |
+| `GroundingValidationResultV1`                                                              | schema v1       | Per-claim validation outcome      |
+| `TriggerScribeRequestV1`                                                                   | schema v1       | Idempotent trigger API            |
+| Events `report.version.created`, `report.generation.completed`, `report.generation.failed` | schema v1       | Realtime delivery                 |
+| `WORKSPACE_VERSION`                                                                        | `0.0.0-phase23` | Compatibility bump                |
 
 ## Database migrations
 
@@ -55,33 +55,33 @@ Phase 23 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/23-scribe.md
 
 ## Acceptance criteria mapping
 
-| Criterion | Evidence |
-|-----------|----------|
-| Deterministic assembly from investigation + events | `aegis_reports.assembler`, `test_scribe_acceptance_criteria.py` |
-| Timeline ordered by event sequence | `aegis_reports.timeline`, acceptance + integration tests |
-| Grounding validates citations; rejects hallucinations | `tests/reports/test_report_grounding.py` |
-| Grounding failure → template-only fallback | `aegis_reports.grounding`, `test_report_grounding.py` |
-| Regeneration creates new immutable version | `aegis_reports.service`, integration test |
-| MD/JSON/HTML exports with checksum | `test_scribe_acceptance_criteria.py` (`render_markdown`, checksum) |
-| SCRIBE read-only tools; no execution | `tests/agents/scribe/test_scribe_role.py` |
-| Full chain integration | `tests/integration/agents/test_scribe_flow.py` (PostgreSQL) |
-| Section 18 acceptance bundle | `tests/reports/test_scribe_acceptance_criteria.py` |
+| Criterion                                             | Evidence                                                           |
+| ----------------------------------------------------- | ------------------------------------------------------------------ |
+| Deterministic assembly from investigation + events    | `aegis_reports.assembler`, `test_scribe_acceptance_criteria.py`    |
+| Timeline ordered by event sequence                    | `aegis_reports.timeline`, acceptance + integration tests           |
+| Grounding validates citations; rejects hallucinations | `tests/reports/test_report_grounding.py`                           |
+| Grounding failure → template-only fallback            | `aegis_reports.grounding`, `test_report_grounding.py`              |
+| Regeneration creates new immutable version            | `aegis_reports.service`, integration test                          |
+| MD/JSON/HTML exports with checksum                    | `test_scribe_acceptance_criteria.py` (`render_markdown`, checksum) |
+| SCRIBE read-only tools; no execution                  | `tests/agents/scribe/test_scribe_role.py`                          |
+| Full chain integration                                | `tests/integration/agents/test_scribe_flow.py` (PostgreSQL)        |
+| Section 18 acceptance bundle                          | `tests/reports/test_scribe_acceptance_criteria.py`                 |
 
 ## Commands executed and results
 
-| Command | Result |
-|---------|--------|
-| `uv run ruff check .` | **PASS** |
-| `uv run pytest tests/reports tests/agents/scribe -q` | **PASS** (8 tests) |
-| `uv run pytest -q` | **PASS** (662 passed, 45 skipped) |
-| `uv run mypy apps services packages` | **KNOWN ISSUE** — duplicate module path + fastapi stubs (pre-existing) |
-| `pnpm check-contracts` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `pnpm lint` | **PASS** |
-| `pnpm test` | **PASS** (59 web tests) |
-| `node apps/web/scripts/capture-scribe-demo.mjs` | **PASS** (fixture-mode screenshots) |
-| `uv run python scripts/run_scribe_harness.py` | Requires PostgreSQL |
-| `uv run pytest tests/integration/agents/test_scribe_flow.py` | Requires `AEGIS_INTEGRATION_POSTGRES=1` + PostgreSQL |
+| Command                                                      | Result                                                                 |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `uv run ruff check .`                                        | **PASS**                                                               |
+| `uv run pytest tests/reports tests/agents/scribe -q`         | **PASS** (8 tests)                                                     |
+| `uv run pytest -q`                                           | **PASS** (662 passed, 45 skipped)                                      |
+| `uv run mypy apps services packages`                         | **KNOWN ISSUE** — duplicate module path + fastapi stubs (pre-existing) |
+| `pnpm check-contracts`                                       | **PASS**                                                               |
+| `pnpm typecheck`                                             | **PASS**                                                               |
+| `pnpm lint`                                                  | **PASS**                                                               |
+| `pnpm test`                                                  | **PASS** (59 web tests)                                                |
+| `node apps/web/scripts/capture-scribe-demo.mjs`              | **PASS** (fixture-mode screenshots)                                    |
+| `uv run python scripts/run_scribe_harness.py`                | Requires PostgreSQL                                                    |
+| `uv run pytest tests/integration/agents/test_scribe_flow.py` | Requires `AEGIS_INTEGRATION_POSTGRES=1` + PostgreSQL                   |
 
 ## Visual evidence
 

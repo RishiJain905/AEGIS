@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -52,7 +53,7 @@ class ReportService:
         prompt_version: str | None = None,
         narrative_claims: list[dict[str, Any]] | None = None,
         regenerate: bool = False,
-        new_runtime_id_fn=_default_new_report_id,
+        new_runtime_id_fn: Callable[[str], str] = _default_new_report_id,
     ) -> tuple[AfterActionReportV1, ReportVersionV1, list[ReportExportArtifactV1]]:
         incident = await uow.incidents.get_by_id(incident_id)
         if incident is None:
@@ -217,7 +218,7 @@ class ReportService:
         *,
         report: AfterActionReportV1,
         version: ReportVersionV1,
-        new_runtime_id_fn,
+        new_runtime_id_fn: Callable[[str], str],
     ) -> list[ReportExportArtifactV1]:
         exports: list[ReportExportArtifactV1] = []
         for export_format in ReportExportFormatV1:

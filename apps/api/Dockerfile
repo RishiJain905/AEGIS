@@ -15,6 +15,7 @@ COPY packages/simulation-domain/pyproject.toml packages/simulation-domain/
 COPY packages/graph-risk/pyproject.toml packages/graph-risk/
 COPY packages/model-provider/pyproject.toml packages/model-provider/
 COPY packages/policy/pyproject.toml packages/policy/
+COPY services/reports/pyproject.toml services/reports/
 COPY services/agents/pyproject.toml services/agents/
 COPY packages/contracts-python/src packages/contracts-python/src
 COPY packages/persistence/src packages/persistence/src
@@ -24,6 +25,7 @@ COPY packages/simulation-domain/src packages/simulation-domain/src
 COPY packages/graph-risk/src packages/graph-risk/src
 COPY packages/model-provider/src packages/model-provider/src
 COPY packages/policy/src packages/policy/src
+COPY services/reports/src services/reports/src
 COPY services/agents/src services/agents/src
 COPY services/ml/src services/ml/src
 COPY services/incidents/src services/incidents/src
@@ -46,6 +48,7 @@ COPY packages/simulation-domain/src packages/simulation-domain/src
 COPY packages/graph-risk/src packages/graph-risk/src
 COPY packages/model-provider/src packages/model-provider/src
 COPY packages/policy/src packages/policy/src
+COPY services/reports/src services/reports/src
 COPY services/agents/src services/agents/src
 ENV PATH="/app/.venv/bin:$PATH"
 USER aegis
