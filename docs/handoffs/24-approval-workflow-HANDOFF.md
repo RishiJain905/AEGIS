@@ -83,6 +83,7 @@ Headers: `X-Actor-Id` (default `asset:operator-console`), `Authorization: Bearer
 | `docker compose up -d postgres redis` | **ENV CAVEAT** — Docker unavailable; local Postgres 16 + Redis used |
 | `pnpm --filter @aegis/web test:e2e` | Spec added (`tests/e2e/approval.spec.ts`); browsers installed; fixture-mode screenshots captured |
 | Fixture-mode screenshot capture | **PASS** — 12 screenshots under `/opt/cursor/artifacts/screenshots/` |
+| `pnpm exec playwright test approval` (from `apps/web`) | **PASS** (3 e2e tests) |
 | `pnpm format:check` | **PARTIAL** — Phase 24 TS formatted; many pre-existing schema JSON files fail Prettier after full regen |
 
 ## Acceptance criteria evidence
