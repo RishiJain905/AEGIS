@@ -16,11 +16,7 @@
           "type": "integer"
         }
       },
-      "required": [
-        "runId",
-        "seed",
-        "scenarioVersionId"
-      ],
+      "required": ["runId", "seed", "scenarioVersionId"],
       "title": "DatasetSourceRunV1",
       "type": "object"
     }

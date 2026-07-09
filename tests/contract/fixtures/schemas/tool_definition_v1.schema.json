@@ -1,24 +1,12 @@
 {
   "$defs": {
     "AgentRole": {
-      "enum": [
-        "WATCHTOWER",
-        "TRACE",
-        "ORACLE",
-        "BASTION",
-        "WARDEN",
-        "SCRIBE"
-      ],
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
       "title": "AgentRole",
       "type": "string"
     },
     "AgentToolClass": {
-      "enum": [
-        "read",
-        "analysis_write",
-        "proposal",
-        "execution"
-      ],
+      "enum": ["read", "analysis_write", "proposal", "execution"],
       "title": "AgentToolClass",
       "type": "string"
     }
@@ -67,14 +55,7 @@
       "$ref": "#/$defs/AgentToolClass"
     }
   },
-  "required": [
-    "schemaVersion",
-    "name",
-    "description",
-    "toolClass",
-    "modelVisible",
-    "allowedRoles"
-  ],
+  "required": ["schemaVersion", "name", "description", "toolClass", "modelVisible", "allowedRoles"],
   "title": "ToolDefinitionV1",
   "type": "object"
 }

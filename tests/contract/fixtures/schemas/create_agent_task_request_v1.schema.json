@@ -25,10 +25,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "idempotencyKey"
-  ],
+  "required": ["schemaVersion", "idempotencyKey"],
   "title": "CreateAgentTaskRequestV1",
   "type": "object"
 }

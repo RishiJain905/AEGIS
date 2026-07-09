@@ -28,11 +28,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "entityId",
-        "entityType",
-        "highlightKind"
-      ],
+      "required": ["entityId", "entityType", "highlightKind"],
       "title": "GraphOverlayHighlightV1",
       "type": "object"
     }

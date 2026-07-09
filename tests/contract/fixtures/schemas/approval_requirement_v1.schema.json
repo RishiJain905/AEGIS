@@ -24,11 +24,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "required",
-    "rationale"
-  ],
+  "required": ["schemaVersion", "required", "rationale"],
   "title": "ApprovalRequirementV1",
   "type": "object"
 }

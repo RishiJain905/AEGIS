@@ -1,13 +1,7 @@
 {
   "$defs": {
     "ProposalStatus": {
-      "enum": [
-        "pending",
-        "approved",
-        "rejected",
-        "executed",
-        "cancelled"
-      ],
+      "enum": ["pending", "approved", "rejected", "executed", "cancelled"],
       "title": "ProposalStatus",
       "type": "string"
     }
@@ -38,12 +32,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "proposalId",
-    "proposalStatus",
-    "reason"
-  ],
+  "required": ["schemaVersion", "proposalId", "proposalStatus", "reason"],
   "title": "CancelProposalResponseV1",
   "type": "object"
 }

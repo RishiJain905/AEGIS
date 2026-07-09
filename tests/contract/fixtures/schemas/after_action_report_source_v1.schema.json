@@ -54,14 +54,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "schemaVersion",
-        "sequence",
-        "eventId",
-        "eventType",
-        "label",
-        "timestamp"
-      ],
+      "required": ["schemaVersion", "sequence", "eventId", "eventType", "label", "timestamp"],
       "title": "ReportTimelineEntryV1",
       "type": "object"
     }
@@ -160,13 +153,7 @@
       "type": "array"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId",
-    "incidentId",
-    "sourceSequenceFrom",
-    "sourceSequenceTo"
-  ],
+  "required": ["schemaVersion", "runId", "incidentId", "sourceSequenceFrom", "sourceSequenceTo"],
   "title": "AfterActionReportSourceV1",
   "type": "object"
 }

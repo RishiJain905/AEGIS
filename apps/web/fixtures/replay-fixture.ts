@@ -243,7 +243,7 @@ function buildReplayState(
             proposalId: 'prp_01ARZ3NDEKTSV4RRFFQ69G5FAY',
             runId,
             resultEventId: 'evt_01ARZ3NDEKTSV4RRFFQ69G5FA8',
-            idempotencyKey: 'idem_synthetic_fixture_001',
+            idempotencyKey: 'replay:fixture:execute:isolate:001',
             executedAt: '2026-06-30T02:30:00.000Z',
           },
         ]

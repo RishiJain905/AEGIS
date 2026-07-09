@@ -1,12 +1,7 @@
 {
   "$defs": {
     "ActionClass": {
-      "enum": [
-        "class_0",
-        "class_1",
-        "class_2",
-        "class_3"
-      ],
+      "enum": ["class_0", "class_1", "class_2", "class_3"],
       "title": "ActionClass",
       "type": "string"
     },
@@ -100,14 +95,7 @@
       "type": "object"
     },
     "AgentRole": {
-      "enum": [
-        "WATCHTOWER",
-        "TRACE",
-        "ORACLE",
-        "BASTION",
-        "WARDEN",
-        "SCRIBE"
-      ],
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
       "title": "AgentRole",
       "type": "string"
     },
@@ -176,10 +164,7 @@
       "type": "object"
     },
     "ApprovalDecision": {
-      "enum": [
-        "approved",
-        "rejected"
-      ],
+      "enum": ["approved", "rejected"],
       "title": "ApprovalDecision",
       "type": "string"
     },
@@ -230,23 +215,12 @@
       "type": "object"
     },
     "AssetType": {
-      "enum": [
-        "service",
-        "device",
-        "user",
-        "identity",
-        "database",
-        "control",
-        "ai_model"
-      ],
+      "enum": ["service", "device", "user", "identity", "database", "control", "ai_model"],
       "title": "AssetType",
       "type": "string"
     },
     "EntityType": {
-      "enum": [
-        "asset",
-        "cluster"
-      ],
+      "enum": ["asset", "cluster"],
       "title": "EntityType",
       "type": "string"
     },
@@ -292,14 +266,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "schemaVersion",
-        "id",
-        "runId",
-        "sourceEventId",
-        "summary",
-        "createdAt"
-      ],
+      "required": ["schemaVersion", "id", "runId", "sourceEventId", "summary", "createdAt"],
       "title": "EvidenceV1",
       "type": "object"
     },
@@ -379,13 +346,7 @@
           "type": "integer"
         }
       },
-      "required": [
-        "schemaVersion",
-        "id",
-        "label",
-        "memberNodeIds",
-        "revision"
-      ],
+      "required": ["schemaVersion", "id", "label", "memberNodeIds", "revision"],
       "title": "GraphClusterV1",
       "type": "object"
     },
@@ -669,35 +630,17 @@
       "type": "object"
     },
     "NodeStatus": {
-      "enum": [
-        "normal",
-        "suspicious",
-        "under_investigation",
-        "contained",
-        "compromised"
-      ],
+      "enum": ["normal", "suspicious", "under_investigation", "contained", "compromised"],
       "title": "NodeStatus",
       "type": "string"
     },
     "ProposalStatus": {
-      "enum": [
-        "pending",
-        "approved",
-        "rejected",
-        "executed",
-        "cancelled"
-      ],
+      "enum": ["pending", "approved", "rejected", "executed", "cancelled"],
       "title": "ProposalStatus",
       "type": "string"
     },
     "RelationshipType": {
-      "enum": [
-        "COMMUNICATED_WITH",
-        "AUTHENTICATED_TO",
-        "DEPENDS_ON",
-        "ADMINISTERS",
-        "HOSTS"
-      ],
+      "enum": ["COMMUNICATED_WITH", "AUTHENTICATED_TO", "DEPENDS_ON", "ADMINISTERS", "HOSTS"],
       "title": "RelationshipType",
       "type": "string"
     },
@@ -750,11 +693,7 @@
           "title": "Objectkey"
         }
       },
-      "required": [
-        "artifactId",
-        "agentSessionId",
-        "artifactType"
-      ],
+      "required": ["artifactId", "agentSessionId", "artifactType"],
       "title": "ReplayAgentArtifactRefV1",
       "type": "object"
     },
@@ -784,12 +723,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "eventId",
-        "sequence",
-        "eventType",
-        "summary"
-      ],
+      "required": ["eventId", "sequence", "eventType", "summary"],
       "title": "ReplayAuditEventRefV1",
       "type": "object"
     },
@@ -835,19 +769,12 @@
           "title": "Simtime"
         }
       },
-      "required": [
-        "schemaVersion",
-        "runId",
-        "sequence"
-      ],
+      "required": ["schemaVersion", "runId", "sequence"],
       "title": "ReplayCursorV1",
       "type": "object"
     },
     "ReplayModeV1": {
-      "enum": [
-        "from_events",
-        "from_snapshot_plus_events"
-      ],
+      "enum": ["from_events", "from_snapshot_plus_events"],
       "title": "ReplayModeV1",
       "type": "string"
     },
@@ -984,11 +911,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "reportId",
-        "reportVersionId",
-        "status"
-      ],
+      "required": ["reportId", "reportVersionId", "status"],
       "title": "ReplayReportRefV1",
       "type": "object"
     },
@@ -1014,11 +937,7 @@
           "type": "number"
         }
       },
-      "required": [
-        "assetId",
-        "score",
-        "revision"
-      ],
+      "required": ["assetId", "score", "revision"],
       "title": "ReplayRiskScoreV1",
       "type": "object"
     },
@@ -1139,13 +1058,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "schemaVersion",
-        "runId",
-        "cursor",
-        "stateDigest",
-        "provenance"
-      ],
+      "required": ["schemaVersion", "runId", "cursor", "stateDigest", "provenance"],
       "title": "ReplayStateV1",
       "type": "object"
     },

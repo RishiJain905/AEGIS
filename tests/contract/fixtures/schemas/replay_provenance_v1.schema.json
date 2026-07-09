@@ -1,10 +1,7 @@
 {
   "$defs": {
     "ReplayModeV1": {
-      "enum": [
-        "from_events",
-        "from_snapshot_plus_events"
-      ],
+      "enum": ["from_events", "from_snapshot_plus_events"],
       "title": "ReplayModeV1",
       "type": "string"
     }
