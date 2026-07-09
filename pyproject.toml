@@ -81,7 +81,7 @@ module = "tests.*"
 disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
-module = ["sklearn.*", "joblib.*", "jsonschema.*", "openai.*"]
+module = ["sklearn.*", "joblib.*", "jsonschema.*", "openai.*", "boto3.*", "botocore.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

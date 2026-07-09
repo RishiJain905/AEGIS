@@ -1,6 +1,6 @@
 /** Phase 25 snapshot and replay engine contracts. */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 import {
   actionProposalSchema,
@@ -10,8 +10,8 @@ import {
   executedActionSchema,
   incidentSchema,
   runSchema,
-} from "./entities";
-import { graphSnapshotSchema } from "./graph";
+} from './entities';
+import { graphSnapshotSchema } from './graph';
 import {
   eventIdSchema,
   incidentIdSchema,
@@ -20,7 +20,7 @@ import {
   sequenceSchema,
   simTimestampSchema,
   utcTimestampSchema,
-} from "./primitives";
+} from './primitives';
 import {
   REPLAY_CURSOR_RANGE_SCHEMA_VERSION,
   REPLAY_CURSOR_SCHEMA_VERSION,
@@ -30,7 +30,7 @@ import {
   REPLAY_STATE_SCHEMA_VERSION,
   SNAPSHOT_MANIFEST_SCHEMA_VERSION,
   STATE_DIFF_SCHEMA_VERSION,
-} from "./versioning";
+} from './versioning';
 
 const schemaVersionCheck = (expected: number) =>
   z
@@ -40,29 +40,26 @@ const schemaVersionCheck = (expected: number) =>
     .refine((v) => v === expected);
 
 export const snapshotTriggerReasonSchema = z.enum([
-  "sequence_interval",
-  "run_paused",
-  "run_completed",
-  "explicit_request",
-  "worker_backfill",
+  'sequence_interval',
+  'run_paused',
+  'run_completed',
+  'explicit_request',
+  'worker_backfill',
 ]);
 
-export const snapshotCompressionSchema = z.enum(["none", "gzip"]);
+export const snapshotCompressionSchema = z.enum(['none', 'gzip']);
 
-export const replayModeSchema = z.enum([
-  "from_events",
-  "from_snapshot_plus_events",
-]);
+export const replayModeSchema = z.enum(['from_events', 'from_snapshot_plus_events']);
 
 export const replayErrorCodeSchema = z.enum([
-  "SNAPSHOT_CHECKSUM_MISMATCH",
-  "SNAPSHOT_INCOMPATIBLE",
-  "SNAPSHOT_MISSING",
-  "REPLAY_SEQUENCE_GAP",
-  "REPLAY_DUPLICATE_EVENT",
-  "REPLAY_LIVE_MUTATION_FORBIDDEN",
-  "REPLAY_VALIDATION_FAILED",
-  "REPLAY_NOT_FOUND",
+  'SNAPSHOT_CHECKSUM_MISMATCH',
+  'SNAPSHOT_INCOMPATIBLE',
+  'SNAPSHOT_MISSING',
+  'REPLAY_SEQUENCE_GAP',
+  'REPLAY_DUPLICATE_EVENT',
+  'REPLAY_LIVE_MUTATION_FORBIDDEN',
+  'REPLAY_VALIDATION_FAILED',
+  'REPLAY_NOT_FOUND',
 ]);
 
 export const replayRiskScoreSchema = z
@@ -125,7 +122,7 @@ export const replayCursorRangeSchema = z
     if (value.toSequence < value.fromSequence) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "toSequence must be >= fromSequence",
+        message: 'toSequence must be >= fromSequence',
       });
     }
   });

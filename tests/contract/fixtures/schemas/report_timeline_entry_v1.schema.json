@@ -52,14 +52,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "schemaVersion",
-    "sequence",
-    "eventId",
-    "eventType",
-    "label",
-    "timestamp"
-  ],
+  "required": ["schemaVersion", "sequence", "eventId", "eventType", "label", "timestamp"],
   "title": "ReportTimelineEntryV1",
   "type": "object"
 }

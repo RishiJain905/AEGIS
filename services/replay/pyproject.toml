@@ -19,6 +19,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aegis_replay"]
+artifacts = ["src/aegis_replay/py.typed"]
 
 [project.scripts]
 aegis-replay = "aegis_replay.cli:main"

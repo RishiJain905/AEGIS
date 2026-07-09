@@ -11,7 +11,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+import boto3
 from aegis_contracts import AegisSettings
+from botocore.client import Config
 
 
 class ObjectStorageError(RuntimeError):
@@ -75,14 +77,6 @@ class S3ObjectStorageAdapter:
     """boto3-backed S3/MinIO adapter."""
 
     def __init__(self, settings: AegisSettings) -> None:
-        try:
-            import boto3
-            from botocore.client import Config
-        except ImportError as exc:  # pragma: no cover - dependency gate
-            raise ObjectStorageError(
-                "boto3 is required for S3ObjectStorageAdapter"
-            ) from exc
-
         self._bucket = settings.S3_BUCKET
         self._client = boto3.client(
             "s3",

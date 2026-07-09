@@ -16,10 +16,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "evidenceId"
-  ],
+  "required": ["schemaVersion", "evidenceId"],
   "title": "EvidenceCitationV1",
   "type": "object"
 }

@@ -38,12 +38,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId",
-    "traceId",
-    "idempotencyKey"
-  ],
+  "required": ["schemaVersion", "runId", "traceId", "idempotencyKey"],
   "title": "TriggerBastionRequestV1",
   "type": "object"
 }
