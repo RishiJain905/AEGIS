@@ -352,7 +352,9 @@ class ApprovalWorkflowService:
                 message="selectedOptionId must reference a response option",
                 details={"selectedOptionId": request.selected_option_id},
             )
-        selected = next(option for option in options if option.option_id == request.selected_option_id)
+        selected = next(
+            option for option in options if option.option_id == request.selected_option_id
+        )
         new_revision = ProposalRevisionV1(
             schema_version=PROPOSAL_REVISION_SCHEMA_VERSION,
             id=new_runtime_id("prv"),
@@ -836,7 +838,11 @@ class ApprovalWorkflowService:
             )
         return incident
 
-    async def _require_current_revision(self, uow: PostgresUnitOfWork, proposal: Any) -> ProposalRevisionV1:
+    async def _require_current_revision(
+        self,
+        uow: PostgresUnitOfWork,
+        proposal: Any,
+    ) -> ProposalRevisionV1:
         if not proposal.current_revision_id:
             raise ApprovalWorkflowError(
                 code=ApprovalErrorCode.VALIDATION_FAILED,
@@ -875,7 +881,10 @@ class ApprovalWorkflowService:
         expected_revision_id: str,
         expected_revision: int,
     ) -> None:
-        if proposal.current_revision_id != expected_revision_id or proposal.revision != expected_revision:
+        if (
+            proposal.current_revision_id != expected_revision_id
+            or proposal.revision != expected_revision
+        ):
             raise ApprovalWorkflowError(
                 code=ApprovalErrorCode.STALE_PROPOSAL,
                 message="Proposal revision no longer matches the current revision",

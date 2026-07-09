@@ -211,13 +211,17 @@ function ProposalsContent({
               policy {decision.id} · {decision.outcome} · {decision.evaluatedAt}
             </li>
           ))}
-          {(detail.approvals ?? []).map((approval) => (
-            <li key={approval.id} className="font-mono" data-testid={`approval-audit-${approval.id}`}>
+          {detail.approvals.map((approval) => (
+            <li
+              key={approval.id}
+              className="font-mono"
+              data-testid={`approval-audit-${approval.id}`}
+            >
               approval {approval.id} · {approval.decision} · {approval.approverId} ·{' '}
               {approval.decidedAt}
             </li>
           ))}
-          {(detail.executedActions ?? []).map((action) => (
+          {detail.executedActions.map((action) => (
             <li key={action.id} className="font-mono" data-testid={`execution-audit-${action.id}`}>
               executed {action.id} · proposal={action.proposalId} · {action.executedAt}
             </li>

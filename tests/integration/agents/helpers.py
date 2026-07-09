@@ -66,7 +66,7 @@ async def seed_investigation_run(
     alerts = [
         AlertV1(
             schema_version=ALERT_SCHEMA_VERSION,
-            id="alert:alt_watchtower_001",
+            id=f"alert:alt_{new_runtime_id('alt')[4:].lower()}",
             run_id=run.id,
             title="Repeated authentication failures",
             severity="high",
@@ -76,7 +76,7 @@ async def seed_investigation_run(
         ),
         AlertV1(
             schema_version=ALERT_SCHEMA_VERSION,
-            id="alert:alt_watchtower_002",
+            id=f"alert:alt_{new_runtime_id('alt')[4:].lower()}",
             run_id=run.id,
             title="Lateral movement attempt",
             severity="high",
@@ -91,7 +91,7 @@ async def seed_investigation_run(
 
     incident = IncidentV1(
         schema_version=INCIDENT_SCHEMA_VERSION,
-        id="incident:watchtower-trace-integration",
+        id=f"incident:inc_{new_runtime_id('inc')[4:].lower()}",
         run_id=run.id,
         title="Watchtower trace integration incident",
         state=IncidentState.OPEN,
@@ -104,7 +104,7 @@ async def seed_investigation_run(
 
     evidence = EvidenceV1(
         schema_version=EVIDENCE_SCHEMA_VERSION,
-        id="evidence:evd_watchtower_trace_001",
+        id=f"evidence:evd_{new_runtime_id('evd')[4:].lower()}",
         run_id=run.id,
         source_event_id=new_runtime_id("evt"),
         summary="Suspicious authentication pattern",

@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from aegis_contracts.entities import ApprovalDecision, ApprovalV1, ExecutedActionV1, ProposalStatus
+from aegis_contracts.entities import ApprovalV1, ExecutedActionV1, ProposalStatus
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 from aegis_contracts.primitives import (
     ApprovalId,

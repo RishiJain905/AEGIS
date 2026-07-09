@@ -78,30 +78,24 @@ export function useApprovalMutations(incidentId: string) {
 
   const approve = useMutation({
     mutationFn: (request: ApproveProposalRequestV1): Promise<ApproveProposalResponseV1> =>
-      postApprovalJson(
-        `/api/v1/action-proposals/${request.proposalId}/approve`,
-        request,
-        (data) => parseContract(approveProposalResponseSchema, data),
+      postApprovalJson(`/api/v1/action-proposals/${request.proposalId}/approve`, request, (data) =>
+        parseContract(approveProposalResponseSchema, data),
       ),
     onSuccess: () => void invalidate(),
   });
 
   const reject = useMutation({
     mutationFn: (request: RejectProposalRequestV1): Promise<RejectProposalResponseV1> =>
-      postApprovalJson(
-        `/api/v1/action-proposals/${request.proposalId}/reject`,
-        request,
-        (data) => parseContract(rejectProposalResponseSchema, data),
+      postApprovalJson(`/api/v1/action-proposals/${request.proposalId}/reject`, request, (data) =>
+        parseContract(rejectProposalResponseSchema, data),
       ),
     onSuccess: () => void invalidate(),
   });
 
   const modify = useMutation({
     mutationFn: (request: ModifyProposalRequestV1): Promise<ModifyProposalResponseV1> =>
-      postApprovalJson(
-        `/api/v1/action-proposals/${request.proposalId}/modify`,
-        request,
-        (data) => parseContract(modifyProposalResponseSchema, data),
+      postApprovalJson(`/api/v1/action-proposals/${request.proposalId}/modify`, request, (data) =>
+        parseContract(modifyProposalResponseSchema, data),
       ),
     onSuccess: () => void invalidate(),
   });

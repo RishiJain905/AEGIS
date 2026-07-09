@@ -16,7 +16,12 @@ import {
   hypothesisRevisionSchema,
   verificationRequestSchema,
 } from './hypothesis';
-import { actionProposalSchema, approvalSchema, executedActionSchema, hypothesisSchema } from './entities';
+import {
+  actionProposalSchema,
+  approvalSchema,
+  executedActionSchema,
+  hypothesisSchema,
+} from './entities';
 import { policyDecisionSchema, proposalRevisionSchema } from './proposals';
 import {
   AGENT_GRAPH_OVERLAY_SCHEMA_VERSION,

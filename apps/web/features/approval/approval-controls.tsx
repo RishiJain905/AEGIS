@@ -2,11 +2,7 @@
 
 import { useState } from 'react';
 
-import type {
-  ActionProposalV1,
-  PolicyDecisionV1,
-  ProposalRevisionV1,
-} from '@aegis/contracts-ts';
+import type { ActionProposalV1, PolicyDecisionV1, ProposalRevisionV1 } from '@aegis/contracts-ts';
 import { Alert, Button } from '@aegis/ui';
 
 import {

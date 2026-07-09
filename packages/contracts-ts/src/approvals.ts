@@ -2,10 +2,7 @@
 
 import { z } from 'zod';
 
-import {
-  approvalSchema,
-  executedActionSchema,
-} from './entities';
+import { approvalSchema, executedActionSchema } from './entities';
 import {
   approvalIdSchema,
   eventIdSchema,

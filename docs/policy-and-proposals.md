@@ -8,7 +8,7 @@ Phase 22 introduces **BASTION** response proposal generation and **WARDEN** dete
 |------|----------------|-----------|
 | BASTION | Evidence-grounded response proposals with 1–3 options | Creates `ActionProposalV1` v2 + `ProposalRevisionV1`; emits `action.proposal.created` |
 | WARDEN | Deterministic policy evaluation | `PolicyEngine` in `packages/policy`; emits `action.proposal.policy_evaluated` |
-| Human (Phase 24) | Approve/reject class 2/3 proposals | Deferred — UI shows read-only "Awaiting human approval" |
+| Human (Phase 24) | Approve/reject/modify class 2/3 proposals | Backend-enforced via `/action-proposals/{id}/approve|reject|modify` — see `docs/approval-workflow.md` |
 
 ## Schema overview
 
@@ -35,8 +35,10 @@ stateDiagram-v2
     pending --> pending: WARDEN approval_required
     pending --> approved: WARDEN allow (class 0/1)
     pending --> rejected: WARDEN block
-    pending --> approval_pending: incident state transition
-    approval_pending --> [*]: Phase 24 deferred
+    pending --> pending: operator modify + WARDEN re-eval
+    pending --> executed: operator approve + final policy + EXECUTE
+    pending --> rejected: operator reject
+    pending --> cancelled: operator cancel
 ```
 
 ## Tool boundaries
@@ -52,12 +54,14 @@ stateDiagram-v2
 ## Phase boundaries
 
 - **Phase 23 (SCRIBE):** evidence-linked after-action reporting via `aegis_reports` + SCRIBE narrative; immutable `ReportVersionV1` artifacts — see `docs/reports.md`
-- **Phase 24:** approval UI, approve/reject routes, simulator command execution — not implemented
-- Class 2/3 proposals stay `pending` with `approval_required`; no autonomous execution in Phase 22
+- **Phase 24:** approval UI, approve/reject/modify routes, final WARDEN revalidation, simulator command execution — see `docs/approval-workflow.md` and ADR 0025
+- Class 2/3 proposals stay `pending` with `approval_required` until an operator decision; no autonomous execution
 
 ## References
 
 - ADR 0023 — BASTION/WARDEN Policy and Proposals
 - ADR 0024 — SCRIBE evidence-linked reporting
+- ADR 0025 — Approval Workflow
 - `docs/AEGIS-v1.0-Agent-Specs/agent-system/22-bastion-and-warden.md`
+- `docs/approval-workflow.md`
 - `packages/policy/README.md`
