@@ -75,10 +75,7 @@
       "title": "Tosequence"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId"
-  ],
+  "required": ["schemaVersion", "runId"],
   "title": "TimelineFilterV1",
   "type": "object"
 }

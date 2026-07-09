@@ -35,7 +35,8 @@ function ReplayStatusExtras() {
       {cursor ? <span data-testid="replay-sequence-label">Sequence: {cursor.sequence}</span> : null}
       {provenance ? (
         <span data-testid="replay-applied-range">
-          Applied: {provenance.appliedFromSequence}–{provenance.appliedToSequence} ({provenance.mode})
+          Applied: {provenance.appliedFromSequence}–{provenance.appliedToSequence} (
+          {provenance.mode})
         </span>
       ) : null}
     </div>

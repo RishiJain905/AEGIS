@@ -1,14 +1,7 @@
 {
   "$defs": {
     "ReplayBookmarkKindV1": {
-      "enum": [
-        "incident",
-        "snapshot",
-        "detection",
-        "approval",
-        "report",
-        "custom"
-      ],
+      "enum": ["incident", "snapshot", "detection", "approval", "report", "custom"],
       "title": "ReplayBookmarkKindV1",
       "type": "string"
     }
@@ -84,14 +77,7 @@
       "title": "Tosequence"
     }
   },
-  "required": [
-    "schemaVersion",
-    "id",
-    "runId",
-    "label",
-    "kind",
-    "sequence"
-  ],
+  "required": ["schemaVersion", "id", "runId", "label", "kind", "sequence"],
   "title": "ReplayBookmarkV1",
   "type": "object"
 }

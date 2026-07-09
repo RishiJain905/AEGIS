@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { clampSequence, nextSpeed, previousSpeed, speedToIntervalMs } from '@/features/replay/lib/playback';
+import {
+  clampSequence,
+  nextSpeed,
+  previousSpeed,
+  speedToIntervalMs,
+} from '@/features/replay/lib/playback';
 
 describe('replay playback helpers', () => {
   it('maps speeds to intervals and disables continuous playback under reduced motion', () => {

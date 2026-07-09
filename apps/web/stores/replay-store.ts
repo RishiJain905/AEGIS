@@ -62,7 +62,11 @@ export interface ReplayStoreState {
   selectBookmark: (bookmarkId: string | null) => void;
   setTimelineFilter: (filter: TimelineFilterV1 | null) => void;
   setComparisonRange: (leftSequence: number, rightSequence: number) => void;
-  applyComparisonDiff: (diff: StateDiffV1 | null, errorCode?: string | null, errorMessage?: string | null) => void;
+  applyComparisonDiff: (
+    diff: StateDiffV1 | null,
+    errorCode?: string | null,
+    errorMessage?: string | null,
+  ) => void;
   step: (delta: number) => void;
   jumpToMin: () => void;
   jumpToMax: () => void;
@@ -151,7 +155,8 @@ export const useReplayStore = create<ReplayStoreState>((set, get) => ({
   setReducedMotion: (reducedMotion) => {
     set((state) => ({
       reducedMotion,
-      playbackStatus: reducedMotion && state.playbackStatus === 'playing' ? 'paused' : state.playbackStatus,
+      playbackStatus:
+        reducedMotion && state.playbackStatus === 'playing' ? 'paused' : state.playbackStatus,
     }));
   },
 

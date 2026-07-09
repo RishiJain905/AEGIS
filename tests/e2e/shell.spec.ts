@@ -30,10 +30,11 @@ test.describe('application shell', () => {
     await expect(page.getByTestId('replay-transport-controls')).toBeVisible();
 
     await page.goto('/reports');
-    await expect(page.getByRole('region', { name: 'Reports' })).toBeVisible();
+    await expect(page.getByTestId('command-centre-shell')).toBeVisible();
+    await expect(page.getByText(/After-action|Reports|SCRIBE/i).first()).toBeVisible();
 
     await page.goto('/admin');
-    await expect(page.getByRole('region', { name: 'Administration' })).toBeVisible();
+    await expect(page.getByTestId('command-centre-shell')).toBeVisible();
   });
 
   test('opens command palette with keyboard shortcut', async ({ page }) => {

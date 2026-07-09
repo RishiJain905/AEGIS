@@ -165,7 +165,10 @@ export function ReplayTransportControls() {
       </label>
 
       {reducedMotion ? (
-        <p className="text-xs text-[var(--aegis-text-secondary)]" data-testid="replay-reduced-motion">
+        <p
+          className="text-xs text-[var(--aegis-text-secondary)]"
+          data-testid="replay-reduced-motion"
+        >
           Reduced motion is enabled. Use step and scrubber controls instead of continuous playback.
         </p>
       ) : null}

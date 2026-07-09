@@ -2,13 +2,13 @@
 
 import { z } from 'zod';
 
+import { incidentIdSchema, runIdSchema, sequenceSchema, utcTimestampSchema } from './primitives';
 import {
-  incidentIdSchema,
-  runIdSchema,
-  sequenceSchema,
-  utcTimestampSchema,
-} from './primitives';
-import { replayCursorSchema, replayErrorCodeSchema, replayProvenanceSchema, stateDiffSchema } from './replay';
+  replayCursorSchema,
+  replayErrorCodeSchema,
+  replayProvenanceSchema,
+  stateDiffSchema,
+} from './replay';
 import {
   HISTORICAL_GRAPH_ADAPTER_SCHEMA_VERSION,
   REPLAY_BOOKMARK_SCHEMA_VERSION,
@@ -29,13 +29,7 @@ export const replayPlaybackSpeedSchema = z.enum(['0.5x', '1x', '2x', '4x']);
 
 export const replayPlaybackStatusSchema = z.enum(['idle', 'playing', 'paused']);
 
-export const replayLoadStatusSchema = z.enum([
-  'idle',
-  'loading',
-  'ready',
-  'unavailable',
-  'error',
-]);
+export const replayLoadStatusSchema = z.enum(['idle', 'loading', 'ready', 'unavailable', 'error']);
 
 export const replayBookmarkKindSchema = z.enum([
   'incident',

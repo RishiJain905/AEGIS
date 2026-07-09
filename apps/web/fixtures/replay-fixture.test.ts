@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  getReplayDiffFixture,
-  getReplayStateFixture,
-} from '@/fixtures/replay-fixture';
+import { getReplayDiffFixture, getReplayStateFixture } from '@/fixtures/replay-fixture';
 
 describe('replay fixture reconstruction projections', () => {
   it('reconstructs later domains as the cursor advances', () => {
@@ -24,8 +21,8 @@ describe('replay fixture reconstruction projections', () => {
   });
 
   it('fails closed for unavailable or corrupt replay data', () => {
-    expect(() => getReplayStateFixture('run_replay_unavailable')).toThrow();
-    expect(() => getReplayStateFixture('run_replay_corrupt')).toThrow();
-    expect(() => getReplayStateFixture('run_replay_incompatible')).toThrow();
+    expect(() => getReplayStateFixture('run_01ARZ3NDEKTSV4RRFFQ69G5FZ0')).toThrow();
+    expect(() => getReplayStateFixture('run_01ARZ3NDEKTSV4RRFFQ69G5FZ1')).toThrow();
+    expect(() => getReplayStateFixture('run_01ARZ3NDEKTSV4RRFFQ69G5FZ2')).toThrow();
   });
 });

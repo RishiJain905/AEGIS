@@ -224,7 +224,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/historical_graph_adapter_v1.schema.json",
-      "sha256": "d616bfefe1d33b67698cbd10f3242c2bf7a54189805c0a3e1c8af15568554a40"
+      "sha256": "a320554e8e39a4ac9c6b830571ee6d082bdecfe7014a6e0500d0c56d87b55b8c"
     },
     {
       "path": "tests/contract/fixtures/schemas/hypothesis_v1.schema.json",
@@ -364,11 +364,11 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_bookmark_v1.schema.json",
-      "sha256": "06d85e0f974e32b1d573874885db3d32adfc8aa8b6489b2e7ae75bd0cc424d32"
+      "sha256": "1ec3479ed55fe618839fd01bb72b45d8d4f8e03c08c517db8ef1725f87fb6f2e"
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_comparison_v1.schema.json",
-      "sha256": "81b1241064db976868ad9db6e8ffac44717417ee10b73e0eef1d954d55ddd88b"
+      "sha256": "2511ec61fc8cfba2b3674eae6c5d28e74b1a85cf2ddce5e50ba32a143002ef82"
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_cursor_range_v1.schema.json",
@@ -396,7 +396,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_view_state_v1.schema.json",
-      "sha256": "90b6da4239d4b118652524503a54b85f8d711dd33994dfa2d048126df4118c78"
+      "sha256": "a27b2730cb161602115b089612fbed7634564fc5b6cb3185fd80a8a2bf8d9280"
     },
     {
       "path": "tests/contract/fixtures/schemas/report_citation_v1.schema.json",
@@ -520,7 +520,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/timeline_filter_v1.schema.json",
-      "sha256": "c35abdacf3a81605daa1dfe47ed8391d61401834941440af2146620e27eabe22"
+      "sha256": "9f3c8e2090e20534c94135f3d160e2079252fdd0c9dc480489bf7d9283120aed"
     },
     {
       "path": "tests/contract/fixtures/schemas/tool_definition_v1.schema.json",

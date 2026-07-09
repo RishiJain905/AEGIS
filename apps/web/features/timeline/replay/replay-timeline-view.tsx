@@ -74,7 +74,9 @@ export function ReplayTimelineView() {
         className="flex items-center justify-between border-t border-[var(--aegis-border-default)] px-4 py-2"
         data-testid="timeline-area-collapsed"
       >
-        <span className="text-xs text-[var(--aegis-text-secondary)]">Historical timeline collapsed</span>
+        <span className="text-xs text-[var(--aegis-text-secondary)]">
+          Historical timeline collapsed
+        </span>
         <Button
           variant="ghost"
           size="sm"

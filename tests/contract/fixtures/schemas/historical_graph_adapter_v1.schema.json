@@ -40,13 +40,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId",
-    "sequence",
-    "graphRevision",
-    "stateDigest"
-  ],
+  "required": ["schemaVersion", "runId", "sequence", "graphRevision", "stateDigest"],
   "title": "HistoricalGraphAdapterV1",
   "type": "object"
 }

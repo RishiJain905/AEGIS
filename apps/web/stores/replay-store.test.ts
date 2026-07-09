@@ -41,40 +41,44 @@ describe('replay-store isolation and cursor controls', () => {
     const second = useReplayStore.getState().beginReconstruction();
     expect(second).toBeGreaterThan(first);
 
-    useReplayStore.getState().applyReconstructedState(first, {
-      schemaVersion: 1,
-      runId: 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
-      cursor: {
+    useReplayStore.getState().applyReconstructedState(
+      first,
+      {
         schemaVersion: 1,
         runId: 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
-        sequence: 50,
-        simTime: null,
-        incidentId: null,
+        cursor: {
+          schemaVersion: 1,
+          runId: 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
+          sequence: 50,
+          simTime: null,
+          incidentId: null,
+        },
+        incidents: [],
+        evidence: [],
+        riskScores: [],
+        agentSessions: [],
+        agentArtifacts: [],
+        proposals: [],
+        approvals: [],
+        executedActions: [],
+        reports: [],
+        auditEvents: [],
+        stateDigest: 'stale',
+        provenance: {
+          schemaVersion: 1,
+          runId: 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
+          mode: 'from_events',
+          snapshotId: null,
+          snapshotSequence: null,
+          appliedFromSequence: 0,
+          appliedToSequence: 50,
+          appliedEventCount: 1,
+          fallbackReason: null,
+          reconstructedAt: '2026-06-30T03:00:00.000Z',
+        },
       },
-      incidents: [],
-      evidence: [],
-      riskScores: [],
-      agentSessions: [],
-      agentArtifacts: [],
-      proposals: [],
-      approvals: [],
-      executedActions: [],
-      reports: [],
-      auditEvents: [],
-      stateDigest: 'stale',
-      provenance: {
-        schemaVersion: 1,
-        runId: 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
-        mode: 'from_events',
-        snapshotId: null,
-        snapshotSequence: null,
-        appliedFromSequence: 0,
-        appliedToSequence: 50,
-        appliedEventCount: 1,
-        fallbackReason: null,
-        reconstructedAt: '2026-06-30T03:00:00.000Z',
-      },
-    }, null);
+      null,
+    );
 
     expect(useReplayStore.getState().reconstructedState).toBeNull();
   });

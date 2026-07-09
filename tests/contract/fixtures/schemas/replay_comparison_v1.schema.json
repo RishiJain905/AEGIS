@@ -42,11 +42,7 @@
           "title": "Simtime"
         }
       },
-      "required": [
-        "schemaVersion",
-        "runId",
-        "sequence"
-      ],
+      "required": ["schemaVersion", "runId", "sequence"],
       "title": "ReplayCursorV1",
       "type": "object"
     },
@@ -100,10 +96,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "path",
-        "changeType"
-      ],
+      "required": ["path", "changeType"],
       "title": "StateDiffEntryV1",
       "type": "object"
     },
@@ -251,12 +244,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "runId",
-    "leftSequence",
-    "rightSequence"
-  ],
+  "required": ["schemaVersion", "runId", "leftSequence", "rightSequence"],
   "title": "ReplayComparisonV1",
   "type": "object"
 }

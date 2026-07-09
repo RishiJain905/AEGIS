@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { createGraphStore, type GraphStore } from '@aegis/graph-domain';
@@ -114,7 +107,16 @@ export function ReplayProvider({ runId, children, initialSequence }: ReplayProvi
       clear();
       setPresentationMode('live');
     };
-  }, [api, clear, enterHistorical, initialSequence, resetForRun, runId, setError, setPresentationMode]);
+  }, [
+    api,
+    clear,
+    enterHistorical,
+    initialSequence,
+    resetForRun,
+    runId,
+    setError,
+    setPresentationMode,
+  ]);
 
   useEffect(() => {
     setReducedMotion(reducedMotion);

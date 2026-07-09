@@ -42,13 +42,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "schemaVersion",
-        "runId",
-        "sequence",
-        "graphRevision",
-        "stateDigest"
-      ],
+      "required": ["schemaVersion", "runId", "sequence", "graphRevision", "stateDigest"],
       "title": "HistoricalGraphAdapterV1",
       "type": "object"
     },
@@ -142,12 +136,7 @@
           "type": "integer"
         }
       },
-      "required": [
-        "schemaVersion",
-        "runId",
-        "leftSequence",
-        "rightSequence"
-      ],
+      "required": ["schemaVersion", "runId", "leftSequence", "rightSequence"],
       "title": "ReplayComparisonV1",
       "type": "object"
     },
@@ -193,11 +182,7 @@
           "title": "Simtime"
         }
       },
-      "required": [
-        "schemaVersion",
-        "runId",
-        "sequence"
-      ],
+      "required": ["schemaVersion", "runId", "sequence"],
       "title": "ReplayCursorV1",
       "type": "object"
     },
@@ -216,40 +201,22 @@
       "type": "string"
     },
     "ReplayLoadStatusV1": {
-      "enum": [
-        "idle",
-        "loading",
-        "ready",
-        "unavailable",
-        "error"
-      ],
+      "enum": ["idle", "loading", "ready", "unavailable", "error"],
       "title": "ReplayLoadStatusV1",
       "type": "string"
     },
     "ReplayModeV1": {
-      "enum": [
-        "from_events",
-        "from_snapshot_plus_events"
-      ],
+      "enum": ["from_events", "from_snapshot_plus_events"],
       "title": "ReplayModeV1",
       "type": "string"
     },
     "ReplayPlaybackSpeedV1": {
-      "enum": [
-        "0.5x",
-        "1x",
-        "2x",
-        "4x"
-      ],
+      "enum": ["0.5x", "1x", "2x", "4x"],
       "title": "ReplayPlaybackSpeedV1",
       "type": "string"
     },
     "ReplayPlaybackStatusV1": {
-      "enum": [
-        "idle",
-        "playing",
-        "paused"
-      ],
+      "enum": ["idle", "playing", "paused"],
       "title": "ReplayPlaybackStatusV1",
       "type": "string"
     },
@@ -339,10 +306,7 @@
       "type": "object"
     },
     "ReplayViewModeV1": {
-      "enum": [
-        "historical",
-        "playback"
-      ],
+      "enum": ["historical", "playback"],
       "title": "ReplayViewModeV1",
       "type": "string"
     },
@@ -382,10 +346,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "path",
-        "changeType"
-      ],
+      "required": ["path", "changeType"],
       "title": "StateDiffEntryV1",
       "type": "object"
     },
@@ -520,10 +481,7 @@
           "title": "Tosequence"
         }
       },
-      "required": [
-        "schemaVersion",
-        "runId"
-      ],
+      "required": ["schemaVersion", "runId"],
       "title": "TimelineFilterV1",
       "type": "object"
     }

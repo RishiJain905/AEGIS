@@ -7,6 +7,20 @@ import { Button, Panel } from '@aegis/ui';
 import { useApiClient } from '@/lib/api';
 import { useReplayStore } from '@/stores/replay-store';
 
+function formatDiffValue(value: unknown): string {
+  if (value == null) {
+    return '∅';
+  }
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '[unserializable]';
+  }
+}
+
 export function ReplayComparisonPanel() {
   const api = useApiClient();
   const runId = useReplayStore((state) => state.runId);
@@ -38,7 +52,14 @@ export function ReplayComparisonPanel() {
     return () => {
       controller.abort();
     };
-  }, [api, applyComparisonDiff, comparison?.leftSequence, comparison?.loading, comparison?.rightSequence, runId]);
+  }, [
+    api,
+    applyComparisonDiff,
+    comparison?.leftSequence,
+    comparison?.loading,
+    comparison?.rightSequence,
+    runId,
+  ]);
 
   if (!runId || !cursor) {
     return null;
@@ -92,7 +113,9 @@ export function ReplayComparisonPanel() {
         <div data-testid="replay-comparison-result">
           <p className="mb-2 text-xs text-[var(--aegis-text-secondary)]">
             {comparison.leftLabel} → {comparison.rightLabel} ·{' '}
-            {comparison.diff.equivalent ? 'Equivalent' : `${String(comparison.diff.entries.length)} changes`}
+            {comparison.diff.equivalent
+              ? 'Equivalent'
+              : `${String(comparison.diff.entries.length)} changes`}
           </p>
           <ul className="flex flex-col gap-1">
             {comparison.diff.entries.map((entry) => (
@@ -104,7 +127,7 @@ export function ReplayComparisonPanel() {
                 <span className="font-mono">{entry.path}</span>
                 <span className="mx-2 text-[var(--aegis-text-secondary)]">{entry.changeType}</span>
                 <span>
-                  {String(entry.before ?? '∅')} → {String(entry.after ?? '∅')}
+                  {formatDiffValue(entry.before)} → {formatDiffValue(entry.after)}
                 </span>
               </li>
             ))}

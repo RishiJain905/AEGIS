@@ -66,9 +66,9 @@ const BASE_AUDIT = [
 ] as const;
 
 function cloneGraphAtSequence(runId: string, sequence: number) {
-  const snapshot = (shellDataset as { graphSnapshots: Array<Record<string, unknown>> }).graphSnapshots.find(
-    (item) => item.runId === runId,
-  );
+  const snapshot = (
+    shellDataset as { graphSnapshots: Array<Record<string, unknown>> }
+  ).graphSnapshots.find((item) => item.runId === runId);
   if (!snapshot) {
     return null;
   }
@@ -80,7 +80,8 @@ function cloneGraphAtSequence(runId: string, sequence: number) {
         return {
           ...record,
           riskScore: Number(scaled.toFixed(2)),
-          status: sequence >= 400 ? 'contained' : sequence >= 120 ? 'under_investigation' : 'normal',
+          status:
+            sequence >= 400 ? 'contained' : sequence >= 120 ? 'under_investigation' : 'normal',
           revision: Math.max(1, sequence),
         };
       })
@@ -101,7 +102,11 @@ function simTimeForSequence(sequence: number): string {
   return `2026-01-01T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.000Z`;
 }
 
-function buildReplayState(runId: string, sequence: number, incidentId?: string | null): ReplayStateV1 {
+function buildReplayState(
+  runId: string,
+  sequence: number,
+  incidentId?: string | null,
+): ReplayStateV1 {
   const clamped = Math.max(0, Math.min(500, sequence));
   const simTime = simTimeForSequence(clamped);
   const auditEvents = BASE_AUDIT.filter((event) => event.sequence <= clamped).map((event) => ({
@@ -277,28 +282,22 @@ export function getReplayStateFixture(
   runId: string,
   params?: { sequence?: number; simTime?: string; incidentId?: string | null },
 ): ReplayStateV1 {
-  if (runId === 'run_replay_unavailable') {
+  if (runId === 'run_01ARZ3NDEKTSV4RRFFQ69G5FZ0') {
     throw Object.assign(new Error('Replay data unavailable'), {
       code: 'REPLAY_NOT_FOUND',
       status: 404,
     });
   }
-  if (runId === 'run_replay_corrupt') {
+  if (runId === 'run_01ARZ3NDEKTSV4RRFFQ69G5FZ1') {
     throw Object.assign(new Error('Snapshot checksum mismatch'), {
       code: 'SNAPSHOT_CHECKSUM_MISMATCH',
       status: 409,
     });
   }
-  if (runId === 'run_replay_incompatible') {
+  if (runId === 'run_01ARZ3NDEKTSV4RRFFQ69G5FZ2') {
     throw Object.assign(new Error('Snapshot incompatible with projector'), {
       code: 'SNAPSHOT_INCOMPATIBLE',
       status: 409,
-    });
-  }
-  if (!runId.startsWith('run_') && runId !== DEFAULT_RUN_ID) {
-    throw Object.assign(new Error(`Replay run not found: ${runId}`), {
-      code: 'REPLAY_NOT_FOUND',
-      status: 404,
     });
   }
   const sequence = params?.sequence ?? 500;

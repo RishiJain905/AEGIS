@@ -39,7 +39,8 @@ export function ReplayInspectorPanel() {
   const snapshot = state?.graph ?? null;
   const selectedRisk =
     state?.riskScores.find(
-      (score: NonNullable<typeof state>['riskScores'][number]) => score.assetId === selectedEntityId,
+      (score: NonNullable<typeof state>['riskScores'][number]) =>
+        score.assetId === selectedEntityId,
     ) ?? null;
 
   return (
@@ -64,7 +65,9 @@ export function ReplayInspectorPanel() {
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        {loadStatus === 'loading' ? <LoadingState message="Reconstructing inspector state…" /> : null}
+        {loadStatus === 'loading' ? (
+          <LoadingState message="Reconstructing inspector state…" />
+        ) : null}
         {loadStatus === 'error' || loadStatus === 'unavailable' ? (
           <ErrorState message={errorMessage ?? 'Historical state unavailable.'} />
         ) : null}
@@ -100,7 +103,10 @@ export function ReplayInspectorPanel() {
                 }
               />
             ) : (
-              <EmptyState title="No graph at this cursor" description="Scrub forward to reconstruct graph state." />
+              <EmptyState
+                title="No graph at this cursor"
+                description="Scrub forward to reconstruct graph state."
+              />
             )}
 
             <Panel title="Incidents" density="compact" data-testid="replay-inspector-incidents">
@@ -142,7 +148,11 @@ export function ReplayInspectorPanel() {
               )}
             </Panel>
 
-            <Panel title="Proposals / approvals" density="compact" data-testid="replay-inspector-proposals">
+            <Panel
+              title="Proposals / approvals"
+              density="compact"
+              data-testid="replay-inspector-proposals"
+            >
               {state.proposals.length === 0 ? (
                 <p className="text-sm text-[var(--aegis-text-secondary)]">No proposals yet.</p>
               ) : (

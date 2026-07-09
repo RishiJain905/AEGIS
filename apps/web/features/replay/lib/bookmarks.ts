@@ -1,8 +1,4 @@
-import type {
-  ReplayBookmarkV1,
-  ReplayStateV1,
-  SnapshotManifestV1,
-} from '@aegis/contracts-ts';
+import type { ReplayBookmarkV1, ReplayStateV1, SnapshotManifestV1 } from '@aegis/contracts-ts';
 
 export function buildReplayBookmarks(
   runId: string,

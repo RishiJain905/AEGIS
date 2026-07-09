@@ -180,9 +180,9 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
       const run = dataset.runs.find((item) => item.id === runId);
       if (!run) {
         if (
-          runId === 'run_replay_unavailable' ||
-          runId === 'run_replay_corrupt' ||
-          runId === 'run_replay_incompatible'
+          runId === 'run_01ARZ3NDEKTSV4RRFFQ69G5FZ0' ||
+          runId === 'run_01ARZ3NDEKTSV4RRFFQ69G5FZ1' ||
+          runId === 'run_01ARZ3NDEKTSV4RRFFQ69G5FZ2'
         ) {
           return applyProfile(
             parseContract(runSchema, {
@@ -311,7 +311,7 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
     async getReplayState(runId, params, signal) {
       try {
         const state = getReplayStateFixture(runId, params);
-        return applyProfile(state, signal);
+        return await applyProfile(state, signal);
       } catch (error) {
         const code =
           error && typeof error === 'object' && 'code' in error
@@ -332,7 +332,7 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
     async getReplayCursor(runId, params, signal) {
       try {
         const cursor = getReplayCursorFixture(runId, params);
-        return applyProfile(cursor, signal);
+        return await applyProfile(cursor, signal);
       } catch (error) {
         const code =
           error && typeof error === 'object' && 'code' in error
@@ -353,7 +353,7 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
     async getReplayDiff(runId, fromSequence, toSequence, signal) {
       try {
         const diff = getReplayDiffFixture(runId, fromSequence, toSequence);
-        return applyProfile(diff, signal);
+        return await applyProfile(diff, signal);
       } catch (error) {
         throw new ApiClientError({
           code: 'REPLAY_VALIDATION_FAILED',
@@ -364,7 +364,7 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
     },
 
     async listReplaySnapshots(runId, signal) {
-      return applyProfile(listReplaySnapshotsFixture(runId), signal);
+      return await applyProfile(listReplaySnapshotsFixture(runId), signal);
     },
   };
 }

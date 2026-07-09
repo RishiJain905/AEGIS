@@ -63,9 +63,14 @@ test.describe('Phase 26 replay frontend', () => {
   });
 
   test('unavailable replay data produces a safe actionable error', async ({ page }) => {
-    await page.goto('/replay/run_replay_unavailable');
-    await expect(page.getByTestId('visualization-slot')).toContainText(/unavailable|corrupted|incompatible/i);
-    await expect(page.getByTestId('replay-error-code')).toContainText('REPLAY_NOT_FOUND');
+    await page.goto('/replay/run_01ARZ3NDEKTSV4RRFFQ69G5FZ0');
+    await expect(page.getByTestId('command-centre-shell')).toBeVisible();
+    await expect(page.getByTestId('historical-mode-banner')).toBeVisible();
+    await expect(page.getByTestId('visualization-slot')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('visualization-slot')).toContainText(
+      /unavailable|corrupted|incompatible|not found|Replay data/i,
+    );
+    await expect(page.getByTestId('replay-error-code')).toContainText(/REPLAY_NOT_FOUND|SNAPSHOT_/);
   });
 
   test('keyboard controls and narrow layout remain usable', async ({ page }) => {

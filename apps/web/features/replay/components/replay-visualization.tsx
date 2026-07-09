@@ -1,10 +1,22 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+
 import { EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
-import { OperationalGraphView } from '@/features/operational-graph/components/operational-graph-view';
 import { useReplay } from '@/features/replay/replay-provider';
 import { useReplayStore } from '@/stores/replay-store';
+
+const OperationalGraphView = dynamic(
+  () =>
+    import('@/features/operational-graph/components/operational-graph-view').then(
+      (module) => module.OperationalGraphView,
+    ),
+  {
+    ssr: false,
+    loading: () => <LoadingState message="Loading historical graph renderer…" />,
+  },
+);
 
 export function ReplayVisualization() {
   const replay = useReplay();
@@ -16,7 +28,11 @@ export function ReplayVisualization() {
 
   if (loadStatus === 'loading' && !state) {
     return (
-      <Panel title="Operational graph" description="Historical reconstruction" data-testid="visualization-slot">
+      <Panel
+        title="Operational graph"
+        description="Historical reconstruction"
+        data-testid="visualization-slot"
+      >
         <LoadingState message="Loading reconstructed graph…" />
       </Panel>
     );
@@ -24,7 +40,11 @@ export function ReplayVisualization() {
 
   if (loadStatus === 'unavailable' || loadStatus === 'error') {
     return (
-      <Panel title="Operational graph" description="Historical reconstruction" data-testid="visualization-slot">
+      <Panel
+        title="Operational graph"
+        description="Historical reconstruction"
+        data-testid="visualization-slot"
+      >
         <ErrorState
           message={
             errorMessage ??
@@ -42,7 +62,11 @@ export function ReplayVisualization() {
 
   if (!state?.graph || !replay || !cursor) {
     return (
-      <Panel title="Operational graph" description="Historical reconstruction" data-testid="visualization-slot">
+      <Panel
+        title="Operational graph"
+        description="Historical reconstruction"
+        data-testid="visualization-slot"
+      >
         <EmptyState
           title="No reconstructed graph"
           description="Scrub the timeline to reconstruct graph state from the Phase 25 replay engine."
