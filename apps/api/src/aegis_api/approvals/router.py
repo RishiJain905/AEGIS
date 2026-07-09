@@ -7,6 +7,7 @@ from aegis_contracts.approvals import (
     ApproveProposalRequestV1,
     ApproveProposalResponseV1,
     CancelProposalRequestV1,
+    CancelProposalResponseV1,
     ModifyProposalRequestV1,
     ModifyProposalResponseV1,
     RejectProposalRequestV1,
@@ -119,13 +120,16 @@ async def modify_proposal(
         return _error_response(exc)
 
 
-@router.post("/action-proposals/{proposal_id}/cancel")
+@router.post(
+    "/action-proposals/{proposal_id}/cancel",
+    response_model=CancelProposalResponseV1,
+)
 async def cancel_proposal(
     proposal_id: str,
     request: CancelProposalRequestV1,
     x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
     authorization: str | None = Header(default=None, alias="Authorization"),
-) -> dict[str, object] | JSONResponse:
+) -> CancelProposalResponseV1 | JSONResponse:
     if request.proposal_id != proposal_id:
         raise HTTPException(status_code=400, detail="proposalId mismatch")
     try:

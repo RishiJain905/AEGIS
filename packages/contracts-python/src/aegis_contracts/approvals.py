@@ -28,6 +28,7 @@ from aegis_contracts.versioning import (
     APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION,
     AUTHORIZED_SIMULATION_COMMAND_SCHEMA_VERSION,
     CANCEL_PROPOSAL_REQUEST_SCHEMA_VERSION,
+    CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION,
     EXECUTION_RESULT_SCHEMA_VERSION,
     FINAL_POLICY_CHECK_SCHEMA_VERSION,
     MODIFY_PROPOSAL_REQUEST_SCHEMA_VERSION,
@@ -343,12 +344,34 @@ class ModifyProposalResponseV1(BaseModel):
         return self
 
 
+class CancelProposalResponseV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    schema_version: int = Field(alias="schemaVersion", ge=1)
+    proposal_id: ProposalId = Field(alias="proposalId")
+    proposal_status: ProposalStatus = Field(alias="proposalStatus")
+    reason: str = Field(min_length=1, max_length=2048)
+    replayed: bool = False
+
+    @model_validator(mode="after")
+    def validate_schema_version(self) -> CancelProposalResponseV1:
+        assert_supported_schema_version("cancel_proposal_response", self.schema_version)
+        if self.schema_version != CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION:
+            raise ContractValidationError(
+                code=ContractErrorCode.SCHEMA_VERSION_UNSUPPORTED,
+                message=f"Unsupported cancel proposal response schema: {self.schema_version}",
+                details={"schemaVersion": self.schema_version},
+            )
+        return self
+
+
 __all__ = [
     "ApprovalErrorCode",
     "ApproveProposalRequestV1",
     "ApproveProposalResponseV1",
     "AuthorizedSimulationCommandV1",
     "CancelProposalRequestV1",
+    "CancelProposalResponseV1",
     "ExecutionResultV1",
     "FinalPolicyCheckV1",
     "ModifyProposalRequestV1",

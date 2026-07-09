@@ -22,6 +22,7 @@ import {
   APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION,
   AUTHORIZED_SIMULATION_COMMAND_SCHEMA_VERSION,
   CANCEL_PROPOSAL_REQUEST_SCHEMA_VERSION,
+  CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION,
   EXECUTION_RESULT_SCHEMA_VERSION,
   FINAL_POLICY_CHECK_SCHEMA_VERSION,
   MODIFY_PROPOSAL_REQUEST_SCHEMA_VERSION,
@@ -204,6 +205,16 @@ export const modifyProposalResponseSchema = z
   })
   .strict();
 
+export const cancelProposalResponseSchema = z
+  .object({
+    schemaVersion: schemaVersionCheck(CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION),
+    proposalId: proposalIdSchema,
+    proposalStatus: z.enum(['pending', 'approved', 'rejected', 'executed', 'cancelled']),
+    reason: z.string().min(1).max(2048),
+    replayed: z.boolean().default(false),
+  })
+  .strict();
+
 export type ApprovalErrorCode = z.infer<typeof approvalErrorCodeSchema>;
 export type StaleProposalErrorV1 = z.infer<typeof staleProposalErrorSchema>;
 export type ProposalModificationV1 = z.infer<typeof proposalModificationSchema>;
@@ -217,3 +228,4 @@ export type CancelProposalRequestV1 = z.infer<typeof cancelProposalRequestSchema
 export type ApproveProposalResponseV1 = z.infer<typeof approveProposalResponseSchema>;
 export type RejectProposalResponseV1 = z.infer<typeof rejectProposalResponseSchema>;
 export type ModifyProposalResponseV1 = z.infer<typeof modifyProposalResponseSchema>;
+export type CancelProposalResponseV1 = z.infer<typeof cancelProposalResponseSchema>;

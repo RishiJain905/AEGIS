@@ -81,7 +81,8 @@ Headers: `X-Actor-Id` (default `asset:operator-console`), `Authorization: Bearer
 | `uv run pytest tests/contract tests/policy -q` (subset with approvals) | **PASS** (467 in focused run including contract/policy) |
 | `uv run mypy apps services packages` | **KNOWN ISSUE** — duplicate module path (pre-existing) |
 | `docker compose up -d postgres redis` | **ENV CAVEAT** — Docker unavailable; local Postgres 16 + Redis used |
-| `pnpm --filter @aegis/web test:e2e` | See demo/validation notes; Playwright e2e spec added |
+| `pnpm --filter @aegis/web test:e2e` | Spec added (`tests/e2e/approval.spec.ts`); browsers installed; fixture-mode screenshots captured |
+| Fixture-mode screenshot capture | **PASS** — 12 screenshots under `/opt/cursor/artifacts/screenshots/` |
 | `pnpm format:check` | **PARTIAL** — Phase 24 TS formatted; many pre-existing schema JSON files fail Prettier after full regen |
 
 ## Acceptance criteria evidence

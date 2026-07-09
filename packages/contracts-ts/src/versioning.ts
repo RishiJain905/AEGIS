@@ -152,6 +152,7 @@ export const CANCEL_PROPOSAL_REQUEST_SCHEMA_VERSION = 1;
 export const APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION = 1;
 export const REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION = 1;
 export const MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION = 1;
+export const CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -298,4 +299,5 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   approve_proposal_response: [APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION],
   reject_proposal_response: [REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION],
   modify_proposal_response: [MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION],
+  cancel_proposal_response: [CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION],
 };

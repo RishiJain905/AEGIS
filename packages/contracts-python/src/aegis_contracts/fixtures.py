@@ -24,6 +24,7 @@ from aegis_contracts.approvals import (
     ApproveProposalResponseV1,
     AuthorizedSimulationCommandV1,
     CancelProposalRequestV1,
+    CancelProposalResponseV1,
     ExecutionResultV1,
     FinalPolicyCheckV1,
     ModifyProposalRequestV1,
@@ -286,4 +287,5 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "approve_proposal_response_v1": ApproveProposalResponseV1,
     "reject_proposal_response_v1": RejectProposalResponseV1,
     "modify_proposal_response_v1": ModifyProposalResponseV1,
+    "cancel_proposal_response_v1": CancelProposalResponseV1,
 }

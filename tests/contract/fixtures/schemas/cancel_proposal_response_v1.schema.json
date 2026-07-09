@@ -1,0 +1,49 @@
+{
+  "$defs": {
+    "ProposalStatus": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "executed",
+        "cancelled"
+      ],
+      "title": "ProposalStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "proposalId": {
+      "title": "Proposalid",
+      "type": "string"
+    },
+    "proposalStatus": {
+      "$ref": "#/$defs/ProposalStatus"
+    },
+    "reason": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "replayed": {
+      "default": false,
+      "title": "Replayed",
+      "type": "boolean"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "proposalId",
+    "proposalStatus",
+    "reason"
+  ],
+  "title": "CancelProposalResponseV1",
+  "type": "object"
+}

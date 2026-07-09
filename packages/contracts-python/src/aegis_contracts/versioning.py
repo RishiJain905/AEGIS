@@ -160,6 +160,7 @@ CANCEL_PROPOSAL_REQUEST_SCHEMA_VERSION: Final[int] = 1
 APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -304,6 +305,7 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "approve_proposal_response": frozenset({APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION}),
     "reject_proposal_response": frozenset({REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION}),
     "modify_proposal_response": frozenset({MODIFY_PROPOSAL_RESPONSE_SCHEMA_VERSION}),
+    "cancel_proposal_response": frozenset({CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION}),
     "trigger_watchtower_request": frozenset({TRIGGER_WATCHTOWER_REQUEST_SCHEMA_VERSION}),
 }
 

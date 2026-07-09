@@ -193,6 +193,7 @@ import {
   approveProposalResponseSchema,
   authorizedSimulationCommandSchema,
   cancelProposalRequestSchema,
+  cancelProposalResponseSchema,
   executionResultSchema,
   finalPolicyCheckSchema,
   modifyProposalRequestSchema,
@@ -324,4 +325,5 @@ export const FIXTURE_SCHEMA_MAP = {
   approve_proposal_response_v1: approveProposalResponseSchema,
   reject_proposal_response_v1: rejectProposalResponseSchema,
   modify_proposal_response_v1: modifyProposalResponseSchema,
+  cancel_proposal_response_v1: cancelProposalResponseSchema,
 } as const;

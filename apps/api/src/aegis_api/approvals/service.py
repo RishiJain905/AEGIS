@@ -27,6 +27,7 @@ from aegis_contracts.approvals import (
     ApproveProposalRequestV1,
     ApproveProposalResponseV1,
     CancelProposalRequestV1,
+    CancelProposalResponseV1,
     ExecutionResultV1,
     FinalPolicyCheckV1,
     ModifyProposalRequestV1,
@@ -44,6 +45,7 @@ from aegis_contracts.proposals import (
 from aegis_contracts.versioning import (
     APPROVAL_SCHEMA_VERSION,
     APPROVE_PROPOSAL_RESPONSE_SCHEMA_VERSION,
+    CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION,
     EXECUTED_ACTION_SCHEMA_VERSION,
     EXECUTION_RESULT_SCHEMA_VERSION,
     FINAL_POLICY_CHECK_SCHEMA_VERSION,
@@ -503,7 +505,7 @@ class ApprovalWorkflowService:
         actor_id: str | None = None,
         authorization_token: str = DEFAULT_AUTHORIZATION_TOKEN,
         trace_id: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> CancelProposalResponseV1:
         actor = self._resolve_actor(request.actor_id or actor_id)
         self._assert_operator_token(authorization_token)
         existing = await uow.idempotency.get(
@@ -511,12 +513,13 @@ class ApprovalWorkflowService:
             idempotency_key=request.idempotency_key,
         )
         if existing is not None:
-            return {
-                "schemaVersion": 1,
-                "proposalId": request.proposal_id,
-                "proposalStatus": ProposalStatus.CANCELLED.value,
-                "replayed": True,
-            }
+            return CancelProposalResponseV1(
+                schema_version=CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION,
+                proposal_id=request.proposal_id,
+                proposal_status=ProposalStatus.CANCELLED,
+                reason=request.reason,
+                replayed=True,
+            )
 
         proposal = await self._require_proposal(uow, request.proposal_id)
         if proposal.status in {
@@ -575,12 +578,13 @@ class ApprovalWorkflowService:
                 created_at=now,
             )
         )
-        return {
-            "schemaVersion": 1,
-            "proposalId": proposal.id,
-            "proposalStatus": ProposalStatus.CANCELLED.value,
-            "replayed": False,
-        }
+        return CancelProposalResponseV1(
+            schema_version=CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION,
+            proposal_id=proposal.id,
+            proposal_status=ProposalStatus.CANCELLED,
+            reason=request.reason,
+            replayed=False,
+        )
 
     async def _final_policy_check(
         self,
