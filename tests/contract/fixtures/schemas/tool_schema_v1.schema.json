@@ -24,11 +24,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "name",
-    "description"
-  ],
+  "required": ["schemaVersion", "name", "description"],
   "title": "ToolSchemaV1",
   "type": "object"
 }

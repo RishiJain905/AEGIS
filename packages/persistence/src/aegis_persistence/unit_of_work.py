@@ -7,6 +7,10 @@ from types import TracebackType
 from aegis_contracts import AegisSettings, DomainEventEnvelopeV1
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from aegis_persistence.repositories.approvals import (
+    PostgresApprovalRepository,
+    PostgresExecutedActionRepository,
+)
 from aegis_persistence.repositories.hypothesis import PostgresOracleHypothesisRepository
 from aegis_persistence.repositories.investigation import PostgresInvestigationRepository
 from aegis_persistence.repositories.postgres import (
@@ -30,10 +34,6 @@ from aegis_persistence.repositories.postgres import (
     PostgresScenarioVersionRepository,
     PostgresToolInvocationRepository,
     create_outbox_row,
-)
-from aegis_persistence.repositories.approvals import (
-    PostgresApprovalRepository,
-    PostgresExecutedActionRepository,
 )
 from aegis_persistence.repositories.proposals import PostgresProposalRepository
 from aegis_persistence.repositories.reports import PostgresReportRepository

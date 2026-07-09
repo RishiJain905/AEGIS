@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from aegis_contracts.entities import ActionProposalV1, HypothesisV1
+from aegis_contracts.entities import ActionProposalV1, ApprovalV1, ExecutedActionV1, HypothesisV1
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 from aegis_contracts.hypothesis import (
     HypothesisComparisonV1,
@@ -25,7 +25,6 @@ from aegis_contracts.primitives import (
     TraceId,
     UtcTimestamp,
 )
-from aegis_contracts.entities import ApprovalV1, ExecutedActionV1
 from aegis_contracts.proposals import PolicyDecisionV1, ProposalRevisionV1
 from aegis_contracts.versioning import (
     AGENT_GRAPH_OVERLAY_SCHEMA_VERSION,

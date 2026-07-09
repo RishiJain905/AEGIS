@@ -23,33 +23,33 @@ Phase 24 deliverables per `docs/AEGIS-v1.0-Agent-Specs/agent-system/24-approval-
 
 ## Files added / changed
 
-| Area | Key paths |
-| --- | --- |
-| Contracts | `packages/contracts-python/src/aegis_contracts/approvals.py`, `packages/contracts-ts/src/approvals.ts`, InvestigationDetail v4, event registry |
-| Mapping | `apps/api/src/aegis_api/commands/mapping.py` |
-| Service | `apps/api/src/aegis_api/approvals/service.py` |
-| API | `apps/api/src/aegis_api/approvals/router.py`, `main.py` registration |
-| Persistence | `packages/persistence/.../repositories/approvals.py`, UoW + investigation aggregation |
-| Frontend | `apps/web/features/approval/**`, `proposals-panel.tsx`, `live-run-provider.tsx` |
-| Tests | `tests/approvals/**`, `tests/integration/approvals/**`, `tests/e2e/approval.spec.ts` |
-| Docs | `docs/approval-workflow.md`, ADR `0025-approval-workflow.md`, this handoff |
+| Area        | Key paths                                                                                                                                      |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contracts   | `packages/contracts-python/src/aegis_contracts/approvals.py`, `packages/contracts-ts/src/approvals.ts`, InvestigationDetail v4, event registry |
+| Mapping     | `apps/api/src/aegis_api/commands/mapping.py`                                                                                                   |
+| Service     | `apps/api/src/aegis_api/approvals/service.py`                                                                                                  |
+| API         | `apps/api/src/aegis_api/approvals/router.py`, `main.py` registration                                                                           |
+| Persistence | `packages/persistence/.../repositories/approvals.py`, UoW + investigation aggregation                                                          |
+| Frontend    | `apps/web/features/approval/**`, `proposals-panel.tsx`, `live-run-provider.tsx`                                                                |
+| Tests       | `tests/approvals/**`, `tests/integration/approvals/**`, `tests/e2e/approval.spec.ts`                                                           |
+| Docs        | `docs/approval-workflow.md`, ADR `0025-approval-workflow.md`, this handoff                                                                     |
 
 ## Contracts introduced or changed
 
-| Contract | Version | Notes |
-| --- | --- | --- |
-| `ApproveProposalRequestV1` / `ResponseV1` | schema v1 | Approve + optional comment / expectedRevision |
-| `RejectProposalRequestV1` / `ResponseV1` | schema v1 | Reject + required reason |
-| `ModifyProposalRequestV1` / `ResponseV1` | schema v1 | Modification + re-WARDEN |
-| `CancelProposalRequestV1` / `ResponseV1` | schema v1 | Cancel without EXECUTE |
-| `ProposalModificationV1` | schema v1 | Operator modification body |
-| `FinalPolicyCheckV1` | schema v1 | Pre-execute policy snapshot |
-| `AuthorizedSimulationCommandV1` | schema v1 | Mapped EXECUTE payload |
-| `ExecutionResultV1` | schema v1 | Idempotent execution result |
-| `StaleProposalErrorV1` | schema v1 | Stable `STALE_PROPOSAL` error |
-| `InvestigationDetailV1` | schema **v4** | Additive `approvals`, `executedActions` |
-| Events `action.proposal.rejected/modified/cancelled` | schema v1 | Approval lifecycle |
-| `WORKSPACE_VERSION` | `0.0.0-phase24` | Compatibility bump |
+| Contract                                             | Version         | Notes                                         |
+| ---------------------------------------------------- | --------------- | --------------------------------------------- |
+| `ApproveProposalRequestV1` / `ResponseV1`            | schema v1       | Approve + optional comment / expectedRevision |
+| `RejectProposalRequestV1` / `ResponseV1`             | schema v1       | Reject + required reason                      |
+| `ModifyProposalRequestV1` / `ResponseV1`             | schema v1       | Modification + re-WARDEN                      |
+| `CancelProposalRequestV1` / `ResponseV1`             | schema v1       | Cancel without EXECUTE                        |
+| `ProposalModificationV1`                             | schema v1       | Operator modification body                    |
+| `FinalPolicyCheckV1`                                 | schema v1       | Pre-execute policy snapshot                   |
+| `AuthorizedSimulationCommandV1`                      | schema v1       | Mapped EXECUTE payload                        |
+| `ExecutionResultV1`                                  | schema v1       | Idempotent execution result                   |
+| `StaleProposalErrorV1`                               | schema v1       | Stable `STALE_PROPOSAL` error                 |
+| `InvestigationDetailV1`                              | schema **v4**   | Additive `approvals`, `executedActions`       |
+| Events `action.proposal.rejected/modified/cancelled` | schema v1       | Approval lifecycle                            |
+| `WORKSPACE_VERSION`                                  | `0.0.0-phase24` | Compatibility bump                            |
 
 ## Database migrations
 
@@ -69,31 +69,31 @@ Headers: `X-Actor-Id` (default `asset:operator-console`), `Authorization: Bearer
 
 ## Commands executed and results
 
-| Command | Result |
-| --- | --- |
-| `pnpm check-contracts` | **PASS** |
-| `pnpm typecheck` | **PASS** |
-| `pnpm lint` | **PASS** (Phase 24 files; workspace Prettier debt on regenerated schemas noted) |
-| `pnpm test` | **PASS** (59 web/UI tests) |
-| `pnpm build` | **PASS** |
-| `uv run ruff check apps/api/src/aegis_api/approvals apps/api/src/aegis_api/commands packages/persistence/src/aegis_persistence/repositories/approvals.py packages/contracts-python/src/aegis_contracts/approvals.py tests/approvals tests/integration/approvals` | **PASS** |
-| `uv run pytest tests/approvals tests/integration/approvals -q` | **PASS** (13 tests; Postgres via local install + `AEGIS_INTEGRATION_POSTGRES=1`) |
-| `uv run pytest tests/contract tests/policy -q` (subset with approvals) | **PASS** (467 in focused run including contract/policy) |
-| `uv run mypy apps services packages` | **KNOWN ISSUE** — duplicate module path (pre-existing) |
-| `docker compose up -d postgres redis` | **ENV CAVEAT** — Docker unavailable; local Postgres 16 + Redis used |
-| `pnpm --filter @aegis/web test:e2e` | Spec added (`tests/e2e/approval.spec.ts`); browsers installed; fixture-mode screenshots captured |
-| Fixture-mode screenshot capture | **PASS** — 12 screenshots under `/opt/cursor/artifacts/screenshots/` |
-| `pnpm exec playwright test approval` (from `apps/web`) | **PASS** (3 e2e tests) |
-| `pnpm format:check` | **PARTIAL** — Phase 24 TS formatted; many pre-existing schema JSON files fail Prettier after full regen |
+| Command                                                                                                                                                                                                                                                          | Result                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `pnpm check-contracts`                                                                                                                                                                                                                                           | **PASS**                                                                                                |
+| `pnpm typecheck`                                                                                                                                                                                                                                                 | **PASS**                                                                                                |
+| `pnpm lint`                                                                                                                                                                                                                                                      | **PASS** (Phase 24 files; workspace Prettier debt on regenerated schemas noted)                         |
+| `pnpm test`                                                                                                                                                                                                                                                      | **PASS** (59 web/UI tests)                                                                              |
+| `pnpm build`                                                                                                                                                                                                                                                     | **PASS**                                                                                                |
+| `uv run ruff check apps/api/src/aegis_api/approvals apps/api/src/aegis_api/commands packages/persistence/src/aegis_persistence/repositories/approvals.py packages/contracts-python/src/aegis_contracts/approvals.py tests/approvals tests/integration/approvals` | **PASS**                                                                                                |
+| `uv run pytest tests/approvals tests/integration/approvals -q`                                                                                                                                                                                                   | **PASS** (13 tests; Postgres via local install + `AEGIS_INTEGRATION_POSTGRES=1`)                        |
+| `uv run pytest tests/contract tests/policy -q` (subset with approvals)                                                                                                                                                                                           | **PASS** (467 in focused run including contract/policy)                                                 |
+| `uv run mypy apps services packages`                                                                                                                                                                                                                             | **KNOWN ISSUE** — duplicate module path (pre-existing)                                                  |
+| `docker compose up -d postgres redis`                                                                                                                                                                                                                            | **ENV CAVEAT** — Docker unavailable; local Postgres 16 + Redis used                                     |
+| `pnpm --filter @aegis/web test:e2e`                                                                                                                                                                                                                              | Spec added (`tests/e2e/approval.spec.ts`); browsers installed; fixture-mode screenshots captured        |
+| Fixture-mode screenshot capture                                                                                                                                                                                                                                  | **PASS** — 12 screenshots under `/opt/cursor/artifacts/screenshots/`                                    |
+| `pnpm exec playwright test approval` (from `apps/web`)                                                                                                                                                                                                           | **PASS** (3 e2e tests)                                                                                  |
+| `pnpm format:check`                                                                                                                                                                                                                                              | **PARTIAL** — Phase 24 TS formatted; many pre-existing schema JSON files fail Prettier after full regen |
 
 ## Acceptance criteria evidence
 
-| Criterion | Evidence |
-| --- | --- |
-| Class 2/3 cannot execute without approval | Integration + unit guards; unauthorized / missing token rejected; reject path writes no `ExecutedActionV1` |
-| Double submission cannot duplicate effects | Integration idempotency test: second approve returns same `executionId`, one executed_action row |
-| Modified proposals create revisions + renewed policy | Integration modify test: new revision + new `PolicyDecisionV1`; no EXECUTE until later approve |
-| Stale state fails closed | Integration + unit `StaleProposalError` / `STALE_PROPOSAL` on revision mismatch |
+| Criterion                                            | Evidence                                                                                                   |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Class 2/3 cannot execute without approval            | Integration + unit guards; unauthorized / missing token rejected; reject path writes no `ExecutedActionV1` |
+| Double submission cannot duplicate effects           | Integration idempotency test: second approve returns same `executionId`, one executed_action row           |
+| Modified proposals create revisions + renewed policy | Integration modify test: new revision + new `PolicyDecisionV1`; no EXECUTE until later approve             |
+| Stale state fails closed                             | Integration + unit `StaleProposalError` / `STALE_PROPOSAL` on revision mismatch                            |
 
 ## Architecture decisions and ADRs
 

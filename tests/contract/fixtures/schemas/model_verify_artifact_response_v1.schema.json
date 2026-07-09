@@ -1,11 +1,7 @@
 {
   "$defs": {
     "ModelApprovalStatus": {
-      "enum": [
-        "approved",
-        "pending",
-        "rejected"
-      ],
+      "enum": ["approved", "pending", "rejected"],
       "title": "ModelApprovalStatus",
       "type": "string"
     }
@@ -65,12 +61,7 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "schemaVersion",
-    "valid",
-    "checksumMatch",
-    "schemaCompatible"
-  ],
+  "required": ["schemaVersion", "valid", "checksumMatch", "schemaCompatible"],
   "title": "ModelVerifyArtifactResponseV1",
   "type": "object"
 }

@@ -1,14 +1,7 @@
 {
   "$defs": {
     "AgentRole": {
-      "enum": [
-        "WATCHTOWER",
-        "TRACE",
-        "ORACLE",
-        "BASTION",
-        "WARDEN",
-        "SCRIBE"
-      ],
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
       "title": "AgentRole",
       "type": "string"
     }
@@ -45,11 +38,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "schemaVersion",
-    "role",
-    "traceId"
-  ],
+  "required": ["schemaVersion", "role", "traceId"],
   "title": "CreateAgentSessionRequestV1",
   "type": "object"
 }

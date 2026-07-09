@@ -1,11 +1,7 @@
 {
   "$defs": {
     "ToolInvocationStatus": {
-      "enum": [
-        "success",
-        "failed",
-        "rejected"
-      ],
+      "enum": ["success", "failed", "rejected"],
       "title": "ToolInvocationStatus",
       "type": "string"
     }
@@ -62,11 +58,7 @@
       "$ref": "#/$defs/ToolInvocationStatus"
     }
   },
-  "required": [
-    "schemaVersion",
-    "invocationId",
-    "status"
-  ],
+  "required": ["schemaVersion", "invocationId", "status"],
   "title": "ToolResultV1",
   "type": "object"
 }
