@@ -1,0 +1,74 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Assetid"
+    },
+    "bookmarkSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Bookmarksequence"
+    },
+    "description": {
+      "default": "",
+      "maxLength": 1024,
+      "title": "Description",
+      "type": "string"
+    },
+    "discovered": {
+      "title": "Discovered",
+      "type": "boolean"
+    },
+    "eventType": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Eventtype",
+      "type": "string"
+    },
+    "expectedEvidenceKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Expectedevidencekey",
+      "type": "string"
+    },
+    "relatedEventIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Relatedeventids",
+      "type": "array"
+    },
+    "relatedEvidenceIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Relatedevidenceids",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "expectedEvidenceKey", "eventType", "discovered"],
+  "title": "MissedEvidenceItemV1",
+  "type": "object"
+}

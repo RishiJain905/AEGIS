@@ -1,0 +1,86 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "calculatedAt": {
+      "title": "Calculatedat",
+      "type": "string"
+    },
+    "fingerprint": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Fingerprint",
+      "type": "string"
+    },
+    "gradingEngineVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Gradingengineversion",
+      "type": "string"
+    },
+    "inputChecksum": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Inputchecksum",
+      "type": "string"
+    },
+    "inputEventSequenceFrom": {
+      "minimum": 0,
+      "title": "Inputeventsequencefrom",
+      "type": "integer"
+    },
+    "inputEventSequenceTo": {
+      "minimum": 0,
+      "title": "Inputeventsequenceto",
+      "type": "integer"
+    },
+    "integrityChecksum": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Integritychecksum",
+      "type": "string"
+    },
+    "rubricVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Rubricversion",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "scenarioId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Scenarioid",
+      "type": "string"
+    },
+    "scenarioVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Scenarioversion",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "scenarioId",
+    "scenarioVersion",
+    "rubricVersion",
+    "gradingEngineVersion",
+    "inputEventSequenceFrom",
+    "inputEventSequenceTo",
+    "inputChecksum",
+    "integrityChecksum",
+    "calculatedAt",
+    "fingerprint"
+  ],
+  "title": "ScoreProvenanceV1",
+  "type": "object"
+}

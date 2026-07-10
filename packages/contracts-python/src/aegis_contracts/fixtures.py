@@ -176,6 +176,19 @@ from aegis_contracts.risk import (
     RiskProjectionDeltaV1,
     RiskScoresListResponseV1,
 )
+from aegis_contracts.scoring import (
+    AfterActionViewModelV1,
+    DecisionReviewV1,
+    MissedEvidenceItemV1,
+    RunComparisonV1,
+    RunScoreV1,
+    ScoreComponentV1,
+    ScoreExplanationV1,
+    ScoreExportArtifactV1,
+    ScoreProvenanceV1,
+    ScoreRubricV1,
+    ValidAlternativeV1,
+)
 from aegis_contracts.simulation import (
     NormalizedEventHashV1,
     RunConfigurationV1,
@@ -336,4 +349,15 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "presentation_hint_v1": PresentationHintV1,
     "cinematic_playback_state_v1": CinematicPlaybackStateV1,
     "cinematic_plan_v1": CinematicPlanV1,
+    "score_explanation_v1": ScoreExplanationV1,
+    "score_rubric_v1": ScoreRubricV1,
+    "score_component_v1": ScoreComponentV1,
+    "score_provenance_v1": ScoreProvenanceV1,
+    "decision_review_v1": DecisionReviewV1,
+    "missed_evidence_item_v1": MissedEvidenceItemV1,
+    "valid_alternative_v1": ValidAlternativeV1,
+    "run_score_v1": RunScoreV1,
+    "after_action_view_model_v1": AfterActionViewModelV1,
+    "run_comparison_v1": RunComparisonV1,
+    "score_export_artifact_v1": ScoreExportArtifactV1,
 }

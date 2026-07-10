@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FAV', label: 'Active run' },
   { href: INCIDENT_PATH, label: 'Incident' },
   { href: '/replay/run_01ARZ3NDEKTSV4RRFFQ69G5FAV', label: 'Replay' },
+  { href: '/after-action/run_01ARZ3NDEKTSV4RRFFQ69G5FAV', label: 'After-action' },
   { href: '/reports', label: 'Reports' },
   { href: '/admin', label: 'Admin' },
   { href: '/design-system', label: 'Design system' },

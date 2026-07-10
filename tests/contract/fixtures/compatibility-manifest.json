@@ -15,6 +15,11 @@
       "sha256": "4a605a2dba2ab0455405d546c0ff0fdc863f4b6df8b3a62bac61609588d0b57e"
     },
     {
+      "path": "tests/contract/fixtures/schemas/after_action_view_model_v1.schema.json",
+      "sha256": "9c1e46bb881767f1ae8cc25466c7589d0447286526210ddb2d42337c86a6970d",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/agent_artifact_v1.schema.json",
       "sha256": "93305394efd966712574e4dffa8c76a56d72b175d6665ef8bfaad01d501df5a2"
     },
@@ -155,6 +160,11 @@
       "sha256": "baab3f6b07b55d5a06aab372e3c1724363aebf277b4b4002f3c6b7a2348bcb56"
     },
     {
+      "path": "tests/contract/fixtures/schemas/decision_review_v1.schema.json",
+      "sha256": "7e144a134455be446a282441e1b3a9cf30dda131d747860248ca7b0f1e105e87",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/event_envelope_v1.schema.json",
       "sha256": "19d6a5df6012ae4509673943d122e33fe0a89fabf505388f7c181a1864f903ec"
     },
@@ -277,6 +287,11 @@
     {
       "path": "tests/contract/fixtures/schemas/live_run_v1.schema.json",
       "sha256": "ed4f27ffb83fb01705de93093a3489fb1769e5f10d528c73437e0d738572ef81"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/missed_evidence_item_v1.schema.json",
+      "sha256": "86ea008f85647c3a5e042ef6a0c58a791c2d50f081eac50d80605b070189a78d",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/model_artifact_reference_v1.schema.json",
@@ -491,12 +506,22 @@
       "sha256": "ba999bfc838f87b1190ddf55af5e56cf55ea95df993fe9daf316eaf42489fca9"
     },
     {
+      "path": "tests/contract/fixtures/schemas/run_comparison_v1.schema.json",
+      "sha256": "4722cdd3f1353c6c544e6f1352a226db6f0321c74c75824d9b205049db9ff414",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/run_configuration_v1.schema.json",
       "sha256": "6f7982fdf7a4928c6a3082b2aca7f5c34f82c99fda7cdd96e263c2f470237efe"
     },
     {
       "path": "tests/contract/fixtures/schemas/run_create_request_v1.schema.json",
       "sha256": "ffa8199629986a7d8fd86fc46f153c4919197fce24d49687edc6d0682494ca47"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/run_score_v1.schema.json",
+      "sha256": "a02ce1a2b57e631a0cfa280c46c275220a9d19cb0986b99407e1116f8b686b59",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/run_v1.schema.json",
@@ -513,6 +538,31 @@
     {
       "path": "tests/contract/fixtures/schemas/scheduled_event_v1.schema.json",
       "sha256": "2f560c0bc4c59da5e22c9b5dbff3f89eab49cda5d11753f1147e14d71a0dc1e6"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/score_component_v1.schema.json",
+      "sha256": "4793fd7e1d93c9706518977c5050a9bbb91b4a446ec1997129b7c51048837167",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/score_explanation_v1.schema.json",
+      "sha256": "06ac46ead3bfb303a691bb9c70c1e79cc8178f07d548d6a9924243c7ab16ef1e",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/score_export_artifact_v1.schema.json",
+      "sha256": "ccf6757b3bb3af7d96a5b8677caf1897cd4084ab4e206516b3df83cb2599cb71",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/score_provenance_v1.schema.json",
+      "sha256": "0c2b4536566b6b0afd5cf735b0b0c521908aa9d54f63c591d8c31683e96116ea",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/score_rubric_v1.schema.json",
+      "sha256": "a3ad296d78e10f0dab5fbbb4c7f1c7f27336169d86a55af79e44a2f594823e5f",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/simulation_checkpoint_v1.schema.json",
@@ -587,6 +637,11 @@
       "sha256": "ca3deaf3999c9f5ce1d2a9db738183f74d051de046382807e666699bba05a0ea"
     },
     {
+      "path": "tests/contract/fixtures/schemas/valid_alternative_v1.schema.json",
+      "sha256": "6ccb2eca50dcbd63aabc29269c235c778c71e0cb4da3a3e6d4b6784fa275e820",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/watchtower_triage_result_v1.schema.json",
       "sha256": "fd61178d645c22cdd5cb44c2ba9e2c896cc991bce60b9eff9e8306c23b708a8c"
     },
@@ -609,6 +664,11 @@
     {
       "path": "tests/contract/fixtures/valid/after_action_report_v1.json",
       "sha256": "359574f953a51a9355194c8b360b23c7fc410a590548e5761db08f16c4e5005d"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/after_action_view_model_v1.json",
+      "sha256": "d6368546c9a1535f6565dee62fd976e22115d62ea0475ec773311c2668a86b31",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/agent_artifact_v1.json",
@@ -751,6 +811,11 @@
       "sha256": "8d98947cb55934f4f1fdf1a135c9d2bf018f1d42830512199af9d8a9d76d6ea4"
     },
     {
+      "path": "tests/contract/fixtures/valid/decision_review_v1.json",
+      "sha256": "cb22770d03d63c420e75d1b3721d4b1e628f04b6fef51b39f42f30b579d22116",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/event_envelope_v1.json",
       "sha256": "d11103b802606a6d45a7d5174c032c96d09ea82448f717a9090175889ddc0ffa"
     },
@@ -873,6 +938,11 @@
     {
       "path": "tests/contract/fixtures/valid/live_run_v1.json",
       "sha256": "d0ae521e37bf8a75c2a2c1eafe2b20f0fbbfcb3a154b25274f192518e05b43b2"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/missed_evidence_item_v1.json",
+      "sha256": "34e35339951e368cd97dba46221c003f7fe5992665627d5ea70aa607c974563f",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/model_artifact_reference_v1.json",
@@ -1087,12 +1157,22 @@
       "sha256": "95e53f4570808f9eb7032672e42116a0d0d215685954c45d3f4fc6562e1eabd4"
     },
     {
+      "path": "tests/contract/fixtures/valid/run_comparison_v1.json",
+      "sha256": "f7141871c8b767777cd372f25a38464d6b187f8f9af5e1603863bf9d32e4054b",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/run_configuration_v1.json",
       "sha256": "2bf46d322bf8b9ca25a3adcfb0295a4aaa3c1614997004fd157d3c9a2ceb0468"
     },
     {
       "path": "tests/contract/fixtures/valid/run_create_request_v1.json",
       "sha256": "e3fbec748380ff46dedc480bf9eabf66a0f3620f5143374a10e7e087350cd0b4"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/run_score_v1.json",
+      "sha256": "e72d468ce638dd569b65fe3da142650c41058ff46505a56a3e4f56643e33f850",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/run_v1.json",
@@ -1109,6 +1189,31 @@
     {
       "path": "tests/contract/fixtures/valid/scheduled_event_v1.json",
       "sha256": "9628abf78023166c8d0c096886ed691988b940a0d262c47f5a6fb53ce1103a41"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/score_component_v1.json",
+      "sha256": "898f6c8bfb04116550fc96fee1e6f48a027e9e014000cf73912d02050c385126",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/score_explanation_v1.json",
+      "sha256": "6e8fa65e2f43fbb9529a4720e2ab4734e6a06d293cf9248b53edceaa33df28e9",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/score_export_artifact_v1.json",
+      "sha256": "b75f4c5693d3dc092c273ded685d46fb3e0dba8da6c01d106e3c0f8caec4c42f",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/score_provenance_v1.json",
+      "sha256": "1af76eb8e75ad1ea18caead630194c61b3402718d84bb54096220f9e6a7a2c8b",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/score_rubric_v1.json",
+      "sha256": "58bd0b36e0102fe90617ae65c67090c8347659668014f93e0d594d9261155aa0",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/simulation_checkpoint_v1.json",
@@ -1181,6 +1286,11 @@
     {
       "path": "tests/contract/fixtures/valid/trigger_warden_request_v1.json",
       "sha256": "9f0ef0ce045f412ed48791603ab8238666658990071a654026b5da7cf705dbcb"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/valid_alternative_v1.json",
+      "sha256": "37c3da35757cf6772e74b7429051a394c676c0fbe03f4deeebee6090014dddef",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/watchtower_triage_result_v1.json",

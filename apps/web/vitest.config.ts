@@ -20,6 +20,7 @@ export default defineConfig({
       '../../tests/unit/replay-ui/**/*.test.ts',
       '../../tests/unit/cinematic/**/*.test.ts',
       '../../tests/unit/cinematic-replay/**/*.test.ts',
+      '../../tests/unit/after-action/**/*.test.ts',
       '../../tests/performance/cinematic-replay/**/*.test.ts',
       'fixtures/**/*.test.ts',
     ],

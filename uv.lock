@@ -20,6 +20,7 @@ members = [
     "aegis-replay",
     "aegis-reports",
     "aegis-scenario-sdk",
+    "aegis-scoring",
     "aegis-simulation",
     "aegis-simulation-domain",
     "aegis-workers",
@@ -348,6 +349,23 @@ requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
     { name = "packaging", specifier = ">=24.2" },
     { name = "pyyaml", specifier = ">=6.0.2" },
+]
+
+[[package]]
+name = "aegis-scoring"
+version = "0.0.0"
+source = { editable = "services/scoring" }
+dependencies = [
+    { name = "aegis-contracts" },
+    { name = "aegis-persistence" },
+    { name = "aegis-scenario-sdk" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aegis-contracts", editable = "packages/contracts-python" },
+    { name = "aegis-persistence", editable = "packages/persistence" },
+    { name = "aegis-scenario-sdk", editable = "packages/scenario-sdk" },
 ]
 
 [[package]]

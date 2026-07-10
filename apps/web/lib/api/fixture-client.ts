@@ -20,6 +20,7 @@ import {
   listReplaySnapshotsFixture,
 } from '@/fixtures/replay-fixture';
 import { getAfterActionReportFixture, getReportVersionsFixture } from '@/fixtures/report-fixture';
+import { getAfterActionFixture, getRunScoreFixture } from '@/fixtures/after-action-fixture';
 import shellDataset from '@/fixtures/shell-dataset.json';
 import { FIXTURE_RISK_SCORES } from '@/fixtures/risk-scores-fixture';
 import type {
@@ -296,6 +297,28 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
 
     async listAfterActionReportVersions(runId, signal) {
       return applyProfile(getReportVersionsFixture(runId), signal);
+    },
+
+    async getAfterAction(runId, signal) {
+      if (runId.includes('FZ0') || runId.includes('BAD')) {
+        throw new ApiClientError({
+          code: 'SCORE_INCOMPLETE_RUN',
+          message: `Incomplete or incompatible scoring inputs for run ${runId}`,
+          status: 409,
+        });
+      }
+      return applyProfile(getAfterActionFixture(runId), signal);
+    },
+
+    async getRunScore(runId, signal) {
+      if (runId.includes('FZ0') || runId.includes('BAD')) {
+        throw new ApiClientError({
+          code: 'SCORE_INCOMPLETE_RUN',
+          message: `Incomplete or incompatible scoring inputs for run ${runId}`,
+          status: 409,
+        });
+      }
+      return applyProfile(getRunScoreFixture(runId), signal);
     },
 
     async getConnectionStatus(signal) {

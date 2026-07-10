@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "ScoreExportFormatV1": {
+      "enum": ["json", "markdown"],
+      "title": "ScoreExportFormatV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "contentChecksum": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Contentchecksum",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "exportId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Exportid",
+      "type": "string"
+    },
+    "format": {
+      "$ref": "#/$defs/ScoreExportFormatV1"
+    },
+    "gradingEngineVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Gradingengineversion",
+      "type": "string"
+    },
+    "integrityChecksum": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Integritychecksum",
+      "type": "string"
+    },
+    "rubricVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Rubricversion",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "scenarioVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Scenarioversion",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "scoreId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Scoreid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "exportId",
+    "scoreId",
+    "runId",
+    "format",
+    "scenarioVersion",
+    "rubricVersion",
+    "gradingEngineVersion",
+    "integrityChecksum",
+    "contentChecksum",
+    "createdAt"
+  ],
+  "title": "ScoreExportArtifactV1",
+  "type": "object"
+}

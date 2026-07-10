@@ -1,0 +1,645 @@
+{
+  "$defs": {
+    "DecisionReviewKindV1": {
+      "enum": ["approval", "rejection", "modification", "cancellation", "agent_recommendation"],
+      "title": "DecisionReviewKindV1",
+      "type": "string"
+    },
+    "DecisionReviewOutcomeV1": {
+      "enum": ["credited", "penalized", "neutral", "restraint_credited"],
+      "title": "DecisionReviewOutcomeV1",
+      "type": "string"
+    },
+    "DecisionReviewV1": {
+      "additionalProperties": false,
+      "properties": {
+        "agentRecommendation": {
+          "anyOf": [
+            {
+              "maxLength": 1024,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agentrecommendation"
+        },
+        "availableEventIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Availableeventids",
+          "type": "array"
+        },
+        "availableEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Availableevidenceids",
+          "type": "array"
+        },
+        "availableInfoSummary": {
+          "default": "",
+          "maxLength": 2048,
+          "title": "Availableinfosummary",
+          "type": "string"
+        },
+        "decisionId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Decisionid",
+          "type": "string"
+        },
+        "explanations": {
+          "items": {
+            "$ref": "#/$defs/ScoreExplanationV1"
+          },
+          "title": "Explanations",
+          "type": "array"
+        },
+        "kind": {
+          "$ref": "#/$defs/DecisionReviewKindV1"
+        },
+        "operatorAction": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Operatoraction",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/DecisionReviewOutcomeV1"
+        },
+        "proposalId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposalid"
+        },
+        "ruleIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ruleids",
+          "type": "array"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "scoreDelta": {
+          "title": "Scoredelta",
+          "type": "number"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "usedFutureKnowledge": {
+          "const": false,
+          "default": false,
+          "title": "Usedfutureknowledge",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "decisionId",
+        "kind",
+        "sequence",
+        "operatorAction",
+        "outcome",
+        "scoreDelta"
+      ],
+      "title": "DecisionReviewV1",
+      "type": "object"
+    },
+    "MissedEvidenceItemV1": {
+      "additionalProperties": false,
+      "properties": {
+        "assetId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assetid"
+        },
+        "bookmarkSequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bookmarksequence"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 1024,
+          "title": "Description",
+          "type": "string"
+        },
+        "discovered": {
+          "title": "Discovered",
+          "type": "boolean"
+        },
+        "eventType": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Eventtype",
+          "type": "string"
+        },
+        "expectedEvidenceKey": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Expectedevidencekey",
+          "type": "string"
+        },
+        "relatedEventIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Relatedeventids",
+          "type": "array"
+        },
+        "relatedEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Relatedevidenceids",
+          "type": "array"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": ["schemaVersion", "expectedEvidenceKey", "eventType", "discovered"],
+      "title": "MissedEvidenceItemV1",
+      "type": "object"
+    },
+    "ScoreComponentV1": {
+      "additionalProperties": false,
+      "properties": {
+        "criterionId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Criterionid",
+          "type": "string"
+        },
+        "explanations": {
+          "items": {
+            "$ref": "#/$defs/ScoreExplanationV1"
+          },
+          "title": "Explanations",
+          "type": "array"
+        },
+        "label": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "rawScore": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Rawscore",
+          "type": "number"
+        },
+        "ruleIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ruleids",
+          "type": "array"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "weight": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "weightedContribution": {
+          "minimum": 0.0,
+          "title": "Weightedcontribution",
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "criterionId",
+        "label",
+        "weight",
+        "rawScore",
+        "weightedContribution"
+      ],
+      "title": "ScoreComponentV1",
+      "type": "object"
+    },
+    "ScoreExplanationV1": {
+      "additionalProperties": false,
+      "properties": {
+        "decisionIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Decisionids",
+          "type": "array"
+        },
+        "eventIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Eventids",
+          "type": "array"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "hypothesisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hypothesisids",
+          "type": "array"
+        },
+        "proposalIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Proposalids",
+          "type": "array"
+        },
+        "reason": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "ruleId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Ruleid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sequence"
+        }
+      },
+      "required": ["schemaVersion", "ruleId", "reason"],
+      "title": "ScoreExplanationV1",
+      "type": "object"
+    },
+    "ScoreGradeBandV1": {
+      "enum": ["A", "B", "C", "D", "F"],
+      "title": "ScoreGradeBandV1",
+      "type": "string"
+    },
+    "ScoreProvenanceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "calculatedAt": {
+          "title": "Calculatedat",
+          "type": "string"
+        },
+        "fingerprint": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Fingerprint",
+          "type": "string"
+        },
+        "gradingEngineVersion": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Gradingengineversion",
+          "type": "string"
+        },
+        "inputChecksum": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Inputchecksum",
+          "type": "string"
+        },
+        "inputEventSequenceFrom": {
+          "minimum": 0,
+          "title": "Inputeventsequencefrom",
+          "type": "integer"
+        },
+        "inputEventSequenceTo": {
+          "minimum": 0,
+          "title": "Inputeventsequenceto",
+          "type": "integer"
+        },
+        "integrityChecksum": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Integritychecksum",
+          "type": "string"
+        },
+        "rubricVersion": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Rubricversion",
+          "type": "string"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "scenarioId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Scenarioid",
+          "type": "string"
+        },
+        "scenarioVersion": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Scenarioversion",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "runId",
+        "scenarioId",
+        "scenarioVersion",
+        "rubricVersion",
+        "gradingEngineVersion",
+        "inputEventSequenceFrom",
+        "inputEventSequenceTo",
+        "inputChecksum",
+        "integrityChecksum",
+        "calculatedAt",
+        "fingerprint"
+      ],
+      "title": "ScoreProvenanceV1",
+      "type": "object"
+    },
+    "ValidAlternativeKindV1": {
+      "enum": ["counterfactual", "valid_response_branch", "alternative_decision"],
+      "title": "ValidAlternativeKindV1",
+      "type": "string"
+    },
+    "ValidAlternativeV1": {
+      "additionalProperties": false,
+      "properties": {
+        "alternativeId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Alternativeid",
+          "type": "string"
+        },
+        "authoritative": {
+          "const": false,
+          "default": false,
+          "title": "Authoritative",
+          "type": "boolean"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 2048,
+          "title": "Description",
+          "type": "string"
+        },
+        "explanations": {
+          "items": {
+            "$ref": "#/$defs/ScoreExplanationV1"
+          },
+          "title": "Explanations",
+          "type": "array"
+        },
+        "kind": {
+          "$ref": "#/$defs/ValidAlternativeKindV1"
+        },
+        "label": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "projectedOverallScore": {
+          "minimum": 0.0,
+          "title": "Projectedoverallscore",
+          "type": "number"
+        },
+        "ruleIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ruleids",
+          "type": "array"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "scoreDelta": {
+          "title": "Scoredelta",
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "alternativeId",
+        "kind",
+        "label",
+        "projectedOverallScore",
+        "scoreDelta"
+      ],
+      "title": "ValidAlternativeV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "coachingAuthoritative": {
+      "const": false,
+      "default": false,
+      "title": "Coachingauthoritative",
+      "type": "boolean"
+    },
+    "coachingText": {
+      "anyOf": [
+        {
+          "maxLength": 8192,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Coachingtext"
+    },
+    "components": {
+      "items": {
+        "$ref": "#/$defs/ScoreComponentV1"
+      },
+      "minItems": 1,
+      "title": "Components",
+      "type": "array"
+    },
+    "decisionReviews": {
+      "items": {
+        "$ref": "#/$defs/DecisionReviewV1"
+      },
+      "title": "Decisionreviews",
+      "type": "array"
+    },
+    "grade": {
+      "$ref": "#/$defs/ScoreGradeBandV1"
+    },
+    "hiddenCauseId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hiddencauseid"
+    },
+    "hiddenCauseLabel": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hiddencauselabel"
+    },
+    "hiddenCauseRevealed": {
+      "default": false,
+      "title": "Hiddencauserevealed",
+      "type": "boolean"
+    },
+    "incidentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "maxScore": {
+      "exclusiveMinimum": 0.0,
+      "title": "Maxscore",
+      "type": "number"
+    },
+    "missedEvidence": {
+      "items": {
+        "$ref": "#/$defs/MissedEvidenceItemV1"
+      },
+      "title": "Missedevidence",
+      "type": "array"
+    },
+    "overallScore": {
+      "minimum": 0.0,
+      "title": "Overallscore",
+      "type": "number"
+    },
+    "passed": {
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "provenance": {
+      "$ref": "#/$defs/ScoreProvenanceV1"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "scoreId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Scoreid",
+      "type": "string"
+    },
+    "validAlternatives": {
+      "items": {
+        "$ref": "#/$defs/ValidAlternativeV1"
+      },
+      "title": "Validalternatives",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "scoreId",
+    "runId",
+    "overallScore",
+    "maxScore",
+    "grade",
+    "passed",
+    "components",
+    "provenance"
+  ],
+  "title": "RunScoreV1",
+  "type": "object"
+}

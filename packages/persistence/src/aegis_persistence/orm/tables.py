@@ -955,3 +955,31 @@ class ReplaySnapshotManifestRow(Base):
         Index("ix_replay_snapshot_manifests_run_sequence", "run_id", "sequence"),
         Index("ix_replay_snapshot_manifests_object_key", "object_key", unique=True),
     )
+
+
+class RunScoreRow(Base):
+    __tablename__ = "run_scores"
+
+    score_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    fingerprint: Mapped[str] = mapped_column(String(128), nullable=False)
+    integrity_checksum: Mapped[str] = mapped_column(String(128), nullable=False)
+    input_checksum: Mapped[str] = mapped_column(String(128), nullable=False)
+    scenario_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    rubric_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    grading_engine_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    event_sequence_from: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_sequence_to: Mapped[int] = mapped_column(Integer, nullable=False)
+    overall_score: Mapped[float] = mapped_column(nullable=False)
+    grade: Mapped[str] = mapped_column(String(8), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("fingerprint", name="uq_run_scores_fingerprint"),
+        Index("ix_run_scores_run_created", "run_id", "created_at"),
+    )

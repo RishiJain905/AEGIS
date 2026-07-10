@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "leftRunId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "rightRunId": "run_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "leftScoreId": "scr_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "rightScoreId": "scr_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "leftOverallScore": 84.5,
+  "rightOverallScore": 91.0,
+  "overallDelta": 6.5,
+  "componentDeltas": [
+    {
+      "criterionId": "criterion-evidence-coverage",
+      "leftRawScore": 0.5,
+      "rightRawScore": 1.0,
+      "delta": 0.5
+    }
+  ],
+  "gradingEngineVersion": "1.0.0-phase29"
+}

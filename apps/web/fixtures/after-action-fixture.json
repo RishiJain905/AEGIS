@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "runStatus": "completed",
+  "score": {
+    "schemaVersion": 1,
+    "scoreId": "scr_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "incidentId": "incident:silent-relay-001",
+    "overallScore": 89.3,
+    "maxScore": 100,
+    "grade": "B",
+    "passed": true,
+    "components": [
+      {
+        "schemaVersion": 1,
+        "criterionId": "criterion-detection-speed",
+        "label": "Detection speed",
+        "weight": 0.15,
+        "rawScore": 0.85,
+        "weightedContribution": 12.75,
+        "ruleIds": ["rule-criterion-detection-speed"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-criterion-detection-speed",
+            "reason": "Deterministic evaluation for Detection speed produced raw score 0.85.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": 120
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "criterionId": "criterion-evidence-coverage",
+        "label": "Evidence coverage",
+        "weight": 0.15,
+        "rawScore": 1.0,
+        "weightedContribution": 15.0,
+        "ruleIds": ["rule-criterion-evidence-coverage"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-criterion-evidence-coverage",
+            "reason": "Deterministic evaluation for Evidence coverage produced raw score 1.0.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": 120
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "criterionId": "criterion-hypothesis-quality",
+        "label": "Hypothesis quality",
+        "weight": 0.15,
+        "rawScore": 0.97,
+        "weightedContribution": 14.55,
+        "ruleIds": ["rule-criterion-hypothesis-quality"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-criterion-hypothesis-quality",
+            "reason": "Deterministic evaluation for Hypothesis quality produced raw score 0.97.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": 210
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "criterionId": "criterion-false-positive-cost",
+        "label": "False-positive cost",
+        "weight": 0.1,
+        "rawScore": 1.0,
+        "weightedContribution": 10.0,
+        "ruleIds": ["rule-criterion-false-positive-cost"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-criterion-false-positive-cost",
+            "reason": "Deterministic evaluation for False-positive cost produced raw score 1.0.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": 210
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "criterionId": "criterion-response-proportionality",
+        "label": "Response proportionality",
+        "weight": 0.15,
+        "rawScore": 1.0,
+        "weightedContribution": 15.0,
+        "ruleIds": ["rule-criterion-response-proportionality"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-criterion-response-proportionality",
+            "reason": "Deterministic evaluation for Response proportionality produced raw score 1.0.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": 210
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "criterionId": "criterion-service-impact",
+        "label": "Service impact",
+        "weight": 0.15,
+        "rawScore": 0.6,
+        "weightedContribution": 9.0,
+        "ruleIds": ["rule-criterion-service-impact"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-criterion-service-impact",
+            "reason": "Deterministic evaluation for Service impact produced raw score 0.6.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": 210
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "criterionId": "criterion-recurrence",
+        "label": "Recurrence handling",
+        "weight": 0.1,
+        "rawScore": 0.8,
+        "weightedContribution": 8.0,
+        "ruleIds": ["rule-criterion-recurrence"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-criterion-recurrence",
+            "reason": "Deterministic evaluation for Recurrence handling produced raw score 0.8.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": 210
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "criterionId": "criterion-objectives",
+        "label": "Objectives completion",
+        "weight": 0.05,
+        "rawScore": 1.0,
+        "weightedContribution": 5.0,
+        "ruleIds": ["rule-criterion-objectives"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-criterion-objectives",
+            "reason": "Deterministic evaluation for Objectives completion produced raw score 1.0.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": 210
+          }
+        ]
+      }
+    ],
+    "provenance": {
+      "schemaVersion": 1,
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "scenarioId": "scenario:operation-silent-relay",
+      "scenarioVersion": "1.0.0",
+      "rubricVersion": "1.0.0",
+      "gradingEngineVersion": "1.0.0-phase29",
+      "inputEventSequenceFrom": 0,
+      "inputEventSequenceTo": 300,
+      "inputChecksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "integrityChecksum": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "calculatedAt": "2026-07-10T18:00:00.000Z",
+      "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "decisionReviews": [
+      {
+        "schemaVersion": 1,
+        "decisionId": "apr_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "kind": "approval",
+        "sequence": 210,
+        "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "operatorAction": "approved",
+        "agentRecommendation": "Contain logistics API with moderate impact",
+        "availableInfoSummary": "Two supporting evidence items and one credible alert were available before approval.",
+        "availableEventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+        "availableEvidenceIds": ["evidence:evd_synthetic_001"],
+        "outcome": "credited",
+        "scoreDelta": 0.05,
+        "ruleIds": ["rule-decision-proportionate-approval"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-decision-proportionate-approval",
+            "reason": "Operator approved a proportionate response using only information available at decision time.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": ["apr_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "hypothesisIds": [],
+            "proposalIds": ["prp_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "sequence": 210
+          }
+        ],
+        "usedFutureKnowledge": false
+      }
+    ],
+    "missedEvidence": [
+      {
+        "schemaVersion": 1,
+        "expectedEvidenceKey": "telemetry.authentication.failed:asset:svc-identity-broker-extra",
+        "eventType": "telemetry.authentication.failed",
+        "assetId": "asset:svc-identity-broker",
+        "description": "Secondary identity broker failure burst (demo missed item)",
+        "discovered": false,
+        "relatedEventIds": [],
+        "relatedEvidenceIds": [],
+        "bookmarkSequence": 95
+      }
+    ],
+    "validAlternatives": [
+      {
+        "schemaVersion": 1,
+        "alternativeId": "alt_branch-response-remediate",
+        "kind": "valid_response_branch",
+        "authoritative": false,
+        "label": "Remediate credentials root cause",
+        "description": "Counterfactual alternative: selecting branch-response-remediate is evidence-grounded. This is not a fact from the completed run.",
+        "projectedOverallScore": 97.5,
+        "scoreDelta": 3.5,
+        "ruleIds": ["rule-cf-response-branch-branch-response-remediate"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-cf-response-branch-branch-response-remediate",
+            "reason": "Projected score delta for alternative remediate branch; labelled non-authoritative.",
+            "eventIds": [],
+            "evidenceIds": [],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": null
+          }
+        ]
+      }
+    ],
+    "coachingText": "Non-authoritative coaching: review missed evidence earlier and compare agent recommendations with operator decisions.",
+    "coachingAuthoritative": false,
+    "hiddenCauseId": "hidden-cause-compromised-credentials",
+    "hiddenCauseLabel": "Compromised service account credentials",
+    "hiddenCauseRevealed": true
+  },
+  "affectedAssetIds": ["asset:svc-logistics-api"],
+  "lessons": [
+    "Prioritize overlapping identity and logistics signals before containment.",
+    "Review missed evidence earlier in the investigation timeline.",
+    "Compare labelled counterfactual alternatives with the authoritative run outcome."
+  ],
+  "scribeReportId": "aar_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "scribeVersionNumber": 1,
+  "bookmarks": [
+    {
+      "label": "First credible alert",
+      "sequence": 120,
+      "kind": "detection",
+      "relatedId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    },
+    {
+      "label": "Operator approval",
+      "sequence": 210,
+      "kind": "decision",
+      "relatedId": "apr_01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    },
+    {
+      "label": "Missed evidence",
+      "sequence": 95,
+      "kind": "missed_evidence",
+      "relatedId": "telemetry.authentication.failed:asset:svc-identity-broker-extra"
+    },
+    {
+      "label": "Alternative: Remediate",
+      "sequence": 300,
+      "kind": "alternative",
+      "relatedId": "alt_branch-response-remediate"
+    }
+  ],
+  "timelineHighlights": [
+    {
+      "sequence": 95,
+      "label": "Missed evidence window",
+      "kind": "missed_evidence",
+      "relatedId": null
+    },
+    {
+      "sequence": 120,
+      "label": "First credible alert",
+      "kind": "detection",
+      "relatedId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    },
+    {
+      "sequence": 210,
+      "label": "Operator approved containment",
+      "kind": "decision",
+      "relatedId": "apr_01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    }
+  ]
+}

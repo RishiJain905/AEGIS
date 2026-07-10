@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "scenarioId": "scenario:operation-silent-relay",
+  "scenarioVersion": "1.0.0",
+  "rubricVersion": "1.0.0",
+  "gradingEngineVersion": "1.0.0-phase29",
+  "inputEventSequenceFrom": 0,
+  "inputEventSequenceTo": 300,
+  "inputChecksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "integrityChecksum": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "calculatedAt": "2026-07-10T18:00:00.000Z",
+  "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+}

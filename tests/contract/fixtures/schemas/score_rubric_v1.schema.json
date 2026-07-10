@@ -1,0 +1,105 @@
+{
+  "$defs": {
+    "ScoreRubricCriterionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "default": "",
+          "maxLength": 1024,
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "weight": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": ["id", "label", "weight"],
+      "title": "ScoreRubricCriterionV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "criteria": {
+      "items": {
+        "$ref": "#/$defs/ScoreRubricCriterionV1"
+      },
+      "minItems": 1,
+      "title": "Criteria",
+      "type": "array"
+    },
+    "gradingEngineVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Gradingengineversion",
+      "type": "string"
+    },
+    "maxScore": {
+      "exclusiveMinimum": 0.0,
+      "title": "Maxscore",
+      "type": "number"
+    },
+    "rubricText": {
+      "default": "",
+      "maxLength": 8192,
+      "title": "Rubrictext",
+      "type": "string"
+    },
+    "rubricTextHash": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Rubrictexthash",
+      "type": "string"
+    },
+    "rubricVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Rubricversion",
+      "type": "string"
+    },
+    "scenarioId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Scenarioid",
+      "type": "string"
+    },
+    "scenarioVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Scenarioversion",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "scenarioId",
+    "scenarioVersion",
+    "rubricVersion",
+    "gradingEngineVersion",
+    "maxScore",
+    "criteria",
+    "rubricTextHash"
+  ],
+  "title": "ScoreRubricV1",
+  "type": "object"
+}

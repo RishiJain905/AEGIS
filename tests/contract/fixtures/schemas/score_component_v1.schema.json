@@ -1,0 +1,138 @@
+{
+  "$defs": {
+    "ScoreExplanationV1": {
+      "additionalProperties": false,
+      "properties": {
+        "decisionIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Decisionids",
+          "type": "array"
+        },
+        "eventIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Eventids",
+          "type": "array"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "hypothesisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hypothesisids",
+          "type": "array"
+        },
+        "proposalIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Proposalids",
+          "type": "array"
+        },
+        "reason": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "ruleId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Ruleid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sequence"
+        }
+      },
+      "required": ["schemaVersion", "ruleId", "reason"],
+      "title": "ScoreExplanationV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "criterionId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Criterionid",
+      "type": "string"
+    },
+    "explanations": {
+      "items": {
+        "$ref": "#/$defs/ScoreExplanationV1"
+      },
+      "title": "Explanations",
+      "type": "array"
+    },
+    "label": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "rawScore": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Rawscore",
+      "type": "number"
+    },
+    "ruleIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Ruleids",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "weight": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Weight",
+      "type": "number"
+    },
+    "weightedContribution": {
+      "minimum": 0.0,
+      "title": "Weightedcontribution",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "criterionId",
+    "label",
+    "weight",
+    "rawScore",
+    "weightedContribution"
+  ],
+  "title": "ScoreComponentV1",
+  "type": "object"
+}

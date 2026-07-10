@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase28' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase29' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -174,6 +174,17 @@ export const CINEMATIC_CHAPTER_SCHEMA_VERSION = 1;
 export const PRESENTATION_HINT_SCHEMA_VERSION = 1;
 export const CINEMATIC_PLAYBACK_STATE_SCHEMA_VERSION = 1;
 export const CINEMATIC_PLAN_SCHEMA_VERSION = 1;
+export const SCORE_EXPLANATION_SCHEMA_VERSION = 1;
+export const SCORE_RUBRIC_SCHEMA_VERSION = 1;
+export const SCORE_COMPONENT_SCHEMA_VERSION = 1;
+export const SCORE_PROVENANCE_SCHEMA_VERSION = 1;
+export const DECISION_REVIEW_SCHEMA_VERSION = 1;
+export const MISSED_EVIDENCE_ITEM_SCHEMA_VERSION = 1;
+export const VALID_ALTERNATIVE_SCHEMA_VERSION = 1;
+export const RUN_SCORE_SCHEMA_VERSION = 1;
+export const AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION = 1;
+export const RUN_COMPARISON_SCORE_SCHEMA_VERSION = 1;
+export const SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -342,4 +353,15 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   presentation_hint: [PRESENTATION_HINT_SCHEMA_VERSION],
   cinematic_playback_state: [CINEMATIC_PLAYBACK_STATE_SCHEMA_VERSION],
   cinematic_plan: [CINEMATIC_PLAN_SCHEMA_VERSION],
+  score_explanation: [SCORE_EXPLANATION_SCHEMA_VERSION],
+  score_rubric: [SCORE_RUBRIC_SCHEMA_VERSION],
+  score_component: [SCORE_COMPONENT_SCHEMA_VERSION],
+  score_provenance: [SCORE_PROVENANCE_SCHEMA_VERSION],
+  decision_review: [DECISION_REVIEW_SCHEMA_VERSION],
+  missed_evidence_item: [MISSED_EVIDENCE_ITEM_SCHEMA_VERSION],
+  valid_alternative: [VALID_ALTERNATIVE_SCHEMA_VERSION],
+  run_score: [RUN_SCORE_SCHEMA_VERSION],
+  after_action_view_model: [AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION],
+  run_comparison: [RUN_COMPARISON_SCORE_SCHEMA_VERSION],
+  score_export_artifact: [SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION],
 };

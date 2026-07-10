@@ -1,0 +1,198 @@
+{
+  "$defs": {
+    "DecisionReviewKindV1": {
+      "enum": ["approval", "rejection", "modification", "cancellation", "agent_recommendation"],
+      "title": "DecisionReviewKindV1",
+      "type": "string"
+    },
+    "DecisionReviewOutcomeV1": {
+      "enum": ["credited", "penalized", "neutral", "restraint_credited"],
+      "title": "DecisionReviewOutcomeV1",
+      "type": "string"
+    },
+    "ScoreExplanationV1": {
+      "additionalProperties": false,
+      "properties": {
+        "decisionIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Decisionids",
+          "type": "array"
+        },
+        "eventIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Eventids",
+          "type": "array"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "hypothesisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hypothesisids",
+          "type": "array"
+        },
+        "proposalIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Proposalids",
+          "type": "array"
+        },
+        "reason": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "ruleId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Ruleid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sequence"
+        }
+      },
+      "required": ["schemaVersion", "ruleId", "reason"],
+      "title": "ScoreExplanationV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "agentRecommendation": {
+      "anyOf": [
+        {
+          "maxLength": 1024,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Agentrecommendation"
+    },
+    "availableEventIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Availableeventids",
+      "type": "array"
+    },
+    "availableEvidenceIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Availableevidenceids",
+      "type": "array"
+    },
+    "availableInfoSummary": {
+      "default": "",
+      "maxLength": 2048,
+      "title": "Availableinfosummary",
+      "type": "string"
+    },
+    "decisionId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Decisionid",
+      "type": "string"
+    },
+    "explanations": {
+      "items": {
+        "$ref": "#/$defs/ScoreExplanationV1"
+      },
+      "title": "Explanations",
+      "type": "array"
+    },
+    "kind": {
+      "$ref": "#/$defs/DecisionReviewKindV1"
+    },
+    "operatorAction": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Operatoraction",
+      "type": "string"
+    },
+    "outcome": {
+      "$ref": "#/$defs/DecisionReviewOutcomeV1"
+    },
+    "proposalId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Proposalid"
+    },
+    "ruleIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Ruleids",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "scoreDelta": {
+      "title": "Scoredelta",
+      "type": "number"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "usedFutureKnowledge": {
+      "const": false,
+      "default": false,
+      "title": "Usedfutureknowledge",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "decisionId",
+    "kind",
+    "sequence",
+    "operatorAction",
+    "outcome",
+    "scoreDelta"
+  ],
+  "title": "DecisionReviewV1",
+  "type": "object"
+}

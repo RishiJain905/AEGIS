@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "scenario:operation-silent-relay",
+  "scenarioVersion": "1.0.0",
+  "rubricVersion": "1.0.0",
+  "gradingEngineVersion": "1.0.0-phase29",
+  "maxScore": 100,
+  "criteria": [
+    {
+      "id": "criterion-detection-speed",
+      "label": "Detection speed",
+      "weight": 0.15,
+      "description": "Time to first credible alert on true cause"
+    },
+    {
+      "id": "criterion-evidence-coverage",
+      "label": "Evidence coverage",
+      "weight": 0.15,
+      "description": "Fraction of expected evidence chain reviewed"
+    }
+  ],
+  "rubricText": "Operation Silent Relay scoring rewards correct cause identification.",
+  "rubricTextHash": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+}
