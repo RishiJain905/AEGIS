@@ -1,0 +1,114 @@
+{
+  "$defs": {
+    "CameraBookmarkWireV1": {
+      "additionalProperties": false,
+      "properties": {
+        "fov": {
+          "exclusiveMinimum": 0,
+          "title": "Fov",
+          "type": "number"
+        },
+        "position": {
+          "$ref": "#/$defs/Vec3WireV1"
+        },
+        "target": {
+          "$ref": "#/$defs/Vec3WireV1"
+        }
+      },
+      "required": ["position", "target", "fov"],
+      "title": "CameraBookmarkWireV1",
+      "type": "object"
+    },
+    "CameraDirectiveKindV1": {
+      "enum": [
+        "establishing",
+        "entity_focus",
+        "path_trace",
+        "agent_focus",
+        "approval",
+        "consequence",
+        "overview"
+      ],
+      "title": "CameraDirectiveKindV1",
+      "type": "string"
+    },
+    "Vec3WireV1": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "title": "Z",
+          "type": "number"
+        }
+      },
+      "required": ["x", "y", "z"],
+      "title": "Vec3WireV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Presentation-only camera instruction; never mutates domain state.",
+  "properties": {
+    "bookmark": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CameraBookmarkWireV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "focusEntityIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Focusentityids",
+      "type": "array"
+    },
+    "id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/CameraDirectiveKindV1"
+    },
+    "pathEntityIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Pathentityids",
+      "type": "array"
+    },
+    "reducedMotionJump": {
+      "default": true,
+      "title": "Reducedmotionjump",
+      "type": "boolean"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "transitionMs": {
+      "default": 800,
+      "maximum": 30000,
+      "minimum": 0,
+      "title": "Transitionms",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "id", "kind"],
+  "title": "CameraDirectiveV1",
+  "type": "object"
+}

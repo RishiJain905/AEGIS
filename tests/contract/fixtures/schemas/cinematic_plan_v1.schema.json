@@ -1,0 +1,416 @@
+{
+  "$defs": {
+    "CameraBookmarkWireV1": {
+      "additionalProperties": false,
+      "properties": {
+        "fov": {
+          "exclusiveMinimum": 0,
+          "title": "Fov",
+          "type": "number"
+        },
+        "position": {
+          "$ref": "#/$defs/Vec3WireV1"
+        },
+        "target": {
+          "$ref": "#/$defs/Vec3WireV1"
+        }
+      },
+      "required": ["position", "target", "fov"],
+      "title": "CameraBookmarkWireV1",
+      "type": "object"
+    },
+    "CameraDirectiveKindV1": {
+      "enum": [
+        "establishing",
+        "entity_focus",
+        "path_trace",
+        "agent_focus",
+        "approval",
+        "consequence",
+        "overview"
+      ],
+      "title": "CameraDirectiveKindV1",
+      "type": "string"
+    },
+    "CameraDirectiveV1": {
+      "additionalProperties": false,
+      "description": "Presentation-only camera instruction; never mutates domain state.",
+      "properties": {
+        "bookmark": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CameraBookmarkWireV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "focusEntityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Focusentityids",
+          "type": "array"
+        },
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/CameraDirectiveKindV1"
+        },
+        "pathEntityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Pathentityids",
+          "type": "array"
+        },
+        "reducedMotionJump": {
+          "default": true,
+          "title": "Reducedmotionjump",
+          "type": "boolean"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "transitionMs": {
+          "default": 800,
+          "maximum": 30000,
+          "minimum": 0,
+          "title": "Transitionms",
+          "type": "integer"
+        }
+      },
+      "required": ["schemaVersion", "id", "kind"],
+      "title": "CameraDirectiveV1",
+      "type": "object"
+    },
+    "CinematicBeatKindV1": {
+      "enum": [
+        "establishing",
+        "incident_origin",
+        "evidence_focus",
+        "path_trace",
+        "agent_investigation",
+        "risk_change",
+        "proposal_focus",
+        "approval_moment",
+        "consequence_reveal",
+        "report_focus",
+        "overview"
+      ],
+      "title": "CinematicBeatKindV1",
+      "type": "string"
+    },
+    "CinematicBeatV1": {
+      "additionalProperties": false,
+      "description": "One directed cinematic moment tied to an authoritative replay sequence.",
+      "properties": {
+        "cameraDirectiveId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Cameradirectiveid",
+          "type": "string"
+        },
+        "caption": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Caption",
+          "type": "string"
+        },
+        "chapterId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Chapterid",
+          "type": "string"
+        },
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entityids",
+          "type": "array"
+        },
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/CinematicBeatKindV1"
+        },
+        "pathEntityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Pathentityids",
+          "type": "array"
+        },
+        "priority": {
+          "default": 100,
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Priority",
+          "type": "integer"
+        },
+        "provenance": {
+          "$ref": "#/$defs/CinematicProvenanceV1"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "simTime": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Simtime"
+        },
+        "tieBreaker": {
+          "default": 0,
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Tiebreaker",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "chapterId",
+        "kind",
+        "sequence",
+        "caption",
+        "cameraDirectiveId",
+        "provenance"
+      ],
+      "title": "CinematicBeatV1",
+      "type": "object"
+    },
+    "CinematicChapterV1": {
+      "additionalProperties": false,
+      "description": "Ordered chapter spanning a sequence range over authoritative replay.",
+      "properties": {
+        "beatIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Beatids",
+          "type": "array"
+        },
+        "fromSequence": {
+          "minimum": 0,
+          "title": "Fromsequence",
+          "type": "integer"
+        },
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "order": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Order",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "summary": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "toSequence": {
+          "minimum": 0,
+          "title": "Tosequence",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "title",
+        "summary",
+        "fromSequence",
+        "toSequence",
+        "order"
+      ],
+      "title": "CinematicChapterV1",
+      "type": "object"
+    },
+    "CinematicProvenanceSourceV1": {
+      "enum": ["replay_state", "presentation_hint", "default_planner"],
+      "title": "CinematicProvenanceSourceV1",
+      "type": "string"
+    },
+    "CinematicProvenanceV1": {
+      "additionalProperties": false,
+      "description": "Links a cinematic beat to authoritative replay cursor/entity provenance.",
+      "properties": {
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entityids",
+          "type": "array"
+        },
+        "incidentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Incidentid"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "simTime": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Simtime"
+        },
+        "source": {
+          "$ref": "#/$defs/CinematicProvenanceSourceV1"
+        },
+        "stateDigest": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Statedigest"
+        }
+      },
+      "required": ["schemaVersion", "runId", "sequence", "source"],
+      "title": "CinematicProvenanceV1",
+      "type": "object"
+    },
+    "Vec3WireV1": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "title": "Z",
+          "type": "number"
+        }
+      },
+      "required": ["x", "y", "z"],
+      "title": "Vec3WireV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Deterministic cinematic plan derived from authoritative replay state.",
+  "properties": {
+    "beats": {
+      "items": {
+        "$ref": "#/$defs/CinematicBeatV1"
+      },
+      "minItems": 1,
+      "title": "Beats",
+      "type": "array"
+    },
+    "cameraDirectives": {
+      "items": {
+        "$ref": "#/$defs/CameraDirectiveV1"
+      },
+      "minItems": 1,
+      "title": "Cameradirectives",
+      "type": "array"
+    },
+    "chapters": {
+      "items": {
+        "$ref": "#/$defs/CinematicChapterV1"
+      },
+      "minItems": 1,
+      "title": "Chapters",
+      "type": "array"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": ["schemaVersion", "runId", "chapters", "beats", "cameraDirectives"],
+  "title": "CinematicPlanV1",
+  "type": "object"
+}

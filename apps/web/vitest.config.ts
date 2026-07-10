@@ -19,6 +19,8 @@ export default defineConfig({
       '../../tests/unit/graph-fixtures/**/*.test.ts',
       '../../tests/unit/replay-ui/**/*.test.ts',
       '../../tests/unit/cinematic/**/*.test.ts',
+      '../../tests/unit/cinematic-replay/**/*.test.ts',
+      '../../tests/performance/cinematic-replay/**/*.test.ts',
       'fixtures/**/*.test.ts',
     ],
     setupFiles: ['./tests/setup.ts'],

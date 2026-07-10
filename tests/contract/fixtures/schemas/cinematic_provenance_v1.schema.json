@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "CinematicProvenanceSourceV1": {
+      "enum": ["replay_state", "presentation_hint", "default_planner"],
+      "title": "CinematicProvenanceSourceV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Links a cinematic beat to authoritative replay cursor/entity provenance.",
+  "properties": {
+    "entityIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Entityids",
+      "type": "array"
+    },
+    "incidentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "simTime": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Simtime"
+    },
+    "source": {
+      "$ref": "#/$defs/CinematicProvenanceSourceV1"
+    },
+    "stateDigest": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Statedigest"
+    }
+  },
+  "required": ["schemaVersion", "runId", "sequence", "source"],
+  "title": "CinematicProvenanceV1",
+  "type": "object"
+}

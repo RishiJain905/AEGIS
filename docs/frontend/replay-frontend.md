@@ -39,4 +39,4 @@ Unavailable / corrupt / incompatible replay data surfaces actionable codes (`REP
 
 ## Deferred
 
-Phase 27 Three.js semantic renderer, Phase 28 cinematic incident replay, Phase 29 scoring/after-action UX.
+Phase 27 Three.js semantic renderer, Phase 28 cinematic incident replay ([`cinematic-replay.md`](cinematic-replay.md)), Phase 29 scoring/after-action UX.

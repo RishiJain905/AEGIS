@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase26"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase28"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -175,6 +175,13 @@ REPLAY_COMPARISON_SCHEMA_VERSION: Final[int] = 1
 TIMELINE_FILTER_SCHEMA_VERSION: Final[int] = 1
 HISTORICAL_GRAPH_ADAPTER_SCHEMA_VERSION: Final[int] = 1
 RETURN_TO_LIVE_RESULT_SCHEMA_VERSION: Final[int] = 1
+CINEMATIC_PROVENANCE_SCHEMA_VERSION: Final[int] = 1
+CAMERA_DIRECTIVE_SCHEMA_VERSION: Final[int] = 1
+CINEMATIC_BEAT_SCHEMA_VERSION: Final[int] = 1
+CINEMATIC_CHAPTER_SCHEMA_VERSION: Final[int] = 1
+PRESENTATION_HINT_SCHEMA_VERSION: Final[int] = 1
+CINEMATIC_PLAYBACK_STATE_SCHEMA_VERSION: Final[int] = 1
+CINEMATIC_PLAN_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -335,6 +342,13 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "timeline_filter": frozenset({TIMELINE_FILTER_SCHEMA_VERSION}),
     "historical_graph_adapter": frozenset({HISTORICAL_GRAPH_ADAPTER_SCHEMA_VERSION}),
     "return_to_live_result": frozenset({RETURN_TO_LIVE_RESULT_SCHEMA_VERSION}),
+    "cinematic_provenance": frozenset({CINEMATIC_PROVENANCE_SCHEMA_VERSION}),
+    "camera_directive": frozenset({CAMERA_DIRECTIVE_SCHEMA_VERSION}),
+    "cinematic_beat": frozenset({CINEMATIC_BEAT_SCHEMA_VERSION}),
+    "cinematic_chapter": frozenset({CINEMATIC_CHAPTER_SCHEMA_VERSION}),
+    "presentation_hint": frozenset({PRESENTATION_HINT_SCHEMA_VERSION}),
+    "cinematic_playback_state": frozenset({CINEMATIC_PLAYBACK_STATE_SCHEMA_VERSION}),
+    "cinematic_plan": frozenset({CINEMATIC_PLAN_SCHEMA_VERSION}),
 }
 
 

@@ -1,0 +1,99 @@
+{
+  "$defs": {
+    "PresentationHintKindV1": {
+      "enum": ["emphasis", "chapter_anchor", "caption"],
+      "title": "PresentationHintKindV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Safe scenario presentation hint. Must not reveal hidden causes.",
+  "properties": {
+    "caption": {
+      "anyOf": [
+        {
+          "maxLength": 512,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Caption"
+    },
+    "chapterId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Chapterid"
+    },
+    "entityIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Entityids",
+      "type": "array"
+    },
+    "hiddenCauseId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hiddencauseid"
+    },
+    "id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/PresentationHintKindV1"
+    },
+    "requiresEvidenceIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Requiresevidenceids",
+      "type": "array"
+    },
+    "revealsHiddenCause": {
+      "default": false,
+      "title": "Revealshiddencause",
+      "type": "boolean"
+    },
+    "scenarioId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Scenarioid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "id", "scenarioId", "kind", "sequence"],
+  "title": "PresentationHintV1",
+  "type": "object"
+}

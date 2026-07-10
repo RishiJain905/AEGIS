@@ -1,0 +1,55 @@
+{
+  "additionalProperties": false,
+  "description": "Ordered chapter spanning a sequence range over authoritative replay.",
+  "properties": {
+    "beatIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Beatids",
+      "type": "array"
+    },
+    "fromSequence": {
+      "minimum": 0,
+      "title": "Fromsequence",
+      "type": "integer"
+    },
+    "id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "order": {
+      "maximum": 1000,
+      "minimum": 0,
+      "title": "Order",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "summary": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "toSequence": {
+      "minimum": 0,
+      "title": "Tosequence",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "id", "title", "summary", "fromSequence", "toSequence", "order"],
+  "title": "CinematicChapterV1",
+  "type": "object"
+}

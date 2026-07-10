@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "cam_incident_origin_001",
+  "kind": "entity_focus",
+  "focusEntityIds": ["asset:svc-api-gateway"],
+  "pathEntityIds": [],
+  "bookmark": {
+    "position": { "x": 40, "y": 160, "z": 280 },
+    "target": { "x": 0, "y": 0, "z": 0 },
+    "fov": 48
+  },
+  "transitionMs": 800,
+  "reducedMotionJump": true
+}

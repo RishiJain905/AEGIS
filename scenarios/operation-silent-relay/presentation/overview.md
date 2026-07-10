@@ -34,3 +34,6 @@ Hidden cause labels are **not** exposed to operators during active play (deferre
 - Cinematic layers derive from authoritative simulation events only
 - Three.js and generated narrative must not invent domain facts
 - Chronology follows `(sim_time, priority, tie_breaker)` ordering
+- Safe presentation hints live in `presentation/cinematic-hints.json` (Phase 28)
+- Hints must set `revealsHiddenCause: false` and omit `hiddenCauseId`
+- Hidden cause labels remain deferred to Phase 29 scoring

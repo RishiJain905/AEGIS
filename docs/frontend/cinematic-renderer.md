@@ -99,6 +99,8 @@ Rules:
 - Keep Sigma as the default investigation surface unless an approved ADR changes architecture rule 6.
 - Directed cinematic sequences must remain derived presentation over structured replay state.
 
+See also: [`cinematic-replay.md`](cinematic-replay.md) (Phase 28).
+
 ## Development
 
 ```bash
