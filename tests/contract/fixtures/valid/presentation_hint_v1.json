@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "hint_emphasis_api_gateway",
+  "scenarioId": "scenario:operation-silent-relay",
+  "kind": "emphasis",
+  "sequence": 120,
+  "entityIds": ["asset:svc-api-gateway"],
+  "caption": "Focus on the first major anomaly around the API gateway.",
+  "chapterId": "chapter-escalation",
+  "requiresEvidenceIds": [],
+  "revealsHiddenCause": false,
+  "hiddenCauseId": null
+}

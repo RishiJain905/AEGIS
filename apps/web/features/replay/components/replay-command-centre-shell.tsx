@@ -1,5 +1,12 @@
 'use client';
 
+import {
+  CinematicAccessibilityFallback,
+  CinematicModeToggle,
+  CinematicTransportControls,
+  useCinematicDirectorController,
+} from '@/features/cinematic-replay';
+import { useCinematicReplayStore } from '@/features/cinematic-replay/stores/cinematic-replay-store';
 import { HistoricalModeBanner } from '@/features/replay/components/historical-mode-banner';
 import { ReplayBookmarks } from '@/features/replay/components/replay-bookmarks';
 import { ReplayComparisonPanel } from '@/features/replay/components/replay-comparison-panel';
@@ -23,6 +30,8 @@ function ReplayStatusExtras() {
   const cursor = useReplayStore((state) => state.cursor);
   const provenance = useReplayStore((state) => state.provenance);
   const mode = useReplayStore((state) => state.mode);
+  const cinematicMode = useCinematicReplayStore((state) => state.mode);
+  const cinematicBeat = useCinematicReplayStore((state) => state.lastApplied);
 
   return (
     <div
@@ -32,7 +41,15 @@ function ReplayStatusExtras() {
       aria-live="polite"
     >
       <span data-testid="replay-mode-label">Mode: {mode}</span>
+      <span data-testid="cinematic-session-mode-label">
+        Presentation: {cinematicMode === 'cinematic' ? 'cinematic' : 'normal'}
+      </span>
       {cursor ? <span data-testid="replay-sequence-label">Sequence: {cursor.sequence}</span> : null}
+      {cinematicMode === 'cinematic' && cinematicBeat ? (
+        <span data-testid="cinematic-sync-label">
+          Cinematic beat @ seq {cinematicBeat.sequence}
+        </span>
+      ) : null}
       {provenance ? (
         <span data-testid="replay-applied-range">
           Applied: {provenance.appliedFromSequence}–{provenance.appliedToSequence} (
@@ -46,6 +63,7 @@ function ReplayStatusExtras() {
 function ReplayShellInner({ runId }: ReplayCommandCentreShellProps) {
   useKeyboardShortcuts();
   useReplayKeyboard();
+  useCinematicDirectorController(runId);
 
   return (
     <>
@@ -58,8 +76,13 @@ function ReplayShellInner({ runId }: ReplayCommandCentreShellProps) {
           <HistoricalModeBanner />
           <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 xl:flex-row">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <CinematicModeToggle />
+              </div>
               <ReplayTransportControls />
+              <CinematicTransportControls />
               <ReplayVisualization />
+              <CinematicAccessibilityFallback />
               <div className="grid gap-4 lg:grid-cols-2">
                 <ReplayBookmarks />
                 <ReplayComparisonPanel />

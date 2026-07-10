@@ -4,7 +4,9 @@ Use sequential files such as `0001-title.md`.
 
 An ADR records a proposed long-lived architecture change, alternatives, consequences, migration impact, security/reliability implications, and approval status. It cannot be used to bypass a failed phase criterion or to silently expand scope.
 
-Latest relevant ADR for Phase 27: [`0028-threejs-semantic-renderer.md`](0028-threejs-semantic-renderer.md).
+Latest relevant ADR for Phase 28: [`0029-cinematic-incident-replay.md`](0029-cinematic-incident-replay.md).
+
+Phase 27 Three.js semantic renderer: [`0028-threejs-semantic-renderer.md`](0028-threejs-semantic-renderer.md).
 
 Phase 26 replay frontend: [`0027-replay-frontend.md`](0027-replay-frontend.md).
 

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "mode": "cinematic",
+  "status": "playing",
+  "chapterIndex": 2,
+  "beatIndex": 0,
+  "speed": "1x",
+  "reducedMotion": false,
+  "captionsEnabled": true,
+  "activeBeatId": "beat_incident_origin_001",
+  "activeChapterId": "chapter-escalation"
+}

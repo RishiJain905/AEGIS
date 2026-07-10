@@ -178,6 +178,7 @@ export * from './approvals';
 export * from './reports';
 export * from './replay';
 export * from './replay-frontend';
+export * from './cinematic';
 
 import {
   afterActionReportSchema,

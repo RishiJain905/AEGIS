@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase26",
+  "workspaceVersion": "0.0.0-phase28",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",
@@ -91,6 +91,10 @@
       "sha256": "509891b380c4a47a39ffdf1ad4dc92d0800ba7d071c10fb58efc268b534808ff"
     },
     {
+      "path": "tests/contract/fixtures/schemas/camera_directive_v1.schema.json",
+      "sha256": "9734fc922388f3e8ac03e51267bd8d9af32a476dfbdcc32d5bd319ce9d0d7611"
+    },
+    {
       "path": "tests/contract/fixtures/schemas/cancel_proposal_request_v1.schema.json",
       "sha256": "3d8718a2773f41345957f9fd8b78c37d796e16851d6b3f93912eb5be93179eea"
     },
@@ -101,6 +105,26 @@
     {
       "path": "tests/contract/fixtures/schemas/candidate_affected_asset_v1.schema.json",
       "sha256": "f4525088adb682a5c3019d9b90c1e440116e2b4a3d65bb7e5e8a54982759aade"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/cinematic_beat_v1.schema.json",
+      "sha256": "57d11771fc4626f17bfd4f304b51ef6ef1bd6c38a44a348a8fe5e94ae8526553"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/cinematic_chapter_v1.schema.json",
+      "sha256": "c897221c44b9b1e0d92eef5c8b81b7d4376ea6e637d8b8be2e0ee947a3c83172"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/cinematic_plan_v1.schema.json",
+      "sha256": "87373735177c7b04b429bd1646b3c374c2b6ecbc1cb322734e7dbc25a5f61321"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/cinematic_playback_state_v1.schema.json",
+      "sha256": "6d38941be1ed5db84d669fda1667a1b8dced91fbbcde5b4baf075c73e972f672"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/cinematic_provenance_v1.schema.json",
+      "sha256": "f60c2ab8a7d8a83f1e8d676153dc91ae49e857724a86fc5773087ca0fd015fb5"
     },
     {
       "path": "tests/contract/fixtures/schemas/connection_health_v1.schema.json",
@@ -317,6 +341,10 @@
     {
       "path": "tests/contract/fixtures/schemas/policy_input_v1.schema.json",
       "sha256": "95d93a1ac9a58b3ee8ceeaa99121b53e7915cf45e4d77dd6983a24d91e1412c9"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/presentation_hint_v1.schema.json",
+      "sha256": "90aabd24b109268dc6506971f7c6c3703b2ede0d6d12036923d5b46b5071c78e"
     },
     {
       "path": "tests/contract/fixtures/schemas/proposal_modification_v1.schema.json",
@@ -659,6 +687,10 @@
       "sha256": "fa6c199641771482478db21364d78a14e6a016c184f58a4366d29f8b5c41f469"
     },
     {
+      "path": "tests/contract/fixtures/valid/camera_directive_v1.json",
+      "sha256": "0257ccc8dfbd24f0a9cee44b8915bccf12f76e0b365af59c11573ef97ba150d0"
+    },
+    {
       "path": "tests/contract/fixtures/valid/cancel_proposal_request_v1.json",
       "sha256": "636566aef853be73b54e50a885bb9e5d7e0502315d01613c41aa5595501accaf"
     },
@@ -669,6 +701,26 @@
     {
       "path": "tests/contract/fixtures/valid/candidate_affected_asset_v1.json",
       "sha256": "b61b5fab8829d0b549b8746074298e1b57216d4ca926b192fdc8d2d2ba8bb200"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/cinematic_beat_v1.json",
+      "sha256": "3a66b30bbe37e57be8af91feb2e9647429cdb926011060e6686ea636ab15e9df"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/cinematic_chapter_v1.json",
+      "sha256": "f237cd6a3db9e7e5f9d7e3bedfab03cb5217f4eefb7d118cbdda5e41acd82422"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/cinematic_plan_v1.json",
+      "sha256": "b8703052c772708d7c3fc7b2d46c5415777c73edc9c3a6d47ae4f096b480adab"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/cinematic_playback_state_v1.json",
+      "sha256": "d2d2f9189c084e3bbfd5d92ec576764b5eeffeeb0364b4a5f9e4222b7d4c2e1c"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/cinematic_provenance_v1.json",
+      "sha256": "310a5b73ca1ad06dc93ba46a2dd038394cd17329653c790e0a37a63187127e7d"
     },
     {
       "path": "tests/contract/fixtures/valid/connection_health_v1.json",
@@ -885,6 +937,10 @@
     {
       "path": "tests/contract/fixtures/valid/policy_input_v1.json",
       "sha256": "0bd79977be358819b21e46d069868b984e00c1cb8d4e703bd06ad1c40ce534e2"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/presentation_hint_v1.json",
+      "sha256": "437ec29660ab51bd578128f57326bade07c3cb6bea14e48bc59e062ad2e6f639"
     },
     {
       "path": "tests/contract/fixtures/valid/proposal_modification_v1.json",

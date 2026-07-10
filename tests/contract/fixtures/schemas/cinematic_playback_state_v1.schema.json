@@ -1,0 +1,90 @@
+{
+  "$defs": {
+    "CinematicDirectorStatusV1": {
+      "enum": ["idle", "playing", "paused", "free_camera"],
+      "title": "CinematicDirectorStatusV1",
+      "type": "string"
+    },
+    "CinematicPlaybackSpeedV1": {
+      "enum": ["0.5x", "1x", "2x", "4x"],
+      "title": "CinematicPlaybackSpeedV1",
+      "type": "string"
+    },
+    "CinematicSessionModeV1": {
+      "enum": ["normal", "cinematic"],
+      "title": "CinematicSessionModeV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Ephemeral cinematic director session state (presentation only).",
+  "properties": {
+    "activeBeatId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Activebeatid"
+    },
+    "activeChapterId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Activechapterid"
+    },
+    "beatIndex": {
+      "minimum": 0,
+      "title": "Beatindex",
+      "type": "integer"
+    },
+    "captionsEnabled": {
+      "default": true,
+      "title": "Captionsenabled",
+      "type": "boolean"
+    },
+    "chapterIndex": {
+      "minimum": 0,
+      "title": "Chapterindex",
+      "type": "integer"
+    },
+    "mode": {
+      "$ref": "#/$defs/CinematicSessionModeV1"
+    },
+    "reducedMotion": {
+      "default": false,
+      "title": "Reducedmotion",
+      "type": "boolean"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "speed": {
+      "$ref": "#/$defs/CinematicPlaybackSpeedV1"
+    },
+    "status": {
+      "$ref": "#/$defs/CinematicDirectorStatusV1"
+    }
+  },
+  "required": ["schemaVersion", "runId", "mode", "status", "chapterIndex", "beatIndex", "speed"],
+  "title": "CinematicPlaybackStateV1",
+  "type": "object"
+}

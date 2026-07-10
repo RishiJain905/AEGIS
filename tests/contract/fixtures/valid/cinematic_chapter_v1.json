@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "chapter-escalation",
+  "title": "Escalation",
+  "summary": "Cause-specific evidence crosses detection thresholds.",
+  "fromSequence": 120,
+  "toSequence": 249,
+  "beatIds": ["beat_incident_origin_001", "beat_evidence_focus_001"],
+  "order": 2
+}

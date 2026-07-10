@@ -34,6 +34,15 @@ from aegis_contracts.approvals import (
     RejectProposalResponseV1,
     StaleProposalErrorV1,
 )
+from aegis_contracts.cinematic import (
+    CameraDirectiveV1,
+    CinematicBeatV1,
+    CinematicChapterV1,
+    CinematicPlanV1,
+    CinematicPlaybackStateV1,
+    CinematicProvenanceV1,
+    PresentationHintV1,
+)
 from aegis_contracts.entities import (
     ActionProposalV1,
     AgentSessionV1,
@@ -320,4 +329,11 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "timeline_filter_v1": TimelineFilterV1,
     "historical_graph_adapter_v1": HistoricalGraphAdapterV1,
     "return_to_live_result_v1": ReturnToLiveResultV1,
+    "cinematic_provenance_v1": CinematicProvenanceV1,
+    "camera_directive_v1": CameraDirectiveV1,
+    "cinematic_beat_v1": CinematicBeatV1,
+    "cinematic_chapter_v1": CinematicChapterV1,
+    "presentation_hint_v1": PresentationHintV1,
+    "cinematic_playback_state_v1": CinematicPlaybackStateV1,
+    "cinematic_plan_v1": CinematicPlanV1,
 }

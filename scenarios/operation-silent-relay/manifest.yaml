@@ -1059,3 +1059,7 @@ media:
   path: presentation/overview.md
   contentType: text/markdown
   description: Narrative overview for cinematic phases
+- id: media-cinematic-hints
+  path: presentation/cinematic-hints.json
+  contentType: application/json
+  description: Safe Phase 28 cinematic presentation hints (no hidden-cause reveals)

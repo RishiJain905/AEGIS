@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "chapters": [
+    {
+      "schemaVersion": 1,
+      "id": "chapter-baseline",
+      "title": "Baseline operations",
+      "summary": "Normal telemetry across organizational zones.",
+      "fromSequence": 0,
+      "toSequence": 119,
+      "beatIds": ["beat_establishing_001"],
+      "order": 0
+    },
+    {
+      "schemaVersion": 1,
+      "id": "chapter-escalation",
+      "title": "Escalation",
+      "summary": "Cause-specific evidence crosses detection thresholds.",
+      "fromSequence": 120,
+      "toSequence": 249,
+      "beatIds": ["beat_incident_origin_001"],
+      "order": 2
+    }
+  ],
+  "beats": [
+    {
+      "schemaVersion": 1,
+      "id": "beat_establishing_001",
+      "chapterId": "chapter-baseline",
+      "kind": "establishing",
+      "sequence": 0,
+      "simTime": "2026-01-01T18:00:00.000Z",
+      "caption": "Operation Silent Relay begins under normal baseline conditions.",
+      "entityIds": [],
+      "pathEntityIds": [],
+      "cameraDirectiveId": "cam_establishing_001",
+      "provenance": {
+        "schemaVersion": 1,
+        "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "sequence": 0,
+        "simTime": "2026-01-01T18:00:00.000Z",
+        "entityIds": [],
+        "incidentId": null,
+        "source": "default_planner",
+        "stateDigest": "sha256:fixture00000000000000000000000000000000000000000000000000000000"
+      },
+      "priority": 0,
+      "tieBreaker": 0
+    },
+    {
+      "schemaVersion": 1,
+      "id": "beat_incident_origin_001",
+      "chapterId": "chapter-escalation",
+      "kind": "incident_origin",
+      "sequence": 120,
+      "simTime": "2026-01-01T18:12:00.000Z",
+      "caption": "Suspicious authentication activity opens the primary incident.",
+      "entityIds": ["asset:svc-api-gateway"],
+      "pathEntityIds": [],
+      "cameraDirectiveId": "cam_incident_origin_001",
+      "provenance": {
+        "schemaVersion": 1,
+        "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "sequence": 120,
+        "simTime": "2026-01-01T18:12:00.000Z",
+        "entityIds": ["asset:svc-api-gateway"],
+        "incidentId": "incident:inc_synthetic_001",
+        "source": "replay_state",
+        "stateDigest": "sha256:fixture00000000000000000000000000000000000000000000000000000120"
+      },
+      "priority": 10,
+      "tieBreaker": 0
+    }
+  ],
+  "cameraDirectives": [
+    {
+      "schemaVersion": 1,
+      "id": "cam_establishing_001",
+      "kind": "establishing",
+      "focusEntityIds": [],
+      "pathEntityIds": [],
+      "bookmark": {
+        "position": { "x": 0, "y": 180, "z": 320 },
+        "target": { "x": 0, "y": 0, "z": 0 },
+        "fov": 50
+      },
+      "transitionMs": 0,
+      "reducedMotionJump": true
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cam_incident_origin_001",
+      "kind": "entity_focus",
+      "focusEntityIds": ["asset:svc-api-gateway"],
+      "pathEntityIds": [],
+      "bookmark": {
+        "position": { "x": 40, "y": 160, "z": 280 },
+        "target": { "x": 0, "y": 0, "z": 0 },
+        "fov": 48
+      },
+      "transitionMs": 800,
+      "reducedMotionJump": true
+    }
+  ],
+  "warnings": []
+}

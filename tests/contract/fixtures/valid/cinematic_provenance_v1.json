@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "sequence": 120,
+  "simTime": "2026-01-01T18:12:00.000Z",
+  "entityIds": ["asset:svc-api-gateway"],
+  "incidentId": "incident:inc_synthetic_001",
+  "source": "replay_state",
+  "stateDigest": "sha256:fixture00000000000000000000000000000000000000000000000000000120"
+}

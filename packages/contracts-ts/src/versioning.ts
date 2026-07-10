@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase26' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase28' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -167,6 +167,13 @@ export const REPLAY_COMPARISON_SCHEMA_VERSION = 1;
 export const TIMELINE_FILTER_SCHEMA_VERSION = 1;
 export const HISTORICAL_GRAPH_ADAPTER_SCHEMA_VERSION = 1;
 export const RETURN_TO_LIVE_RESULT_SCHEMA_VERSION = 1;
+export const CINEMATIC_PROVENANCE_SCHEMA_VERSION = 1;
+export const CAMERA_DIRECTIVE_SCHEMA_VERSION = 1;
+export const CINEMATIC_BEAT_SCHEMA_VERSION = 1;
+export const CINEMATIC_CHAPTER_SCHEMA_VERSION = 1;
+export const PRESENTATION_HINT_SCHEMA_VERSION = 1;
+export const CINEMATIC_PLAYBACK_STATE_SCHEMA_VERSION = 1;
+export const CINEMATIC_PLAN_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -328,4 +335,11 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   timeline_filter: [TIMELINE_FILTER_SCHEMA_VERSION],
   historical_graph_adapter: [HISTORICAL_GRAPH_ADAPTER_SCHEMA_VERSION],
   return_to_live_result: [RETURN_TO_LIVE_RESULT_SCHEMA_VERSION],
+  cinematic_provenance: [CINEMATIC_PROVENANCE_SCHEMA_VERSION],
+  camera_directive: [CAMERA_DIRECTIVE_SCHEMA_VERSION],
+  cinematic_beat: [CINEMATIC_BEAT_SCHEMA_VERSION],
+  cinematic_chapter: [CINEMATIC_CHAPTER_SCHEMA_VERSION],
+  presentation_hint: [PRESENTATION_HINT_SCHEMA_VERSION],
+  cinematic_playback_state: [CINEMATIC_PLAYBACK_STATE_SCHEMA_VERSION],
+  cinematic_plan: [CINEMATIC_PLAN_SCHEMA_VERSION],
 };
