@@ -12,7 +12,9 @@ files:
 - path: golden-seeds.yaml
   checksum: sha256:5b009957efdb13288d51707874bb726200225e43f0ee922dbb96d9d5c8f7a36f
 - path: manifest.yaml
-  checksum: sha256:9d1db834811ccf33af9c46403d0c4a445cc2aa318eddaf1a7e1c4dfeb09971e8
+  checksum: sha256:278cd4eb28e72c8927545afd7c40ab3bb7b8206ce3f4bc22b6d2d8d19748d5d2
+- path: presentation/cinematic-hints.json
+  checksum: sha256:ee447873602e49bbab503e78de26bd8afd1b01639a31ae9d7a0606de0c6c9f40
 - path: presentation/overview.md
-  checksum: sha256:9ba5a5269723985c50bdf47b75c7fc3a401a71c44891e8a8a55d07251364a4bd
-packageChecksum: sha256:2b1038d13003561a0edede184523e17b9a2e1fe06e22e33bfecd29bdc2a64a1c
+  checksum: sha256:121feeb46cc813df5af2aa0bd19bb14c0beb5c0d0dd58bd44fa61126e45af745
+packageChecksum: sha256:688877a13f3f2037c7cad0fd6cc46db34c907c96c4c3409911f5bb0f0eeb1ad3
