@@ -40,6 +40,23 @@ from aegis_contracts.approvals import (
     RejectProposalResponseV1,
     StaleProposalErrorV1,
 )
+from aegis_contracts.cinematic import (
+    CameraDirectiveKindV1,
+    CameraDirectiveV1,
+    CinematicBeatKindV1,
+    CinematicBeatV1,
+    CinematicChapterV1,
+    CinematicDirectorStatusV1,
+    CinematicErrorCode,
+    CinematicPlanV1,
+    CinematicPlaybackSpeedV1,
+    CinematicPlaybackStateV1,
+    CinematicProvenanceSourceV1,
+    CinematicProvenanceV1,
+    CinematicSessionModeV1,
+    PresentationHintKindV1,
+    PresentationHintV1,
+)
 from aegis_contracts.detection import (
     AlertCandidateV1,
     AlertEvidenceV1,
@@ -201,23 +218,6 @@ from aegis_contracts.replay_frontend import (
     ReplayViewStateV1,
     ReturnToLiveResultV1,
     TimelineFilterV1,
-)
-from aegis_contracts.cinematic import (
-    CameraDirectiveKindV1,
-    CameraDirectiveV1,
-    CinematicBeatKindV1,
-    CinematicBeatV1,
-    CinematicChapterV1,
-    CinematicDirectorStatusV1,
-    CinematicErrorCode,
-    CinematicPlanV1,
-    CinematicPlaybackSpeedV1,
-    CinematicPlaybackStateV1,
-    CinematicProvenanceSourceV1,
-    CinematicProvenanceV1,
-    CinematicSessionModeV1,
-    PresentationHintKindV1,
-    PresentationHintV1,
 )
 from aegis_contracts.reports import (
     AfterActionReportSourceV1,
