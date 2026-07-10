@@ -50,6 +50,18 @@ test.describe('Phase 28 cinematic incident replay', () => {
     await expect(page.getByTestId('replay-cursor-label')).toContainText(/sequence/);
   });
 
+  test('unavailable replay fails safely for cinematic mode', async ({ page }) => {
+    await page.goto('/replay/run_01ARZ3NDEKTSV4RRFFQ69G5FZ0');
+    await expect(page.getByTestId('historical-mode-banner')).toBeVisible();
+    await expect(page.getByTestId('visualization-slot')).toContainText(
+      /unavailable|corrupted|incompatible|not found|Replay data/i,
+      { timeout: 15_000 },
+    );
+    await page.getByTestId('cinematic-mode-cinematic').click();
+    await expect(page.getByTestId('cinematic-error')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('cinematic-error-code')).toContainText(/CINEMATIC_|REPLAY_/);
+  });
+
   test('reduced motion exposes accessibility fallback without requiring motion', async ({
     page,
   }) => {
@@ -60,14 +72,6 @@ test.describe('Phase 28 cinematic incident replay', () => {
     await expect(page.getByTestId('cinematic-a11y-caption')).toBeVisible();
     await expect(page.getByTestId('cinematic-a11y-beat-list')).toBeVisible();
     await expect(page.getByTestId('cinematic-reduced-motion-badge')).toBeVisible();
-  });
-
-  test('unavailable replay fails safely for cinematic mode', async ({ page }) => {
-    await page.goto('/replay/run_01ARZ3NDEKTSV4RRFFQ69G5FZ0');
-    await expect(page.getByTestId('historical-mode-banner')).toBeVisible();
-    await page.getByTestId('cinematic-mode-cinematic').click();
-    await expect(page.getByTestId('cinematic-error')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('cinematic-error-code')).toContainText(/CINEMATIC_|REPLAY_/);
   });
 
   test('narrow layout keeps cinematic controls usable', async ({ page }) => {

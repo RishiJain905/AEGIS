@@ -71,7 +71,6 @@ export const useCinematicReplayStore = create<CinematicReplayUiState>((set, get)
       chapterIndex: 0,
       beatIndex: 0,
       lastApplied: plan ? applyBeatCamera(plan, 0) : null,
-      lastError: null,
     });
   },
   setStatus: (status) => {

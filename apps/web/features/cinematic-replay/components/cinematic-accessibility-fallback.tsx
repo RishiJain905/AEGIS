@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { Button, Panel } from '@aegis/ui';
 
 import { GraphViewMode } from '@/features/cinematic-graph/contracts';
@@ -22,9 +24,27 @@ export function CinematicAccessibilityFallback() {
   const reducedMotion = useCinematicReplayStore((state) => state.reducedMotion);
   const goToBeat = useCinematicReplayStore((state) => state.goToBeat);
   const setStatus = useCinematicReplayStore((state) => state.setStatus);
+  const setError = useCinematicReplayStore((state) => state.setError);
 
   const setCursorSequence = useReplayStore((state) => state.setCursorSequence);
+  const replayLoadStatus = useReplayStore((state) => state.loadStatus);
+  const replayErrorCode = useReplayStore((state) => state.errorCode);
+  const replayErrorMessage = useReplayStore((state) => state.errorMessage);
   const setViewMode = useCinematicGraphStore((state) => state.setViewMode);
+
+  useEffect(() => {
+    if (mode !== 'cinematic') {
+      return;
+    }
+    if (replayLoadStatus === 'unavailable' || replayLoadStatus === 'error') {
+      setError({
+        code: replayErrorCode ?? 'CINEMATIC_REPLAY_UNAVAILABLE',
+        message:
+          replayErrorMessage ??
+          'Cinematic replay cannot start: replay data is unavailable, malformed, or incompatible.',
+      });
+    }
+  }, [mode, replayLoadStatus, replayErrorCode, replayErrorMessage, setError]);
 
   if (mode !== 'cinematic') {
     return null;

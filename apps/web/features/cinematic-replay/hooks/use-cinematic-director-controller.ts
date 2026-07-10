@@ -64,12 +64,12 @@ export function useCinematicDirectorController(runId: string): void {
       return;
     }
     if (loadStatus === 'unavailable' || loadStatus === 'error') {
+      setPlan(null);
       setError({
         code: 'CINEMATIC_REPLAY_UNAVAILABLE',
         message:
           'Cinematic replay cannot start: replay data is unavailable, malformed, or incompatible.',
       });
-      setPlan(null);
       plannedForRef.current = null;
       return;
     }
@@ -125,7 +125,8 @@ export function useCinematicDirectorController(runId: string): void {
     setError,
   ]);
 
-  // Apply camera/selection/cursor when director advances a beat
+  // Apply camera/selection/cursor when director advances a beat.
+  // Do not force 3D here — entering cinematic mode selects 3D once; Open-in-2D must stick.
   useEffect(() => {
     if (mode !== 'cinematic' || !lastApplied || applyingRef.current) {
       return;
@@ -139,22 +140,20 @@ export function useCinematicDirectorController(runId: string): void {
       if (cursor && cursor.sequence !== lastApplied.sequence) {
         setCursorSequence(lastApplied.sequence, lastApplied.beat.provenance.incidentId ?? null);
       }
-      if (!reducedMotion) {
-        setViewMode(GraphViewMode.THREE_D);
-      }
     } finally {
       applyingRef.current = false;
     }
-  }, [
-    mode,
-    lastApplied,
-    setCamera,
-    setSelectedEntityId,
-    setCursorSequence,
-    cursor,
-    reducedMotion,
-    setViewMode,
-  ]);
+  }, [mode, lastApplied, setCamera, setSelectedEntityId, setCursorSequence, cursor]);
+
+  // Prefer 3D once when entering cinematic mode (unless reduced motion).
+  useEffect(() => {
+    if (mode !== 'cinematic') {
+      return;
+    }
+    if (!reducedMotion) {
+      setViewMode(GraphViewMode.THREE_D);
+    }
+  }, [mode, reducedMotion, setViewMode]);
 
   // Auto-advance beats while playing (disabled under reduced motion)
   useEffect(() => {
