@@ -75,7 +75,7 @@ Expected evidence manifest: [`scenarios/operation-silent-relay/expected-evidence
 
 ## Scoring
 
-Scoring criteria are defined in the manifest `scoring` section (8 weighted dimensions). Runtime scoring execution is deferred to Phase 29.
+Scoring criteria are defined in the manifest `scoring` section (8 weighted dimensions). Runtime scoring is implemented in Phase 29 (`services/scoring`, `/after-action/[runId]`).
 
 ## Validation commands
 

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "apr_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "kind": "approval",
+  "sequence": 210,
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "operatorAction": "approved",
+  "agentRecommendation": "contain logistics API with moderate impact",
+  "availableInfoSummary": "Two supporting evidence items and one credible alert were available before approval.",
+  "availableEventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+  "availableEvidenceIds": ["evidence:evd_synthetic_001"],
+  "outcome": "credited",
+  "scoreDelta": 0.05,
+  "ruleIds": ["rule-decision-proportionate-approval"],
+  "explanations": [
+    {
+      "schemaVersion": 1,
+      "ruleId": "rule-decision-proportionate-approval",
+      "reason": "Operator approved a proportionate response using only information available at decision time.",
+      "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+      "evidenceIds": ["evidence:evd_synthetic_001"],
+      "decisionIds": ["apr_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+      "hypothesisIds": [],
+      "proposalIds": ["prp_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+      "sequence": 210
+    }
+  ],
+  "usedFutureKnowledge": false
+}

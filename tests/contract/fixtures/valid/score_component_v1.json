@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "criterionId": "criterion-evidence-coverage",
+  "label": "Evidence coverage",
+  "weight": 0.15,
+  "rawScore": 1.0,
+  "weightedContribution": 15.0,
+  "ruleIds": ["rule-evidence-coverage-fraction"],
+  "explanations": [
+    {
+      "schemaVersion": 1,
+      "ruleId": "rule-evidence-coverage-fraction",
+      "reason": "Operator reviewed 2 of 2 expected supporting evidence items for the true cause.",
+      "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+      "evidenceIds": ["evidence:evd_synthetic_001"],
+      "decisionIds": [],
+      "hypothesisIds": [],
+      "proposalIds": [],
+      "sequence": 120
+    }
+  ]
+}

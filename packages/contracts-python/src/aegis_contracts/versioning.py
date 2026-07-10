@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase28"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase29"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -182,6 +182,17 @@ CINEMATIC_CHAPTER_SCHEMA_VERSION: Final[int] = 1
 PRESENTATION_HINT_SCHEMA_VERSION: Final[int] = 1
 CINEMATIC_PLAYBACK_STATE_SCHEMA_VERSION: Final[int] = 1
 CINEMATIC_PLAN_SCHEMA_VERSION: Final[int] = 1
+SCORE_EXPLANATION_SCHEMA_VERSION: Final[int] = 1
+SCORE_RUBRIC_SCHEMA_VERSION: Final[int] = 1
+SCORE_COMPONENT_SCHEMA_VERSION: Final[int] = 1
+SCORE_PROVENANCE_SCHEMA_VERSION: Final[int] = 1
+DECISION_REVIEW_SCHEMA_VERSION: Final[int] = 1
+MISSED_EVIDENCE_ITEM_SCHEMA_VERSION: Final[int] = 1
+VALID_ALTERNATIVE_SCHEMA_VERSION: Final[int] = 1
+RUN_SCORE_SCHEMA_VERSION: Final[int] = 1
+AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION: Final[int] = 1
+RUN_COMPARISON_SCORE_SCHEMA_VERSION: Final[int] = 1
+SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -349,6 +360,17 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "presentation_hint": frozenset({PRESENTATION_HINT_SCHEMA_VERSION}),
     "cinematic_playback_state": frozenset({CINEMATIC_PLAYBACK_STATE_SCHEMA_VERSION}),
     "cinematic_plan": frozenset({CINEMATIC_PLAN_SCHEMA_VERSION}),
+    "score_explanation": frozenset({SCORE_EXPLANATION_SCHEMA_VERSION}),
+    "score_rubric": frozenset({SCORE_RUBRIC_SCHEMA_VERSION}),
+    "score_component": frozenset({SCORE_COMPONENT_SCHEMA_VERSION}),
+    "score_provenance": frozenset({SCORE_PROVENANCE_SCHEMA_VERSION}),
+    "decision_review": frozenset({DECISION_REVIEW_SCHEMA_VERSION}),
+    "missed_evidence_item": frozenset({MISSED_EVIDENCE_ITEM_SCHEMA_VERSION}),
+    "valid_alternative": frozenset({VALID_ALTERNATIVE_SCHEMA_VERSION}),
+    "run_score": frozenset({RUN_SCORE_SCHEMA_VERSION}),
+    "after_action_view_model": frozenset({AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION}),
+    "run_comparison": frozenset({RUN_COMPARISON_SCORE_SCHEMA_VERSION}),
+    "score_export_artifact": frozenset({SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION}),
 }
 
 

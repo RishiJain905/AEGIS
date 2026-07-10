@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "runStatus": "completed",
+  "score": {
+    "schemaVersion": 1,
+    "scoreId": "scr_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "incidentId": "incident:silent-relay-001",
+    "overallScore": 84.5,
+    "maxScore": 100,
+    "grade": "B",
+    "passed": true,
+    "components": [
+      {
+        "schemaVersion": 1,
+        "criterionId": "criterion-evidence-coverage",
+        "label": "Evidence coverage",
+        "weight": 0.15,
+        "rawScore": 1.0,
+        "weightedContribution": 15.0,
+        "ruleIds": ["rule-evidence-coverage-fraction"],
+        "explanations": [
+          {
+            "schemaVersion": 1,
+            "ruleId": "rule-evidence-coverage-fraction",
+            "reason": "Operator reviewed 2 of 2 expected supporting evidence items.",
+            "eventIds": ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+            "evidenceIds": ["evidence:evd_synthetic_001"],
+            "decisionIds": [],
+            "hypothesisIds": [],
+            "proposalIds": [],
+            "sequence": 120
+          }
+        ]
+      }
+    ],
+    "provenance": {
+      "schemaVersion": 1,
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "scenarioId": "scenario:operation-silent-relay",
+      "scenarioVersion": "1.0.0",
+      "rubricVersion": "1.0.0",
+      "gradingEngineVersion": "1.0.0-phase29",
+      "inputEventSequenceFrom": 0,
+      "inputEventSequenceTo": 300,
+      "inputChecksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "integrityChecksum": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "calculatedAt": "2026-07-10T18:00:00.000Z",
+      "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "decisionReviews": [],
+    "missedEvidence": [],
+    "validAlternatives": [],
+    "coachingText": null,
+    "coachingAuthoritative": false,
+    "hiddenCauseId": "hidden-cause-compromised-credentials",
+    "hiddenCauseLabel": "Compromised service account credentials",
+    "hiddenCauseRevealed": true
+  },
+  "affectedAssetIds": ["asset:svc-logistics-api"],
+  "lessons": ["Prioritize overlapping identity and logistics signals before containment."],
+  "scribeReportId": "aar_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "scribeVersionNumber": 1,
+  "bookmarks": [
+    {
+      "label": "First credible alert",
+      "sequence": 120,
+      "kind": "detection",
+      "relatedId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    }
+  ],
+  "timelineHighlights": [
+    {
+      "sequence": 120,
+      "label": "First credible alert",
+      "kind": "detection",
+      "relatedId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "exportId": "aaf_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "scoreId": "scr_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "format": "json",
+  "scenarioVersion": "1.0.0",
+  "rubricVersion": "1.0.0",
+  "gradingEngineVersion": "1.0.0-phase29",
+  "integrityChecksum": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "contentChecksum": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "createdAt": "2026-07-10T18:05:00.000Z"
+}

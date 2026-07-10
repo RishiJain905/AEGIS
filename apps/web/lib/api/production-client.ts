@@ -1,5 +1,6 @@
 import {
   afterActionReportSchema,
+  afterActionViewModelSchema,
   agentSessionDetailSchema,
   apiErrorEnvelopeSchema,
   graphSnapshotSchema,
@@ -9,6 +10,7 @@ import {
   replayStateSchema,
   reportVersionSchema,
   riskScoresListResponseSchema,
+  runScoreSchema,
   snapshotManifestSchema,
   stateDiffSchema,
 } from '@aegis/contracts-ts';
@@ -129,6 +131,14 @@ export function createProductionClient(): AegisApiClient {
       );
       return data.map((item) => parseContract(reportVersionSchema, item));
     },
+    getAfterAction: (runId, signal) =>
+      fetchJson(`/api/v1/runs/${runId}/after-action`, signal, (data) =>
+        parseContract(afterActionViewModelSchema, data),
+      ),
+    getRunScore: (runId, signal) =>
+      fetchJson(`/api/v1/runs/${runId}/score`, signal, (data) =>
+        parseContract(runScoreSchema, data),
+      ),
     getConnectionStatus: async (signal): Promise<ConnectionStatus> => {
       try {
         await fetchJson('/api/v1/health', signal);

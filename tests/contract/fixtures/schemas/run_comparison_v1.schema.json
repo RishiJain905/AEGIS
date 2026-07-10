@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "RunComparisonComponentDeltaV1": {
+      "additionalProperties": false,
+      "properties": {
+        "criterionId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Criterionid",
+          "type": "string"
+        },
+        "delta": {
+          "title": "Delta",
+          "type": "number"
+        },
+        "leftRawScore": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Leftrawscore",
+          "type": "number"
+        },
+        "rightRawScore": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Rightrawscore",
+          "type": "number"
+        }
+      },
+      "required": ["criterionId", "leftRawScore", "rightRawScore", "delta"],
+      "title": "RunComparisonComponentDeltaV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "componentDeltas": {
+      "items": {
+        "$ref": "#/$defs/RunComparisonComponentDeltaV1"
+      },
+      "title": "Componentdeltas",
+      "type": "array"
+    },
+    "gradingEngineVersion": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Gradingengineversion",
+      "type": "string"
+    },
+    "leftOverallScore": {
+      "minimum": 0.0,
+      "title": "Leftoverallscore",
+      "type": "number"
+    },
+    "leftRunId": {
+      "title": "Leftrunid",
+      "type": "string"
+    },
+    "leftScoreId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Leftscoreid",
+      "type": "string"
+    },
+    "overallDelta": {
+      "title": "Overalldelta",
+      "type": "number"
+    },
+    "rightOverallScore": {
+      "minimum": 0.0,
+      "title": "Rightoverallscore",
+      "type": "number"
+    },
+    "rightRunId": {
+      "title": "Rightrunid",
+      "type": "string"
+    },
+    "rightScoreId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Rightscoreid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "leftRunId",
+    "rightRunId",
+    "leftScoreId",
+    "rightScoreId",
+    "leftOverallScore",
+    "rightOverallScore",
+    "overallDelta",
+    "gradingEngineVersion"
+  ],
+  "title": "RunComparisonV1",
+  "type": "object"
+}

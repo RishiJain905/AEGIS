@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "alternativeId": "alt_investigate_branch",
+  "kind": "valid_response_branch",
+  "authoritative": false,
+  "label": "Investigate-first response branch",
+  "description": "Counterfactual: selecting the investigate branch would have improved evidence coverage with lower service impact.",
+  "projectedOverallScore": 88.5,
+  "scoreDelta": 4.5,
+  "ruleIds": ["rule-cf-response-branch-investigate"],
+  "explanations": [
+    {
+      "schemaVersion": 1,
+      "ruleId": "rule-cf-response-branch-investigate",
+      "reason": "Investigate branch is an evidence-grounded valid alternative for this cause.",
+      "eventIds": [],
+      "evidenceIds": [],
+      "decisionIds": [],
+      "hypothesisIds": [],
+      "proposalIds": [],
+      "sequence": null
+    }
+  ]
+}

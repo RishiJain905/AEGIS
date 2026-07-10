@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "expectedEvidenceKey": "telemetry.authentication.failed:asset:svc-identity-broker",
+  "eventType": "telemetry.authentication.failed",
+  "assetId": "asset:svc-identity-broker",
+  "description": "Elevated authentication failures on identity broker",
+  "discovered": false,
+  "relatedEventIds": [],
+  "relatedEvidenceIds": [],
+  "bookmarkSequence": 95
+}

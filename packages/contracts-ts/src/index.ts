@@ -179,6 +179,7 @@ export * from './reports';
 export * from './replay';
 export * from './replay-frontend';
 export * from './cinematic';
+export * from './scoring';
 
 import {
   afterActionReportSchema,
@@ -224,6 +225,19 @@ import {
   returnToLiveResultSchema,
   timelineFilterSchema,
 } from './replay-frontend';
+import {
+  afterActionViewModelSchema,
+  decisionReviewSchema,
+  missedEvidenceItemSchema,
+  runComparisonSchema,
+  runScoreSchema,
+  scoreComponentSchema,
+  scoreExplanationSchema,
+  scoreExportArtifactSchema,
+  scoreProvenanceSchema,
+  scoreRubricSchema,
+  validAlternativeSchema,
+} from './scoring';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
@@ -361,4 +375,15 @@ export const FIXTURE_SCHEMA_MAP = {
   timeline_filter_v1: timelineFilterSchema,
   historical_graph_adapter_v1: historicalGraphAdapterSchema,
   return_to_live_result_v1: returnToLiveResultSchema,
+  score_explanation_v1: scoreExplanationSchema,
+  score_rubric_v1: scoreRubricSchema,
+  score_component_v1: scoreComponentSchema,
+  score_provenance_v1: scoreProvenanceSchema,
+  decision_review_v1: decisionReviewSchema,
+  missed_evidence_item_v1: missedEvidenceItemSchema,
+  valid_alternative_v1: validAlternativeSchema,
+  run_score_v1: runScoreSchema,
+  after_action_view_model_v1: afterActionViewModelSchema,
+  run_comparison_v1: runComparisonSchema,
+  score_export_artifact_v1: scoreExportArtifactSchema,
 } as const;

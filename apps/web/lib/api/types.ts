@@ -1,5 +1,6 @@
 import type {
   AfterActionReportV1,
+  AfterActionViewModelV1,
   AgentSessionDetailV1,
   AlertV1,
   AssetRiskScoreV1,
@@ -9,6 +10,7 @@ import type {
   ReplayCursorV1,
   ReplayStateV1,
   ReportVersionV1,
+  RunScoreV1,
   RunV1,
   ScenarioV1,
   ScenarioVersionV1,
@@ -18,6 +20,7 @@ import type {
 
 export type {
   AfterActionReportV1,
+  AfterActionViewModelV1,
   AgentSessionDetailV1,
   AlertV1,
   AssetRiskScoreV1,
@@ -27,6 +30,7 @@ export type {
   ReplayCursorV1,
   ReplayStateV1,
   ReportVersionV1,
+  RunScoreV1,
   RunV1,
   ScenarioV1,
   ScenarioVersionV1,
@@ -73,6 +77,8 @@ export interface AegisApiClient {
   getRunGraph(runId: string, signal?: AbortSignal): Promise<RunGraphResult>;
   getAfterActionReport(runId: string, signal?: AbortSignal): Promise<AfterActionReportV1>;
   listAfterActionReportVersions(runId: string, signal?: AbortSignal): Promise<ReportVersionV1[]>;
+  getAfterAction(runId: string, signal?: AbortSignal): Promise<AfterActionViewModelV1>;
+  getRunScore(runId: string, signal?: AbortSignal): Promise<RunScoreV1>;
   getConnectionStatus(signal?: AbortSignal): Promise<ConnectionStatus>;
   isReadOnly(runId: string, signal?: AbortSignal): Promise<boolean>;
   getReplayState(

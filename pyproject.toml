@@ -26,6 +26,7 @@ members = [
     "services/workers",
     "services/reports",
     "services/replay",
+    "services/scoring",
 ]
 
 [tool.uv.sources]
@@ -35,6 +36,7 @@ aegis-agents = { workspace = true }
 aegis-api = { workspace = true }
 aegis-reports = { workspace = true }
 aegis-replay = { workspace = true }
+aegis-scoring = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -110,6 +112,7 @@ root_packages = [
     "aegis_workers",
     "aegis_replay",
     "aegis_reports",
+    "aegis_scoring",
 ]
 
 [[tool.importlinter.contracts]]
@@ -164,6 +167,7 @@ forbidden_modules = [
     "aegis_workers",
     "aegis_replay",
     "aegis_reports",
+    "aegis_scoring",
 ]
 
 [tool.coverage.run]

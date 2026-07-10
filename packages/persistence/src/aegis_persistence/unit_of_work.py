@@ -38,6 +38,7 @@ from aegis_persistence.repositories.postgres import (
 from aegis_persistence.repositories.proposals import PostgresProposalRepository
 from aegis_persistence.repositories.replay import PostgresReplaySnapshotRepository
 from aegis_persistence.repositories.reports import PostgresReportRepository
+from aegis_persistence.repositories.scoring import PostgresRunScoreRepository
 
 
 class PostgresUnitOfWork:
@@ -80,6 +81,7 @@ class PostgresUnitOfWork:
         self._approvals = PostgresApprovalRepository(self._session)
         self._executed_actions = PostgresExecutedActionRepository(self._session)
         self._reports = PostgresReportRepository(self._session)
+        self._run_scores = PostgresRunScoreRepository(self._session)
         self._replay_snapshots = PostgresReplaySnapshotRepository(self._session)
         self._investigation = PostgresInvestigationRepository(
             self._session,
@@ -199,6 +201,10 @@ class PostgresUnitOfWork:
     @property
     def reports(self) -> PostgresReportRepository:
         return self._reports
+
+    @property
+    def run_scores(self) -> PostgresRunScoreRepository:
+        return self._run_scores
 
     @property
     def replay_snapshots(self) -> PostgresReplaySnapshotRepository:

@@ -13,6 +13,8 @@ export const queryKeys = {
     graph: (runId: string) => ['runs', runId, 'graph'] as const,
     readOnly: (runId: string) => ['runs', runId, 'read-only'] as const,
     afterActionReport: (runId: string) => ['runs', runId, 'after-action-report'] as const,
+    afterAction: (runId: string) => ['runs', runId, 'after-action'] as const,
+    score: (runId: string) => ['runs', runId, 'score'] as const,
     reportVersions: (runId: string) => ['runs', runId, 'report-versions'] as const,
   },
   incidents: {
