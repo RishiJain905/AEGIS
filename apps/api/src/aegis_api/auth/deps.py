@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Annotated
 
 from aegis_contracts import (
@@ -83,7 +83,7 @@ def require_permission(
     *,
     resource_type: str | None = None,
     resource_id_param: str | None = None,
-) -> Callable[..., AuthenticatedActorV1]:
+) -> Callable[..., Awaitable[AuthenticatedActorV1]]:
     async def _dependency(
         request: Request,
         actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],

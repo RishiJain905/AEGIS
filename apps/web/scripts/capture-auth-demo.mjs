@@ -82,8 +82,10 @@ await shot('30-narrow-responsive-authenticated');
 
 // Short motion recording: login → identity → logout
 await page.setViewportSize({ width: 1440, height: 900 });
+await context.clearCookies();
 await page.goto(`${BASE}/sign-in`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 await page.waitForSelector('[data-testid=sign-in-page]', { timeout: 60_000 });
+await page.waitForSelector('[data-testid=dev-login-operator]', { timeout: 60_000 });
 await page.waitForTimeout(400);
 await page.getByTestId('dev-login-operator').click();
 await page.waitForSelector('[data-testid=operator-identity]', { timeout: 60_000 });

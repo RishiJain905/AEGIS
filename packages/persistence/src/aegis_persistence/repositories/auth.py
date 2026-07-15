@@ -184,7 +184,7 @@ class PostgresAuthRepository:
             schema_version=SESSION_INFO_SCHEMA_VERSION,
             session_id=session_id,
             user_id=user_id,
-            auth_method=auth_method,  # type: ignore[arg-type]
+            auth_method=auth_method,
             created_at=created_at,
             expires_at=expires_at,
             revoked_at=None,
@@ -238,7 +238,7 @@ class PostgresAuthRepository:
                     schema_version=RESOURCE_ACCESS_GRANT_SCHEMA_VERSION,
                     grant_id=row.grant_id,
                     user_id=row.user_id,
-                    resource_type=row.resource_type,  # type: ignore[arg-type]
+                    resource_type=row.resource_type,
                     resource_id=row.resource_id,
                     permissions=[PermissionV1(item) for item in row.permissions],
                     created_at=row.created_at,

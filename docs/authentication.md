@@ -9,13 +9,13 @@ controls are usability only.
 
 ## Identity model
 
-| Concept | Description |
-|---------|-------------|
-| User | Authored id `user:…` persisted in `auth_users` |
-| External identity | OIDC issuer + subject mapped in `auth_external_identities` |
-| Roles | `viewer`, `analyst`, `operator`, `scenario_author`, `admin` |
-| Session | Opaque token (HttpOnly cookie) hashed in `auth_sessions` |
-| Actor | `AuthenticatedActorV1` derived only from the session |
+| Concept           | Description                                                 |
+| ----------------- | ----------------------------------------------------------- |
+| User              | Authored id `user:…` persisted in `auth_users`              |
+| External identity | OIDC issuer + subject mapped in `auth_external_identities`  |
+| Roles             | `viewer`, `analyst`, `operator`, `scenario_author`, `admin` |
+| Session           | Opaque token (HttpOnly cookie) hashed in `auth_sessions`    |
+| Actor             | `AuthenticatedActorV1` derived only from the session        |
 
 Client-supplied `X-Actor-Id`, `actorId`, roles, or bearer synthetic tokens are
 **ignored** for identity. Approval `approverId` is always the authenticated
@@ -48,24 +48,24 @@ Client-supplied `X-Actor-Id`, `actorId`, roles, or bearer synthetic tokens are
 
 ## Role → permission matrix
 
-| Permission | viewer | analyst | operator | scenario_author | admin |
-|---|---|---|---|---|---|
-| `runs:read` | Y | Y | Y | Y | Y |
-| `runs:write` | | | Y | | Y |
-| `investigation:read` | Y | Y | Y | Y | Y |
-| `investigation:trigger` | | Y | Y | | Y |
-| `approvals:decide` | | | Y | | Y |
-| `replay:read` | Y | Y | Y | Y | Y |
-| `replay:write` | | | Y | | Y |
-| `reports:read` | Y | Y | Y | Y | Y |
-| `reports:export` | | Y | Y | | Y |
-| `reports:trigger` | | | Y | | Y |
-| `scoring:read` | Y | Y | Y | Y | Y |
-| `scoring:compute` | | Y | Y | | Y |
-| `scoring:export` | | Y | Y | | Y |
-| `scenarios:publish` | | | | Y | Y |
-| `admin:manage` | | | | | Y |
-| `ws:subscribe` | Y | Y | Y | Y | Y |
+| Permission              | viewer | analyst | operator | scenario_author | admin |
+| ----------------------- | ------ | ------- | -------- | --------------- | ----- |
+| `runs:read`             | Y      | Y       | Y        | Y               | Y     |
+| `runs:write`            |        |         | Y        |                 | Y     |
+| `investigation:read`    | Y      | Y       | Y        | Y               | Y     |
+| `investigation:trigger` |        | Y       | Y        |                 | Y     |
+| `approvals:decide`      |        |         | Y        |                 | Y     |
+| `replay:read`           | Y      | Y       | Y        | Y               | Y     |
+| `replay:write`          |        |         | Y        |                 | Y     |
+| `reports:read`          | Y      | Y       | Y        | Y               | Y     |
+| `reports:export`        |        | Y       | Y        |                 | Y     |
+| `reports:trigger`       |        |         | Y        |                 | Y     |
+| `scoring:read`          | Y      | Y       | Y        | Y               | Y     |
+| `scoring:compute`       |        | Y       | Y        |                 | Y     |
+| `scoring:export`        |        | Y       | Y        |                 | Y     |
+| `scenarios:publish`     |        |         |          | Y               | Y     |
+| `admin:manage`          |        |         |          |                 | Y     |
+| `ws:subscribe`          | Y      | Y       | Y        | Y               | Y     |
 
 WARDEN policy metadata roles `incident_commander` / `security_lead` are satisfied
 by any authenticated actor with `approvals:decide` (operator, admin). They are
@@ -75,13 +75,13 @@ Optional `ResourceAccessGrant` rows further restrict run-scoped access when pres
 
 ## Enforcement points
 
-| Surface | Mechanism |
-|---------|-----------|
-| HTTP | `require_actor` / `require_permission` FastAPI dependencies |
-| Approvals | Session actor only; `approvals:decide` required |
-| WebSocket | Session or short-lived `/api/v1/auth/ws-ticket`; `ws:subscribe` |
-| Exports / scoring / replay writes | Permission-gated as above |
-| Admin observability | `admin:manage` |
+| Surface                           | Mechanism                                                       |
+| --------------------------------- | --------------------------------------------------------------- |
+| HTTP                              | `require_actor` / `require_permission` FastAPI dependencies     |
+| Approvals                         | Session actor only; `approvals:decide` required                 |
+| WebSocket                         | Session or short-lived `/api/v1/auth/ws-ticket`; `ws:subscribe` |
+| Exports / scoring / replay writes | Permission-gated as above                                       |
+| Admin observability               | `admin:manage`                                                  |
 
 ## CORS
 

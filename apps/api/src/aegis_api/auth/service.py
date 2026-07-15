@@ -159,7 +159,7 @@ class AuthService:
             schema_version=SESSION_INFO_SCHEMA_VERSION,
             session_id=row.session_id,
             user_id=row.user_id,
-            auth_method=row.auth_method,  # type: ignore[arg-type]
+            auth_method=row.auth_method,
             created_at=row.created_at,
             expires_at=row.expires_at,
             revoked_at=row.revoked_at,
