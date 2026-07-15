@@ -105,3 +105,25 @@ def test_production_rejects_wildcard_cors() -> None:
 def test_development_allows_dev_auth() -> None:
     settings = _settings()
     assert_secure_auth_configuration(settings)
+
+
+@pytest.mark.asyncio
+async def test_seed_dev_identities_skips_connection_errors_in_test_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from aegis_api.auth import startup as startup_module
+
+    class _Boom:
+        async def __aenter__(self):  # noqa: ANN204
+            raise OSError("simulated postgres unavailable")
+
+        async def __aexit__(self, *args: object) -> None:
+            _ = args
+
+    monkeypatch.setattr(
+        startup_module,
+        "PostgresUnitOfWork",
+        lambda *_args, **_kwargs: _Boom(),
+    )
+    settings = _settings(AEGIS_ENV=AegisEnvironment.TEST, AEGIS_DEV_AUTH_ENABLED=True)
+    await startup_module.seed_dev_identities(settings)

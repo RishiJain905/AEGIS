@@ -37,16 +37,28 @@ def assert_secure_auth_configuration(settings: AegisSettings) -> None:
 
 
 async def seed_dev_identities(settings: AegisSettings) -> None:
+    """Seed deterministic local identities when development auth is enabled.
+
+    Seeding is best-effort in the test environment so unit tests that boot the
+    app without PostgreSQL (for example health checks) do not fail closed on
+    connection errors. Development and other non-production environments still
+    surface seed failures so local misconfiguration is obvious.
+    """
     if settings.AEGIS_ENV == AegisEnvironment.PRODUCTION:
         return
     if not settings.AEGIS_DEV_AUTH_ENABLED:
         return
     now = datetime.now(tz=UTC)
-    async with PostgresUnitOfWork(get_db_session_maker()) as uow:
-        for user_id, display_name, roles in DEV_SEED_USERS:
-            await uow.auth.upsert_user(
-                user_id=user_id,
-                display_name=display_name,
-                roles=roles,
-                now=now,
-            )
+    try:
+        async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+            for user_id, display_name, roles in DEV_SEED_USERS:
+                await uow.auth.upsert_user(
+                    user_id=user_id,
+                    display_name=display_name,
+                    roles=roles,
+                    now=now,
+                )
+    except Exception:
+        if settings.AEGIS_ENV == AegisEnvironment.TEST:
+            return
+        raise

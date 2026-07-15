@@ -46,6 +46,8 @@ def client() -> Iterator[TestClient]:
         API_PORT=8000,
         WEB_PORT=3000,
         AEGIS_WS_ENABLED=False,
+        # Health unit tests do not provide PostgreSQL; skip identity seeding.
+        AEGIS_DEV_AUTH_ENABLED=False,
     )
     with patch("aegis_api.main.check_postgres", new=AsyncMock(return_value=True)):
         app = create_app(settings=settings)
@@ -92,6 +94,7 @@ def test_ready_endpoint_fails_closed_when_database_unavailable() -> None:
         API_PORT=8000,
         WEB_PORT=3000,
         AEGIS_WS_ENABLED=False,
+        AEGIS_DEV_AUTH_ENABLED=False,
     )
     with patch("aegis_api.main.check_postgres", new=AsyncMock(return_value=False)):
         app = create_app(settings=settings)
