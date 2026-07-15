@@ -1,0 +1,145 @@
+{
+  "$defs": {
+    "PermissionV1": {
+      "enum": [
+        "runs:read",
+        "runs:write",
+        "investigation:read",
+        "investigation:trigger",
+        "approvals:decide",
+        "replay:read",
+        "replay:write",
+        "reports:read",
+        "reports:export",
+        "reports:trigger",
+        "scoring:read",
+        "scoring:compute",
+        "scoring:export",
+        "scenarios:publish",
+        "admin:manage",
+        "ws:subscribe"
+      ],
+      "title": "PermissionV1",
+      "type": "string"
+    },
+    "SecurityAuditActionV1": {
+      "enum": ["login", "logout", "denial", "role_change", "privileged_action"],
+      "title": "SecurityAuditActionV1",
+      "type": "string"
+    },
+    "SecurityAuditOutcomeV1": {
+      "enum": ["success", "failure"],
+      "title": "SecurityAuditOutcomeV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "$ref": "#/$defs/SecurityAuditActionV1"
+    },
+    "actorUserId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actoruserid"
+    },
+    "correlationId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correlationid"
+    },
+    "details": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Details",
+      "type": "object"
+    },
+    "eventId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Eventid",
+      "type": "string"
+    },
+    "occurredAt": {
+      "title": "Occurredat",
+      "type": "string"
+    },
+    "outcome": {
+      "$ref": "#/$defs/SecurityAuditOutcomeV1"
+    },
+    "permission": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PermissionV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reasonCode": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reasoncode"
+    },
+    "requestId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Requestid"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "target": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target"
+    }
+  },
+  "required": ["schemaVersion", "eventId", "action", "outcome", "occurredAt"],
+  "title": "SecurityAuditEventV1",
+  "type": "object"
+}

@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase29"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase30"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -193,6 +193,13 @@ RUN_SCORE_SCHEMA_VERSION: Final[int] = 1
 AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION: Final[int] = 1
 RUN_COMPARISON_SCORE_SCHEMA_VERSION: Final[int] = 1
 SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION: Final[int] = 1
+AUTHENTICATED_ACTOR_SCHEMA_VERSION: Final[int] = 1
+ROLE_SCHEMA_VERSION: Final[int] = 1
+PERMISSION_SCHEMA_VERSION: Final[int] = 1
+RESOURCE_ACCESS_GRANT_SCHEMA_VERSION: Final[int] = 1
+AUTHORIZATION_DECISION_SCHEMA_VERSION: Final[int] = 1
+SESSION_INFO_SCHEMA_VERSION: Final[int] = 1
+SECURITY_AUDIT_EVENT_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -371,6 +378,13 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "after_action_view_model": frozenset({AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION}),
     "run_comparison": frozenset({RUN_COMPARISON_SCORE_SCHEMA_VERSION}),
     "score_export_artifact": frozenset({SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION}),
+    "authenticated_actor": frozenset({AUTHENTICATED_ACTOR_SCHEMA_VERSION}),
+    "role": frozenset({ROLE_SCHEMA_VERSION}),
+    "permission": frozenset({PERMISSION_SCHEMA_VERSION}),
+    "resource_access_grant": frozenset({RESOURCE_ACCESS_GRANT_SCHEMA_VERSION}),
+    "authorization_decision": frozenset({AUTHORIZATION_DECISION_SCHEMA_VERSION}),
+    "session_info": frozenset({SESSION_INFO_SCHEMA_VERSION}),
+    "security_audit_event": frozenset({SECURITY_AUDIT_EVENT_SCHEMA_VERSION}),
 }
 
 

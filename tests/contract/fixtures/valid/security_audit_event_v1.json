@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "eventId": "sae_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "action": "login",
+  "outcome": "success",
+  "actorUserId": "user:operator-alpha",
+  "target": null,
+  "permission": null,
+  "reasonCode": "DEV_LOGIN",
+  "requestId": "req_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "correlationId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "occurredAt": "2026-01-01T00:00:00Z",
+  "details": {
+    "authMethod": "dev"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "grantId": "grant_operator_run_001",
+  "userId": "user:operator-alpha",
+  "resourceType": "run",
+  "resourceId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "permissions": ["runs:read", "ws:subscribe"],
+  "createdAt": "2026-01-01T00:00:00Z"
+}

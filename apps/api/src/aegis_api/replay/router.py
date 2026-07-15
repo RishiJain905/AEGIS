@@ -12,6 +12,7 @@ from functools import lru_cache
 from typing import Annotated
 
 from aegis_contracts import (
+    PermissionV1,
     ReplayCursorV1,
     ReplayEquivalenceResultV1,
     ReplayStateV1,
@@ -24,9 +25,10 @@ from aegis_persistence.object_storage import build_object_storage
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_replay.errors import ReplayEngineError
 from aegis_replay.service import ReplayService
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
+from aegis_api.auth.deps import require_permission
 from aegis_api.db.session import get_db_session_maker
 
 router = APIRouter(prefix="/api/v1/replay", tags=["replay"])
@@ -165,7 +167,10 @@ async def list_replay_snapshots(run_id: str) -> list[SnapshotManifestV1]:
         return await service.list_snapshots(uow, run_id=run_id)
 
 
-@router.post("/runs/{run_id}/snapshots", response_model=SnapshotManifestV1)
+@router.post(
+    "/runs/{run_id}/snapshots", response_model=SnapshotManifestV1,
+    dependencies=[Depends(require_permission(PermissionV1.REPLAY_WRITE))],
+)
 async def create_replay_snapshot(
     run_id: str,
     request: CreateSnapshotRequestV1 | None = None,

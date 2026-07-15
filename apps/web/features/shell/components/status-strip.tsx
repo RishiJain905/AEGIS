@@ -4,6 +4,7 @@ import { NodeStatus } from '@aegis/contracts-ts';
 import { Alert, Badge } from '@aegis/ui';
 
 import { useLiveRun } from '@/features/live-run';
+import { OperatorIdentityBadge } from '@/features/auth';
 import {
   useConnectionStatus,
   useRun,
@@ -88,8 +89,11 @@ export function StatusStrip({ runId }: StatusStripProps) {
           Sequence: {sequence}
         </span>
       ) : null}
+      <div className="ml-auto">
+        <OperatorIdentityBadge />
+      </div>
       {!liveRun?.isLiveMode && connectionStatus === 'offline' ? (
-        <Alert variant="warning" title="Connection offline" className="ml-auto max-w-md">
+        <Alert variant="warning" title="Connection offline" className="max-w-md">
           Realtime updates are unavailable. Showing last known fixture data.
         </Alert>
       ) : null}

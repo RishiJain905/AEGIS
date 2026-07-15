@@ -111,17 +111,32 @@ All frames use `WebSocketFrameV1`:
 
 Package: `@aegis/realtime-client`
 
+Authenticate with a short-lived WebSocket ticket from
+`POST /api/v1/auth/ws-ticket` (session cookie + CSRF required). Do not embed
+long-lived session secrets in the browser URL or localStorage.
+
 ```typescript
 import { RealtimeTransport } from '@aegis/realtime-client';
 
+const ticketRes = await fetch('/api/v1/auth/ws-ticket', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'X-CSRF-Token': csrfToken },
+});
+const { ticket } = await ticketRes.json();
+
 const transport = new RealtimeTransport({
   url: 'ws://localhost:8000/ws/v1/realtime',
-  token: 'aegis-dev-token',
+  token: ticket,
   autoReconnect: true,
 });
 await transport.connect();
 transport.subscribe({ runId, channel: 'events', lastAppliedSequence: 0 });
 ```
+
+`AEGIS_WS_DEV_AUTH_ENABLED` / `DevWebSocketAuthenticator` remain for narrow
+local tests only and are rejected at startup when `AEGIS_ENV=production`.
+See [`docs/authentication.md`](authentication.md).
 
 ## Diagnostic demo
 

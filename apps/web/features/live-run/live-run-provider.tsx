@@ -25,6 +25,7 @@ import { RealtimeTransport } from '@aegis/realtime-client';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/api/query-keys';
+import { apiFetchJson } from '@/lib/api/auth-fetch';
 
 import { fetchMissingEvents } from '@/lib/realtime/catch-up';
 import {
@@ -53,8 +54,11 @@ function getWsUrl(): string {
   return process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:8000/ws/v1/realtime';
 }
 
-function getWsToken(): string {
-  return process.env.NEXT_PUBLIC_AEGIS_WS_TOKEN ?? 'aegis-dev-token';
+async function fetchWsTicket(): Promise<string> {
+  const payload = await apiFetchJson<{ ticket: string }>('/api/v1/auth/ws-ticket', {
+    method: 'POST',
+  });
+  return payload.ticket;
 }
 
 function isLiveDataSource(): boolean {
@@ -219,7 +223,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       return;
     }
 
-    let cancelled = false;
+    const cancelledRef = { current: false };
 
     async function bootstrap() {
       dispatch({
@@ -229,7 +233,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       });
       try {
         const bootstrapPayload = await buildBootstrapFromEndpoints(runId);
-        if (cancelled) {
+        if (cancelledRef.current) {
           return;
         }
         graphStoreRef.current.loadSnapshot(bootstrapPayload.graphSnapshot);
@@ -264,79 +268,103 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
 
     void bootstrap();
 
-    const transport = new RealtimeTransport({
-      url: getWsUrl(),
-      token: getWsToken(),
-      autoReconnect: true,
-    });
-    transportRef.current = transport;
+    let offState = () => {};
+    let offEvent = () => {};
+    let offSnapshotRequired = () => {};
+    let offError = () => {};
+    let offResyncComplete = () => {};
 
-    const offState = transport.on('connection_state', (connectionState) => {
-      if (connectionState === 'reconnecting') {
+    void (async () => {
+      let ticket: string;
+      try {
+        ticket = await fetchWsTicket();
+      } catch {
+        if (!cancelledRef.current) {
+          dispatch({
+            type: 'set_connection_health',
+            connectionHealth: ConnectionHealthState.DISCONNECTED,
+            isStale: true,
+          });
+        }
+        return;
+      }
+      if (cancelledRef.current) {
+        return;
+      }
+
+      const transport = new RealtimeTransport({
+        url: getWsUrl(),
+        token: ticket,
+        autoReconnect: true,
+      });
+      transportRef.current = transport;
+
+      offState = transport.on('connection_state', (connectionState) => {
+        if (connectionState === 'reconnecting') {
+          dispatch({
+            type: 'set_connection_health',
+            connectionHealth: ConnectionHealthState.RECONNECTING,
+            isStale: true,
+          });
+        } else if (connectionState === 'connected') {
+          dispatch({
+            type: 'set_connection_health',
+            connectionHealth: ConnectionHealthState.CONNECTED,
+            isStale: false,
+          });
+        } else if (connectionState === 'disconnected' || connectionState === 'closed') {
+          dispatch({
+            type: 'set_connection_health',
+            connectionHealth: ConnectionHealthState.DISCONNECTED,
+            isStale: true,
+          });
+        }
+      });
+
+      offEvent = transport.on('event', (envelope) => {
+        processEnvelope(envelope);
+      });
+
+      offSnapshotRequired = transport.on('snapshot_required', () => {
+        void performResync();
+      });
+
+      offError = transport.on('error', (error) => {
+        if (error.code === 'WS_SEQUENCE_GAP') {
+          void performResync();
+          return;
+        }
         dispatch({
           type: 'set_connection_health',
-          connectionHealth: ConnectionHealthState.RECONNECTING,
+          connectionHealth: ConnectionHealthState.STALE,
           isStale: true,
         });
-      } else if (connectionState === 'connected') {
+      });
+
+      offResyncComplete = transport.on('resync_complete', () => {
         dispatch({
           type: 'set_connection_health',
           connectionHealth: ConnectionHealthState.CONNECTED,
           isStale: false,
         });
-      } else if (connectionState === 'disconnected' || connectionState === 'closed') {
-        dispatch({
-          type: 'set_connection_health',
-          connectionHealth: ConnectionHealthState.DISCONNECTED,
-          isStale: true,
-        });
-      }
-    });
-
-    const offEvent = transport.on('event', (envelope) => {
-      processEnvelope(envelope);
-    });
-
-    const offSnapshotRequired = transport.on('snapshot_required', () => {
-      void performResync();
-    });
-
-    const offError = transport.on('error', (error) => {
-      if (error.code === 'WS_SEQUENCE_GAP') {
-        void performResync();
-        return;
-      }
-      dispatch({
-        type: 'set_connection_health',
-        connectionHealth: ConnectionHealthState.STALE,
-        isStale: true,
       });
-    });
 
-    const offResyncComplete = transport.on('resync_complete', () => {
-      dispatch({
-        type: 'set_connection_health',
-        connectionHealth: ConnectionHealthState.CONNECTED,
-        isStale: false,
-      });
-    });
-
-    void transport.connect().then(() => {
+      await transport.connect();
       transport.subscribe({
         runId,
         channel: 'events',
         lastAppliedSequence: loadStoredCursor(runId),
       });
-    });
+    })();
 
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
       offState();
       offEvent();
       offSnapshotRequired();
       offError();
       offResyncComplete();
-      transport.disconnect();
+      transportRef.current?.disconnect();
       transportRef.current = null;
     };
   }, [isLiveMode, performResync, processEnvelope, runId]);

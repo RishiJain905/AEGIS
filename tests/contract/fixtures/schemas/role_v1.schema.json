@@ -1,0 +1,53 @@
+{
+  "$defs": {
+    "PermissionV1": {
+      "enum": [
+        "runs:read",
+        "runs:write",
+        "investigation:read",
+        "investigation:trigger",
+        "approvals:decide",
+        "replay:read",
+        "replay:write",
+        "reports:read",
+        "reports:export",
+        "reports:trigger",
+        "scoring:read",
+        "scoring:compute",
+        "scoring:export",
+        "scenarios:publish",
+        "admin:manage",
+        "ws:subscribe"
+      ],
+      "title": "PermissionV1",
+      "type": "string"
+    },
+    "PlatformRoleV1": {
+      "enum": ["viewer", "analyst", "operator", "scenario_author", "admin"],
+      "title": "PlatformRoleV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "permissions": {
+      "items": {
+        "$ref": "#/$defs/PermissionV1"
+      },
+      "minItems": 1,
+      "title": "Permissions",
+      "type": "array"
+    },
+    "role": {
+      "$ref": "#/$defs/PlatformRoleV1"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "role", "permissions"],
+  "title": "RoleContractV1",
+  "type": "object"
+}

@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "permission": "approvals:decide",
+  "description": "Approve, reject, modify, or cancel approval-controlled proposals"
+}

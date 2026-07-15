@@ -17,8 +17,10 @@ from aegis_contracts import (
     ActorType,
     ApprovalDecision,
     ApprovalV1,
+    AuthenticatedActorV1,
     ExecutedActionV1,
     IdempotencyRecordV1,
+    PermissionV1,
     SimulationCommandType,
     SimulationCommandV1,
 )
@@ -58,6 +60,7 @@ from aegis_contracts.versioning import (
 )
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_policy import PolicyEngine
+from aegis_policy.authz import actor_has_permission
 from aegis_simulation.application import SimulationApplicationService
 from aegis_simulation.run_command_service import RunCommandService
 from aegis_simulation_domain.errors import SimulationError, SimulationErrorCode
@@ -72,8 +75,6 @@ from aegis_api.approvals.events import (
 )
 from aegis_api.commands.mapping import (
     APPROVAL_IDEMPOTENCY_SCOPE,
-    DEFAULT_AUTHORIZATION_TOKEN,
-    DEFAULT_OPERATOR_ACTOR_ID,
     map_scenario_command_to_authorized,
 )
 
@@ -95,12 +96,10 @@ class ApprovalWorkflowService:
         uow: PostgresUnitOfWork,
         request: ApproveProposalRequestV1,
         *,
-        actor_id: str | None = None,
-        authorization_token: str = DEFAULT_AUTHORIZATION_TOKEN,
+        authenticated_actor: AuthenticatedActorV1,
         trace_id: str | None = None,
     ) -> ApproveProposalResponseV1:
-        actor = self._resolve_actor(request.actor_id or actor_id)
-        self._assert_operator_token(authorization_token)
+        actor, authorization_token = self._resolve_authenticated_actor(authenticated_actor)
         existing = await uow.idempotency.get(
             scope=APPROVAL_IDEMPOTENCY_SCOPE,
             idempotency_key=request.idempotency_key,
@@ -239,12 +238,10 @@ class ApprovalWorkflowService:
         uow: PostgresUnitOfWork,
         request: RejectProposalRequestV1,
         *,
-        actor_id: str | None = None,
-        authorization_token: str = DEFAULT_AUTHORIZATION_TOKEN,
+        authenticated_actor: AuthenticatedActorV1,
         trace_id: str | None = None,
     ) -> RejectProposalResponseV1:
-        actor = self._resolve_actor(request.actor_id or actor_id)
-        self._assert_operator_token(authorization_token)
+        actor, authorization_token = self._resolve_authenticated_actor(authenticated_actor)
         existing = await uow.idempotency.get(
             scope=APPROVAL_IDEMPOTENCY_SCOPE,
             idempotency_key=request.idempotency_key,
@@ -323,18 +320,18 @@ class ApprovalWorkflowService:
         uow: PostgresUnitOfWork,
         request: ModifyProposalRequestV1,
         *,
-        actor_id: str | None = None,
-        authorization_token: str = DEFAULT_AUTHORIZATION_TOKEN,
+        authenticated_actor: AuthenticatedActorV1,
         trace_id: str | None = None,
     ) -> ModifyProposalResponseV1:
-        actor = self._resolve_actor(request.actor_id or actor_id)
-        self._assert_operator_token(authorization_token)
+        actor, authorization_token = self._resolve_authenticated_actor(authenticated_actor)
         existing = await uow.idempotency.get(
             scope=APPROVAL_IDEMPOTENCY_SCOPE,
             idempotency_key=request.idempotency_key,
         )
         if existing is not None and existing.response_ref:
-            return await self._replay_modify_response(uow, existing.response_ref, request)
+            return await self._replay_modify_response(
+                uow, existing.response_ref, request, actor=actor
+            )
 
         proposal = await self._require_proposal(uow, request.proposal_id)
         self._assert_pending(proposal)
@@ -502,12 +499,10 @@ class ApprovalWorkflowService:
         uow: PostgresUnitOfWork,
         request: CancelProposalRequestV1,
         *,
-        actor_id: str | None = None,
-        authorization_token: str = DEFAULT_AUTHORIZATION_TOKEN,
+        authenticated_actor: AuthenticatedActorV1,
         trace_id: str | None = None,
     ) -> CancelProposalResponseV1:
-        actor = self._resolve_actor(request.actor_id or actor_id)
-        self._assert_operator_token(authorization_token)
+        actor, authorization_token = self._resolve_authenticated_actor(authenticated_actor)
         existing = await uow.idempotency.get(
             scope=APPROVAL_IDEMPOTENCY_SCOPE,
             idempotency_key=request.idempotency_key,
@@ -901,22 +896,22 @@ class ApprovalWorkflowService:
                 status_code=409,
             )
 
-    def _resolve_actor(self, actor_id: str | None) -> str:
-        return actor_id or DEFAULT_OPERATOR_ACTOR_ID
+    def _resolve_authenticated_actor(
+        self,
+        authenticated_actor: AuthenticatedActorV1,
+    ) -> tuple[str, str]:
+        """Derive approver identity only from the authenticated session actor.
 
-    def _assert_operator_token(self, authorization_token: str | None) -> None:
-        if not authorization_token:
+        Client-supplied actorId / X-Actor-Id / Authorization bearer values are ignored.
+        """
+        if not actor_has_permission(authenticated_actor, PermissionV1.APPROVALS_DECIDE):
             raise ApprovalWorkflowError(
                 code=ApprovalErrorCode.UNAUTHORIZED,
-                message="Authorization token required for approval workflow",
-                status_code=401,
+                message="Authenticated actor lacks approvals:decide permission",
+                status_code=403,
             )
-        if authorization_token != DEFAULT_AUTHORIZATION_TOKEN:
-            raise ApprovalWorkflowError(
-                code=ApprovalErrorCode.UNAUTHORIZED,
-                message="Invalid authorization token for approval workflow",
-                status_code=401,
-            )
+        token = f"session:{authenticated_actor.session_id}"
+        return authenticated_actor.user_id, token
 
     async def _replay_approve_response(
         self,
@@ -999,6 +994,8 @@ class ApprovalWorkflowService:
         uow: PostgresUnitOfWork,
         revision_id: str,
         request: ModifyProposalRequestV1,
+        *,
+        actor: str,
     ) -> ModifyProposalResponseV1:
         revision = await uow.proposals.get_revision(revision_id)
         if revision is None:
@@ -1035,7 +1032,7 @@ class ApprovalWorkflowService:
                 rationale=revision.rationale,
                 risk_tradeoffs=revision.risk_tradeoffs,
                 comment=request.comment,
-                modified_by=request.actor_id or DEFAULT_OPERATOR_ACTOR_ID,
+                modified_by=actor,
                 modified_at=revision.created_at,
             ),
             policy_decision=decision,

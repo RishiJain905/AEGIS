@@ -10,7 +10,7 @@ import pytest
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_api.approvals.errors import ApprovalWorkflowError
 from aegis_api.approvals.service import ApprovalWorkflowService
-from aegis_contracts import ActionClass, AgentRole, ProposalStatus
+from aegis_contracts import ActionClass, AgentRole, PlatformRoleV1, ProposalStatus
 from aegis_contracts.approvals import (
     ApprovalErrorCode,
     ApproveProposalRequestV1,
@@ -37,10 +37,31 @@ from aegis_contracts.versioning import (
 from aegis_persistence.engine import create_engine, dispose_engine, get_session_maker
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_policy import PolicyEngine
+from aegis_policy.authz import build_actor
 from aegis_simulation import run_command_service as run_command_module
 from aegis_simulation.run_command_service import RunCommandService
 
 from tests.integration.agents.helpers import seed_investigation_run
+
+
+def _operator_actor():
+    return build_actor(
+        user_id="user:operator-alpha",
+        display_name="Operator Alpha",
+        roles=[PlatformRoleV1.OPERATOR],
+        session_id="sess_phase24_operator",
+        auth_method="dev",
+    )
+
+
+def _viewer_actor():
+    return build_actor(
+        user_id="user:viewer-alpha",
+        display_name="Viewer Alpha",
+        roles=[PlatformRoleV1.VIEWER],
+        session_id="sess_phase24_viewer",
+        auth_method="dev",
+    )
 
 pytestmark = pytest.mark.skipif(
     os.getenv("AEGIS_INTEGRATION_POSTGRES") != "1",
@@ -189,6 +210,7 @@ async def test_approval_workflow_accept_criteria() -> None:
                     comment="stale",
                     idempotency_key=f"{suite_key}-stale-approve",
                 ),
+                authenticated_actor=_operator_actor(),
             )
         assert stale_exc.value.code == ApprovalErrorCode.STALE_PROPOSAL
 
@@ -203,7 +225,7 @@ async def test_approval_workflow_accept_criteria() -> None:
                     comment="bypass",
                     idempotency_key=f"{suite_key}-unauth-approve",
                 ),
-                authorization_token="agent-self-approve",
+                authenticated_actor=_viewer_actor(),
             )
         assert auth_exc.value.code == ApprovalErrorCode.UNAUTHORIZED
 
@@ -223,6 +245,7 @@ async def test_approval_workflow_accept_criteria() -> None:
                 comment="modify-before-approve",
                 idempotency_key=f"{suite_key}-modify",
             ),
+            authenticated_actor=_operator_actor(),
         )
         assert (
             modify_response.modification.new_revision_id
@@ -247,6 +270,7 @@ async def test_approval_workflow_accept_criteria() -> None:
                 comment="approve-after-modify",
                 idempotency_key=f"{suite_key}-approve",
             ),
+            authenticated_actor=_operator_actor(),
         )
         assert approve_response.approval.decision.value == "approved"
         assert approve_response.execution is not None
@@ -263,6 +287,7 @@ async def test_approval_workflow_accept_criteria() -> None:
                 comment="approve-after-modify",
                 idempotency_key=f"{suite_key}-approve",
             ),
+            authenticated_actor=_operator_actor(),
         )
         assert replay.replayed is True
         actions = await uow.executed_actions.list_for_proposal(updated.id)
@@ -292,6 +317,7 @@ async def test_approval_workflow_accept_criteria() -> None:
                 comment="reject-path",
                 idempotency_key=f"{suite_key}-reject",
             ),
+            authenticated_actor=_operator_actor(),
         )
         assert reject_response.proposal_status == ProposalStatus.REJECTED
         assert await uow.executed_actions.list_for_proposal(reject_proposal.id) == []

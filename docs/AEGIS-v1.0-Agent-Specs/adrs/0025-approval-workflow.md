@@ -6,7 +6,7 @@ Proposed
 
 ## Context
 
-Phase 22 delivered BASTION proposals and deterministic WARDEN policy evaluation. Class 2/3 proposals remain `pending` with `approval_required`. Architecture requires important state changes to pass deterministic policy, explicit human approval, final revalidation, and an internal idempotent simulator command. Production OIDC is deferred to Phase 30, but actor hooks must exist now.
+Phase 22 delivered BASTION proposals and deterministic WARDEN policy evaluation. Class 2/3 proposals remain `pending` with `approval_required`. Architecture requires important state changes to pass deterministic policy, explicit human approval, final revalidation, and an internal idempotent simulator command. Production OIDC identity is delivered in Phase 30 (ADR 0031); this ADR established the approval state machine and temporary synthetic actor hooks that Phase 30 replaced.
 
 ## Decision
 
@@ -16,13 +16,13 @@ Phase 22 delivered BASTION proposals and deterministic WARDEN policy evaluation.
 
 3. **Optimistic concurrency** — Requests carry `expectedRevisionId` and `expectedRevision`. Mismatch returns `STALE_PROPOSAL`.
 
-4. **Authorized simulation command adapter** — Allowlisted scenario commands map to `SimulationCommandType.EXECUTE` with `effect.set_asset_status` payloads. Operator actor + `synthetic-operator-token` are required until Phase 30.
+4. **Authorized simulation command adapter** — Allowlisted scenario commands map to `SimulationCommandType.EXECUTE` with `effect.set_asset_status` payloads. Operator identity and the session-bound authorization token come from Phase 30 authenticated sessions (`user:…` + `session:{sessionId}`).
 
 5. **Idempotent execution** — Approval scope idempotency keys plus unique `(run_id, idempotency_key)` on `executed_actions` prevent duplicate effects under retries.
 
 6. **InvestigationDetail v4** — Additive `approvals[]` and `executedActions[]` for command-centre reconstruction after reload.
 
-7. **Actor identity hook** — Optional `X-Actor-Id` / request `actorId` defaulting to `asset:operator-console`. Phase 30 replaces the synthetic token and identity source without changing the approval state machine.
+7. **Actor identity** — Client `X-Actor-Id` / `actorId` are ignored. Approver identity is session-derived only (ADR 0031). The approval state machine itself is unchanged.
 
 ## Consequences
 
@@ -37,4 +37,6 @@ Phase 22 delivered BASTION proposals and deterministic WARDEN policy evaluation.
 - ADR 0023 — BASTION/WARDEN Policy and Proposals
 - ADR 0010 — Deterministic Simulation Core
 - ADR 0020 — Agent Runtime Foundation
+- ADR 0031 — Authentication and Authorization
 - `docs/approval-workflow.md`
+- `docs/authentication.md`

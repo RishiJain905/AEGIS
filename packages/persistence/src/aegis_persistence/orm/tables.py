@@ -983,3 +983,121 @@ class RunScoreRow(Base):
         UniqueConstraint("fingerprint", name="uq_run_scores_fingerprint"),
         Index("ix_run_scores_run_created", "run_id", "created_at"),
     )
+
+
+class AuthUserRow(Base):
+    __tablename__ = "auth_users"
+
+    user_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class AuthExternalIdentityRow(Base):
+    __tablename__ = "auth_external_identities"
+
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("auth_users.user_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    issuer: Mapped[str] = mapped_column(String(512), nullable=False)
+    subject: Mapped[str] = mapped_column(String(512), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("issuer", "subject", name="uq_auth_external_identities_issuer_subject"),
+        Index("ix_auth_external_identities_user_id", "user_id"),
+    )
+
+
+class AuthRoleAssignmentRow(Base):
+    __tablename__ = "auth_role_assignments"
+
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("auth_users.user_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    role: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "role", name="uq_auth_role_assignments_user_role"),
+        Index("ix_auth_role_assignments_user_id", "user_id"),
+    )
+
+
+class AuthResourceGrantRow(Base):
+    __tablename__ = "auth_resource_grants"
+
+    grant_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("auth_users.user_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    resource_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    resource_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    permissions: Mapped[list[Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index(
+            "ix_auth_resource_grants_user_resource",
+            "user_id",
+            "resource_type",
+            "resource_id",
+        ),
+    )
+
+
+class AuthSessionRow(Base):
+    __tablename__ = "auth_sessions"
+
+    session_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    session_token_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    user_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("auth_users.user_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    auth_method: Mapped[str] = mapped_column(String(32), nullable=False)
+    csrf_token: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ws_ticket_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    ws_ticket_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    __table_args__ = (
+        Index("ix_auth_sessions_user_id", "user_id"),
+        Index("ix_auth_sessions_expires_at", "expires_at"),
+    )
+
+
+class SecurityAuditEventRow(Base):
+    __tablename__ = "security_audit_events"
+
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    action: Mapped[str] = mapped_column(String(64), nullable=False)
+    outcome: Mapped[str] = mapped_column(String(32), nullable=False)
+    actor_user_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    target: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    permission: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reason_code: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    request_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    correlation_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    details: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+    __table_args__ = (
+        Index("ix_security_audit_events_occurred_at", "occurred_at"),
+        Index("ix_security_audit_events_actor", "actor_user_id"),
+    )

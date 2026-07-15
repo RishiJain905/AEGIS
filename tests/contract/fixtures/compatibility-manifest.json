@@ -84,6 +84,16 @@
       "sha256": "271cff72e643762899ad379ebeb1215be6db3f5871eae413d819d9cc8bf71397"
     },
     {
+      "path": "tests/contract/fixtures/schemas/authenticated_actor_v1.schema.json",
+      "sha256": "b53d7999ae1524e49e6dbc1e16c713ed5ace2d30ed935fea0d5eaa5a951261f1",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/authorization_decision_v1.schema.json",
+      "sha256": "f3b22a8f37a4e63fac6606f29de1fca13c761bd050f0f9a00fa5e22286d38c02",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/authorized_simulation_command_v1.schema.json",
       "sha256": "9e87760eb064d1cd13cd8868191bbafac78474914472d2da049d61691449fad8"
     },
@@ -350,6 +360,11 @@
       "sha256": "bb9b3e106534f045f6d3e1926376d220b21462a58a0a68895026e83edba36e35"
     },
     {
+      "path": "tests/contract/fixtures/schemas/permission_v1.schema.json",
+      "sha256": "8ddcc4cc6d0d938664c6134cf304c4e2f3a460de37d52ba85a6cb4f0fc02cc0d",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/policy_decision_v1.schema.json",
       "sha256": "da7ddcb03c8343eb16c8844c71dafb9eb066880d142b533918f12bf5b5e83952"
     },
@@ -462,6 +477,11 @@
       "sha256": "b8e64c8cbd2f98a1c77f4cfafe9a45023392630d93e96d7d30aa615a18d2efcd"
     },
     {
+      "path": "tests/contract/fixtures/schemas/resource_access_grant_v1.schema.json",
+      "sha256": "86f616d38968edf8d105072a25b08cc219bd03ff6f43372bde4a1e57be68d75e",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/response_option_v1.schema.json",
       "sha256": "a73f9dd919b8a6213bae2e90ff74ac1557e30a8fa66dfaa1bea43e42483ba5ca"
     },
@@ -500,6 +520,11 @@
     {
       "path": "tests/contract/fixtures/schemas/risk_scores_list_response_v1.schema.json",
       "sha256": "bb44965b54e4ec92a1d1a68f41fd78f09db9e18076389bcac525476dd3edc326"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/role_v1.schema.json",
+      "sha256": "d931f3c313ced49d17438448b4d533e62b3aaff32b6002670d9cc978cbe74199",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/run_command_response_v1.schema.json",
@@ -562,6 +587,16 @@
     {
       "path": "tests/contract/fixtures/schemas/score_rubric_v1.schema.json",
       "sha256": "a3ad296d78e10f0dab5fbbb4c7f1c7f27336169d86a55af79e44a2f594823e5f",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/security_audit_event_v1.schema.json",
+      "sha256": "2d85b261b9afad4443a7c9c4ec00c7996c24461bf31a85bd12328a6575458040",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/session_info_v1.schema.json",
+      "sha256": "fa6b1d2eb7044c822c20c0d7c35eca025fa6e46700b9611dc8b1e7f0ca2aa0f1",
       "schemaVersion": 1
     },
     {
@@ -733,6 +768,16 @@
     {
       "path": "tests/contract/fixtures/valid/asset_risk_score_v1.json",
       "sha256": "15ff5455db0eb3c08bc1c83c6839d1b6b6b59144bc35538eb38589b10552c535"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/authenticated_actor_v1.json",
+      "sha256": "87b4ef21191b9417f45f555289b8307a2f801401b8a075c653018caa5cbd1463",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/authorization_decision_v1.json",
+      "sha256": "1a03a7fb713e9316df0b76fcf29be69b0c0c3058eaa37632b11b7e2fcc35ae8f",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/authorized_simulation_command_v1.json",
@@ -1001,6 +1046,11 @@
       "sha256": "8c29a93f38e9dcb579d6fe488380a51cf4ea67421461a51d8b9369212ff10a71"
     },
     {
+      "path": "tests/contract/fixtures/valid/permission_v1.json",
+      "sha256": "16eb486ef3c294cbe8f01abdc10fb4cc637fbe07877a3800188665c22ba0fbda",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/policy_decision_v1.json",
       "sha256": "6b953944fe8f9ca27e526f21e0c2e0326e3e08b8688b651798d6696a8c2e4c17"
     },
@@ -1113,6 +1163,11 @@
       "sha256": "79a1912852d4c55c967f48833a13ed818d5409fb345068f26e970bbde74ceed5"
     },
     {
+      "path": "tests/contract/fixtures/valid/resource_access_grant_v1.json",
+      "sha256": "4223114a5fef76a5c60be8d451bb3da14786916f9b86ab600f3974bd20fd0822",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/response_option_v1.json",
       "sha256": "d1bf37ea28d802da1803e3d4e3d7f7314477ee2d5c5d819a683d45c3e1659364"
     },
@@ -1151,6 +1206,11 @@
     {
       "path": "tests/contract/fixtures/valid/risk_scores_list_response_v1.json",
       "sha256": "7dc844f22b4663772c412c97742f4cab485473bbf25ce01420bbe8f000220731"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/role_v1.json",
+      "sha256": "b773a138db12d92a859257653db06f568e9282564f640158be5fe153c154e385",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/run_command_response_v1.json",
@@ -1213,6 +1273,16 @@
     {
       "path": "tests/contract/fixtures/valid/score_rubric_v1.json",
       "sha256": "58bd0b36e0102fe90617ae65c67090c8347659668014f93e0d594d9261155aa0",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/security_audit_event_v1.json",
+      "sha256": "b87256613496f803be11aab98da1b3d6a13a4271e410b35daced7339518a9e07",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/session_info_v1.json",
+      "sha256": "98e373c3b6cb858aebd72090faf89953e24e9fff86780f722c61e2cda8f76446",
       "schemaVersion": 1
     },
     {

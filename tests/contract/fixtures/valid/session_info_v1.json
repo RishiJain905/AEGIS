@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "sessionId": "sess_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "userId": "user:operator-alpha",
+  "authMethod": "dev",
+  "createdAt": "2026-01-01T00:00:00Z",
+  "expiresAt": "2026-01-01T08:00:00Z",
+  "revokedAt": null,
+  "csrfToken": "csrf_01ARZ3NDEKTSV4RRFFQ69G5FAVxx"
+}

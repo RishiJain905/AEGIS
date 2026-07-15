@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "role": "operator",
+  "permissions": [
+    "runs:read",
+    "runs:write",
+    "investigation:read",
+    "investigation:trigger",
+    "approvals:decide",
+    "replay:read",
+    "replay:write",
+    "reports:read",
+    "reports:export",
+    "reports:trigger",
+    "scoring:read",
+    "scoring:compute",
+    "scoring:export",
+    "ws:subscribe"
+  ]
+}
