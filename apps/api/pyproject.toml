@@ -14,6 +14,8 @@ dependencies = [
     "aegis-policy",
     "aegis-reports",
     "aegis-replay",
+    "aegis-scoring",
+    "aegis-observability",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
 ]
@@ -30,6 +32,7 @@ aegis-policy = { workspace = true }
 aegis-reports = { workspace = true }
 aegis-replay = { workspace = true }
 aegis-scoring = { workspace = true }
+aegis-observability = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

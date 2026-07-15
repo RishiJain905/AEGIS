@@ -6,7 +6,7 @@ from typing import Final
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 
-WORKSPACE_VERSION: Final[str] = "0.0.0-phase30"
+WORKSPACE_VERSION: Final[str] = "0.0.0-phase31"
 
 PROTOCOL_VERSION_V1: Final[int] = 1
 
@@ -200,6 +200,12 @@ RESOURCE_ACCESS_GRANT_SCHEMA_VERSION: Final[int] = 1
 AUTHORIZATION_DECISION_SCHEMA_VERSION: Final[int] = 1
 SESSION_INFO_SCHEMA_VERSION: Final[int] = 1
 SECURITY_AUDIT_EVENT_SCHEMA_VERSION: Final[int] = 1
+TELEMETRY_CONTEXT_SCHEMA_VERSION: Final[int] = 1
+STRUCTURED_LOG_RECORD_SCHEMA_VERSION: Final[int] = 1
+HEALTH_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+READY_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+DEPENDENCY_STATUS_SCHEMA_VERSION: Final[int] = 1
+METRIC_LABEL_POLICY_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -385,6 +391,12 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "authorization_decision": frozenset({AUTHORIZATION_DECISION_SCHEMA_VERSION}),
     "session_info": frozenset({SESSION_INFO_SCHEMA_VERSION}),
     "security_audit_event": frozenset({SECURITY_AUDIT_EVENT_SCHEMA_VERSION}),
+    "telemetry_context": frozenset({TELEMETRY_CONTEXT_SCHEMA_VERSION}),
+    "structured_log_record": frozenset({STRUCTURED_LOG_RECORD_SCHEMA_VERSION}),
+    "health_response": frozenset({HEALTH_RESPONSE_SCHEMA_VERSION}),
+    "ready_response": frozenset({READY_RESPONSE_SCHEMA_VERSION}),
+    "dependency_status": frozenset({DEPENDENCY_STATUS_SCHEMA_VERSION}),
+    "metric_label_policy": frozenset({METRIC_LABEL_POLICY_SCHEMA_VERSION}),
 }
 
 

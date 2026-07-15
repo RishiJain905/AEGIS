@@ -1,0 +1,33 @@
+groups:
+  - name: aegis-phase31
+    rules:
+      - alert: AegisApiHighErrorRate
+        expr: sum(rate(aegis_aegis_api_request_errors_total[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: High API error rate
+          description: API error rate exceeded 0.5/s for 2m. Check traces and structured logs by correlation id.
+          runbook: docs/observability.md#alerting-foundations
+      - alert: AegisOutboxLag
+        expr: max(aegis_aegis_outbox_unpublished) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: worker
+        annotations:
+          summary: Outbox backlog growing
+          description: Unpublished outbox rows exceed 100 for 5m.
+          runbook: docs/observability.md#alerting-foundations
+      - alert: AegisTelemetryExporterFailures
+        expr: increase(aegis_aegis_telemetry_exporter_failures_total[10m]) > 5
+        for: 5m
+        labels:
+          severity: info
+          service: observability
+        annotations:
+          summary: Telemetry exporter failures detected
+          description: Exporter failures are non-fatal but visible. Domain behavior must continue.
+          runbook: docs/observability.md#telemetry-failure-behavior

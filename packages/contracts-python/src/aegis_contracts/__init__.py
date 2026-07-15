@@ -195,6 +195,22 @@ from aegis_contracts.models import (
     SourceWindowV1,
     TrainingRunManifestV1,
 )
+from aegis_contracts.observability import (
+    ALLOWED_METRIC_LABELS,
+    FORBIDDEN_METRIC_LABELS,
+    ActorKindV1,
+    DependencyStateV1,
+    DependencyStatusV1,
+    HealthResponseV1,
+    HealthStatusV1,
+    LogOutcomeV1,
+    MetricLabelPolicyV1,
+    MetricTypeV1,
+    ReadyResponseV1,
+    ReadyStatusV1,
+    StructuredLogRecordV1,
+    TelemetryContextV1,
+)
 from aegis_contracts.parsing import parse_contract
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
 from aegis_contracts.realtime import (
@@ -609,6 +625,20 @@ __all__ = [
     "SecurityAuditEventV1",
     "SecurityAuditOutcomeV1",
     "SessionInfoV1",
+    "ActorKindV1",
+    "ALLOWED_METRIC_LABELS",
+    "DependencyStateV1",
+    "DependencyStatusV1",
+    "FORBIDDEN_METRIC_LABELS",
+    "HealthResponseV1",
+    "HealthStatusV1",
+    "LogOutcomeV1",
+    "MetricLabelPolicyV1",
+    "MetricTypeV1",
+    "ReadyResponseV1",
+    "ReadyStatusV1",
+    "StructuredLogRecordV1",
+    "TelemetryContextV1",
     "assert_supported_schema_version",
     "load_settings",
     "parse_contract",

@@ -32,6 +32,50 @@ class ScoringService:
         incident_id: str | None = None,
         force: bool = False,
     ) -> RunScoreV1:
+        import time
+
+        started = time.perf_counter()
+        status = "ok"
+        try:
+            result = await self._score_run_impl(
+                uow,
+                run_id=run_id,
+                scenarios_root=scenarios_root,
+                incident_id=incident_id,
+                force=force,
+            )
+            try:
+                from aegis_observability.instrumentation import record_scoring
+
+                record_scoring(
+                    duration_ms=(time.perf_counter() - started) * 1000.0,
+                    status=status,
+                )
+            except Exception:  # noqa: BLE001
+                pass
+            return result
+        except Exception:
+            status = "error"
+            try:
+                from aegis_observability.instrumentation import record_scoring
+
+                record_scoring(
+                    duration_ms=(time.perf_counter() - started) * 1000.0,
+                    status=status,
+                )
+            except Exception:  # noqa: BLE001
+                pass
+            raise
+
+    async def _score_run_impl(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        scenarios_root: Path | None = None,
+        incident_id: str | None = None,
+        force: bool = False,
+    ) -> RunScoreV1:
         facts = await assemble_scoring_facts(
             uow,
             run_id=run_id,

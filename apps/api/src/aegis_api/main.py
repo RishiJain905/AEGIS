@@ -1,8 +1,12 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 
 from aegis_contracts import WORKSPACE_VERSION, AegisSettings, PermissionV1, load_settings
-from aegis_persistence.health import check_postgres
+from aegis_contracts.observability import HealthResponseV1, HealthStatusV1
+from aegis_contracts.versioning import HEALTH_RESPONSE_SCHEMA_VERSION
+from aegis_observability.middleware import create_observability_middleware
+from aegis_observability.setup import init_observability, shutdown_observability
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -23,6 +27,9 @@ from aegis_api.features.router import router as features_router
 from aegis_api.investigation.router import router as investigation_router
 from aegis_api.models.observability import router as models_observability_router
 from aegis_api.models.router import router as models_router
+from aegis_api.observability import build_ready_response
+from aegis_api.observability import protected_router as ops_protected_router
+from aegis_api.observability import public_router as ops_public_router
 from aegis_api.providers.observability import router as providers_observability_router
 from aegis_api.providers.router import router as providers_router
 from aegis_api.realtime.backfill import router as backfill_router
@@ -41,21 +48,26 @@ from aegis_api.websocket.router import create_websocket_router
 
 
 class HealthResponse(BaseModel):
+    """Legacy shape retained for Docker HEALTHCHECK compatibility."""
+
     status: str
     service: str
     version: str
 
 
-class ReadyResponse(BaseModel):
-    status: str
-    service: str
-    environment: str
-    database: str
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = app.state.settings
+    init_observability(
+        service_name=settings.OTEL_SERVICE_NAME,
+        enabled=settings.OTEL_ENABLED,
+        otlp_endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
+        otlp_protocol=settings.OTEL_EXPORTER_OTLP_PROTOCOL,
+        sampler_arg=settings.OTEL_TRACES_SAMPLER_ARG,
+        metrics_export_interval_ms=settings.OTEL_METRICS_EXPORT_INTERVAL_MS,
+        log_level=settings.LOG_LEVEL.value,
+        json_logs=settings.AEGIS_LOG_JSON,
+    )
     assert_secure_auth_configuration(settings)
     init_db(settings)
     await seed_dev_identities(settings)
@@ -64,6 +76,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
     await gateway.stop()
     await shutdown_db(settings)
+    shutdown_observability()
 
 
 def create_app(settings: AegisSettings | None = None) -> FastAPI:
@@ -83,11 +96,17 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
             "Content-Type",
             "X-CSRF-Token",
             "X-Request-Id",
+            "X-Correlation-Id",
+            "traceparent",
+            "tracestate",
             "Idempotency-Key",
             "Authorization",
+            "X-Aegis-Run-Id",
+            "X-Aegis-Incident-Id",
         ],
-        expose_headers=["X-Request-Id"],
+        expose_headers=["X-Request-Id", "X-Correlation-Id", "traceparent"],
     )
+    app.add_middleware(create_observability_middleware(resolved_settings.OTEL_SERVICE_NAME))
 
     @app.exception_handler(AuthDependencyError)
     async def handle_auth_dependency_error(
@@ -105,30 +124,26 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
 
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
+        # Liveness: process is alive. Does not check dependencies.
+        _ = HealthResponseV1.model_validate(
+            {
+                "schemaVersion": HEALTH_RESPONSE_SCHEMA_VERSION,
+                "status": HealthStatusV1.OK.value,
+                "service": "api",
+                "version": WORKSPACE_VERSION,
+                "checkedAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            }
+        )
         return HealthResponse(status="ok", service="api", version=WORKSPACE_VERSION)
 
-    @app.get("/ready", response_model=ReadyResponse)
-    async def ready() -> ReadyResponse | JSONResponse:
-        db_ok = await check_postgres(resolved_settings)
-        if not db_ok:
-            return JSONResponse(
-                status_code=503,
-                content={
-                    "status": "not_ready",
-                    "service": "api",
-                    "environment": resolved_settings.AEGIS_ENV.value,
-                    "database": "unavailable",
-                },
-            )
-        return ReadyResponse(
-            status="ready",
-            service="api",
-            environment=resolved_settings.AEGIS_ENV.value,
-            database="ok",
-        )
+    @app.get("/ready")
+    async def ready() -> JSONResponse:
+        payload, status_code = await build_ready_response(resolved_settings)
+        return JSONResponse(status_code=status_code, content=payload.model_dump(by_alias=True))
 
     # Auth routes are public (login/session/dev); all other API routers require auth.
     app.include_router(auth_router)
+    app.include_router(ops_public_router)
 
     read_runs = [Depends(require_permission(PermissionV1.RUNS_READ))]
     write_runs = [Depends(require_permission(PermissionV1.RUNS_WRITE))]
@@ -145,7 +160,7 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     export_scoring = [Depends(require_permission(PermissionV1.SCORING_EXPORT))]
     admin_manage = [Depends(require_permission(PermissionV1.ADMIN_MANAGE))]
 
-    # Apply default read protection at include time; mutation routes add stronger deps in routers.
+    app.include_router(ops_protected_router, dependencies=admin_manage)
     app.include_router(backfill_router, dependencies=read_runs)
     app.include_router(events_router, dependencies=read_runs)
     app.include_router(status_router, dependencies=read_runs)
@@ -180,6 +195,7 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
         write_replay,
         compute_scoring,
         export_scoring,
+        admin_manage,
     )
 
     return app

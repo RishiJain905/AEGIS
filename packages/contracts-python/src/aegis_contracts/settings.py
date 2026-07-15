@@ -70,6 +70,21 @@ class AegisSettings(BaseSettings):
     AEGIS_OIDC_SCOPES: str = "openid profile email"
     AEGIS_WEB_BASE_URL: str = "http://localhost:3000"
 
+    # Phase 31 observability
+    OTEL_SERVICE_NAME: str = "aegis-api"
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4317"
+    OTEL_EXPORTER_OTLP_PROTOCOL: str = "grpc"
+    OTEL_TRACES_SAMPLER: str = "parentbased_traceidratio"
+    OTEL_TRACES_SAMPLER_ARG: float = Field(default=1.0, ge=0.0, le=1.0)
+    OTEL_METRICS_EXPORT_INTERVAL_MS: int = Field(default=15000, ge=1000)
+    OTEL_ENABLED: bool = True
+    OTEL_EXPORTER_FAILURE_MODE: str = "ignore"
+    AEGIS_HEALTH_PROBE_TIMEOUT_MS: int = Field(default=2000, ge=100, le=30000)
+    AEGIS_READY_REQUIRE_REDIS: bool = True
+    AEGIS_READY_REQUIRE_OBJECT_STORAGE: bool = True
+    AEGIS_LOG_JSON: bool = True
+    AEGIS_TELEMETRY_RETENTION_HOURS: int = Field(default=168, ge=1)
+
     @property
     def cors_allowed_origins(self) -> list[str]:
         return [

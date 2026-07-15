@@ -62,6 +62,54 @@ class ReplayService:
         incident_id: str | None = None,
         prefer_snapshot: bool = True,
     ) -> ReplayStateV1:
+        import time
+
+        started = time.perf_counter()
+        status = "ok"
+        try:
+            result = await self._reconstruct_impl(
+                uow,
+                run_id=run_id,
+                sequence=sequence,
+                sim_time=sim_time,
+                incident_id=incident_id,
+                prefer_snapshot=prefer_snapshot,
+            )
+            try:
+                from aegis_observability.instrumentation import record_replay
+
+                event_count = int(getattr(result.provenance, "applied_count", 0) or 0)
+                record_replay(
+                    duration_ms=(time.perf_counter() - started) * 1000.0,
+                    status=status,
+                    event_count=event_count,
+                )
+            except Exception:  # noqa: BLE001
+                pass
+            return result
+        except Exception:
+            status = "error"
+            try:
+                from aegis_observability.instrumentation import record_replay
+
+                record_replay(
+                    duration_ms=(time.perf_counter() - started) * 1000.0,
+                    status=status,
+                )
+            except Exception:  # noqa: BLE001
+                pass
+            raise
+
+    async def _reconstruct_impl(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        sequence: int | None = None,
+        sim_time: datetime | None = None,
+        incident_id: str | None = None,
+        prefer_snapshot: bool = True,
+    ) -> ReplayStateV1:
         self.assert_read_only()
         events = await self._load_all_events(uow, run_id)
         if not events and sequence is None and sim_time is None:

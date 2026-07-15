@@ -82,7 +82,14 @@ class SimulationRuntime:
         scheduled = self.queue.pop()
         if scheduled is None:
             return []
-        return self._process_scheduled_event(scheduled)
+        events = self._process_scheduled_event(scheduled)
+        try:
+            from aegis_observability.instrumentation import record_simulation_events
+
+            record_simulation_events(count=len(events), status="ok")
+        except Exception:  # noqa: BLE001
+            pass
+        return events
 
     def advance(self, until: datetime) -> list[DomainEventEnvelopeV1]:
         emitted: list[DomainEventEnvelopeV1] = []

@@ -61,6 +61,16 @@ services:
       S3_BUCKET: ${S3_BUCKET:-aegis-artifacts}
       API_PORT: 8000
       WEB_PORT: 3000
+      OTEL_ENABLED: ${OTEL_ENABLED:-true}
+      OTEL_SERVICE_NAME: aegis-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_traceidratio}
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_TRACES_SAMPLER_ARG:-1.0}
+      AEGIS_LOG_JSON: ${AEGIS_LOG_JSON:-true}
+      AEGIS_HEALTH_PROBE_TIMEOUT_MS: ${AEGIS_HEALTH_PROBE_TIMEOUT_MS:-2000}
+      AEGIS_READY_REQUIRE_REDIS: ${AEGIS_READY_REQUIRE_REDIS:-true}
+      AEGIS_READY_REQUIRE_OBJECT_STORAGE: ${AEGIS_READY_REQUIRE_OBJECT_STORAGE:-true}
     ports:
       - '${API_PORT:-8000}:8000'
     depends_on:
@@ -70,6 +80,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
 
   web:
     build:
@@ -106,11 +118,18 @@ services:
       S3_BUCKET: ${S3_BUCKET:-aegis-artifacts}
       API_PORT: 8000
       WEB_PORT: 3000
+      OTEL_ENABLED: ${OTEL_ENABLED:-true}
+      OTEL_SERVICE_NAME: aegis-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      AEGIS_LOG_JSON: ${AEGIS_LOG_JSON:-true}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
 
   simulator:
     build:
@@ -131,12 +150,76 @@ services:
       S3_BUCKET: ${S3_BUCKET:-aegis-artifacts}
       API_PORT: 8000
       WEB_PORT: 3000
+      OTEL_ENABLED: ${OTEL_ENABLED:-true}
+      OTEL_SERVICE_NAME: aegis-simulator
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      AEGIS_LOG_JSON: ${AEGIS_LOG_JSON:-true}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    command: ['--config=/etc/otelcol/config.yaml']
+    volumes:
+      - ./infra/observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+      - '8889:8889'
+    depends_on:
+      - tempo
+
+  tempo:
+    image: grafana/tempo:2.7.1
+    command: ['-config.file=/etc/tempo.yaml']
+    volumes:
+      - ./infra/observability/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - '3200:3200'
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    volumes:
+      - ./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    ports:
+      - '9090:9090'
+    depends_on:
+      - otel-collector
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: aegis_dev
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - '3001:3000'
+    depends_on:
+      - prometheus
+      - tempo
 
 volumes:
   postgres_data:
   minio_data:
+  tempo_data:
+  prometheus_data:
+  grafana_data:

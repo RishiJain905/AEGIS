@@ -3,6 +3,7 @@
 import { apiErrorEnvelopeSchema, parseContract } from '@aegis/contracts-ts';
 
 import { ApiClientError } from '@/lib/api/types';
+import { applyCorrelationHeaders } from '@/lib/observability/correlation';
 
 function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
@@ -30,6 +31,7 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
       headers.set('X-CSRF-Token', csrf);
     }
   }
+  applyCorrelationHeaders(headers);
   return fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
     headers,

@@ -63,6 +63,38 @@ class GenerationService:
                 operation=operation,
             )
             latency_ms = int((time.perf_counter() - started) * 1000)
+            try:
+                from aegis_observability.instrumentation import record_provider_call
+
+                usage = getattr(response, "usage", None)
+                tokens = None
+                cost = None
+                if usage is not None:
+                    tokens = getattr(usage, "total_tokens", None) or getattr(
+                        usage, "totalTokens", None
+                    )
+                    cost = getattr(usage, "estimated_cost", None) or getattr(
+                        usage, "estimatedCost", None
+                    )
+                record_provider_call(
+                    provider=str(
+                        getattr(response, "provider_id", None)
+                        or request.provider_id
+                        or request.model_config_ref.provider_id
+                        or "unknown"
+                    ),
+                    model_alias=str(
+                        getattr(response, "model", None)
+                        or request.model_config_ref.model_id
+                        or "default"
+                    ),
+                    duration_ms=float(latency_ms),
+                    status="ok",
+                    tokens=int(tokens) if tokens is not None else None,
+                    cost=float(cost) if cost is not None else None,
+                )
+            except Exception:  # noqa: BLE001
+                pass
             if not dry_run:
                 artifact = build_generation_artifact(
                     request=request,
@@ -80,6 +112,21 @@ class GenerationService:
             )
         except ProviderRuntimeError as exc:
             latency_ms = int((time.perf_counter() - started) * 1000)
+            try:
+                from aegis_observability.instrumentation import record_provider_call
+
+                record_provider_call(
+                    provider=str(
+                        request.provider_id
+                        or request.model_config_ref.provider_id
+                        or "unknown"
+                    ),
+                    model_alias=str(request.model_config_ref.model_id or "default"),
+                    duration_ms=float(latency_ms),
+                    status="error",
+                )
+            except Exception:  # noqa: BLE001
+                pass
             if not dry_run:
                 artifact = build_generation_artifact(
                     request=request,

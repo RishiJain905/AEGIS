@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase28",
+  "workspaceVersion": "0.0.0-phase31",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",
@@ -1373,6 +1373,78 @@
     {
       "path": "tests/contract/fixtures/valid/world_state_snapshot_v1.json",
       "sha256": "e39f1433a647563663fc974cedf92de7ed097294866173df1e9de7c40fe95d91"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/telemetry_context_v1.schema.json",
+      "sha256": "9d8f843deae94b107e92f865b5f9df0a67a707c4ad50d91935854087285db320",
+      "kind": "schema",
+      "contract": "telemetry_context_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/telemetry_context_v1.json",
+      "sha256": "4070e1aa717bbe5bcadeda7e1ca31cb631038641a52d4b8a783896a476a4c0ec",
+      "kind": "valid_fixture",
+      "contract": "telemetry_context_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/structured_log_record_v1.schema.json",
+      "sha256": "39ba2b1f09311b70e87b472607f6fa3eae6f65030f3336f8fea928962eb9f318",
+      "kind": "schema",
+      "contract": "structured_log_record_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/structured_log_record_v1.json",
+      "sha256": "6b073f42e4d169fd569df594855924f3b678c45d262d486ff2556d3ce2e5e482",
+      "kind": "valid_fixture",
+      "contract": "structured_log_record_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/health_response_v1.schema.json",
+      "sha256": "87a04c5cee6979a479ac29fa1fa08daffcb82b97b98c065cf1ccbeb122f82689",
+      "kind": "schema",
+      "contract": "health_response_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/health_response_v1.json",
+      "sha256": "858f264575604e5de74f28d243c00c2cd70cd8e2b10142bb0a63768b7b8c3754",
+      "kind": "valid_fixture",
+      "contract": "health_response_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/ready_response_v1.schema.json",
+      "sha256": "0faef32cb107e564168791c6a1e1664f180021660951bfba877782fe5eb9a989",
+      "kind": "schema",
+      "contract": "ready_response_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/ready_response_v1.json",
+      "sha256": "5c1787c143a9b6cccf3f86ed8a2df212ac54c5cbaf2b08139f6ff642343b7a60",
+      "kind": "valid_fixture",
+      "contract": "ready_response_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/dependency_status_v1.schema.json",
+      "sha256": "8fbb41291174065b2156c665569590fe262cad2353e0a36fc71b887ec5753fe3",
+      "kind": "schema",
+      "contract": "dependency_status_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/dependency_status_v1.json",
+      "sha256": "bd0aceb47c7b2fe8adfaeb6bba7d7d43120274dd37d686a56d8c4e23e66a1020",
+      "kind": "valid_fixture",
+      "contract": "dependency_status_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/metric_label_policy_v1.schema.json",
+      "sha256": "e193088751cfd939181e0695a249864f7ed4b0ec586208111e7930745a6a76e3",
+      "kind": "schema",
+      "contract": "metric_label_policy_v1"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/metric_label_policy_v1.json",
+      "sha256": "78da8dc5aeb462c14b3e9214c6bd247c544e2bb49c6d889a05aada0516b93b97",
+      "kind": "valid_fixture",
+      "contract": "metric_label_policy_v1"
     }
   ]
 }

@@ -19,7 +19,7 @@ from aegis_policy.commands import (
 )
 from aegis_policy.engine import PolicyEngine
 
-WORKSPACE_VERSION = "0.0.0-phase30"
+WORKSPACE_VERSION = "0.0.0-phase31"
 
 __all__ = [
     "ALLOWLISTED_COMMANDS",

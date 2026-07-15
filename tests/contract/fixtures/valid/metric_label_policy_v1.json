@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "metricName": "aegis.api.request.duration",
+  "metricType": "histogram",
+  "unit": "ms",
+  "description": "HTTP API request duration in milliseconds",
+  "allowedLabels": ["service", "operation", "status", "method", "route_group"],
+  "source": "apps/api"
+}

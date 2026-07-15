@@ -73,6 +73,18 @@ async def require_actor(
                     session_csrf=session.csrf_token,
                     header_csrf=header_csrf,
                 )
+            try:
+                from aegis_contracts.observability import ActorKindV1
+                from aegis_observability.middleware import bind_actor_context
+
+                primary_role = actor.roles[0].value if actor.roles else None
+                bind_actor_context(
+                    actor_id=actor.user_id,
+                    actor_role=primary_role,
+                    actor_kind=ActorKindV1.USER,
+                )
+            except Exception:  # noqa: BLE001 — telemetry must not break auth
+                pass
             return actor
     except AuthServiceError as exc:
         raise AuthDependencyError(exc) from exc

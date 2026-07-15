@@ -1,0 +1,170 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "API request rate",
+      "id": 1,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(aegis_aegis_api_request_count_total[1m])) or vector(0)",
+          "legendFormat": "req/s",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "type": "stat",
+      "title": "API error rate",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(aegis_aegis_api_request_errors_total[1m])) or vector(0)",
+          "legendFormat": "errors/s",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "API request duration (ms)",
+      "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(aegis_aegis_api_request_duration_milliseconds_bucket[5m])) by (le)) or vector(0)",
+          "legendFormat": "p95",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "WebSocket connections & messages",
+      "id": 4,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "sum(aegis_aegis_ws_connections) or vector(0)",
+          "legendFormat": "connections",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(aegis_aegis_ws_messages_total[1m])) or vector(0)",
+          "legendFormat": "messages/s",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Simulation & event throughput",
+      "id": 5,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(aegis_aegis_simulation_events_total[1m])) or vector(0)",
+          "legendFormat": "sim events/s",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(aegis_aegis_stream_consumer_lag) or vector(0)",
+          "legendFormat": "consumer lag",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Model provider & agent latency",
+      "id": 6,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(aegis_aegis_provider_request_duration_milliseconds_bucket[5m])) by (le)) or vector(0)",
+          "legendFormat": "provider p95",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(aegis_aegis_agent_task_duration_milliseconds_bucket[5m])) by (le)) or vector(0)",
+          "legendFormat": "agent p95",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Dependency probe latency",
+      "id": 7,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(aegis_aegis_dependency_probe_duration_milliseconds_bucket[5m])) by (le, dependency)) or vector(0)",
+          "legendFormat": "{{dependency}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Replay, scoring, approval wait",
+      "id": 8,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(aegis_aegis_replay_duration_milliseconds_bucket[5m])) by (le)) or vector(0)",
+          "legendFormat": "replay p95",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(aegis_aegis_scoring_duration_milliseconds_bucket[5m])) by (le)) or vector(0)",
+          "legendFormat": "scoring p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(aegis_aegis_approval_wait_milliseconds_bucket[5m])) by (le)) or vector(0)",
+          "legendFormat": "approval wait p95",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Telemetry exporter failures",
+      "id": 9,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 24 },
+      "targets": [
+        {
+          "expr": "sum(aegis_aegis_telemetry_exporter_failures_total) or vector(0)",
+          "legendFormat": "failures",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "title": "Traces",
+      "id": 10,
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 24 },
+      "options": {
+        "mode": "markdown",
+        "content": "Open **Explore → Tempo** and search by `service.name` or `aegis.trace_id` to follow Operation Silent Relay end-to-end."
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["aegis", "phase31", "observability"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "AEGIS Operations",
+  "uid": "aegis-operations",
+  "version": 1
+}
