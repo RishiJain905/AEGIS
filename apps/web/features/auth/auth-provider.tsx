@@ -1,13 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
 
 import {
   authSessionResponseSchema,
@@ -79,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         (data) => parseContract(authSessionResponseSchema, data),
       ),
-    onSuccess: async (session) => {
+    onSuccess: (session) => {
       rememberCsrf(session);
       queryClient.setQueryData(AUTH_SESSION_KEY, session);
     },
@@ -125,14 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await devLoginMutation.mutateAsync(userId);
       },
     }),
-    [
-      actor,
-      hasPermission,
-      hasRole,
-      logoutMutation,
-      devLoginMutation,
-      sessionQuery,
-    ],
+    [actor, hasPermission, hasRole, logoutMutation, devLoginMutation, sessionQuery],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -14,6 +14,7 @@ from aegis_event_streaming.relay import PostgresOutboxRelay
 from aegis_event_streaming.stream_names import DOMAIN_EVENTS_STREAM
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from fastapi.testclient import TestClient
+from tests.integration.auth_helpers import issue_ws_ticket, login_as
 from tests.integration.streaming.helpers import make_test_event, sample_event_id, seed_run
 
 
@@ -34,7 +35,7 @@ def _frame(message_type: str, payload: dict) -> str:
     )
 
 
-def _hello(token: str = "aegis-dev-token") -> str:
+def _hello(token: str) -> str:
     return _frame("hello", {"protocolVersion": PROTOCOL_VERSION_V1, "authToken": token})
 
 
@@ -61,7 +62,14 @@ def ws_settings() -> AegisSettings:
 def api_client(ws_settings: AegisSettings, redis_available: None) -> TestClient:
     app = create_app(ws_settings)
     with TestClient(app) as client:
+        # Lifespan seeds development identities when AEGIS_DEV_AUTH_ENABLED.
         yield client
+
+
+@pytest.fixture
+def ws_auth_token(api_client: TestClient) -> str:
+    csrf = login_as(api_client)
+    return issue_ws_ticket(api_client, csrf=csrf)
 
 
 @pytest.mark.asyncio
@@ -70,6 +78,7 @@ async def test_connect_and_subscribe_delivers_events(
     session_maker,
     redis_client,
     api_client: TestClient,
+    ws_auth_token: str,
 ) -> None:
     run_id = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV"
     await seed_run(unit_of_work, run_id=run_id)
@@ -87,7 +96,7 @@ async def test_connect_and_subscribe_delivers_events(
     assert await relay.publish_until_empty() == 3
 
     with api_client.websocket_connect("/ws/v1/realtime") as ws:
-        ws.send_text(_hello())
+        ws.send_text(_hello(ws_auth_token))
         ack = json.loads(ws.receive_text())
         assert ack["messageType"] == "hello_ack"
 
@@ -119,10 +128,11 @@ async def test_unauthorized_subscription_rejected(api_client: TestClient) -> Non
 async def test_unknown_run_rejected(
     unit_of_work: PostgresUnitOfWork,
     api_client: TestClient,
+    ws_auth_token: str,
 ) -> None:
     _ = unit_of_work
     with api_client.websocket_connect("/ws/v1/realtime") as ws:
-        ws.send_text(_hello())
+        ws.send_text(_hello(ws_auth_token))
         ws.receive_text()
         ws.send_text(_subscribe("run_01ARZ3NDEKTSV4RRFFQ69G5FAX"))
         msg = json.loads(ws.receive_text())
@@ -136,6 +146,7 @@ async def test_reconnect_with_cursor(
     session_maker,
     redis_client,
     api_client: TestClient,
+    ws_auth_token: str,
 ) -> None:
     run_id = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV"
     await seed_run(unit_of_work, run_id=run_id)
@@ -152,7 +163,7 @@ async def test_reconnect_with_cursor(
     await relay.publish_until_empty()
 
     with api_client.websocket_connect("/ws/v1/realtime") as ws:
-        ws.send_text(_hello())
+        ws.send_text(_hello(ws_auth_token))
         ws.receive_text()
         ws.send_text(_subscribe(run_id))
         ws.receive_text()
@@ -163,7 +174,7 @@ async def test_reconnect_with_cursor(
                 seen += 1
 
     with api_client.websocket_connect("/ws/v1/realtime") as ws:
-        ws.send_text(_hello())
+        ws.send_text(_hello(ws_auth_token))
         ws.receive_text()
         ws.send_text(_subscribe(run_id, last_applied_sequence=2))
         msg = json.loads(ws.receive_text())
@@ -185,6 +196,7 @@ async def test_duplicate_events_suppressed(
     session_maker,
     redis_client,
     api_client: TestClient,
+    ws_auth_token: str,
 ) -> None:
     run_id = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV"
     await seed_run(unit_of_work, run_id=run_id)
@@ -204,7 +216,7 @@ async def test_duplicate_events_suppressed(
     await redis_client.xadd(DOMAIN_EVENTS_STREAM, fields)
 
     with api_client.websocket_connect("/ws/v1/realtime") as ws:
-        ws.send_text(_hello())
+        ws.send_text(_hello(ws_auth_token))
         ws.receive_text()
         ws.send_text(_subscribe(run_id))
         ws.receive_text()
@@ -240,6 +252,7 @@ async def test_pg_backfill_on_subscribe(
     session_maker,
     redis_client,
     api_client: TestClient,
+    ws_auth_token: str,
 ) -> None:
     run_id = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV"
     await seed_run(unit_of_work, run_id=run_id)
@@ -254,7 +267,7 @@ async def test_pg_backfill_on_subscribe(
     await unit_of_work.commit()
 
     with api_client.websocket_connect("/ws/v1/realtime") as ws:
-        ws.send_text(_hello())
+        ws.send_text(_hello(ws_auth_token))
         ws.receive_text()
         ws.send_text(_subscribe(run_id, last_applied_sequence=1))
         subscribed = json.loads(ws.receive_text())
@@ -292,16 +305,19 @@ async def test_slow_client_queue_overflow_triggers_snapshot_required(
     relay = PostgresOutboxRelay(session_maker, redis_client)
     await relay.publish_until_empty()
 
-    with TestClient(app) as client, client.websocket_connect("/ws/v1/realtime") as ws:
-        ws.send_text(_hello())
-        ws.receive_text()
-        ws.send_text(_subscribe(run_id))
-        ws.receive_text()
-        saw_snapshot = False
-        for _ in range(12):
-            msg = json.loads(ws.receive_text())
-            if msg["messageType"] == "snapshot_required":
-                saw_snapshot = True
-                assert msg["payload"]["reason"] == "WS_QUEUE_OVERFLOW"
-                break
-        assert saw_snapshot
+    with TestClient(app) as client:
+        csrf = login_as(client)
+        token = issue_ws_ticket(client, csrf=csrf)
+        with client.websocket_connect("/ws/v1/realtime") as ws:
+            ws.send_text(_hello(token))
+            ws.receive_text()
+            ws.send_text(_subscribe(run_id))
+            ws.receive_text()
+            saw_snapshot = False
+            for _ in range(12):
+                msg = json.loads(ws.receive_text())
+                if msg["messageType"] == "snapshot_required":
+                    saw_snapshot = True
+                    assert msg["payload"]["reason"] == "WS_QUEUE_OVERFLOW"
+                    break
+            assert saw_snapshot

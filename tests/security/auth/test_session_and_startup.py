@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from aegis_contracts import AegisEnvironment, AegisSettings
 from aegis_api.auth.service import AuthService, AuthServiceError
 from aegis_api.auth.startup import InsecureAuthConfigurationError, assert_secure_auth_configuration
 from aegis_api.auth.tokens import constant_time_equals, generate_opaque_token, hash_token
-from aegis_contracts import AuthErrorCode
+from aegis_contracts import AegisEnvironment, AegisSettings, AuthErrorCode
 
 
 def _settings(**overrides: object) -> AegisSettings:
@@ -47,7 +46,10 @@ def test_csrf_validation_rejects_mismatch() -> None:
 
 def test_csrf_validation_accepts_match() -> None:
     service = AuthService(session_ttl_seconds=60)
-    service.validate_csrf(session_csrf="csrf_expected_value_xx", header_csrf="csrf_expected_value_xx")
+    service.validate_csrf(
+        session_csrf="csrf_expected_value_xx",
+        header_csrf="csrf_expected_value_xx",
+    )
 
 
 def test_constant_time_equals() -> None:

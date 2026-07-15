@@ -223,7 +223,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       return;
     }
 
-    let cancelled = false;
+    const cancelledRef = { current: false };
 
     async function bootstrap() {
       dispatch({
@@ -233,7 +233,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       });
       try {
         const bootstrapPayload = await buildBootstrapFromEndpoints(runId);
-        if (cancelled) {
+        if (cancelledRef.current) {
           return;
         }
         graphStoreRef.current.loadSnapshot(bootstrapPayload.graphSnapshot);
@@ -279,7 +279,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       try {
         ticket = await fetchWsTicket();
       } catch {
-        if (!cancelled) {
+        if (!cancelledRef.current) {
           dispatch({
             type: 'set_connection_health',
             connectionHealth: ConnectionHealthState.DISCONNECTED,
@@ -288,7 +288,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         }
         return;
       }
-      if (cancelled) {
+      if (cancelledRef.current) {
         return;
       }
 
@@ -350,10 +350,6 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       });
 
       await transport.connect();
-      if (cancelled) {
-        transport.disconnect();
-        return;
-      }
       transport.subscribe({
         runId,
         channel: 'events',
@@ -362,7 +358,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
     })();
 
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
       offState();
       offEvent();
       offSnapshotRequired();

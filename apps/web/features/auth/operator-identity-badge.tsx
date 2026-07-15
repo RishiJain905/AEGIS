@@ -36,7 +36,10 @@ export function OperatorIdentityBadge() {
       <Badge nodeStatus={NodeStatus.NORMAL} data-testid="operator-display-name">
         {auth.actor.displayName}
       </Badge>
-      <span className="font-mono text-xs text-[var(--aegis-text-secondary)]" data-testid="operator-roles">
+      <span
+        className="font-mono text-xs text-[var(--aegis-text-secondary)]"
+        data-testid="operator-roles"
+      >
         {auth.actor.roles.join(', ')}
       </span>
       <Button

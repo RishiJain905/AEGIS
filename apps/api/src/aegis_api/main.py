@@ -13,8 +13,8 @@ from aegis_api.agents.router import router as agents_router
 from aegis_api.approvals.router import router as approvals_router
 from aegis_api.auth.deps import AuthDependencyError, auth_error_response, require_permission
 from aegis_api.auth.router import router as auth_router
-from aegis_api.auth.startup import assert_secure_auth_configuration, seed_dev_identities
 from aegis_api.auth.service import AuthServiceError
+from aegis_api.auth.startup import assert_secure_auth_configuration, seed_dev_identities
 from aegis_api.db.session import init_db, shutdown_db
 from aegis_api.detection.observability import router as detection_observability_router
 from aegis_api.detection.router import router as detection_router

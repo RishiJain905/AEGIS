@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 from aegis_contracts import (
+    AuthenticatedActorV1,
     AuthErrorCode,
     AuthMethodV1,
     AuthSessionResponseV1,
-    AuthenticatedActorV1,
     PermissionV1,
     PlatformRoleV1,
     SecurityAuditActionV1,
@@ -20,7 +20,7 @@ from aegis_contracts.versioning import (
     SECURITY_AUDIT_EVENT_SCHEMA_VERSION,
     SESSION_INFO_SCHEMA_VERSION,
 )
-from aegis_persistence.repositories.auth import AuthUserRecord, PostgresAuthRepository
+from aegis_persistence.repositories.auth import AuthUserRecord
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_policy.authz import AuthorizationEngine, build_actor
 

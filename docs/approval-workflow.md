@@ -33,12 +33,17 @@ Request bodies require:
 
 - `expectedRevisionId` / `expectedRevision` (optimistic concurrency)
 - `idempotencyKey`
-- optional `actorId` (defaults to `asset:operator-console`)
+
+Optional client `actorId` / `X-Actor-Id` fields are **ignored**. Approver identity
+comes only from the authenticated session (`AuthenticatedActorV1.userId`).
 
 Headers:
 
-- `X-Actor-Id` — operator identity hook (Phase 30 replaces with OIDC)
-- `Authorization: Bearer synthetic-operator-token` — synthetic operator token until Phase 30
+- Session cookie (`AEGIS_SESSION_COOKIE_NAME`) — required
+- `X-CSRF-Token` — required for cookie-authenticated mutations
+- Authenticated actor must hold `approvals:decide` (operator or admin)
+
+See [`docs/authentication.md`](authentication.md) and ADR 0031.
 
 ## Final policy check
 
@@ -64,7 +69,9 @@ Allowlisted `ScenarioCommandTemplateV1` values map to internal `SimulationComman
 | `restart_service` | `restarting` |
 | `rollback_deployment` | `rolling_back` |
 
-Execution uses operator actor + authorization token + idempotency key. Duplicate approve returns the prior `ExecutedActionV1` without double effect.
+Execution uses the authenticated operator actor id (`user:…`) plus a
+session-bound authorization token (`session:{sessionId}`) and idempotency key.
+Duplicate approve returns the prior `ExecutedActionV1` without double effect.
 
 ## Persistence and events
 

@@ -10,9 +10,7 @@ import pytest
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_api.approvals.errors import ApprovalWorkflowError
 from aegis_api.approvals.service import ApprovalWorkflowService
-from aegis_contracts import PlatformRoleV1
-from aegis_policy.authz import build_actor
-from aegis_contracts import ActionClass, AgentRole, ProposalStatus
+from aegis_contracts import ActionClass, AgentRole, PlatformRoleV1, ProposalStatus
 from aegis_contracts.approvals import (
     ApprovalErrorCode,
     ApproveProposalRequestV1,
@@ -39,6 +37,7 @@ from aegis_contracts.versioning import (
 from aegis_persistence.engine import create_engine, dispose_engine, get_session_maker
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_policy import PolicyEngine
+from aegis_policy.authz import build_actor
 from aegis_simulation import run_command_service as run_command_module
 from aegis_simulation.run_command_service import RunCommandService
 

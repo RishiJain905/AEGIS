@@ -5,8 +5,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from aegis_contracts import (
-    AuthMethodV1,
     AuthenticatedActorV1,
+    AuthMethodV1,
     AuthorizationDecisionOutcomeV1,
     AuthorizationDecisionV1,
     PermissionV1,
@@ -104,7 +104,11 @@ def can_satisfy_warden_approver_roles(
         return actor_has_permission(actor, PermissionV1.APPROVALS_DECIDE)
     if not actor_has_permission(actor, PermissionV1.APPROVALS_DECIDE):
         return False
-    return all(role in WARDEN_APPROVER_ROLE_ALIASES or role in {r.value for r in actor.roles} for role in required_roles)
+    actor_roles = {r.value for r in actor.roles}
+    return all(
+        role in WARDEN_APPROVER_ROLE_ALIASES or role in actor_roles
+        for role in required_roles
+    )
 
 
 class AuthorizationEngine:

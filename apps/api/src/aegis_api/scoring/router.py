@@ -15,7 +15,7 @@ from aegis_contracts.scoring import (
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_scoring.errors import ScoringError
 from aegis_scoring.service import ScoringService
-from fastapi import Depends, APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from aegis_api.auth.deps import require_permission
 from aegis_api.db.session import get_db_session_maker
@@ -43,7 +43,10 @@ def _http_status(code: ScoreErrorCode) -> int:
     return 400
 
 
-@router.post("/runs/{run_id}/score", response_model=RunScoreV1, dependencies=[Depends(require_permission(PermissionV1.SCORING_COMPUTE))])
+@router.post(
+    "/runs/{run_id}/score", response_model=RunScoreV1,
+    dependencies=[Depends(require_permission(PermissionV1.SCORING_COMPUTE))],
+)
 async def score_run(run_id: str) -> RunScoreV1:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
         try:
@@ -87,7 +90,10 @@ async def get_after_action(run_id: str) -> AfterActionViewModelV1:
             ) from exc
 
 
-@router.get("/runs/{run_id}/score/export/{export_format}", dependencies=[Depends(require_permission(PermissionV1.SCORING_EXPORT))])
+@router.get(
+    "/runs/{run_id}/score/export/{export_format}",
+    dependencies=[Depends(require_permission(PermissionV1.SCORING_EXPORT))],
+)
 async def export_run_score(run_id: str, export_format: ScoreExportFormatV1) -> Response:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
         try:

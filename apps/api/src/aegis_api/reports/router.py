@@ -18,7 +18,7 @@ from aegis_contracts.versioning import AFTER_ACTION_REPORT_SCHEMA_VERSION
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_reports.errors import ReportError
 from aegis_reports.service import ReportService
-from fastapi import Depends, APIRouter, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 router = APIRouter(prefix="/api/v1", tags=["reports"])
 _report_service = ReportService()
@@ -42,7 +42,10 @@ async def list_after_action_report_versions(run_id: str) -> list[ReportVersionV1
         return await _report_service.list_versions(uow, run_id=run_id)
 
 
-@router.get("/runs/{run_id}/after-action-report/exports/{export_format}", dependencies=[Depends(require_permission(PermissionV1.REPORTS_EXPORT))])
+@router.get(
+    "/runs/{run_id}/after-action-report/exports/{export_format}",
+    dependencies=[Depends(require_permission(PermissionV1.REPORTS_EXPORT))],
+)
 async def download_after_action_report_export(
     run_id: str,
     export_format: ReportExportFormatV1,
@@ -66,7 +69,10 @@ async def download_after_action_report_export(
     return Response(content=content, media_type=artifact.content_type, headers=headers)
 
 
-@router.post("/runs/{run_id}/investigation/trigger-scribe", dependencies=[Depends(require_permission(PermissionV1.REPORTS_TRIGGER))])
+@router.post(
+    "/runs/{run_id}/investigation/trigger-scribe",
+    dependencies=[Depends(require_permission(PermissionV1.REPORTS_TRIGGER))],
+)
 async def trigger_scribe(run_id: str, request: TriggerScribeRequestV1) -> dict[str, object]:
     if request.run_id != run_id:
         raise HTTPException(status_code=400, detail="runId mismatch")

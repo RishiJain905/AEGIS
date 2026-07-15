@@ -28,7 +28,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (auth.isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center" data-testid="auth-gate-loading">
+      <div
+        className="flex min-h-screen items-center justify-center"
+        data-testid="auth-gate-loading"
+      >
         Verifying session…
       </div>
     );
@@ -36,7 +39,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (!auth.isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center" data-testid="auth-gate-redirect">
+      <div
+        className="flex min-h-screen items-center justify-center"
+        data-testid="auth-gate-redirect"
+      >
         Redirecting to sign-in…
       </div>
     );

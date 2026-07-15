@@ -72,7 +72,11 @@ class AegisSettings(BaseSettings):
 
     @property
     def cors_allowed_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.AEGIS_CORS_ALLOWED_ORIGINS.split(",") if origin.strip()]
+        return [
+            origin.strip()
+            for origin in self.AEGIS_CORS_ALLOWED_ORIGINS.split(",")
+            if origin.strip()
+        ]
 
     @property
     def postgres_dsn(self) -> str:

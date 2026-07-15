@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Annotated
 
 from aegis_contracts import (
     AegisEnvironment,
@@ -87,7 +88,7 @@ def _clear_session_cookies(response: Response, *, settings: AegisSettings) -> No
 @router.get("/session", response_model=AuthSessionResponseV1)
 async def get_session(
     request: Request,
-    auth_service: AuthService = Depends(get_auth_service),
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> AuthSessionResponseV1 | JSONResponse:
     settings: AegisSettings = request.app.state.settings
     raw_token = request.cookies.get(settings.AEGIS_SESSION_COOKIE_NAME)
@@ -106,7 +107,7 @@ async def get_session(
 async def dev_login(
     request: Request,
     body: DevLoginRequestV1,
-    auth_service: AuthService = Depends(get_auth_service),
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> Response:
     settings: AegisSettings = request.app.state.settings
     if settings.AEGIS_ENV == AegisEnvironment.PRODUCTION or not settings.AEGIS_DEV_AUTH_ENABLED:
@@ -149,8 +150,8 @@ async def dev_login(
 @router.post("/logout", response_model=AuthSessionResponseV1)
 async def logout(
     request: Request,
-    actor: CurrentActor = Depends(require_actor),
-    auth_service: AuthService = Depends(get_auth_service),
+    actor: Annotated[CurrentActor, Depends(require_actor)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> Response:
     settings: AegisSettings = request.app.state.settings
     try:
@@ -171,8 +172,8 @@ async def logout(
 @router.post("/ws-ticket")
 async def create_ws_ticket(
     request: Request,
-    actor: CurrentActor = Depends(require_actor),
-    auth_service: AuthService = Depends(get_auth_service),
+    actor: Annotated[CurrentActor, Depends(require_actor)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> JSONResponse:
     try:
         async with PostgresUnitOfWork(get_db_session_maker()) as uow:
@@ -222,9 +223,9 @@ async def oidc_login(request: Request) -> Response:
 @router.get("/callback")
 async def oidc_callback(
     request: Request,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
     code: str | None = None,
     state: str | None = None,
-    auth_service: AuthService = Depends(get_auth_service),
 ) -> Response:
     settings: AegisSettings = request.app.state.settings
     if not settings.AEGIS_OIDC_ENABLED:

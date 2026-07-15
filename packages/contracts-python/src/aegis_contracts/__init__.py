@@ -41,12 +41,12 @@ from aegis_contracts.approvals import (
     StaleProposalErrorV1,
 )
 from aegis_contracts.auth import (
+    AuthenticatedActorV1,
     AuthErrorCode,
     AuthMethodV1,
-    AuthSessionResponseV1,
-    AuthenticatedActorV1,
     AuthorizationDecisionOutcomeV1,
     AuthorizationDecisionV1,
+    AuthSessionResponseV1,
     DevLoginRequestV1,
     PermissionContractV1,
     PermissionV1,

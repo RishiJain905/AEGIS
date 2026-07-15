@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from aegis_contracts import AegisEnvironment, AegisSettings, AuthErrorCode
-from fastapi.testclient import TestClient
-
 from aegis_api.auth.service import AuthService, AuthServiceError
 from aegis_api.main import create_app
+from aegis_contracts import AegisEnvironment, AegisSettings, AuthErrorCode
+from fastapi.testclient import TestClient
 
 
 def _settings() -> AegisSettings:

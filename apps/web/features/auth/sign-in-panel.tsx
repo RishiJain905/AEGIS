@@ -30,7 +30,9 @@ export function SignInPanel() {
 
   useEffect(() => {
     void apiFetchJson<{ users: DevUser[] }>('/api/v1/auth/dev/users')
-      .then((payload) => setUsers(payload.users))
+      .then((payload) => {
+        setUsers(payload.users);
+      })
       .catch(() => {
         setUsers([]);
       });

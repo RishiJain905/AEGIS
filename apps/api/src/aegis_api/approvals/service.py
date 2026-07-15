@@ -329,7 +329,9 @@ class ApprovalWorkflowService:
             idempotency_key=request.idempotency_key,
         )
         if existing is not None and existing.response_ref:
-            return await self._replay_modify_response(uow, existing.response_ref, request)
+            return await self._replay_modify_response(
+                uow, existing.response_ref, request, actor=actor
+            )
 
         proposal = await self._require_proposal(uow, request.proposal_id)
         self._assert_pending(proposal)
@@ -992,6 +994,8 @@ class ApprovalWorkflowService:
         uow: PostgresUnitOfWork,
         revision_id: str,
         request: ModifyProposalRequestV1,
+        *,
+        actor: str,
     ) -> ModifyProposalResponseV1:
         revision = await uow.proposals.get_revision(revision_id)
         if revision is None:

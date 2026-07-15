@@ -5,11 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from aegis_contracts import (
-    PermissionV1,
     AlertV1,
     ApiErrorEnvelopeV1,
     GraphSnapshotV1,
     IncidentV1,
+    PermissionV1,
     RunCommandResponseV1,
     RunCreateRequestV1,
     RunV1,
@@ -30,7 +30,7 @@ from aegis_persistence.repositories.postgres import (
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_simulation.run_command_service import RunCommandService
 from aegis_simulation_domain.errors import SimulationError, SimulationErrorCode
-from fastapi import Depends, APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -144,7 +144,10 @@ async def list_runs() -> list[RunV1]:
         return await PostgresRunRepository(session).list_all()
 
 
-@router.post("/runs", response_model=RunCommandResponseV1, dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))])
+@router.post(
+    "/runs", response_model=RunCommandResponseV1,
+    dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))],
+)
 async def create_run(
     request: Request,
     body: RunCreateRequestV1,
@@ -235,7 +238,10 @@ async def _run_command(
         return _simulation_error_response(exc)
 
 
-@router.post("/runs/{run_id}/pause", response_model=RunCommandResponseV1, dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))])
+@router.post(
+    "/runs/{run_id}/pause", response_model=RunCommandResponseV1,
+    dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))],
+)
 async def pause_run(
     request: Request,
     run_id: str,
@@ -244,7 +250,10 @@ async def pause_run(
     return await _run_command(request, run_id, SimulationCommandType.PAUSE, idempotency_key)
 
 
-@router.post("/runs/{run_id}/resume", response_model=RunCommandResponseV1, dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))])
+@router.post(
+    "/runs/{run_id}/resume", response_model=RunCommandResponseV1,
+    dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))],
+)
 async def resume_run(
     request: Request,
     run_id: str,
@@ -253,7 +262,10 @@ async def resume_run(
     return await _run_command(request, run_id, SimulationCommandType.RESUME, idempotency_key)
 
 
-@router.post("/runs/{run_id}/stop", response_model=RunCommandResponseV1, dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))])
+@router.post(
+    "/runs/{run_id}/stop", response_model=RunCommandResponseV1,
+    dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))],
+)
 async def stop_run(
     request: Request,
     run_id: str,
@@ -262,7 +274,10 @@ async def stop_run(
     return await _run_command(request, run_id, SimulationCommandType.STOP, idempotency_key)
 
 
-@router.post("/runs/{run_id}/step", response_model=RunCommandResponseV1, dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))])
+@router.post(
+    "/runs/{run_id}/step", response_model=RunCommandResponseV1,
+    dependencies=[Depends(require_permission(PermissionV1.RUNS_WRITE))],
+)
 async def step_run(
     request: Request,
     run_id: str,
