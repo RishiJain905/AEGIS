@@ -180,6 +180,7 @@ export * from './replay';
 export * from './replay-frontend';
 export * from './cinematic';
 export * from './scoring';
+export * from './auth';
 
 import {
   afterActionReportSchema,
@@ -238,6 +239,15 @@ import {
   scoreRubricSchema,
   validAlternativeSchema,
 } from './scoring';
+import {
+  authenticatedActorSchema,
+  authorizationDecisionSchema,
+  permissionContractSchema,
+  resourceAccessGrantSchema,
+  roleContractSchema,
+  securityAuditEventSchema,
+  sessionInfoSchema,
+} from './auth';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
@@ -386,4 +396,11 @@ export const FIXTURE_SCHEMA_MAP = {
   after_action_view_model_v1: afterActionViewModelSchema,
   run_comparison_v1: runComparisonSchema,
   score_export_artifact_v1: scoreExportArtifactSchema,
+  authenticated_actor_v1: authenticatedActorSchema,
+  role_v1: roleContractSchema,
+  permission_v1: permissionContractSchema,
+  resource_access_grant_v1: resourceAccessGrantSchema,
+  authorization_decision_v1: authorizationDecisionSchema,
+  session_info_v1: sessionInfoSchema,
+  security_audit_event_v1: securityAuditEventSchema,
 } as const;

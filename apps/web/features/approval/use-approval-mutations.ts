@@ -16,11 +16,8 @@ import {
 } from '@aegis/contracts-ts';
 
 import { queryKeys } from '@/lib/api/query-keys';
+import { apiFetch } from '@/lib/api/auth-fetch';
 import { ApiClientError } from '@/lib/api/types';
-
-function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
-}
 
 export function newApprovalIdempotencyKey(prefix: string): string {
   return `${prefix}-${String(Date.now())}-${Math.random().toString(36).slice(2, 10)}`;
@@ -31,13 +28,10 @@ async function postApprovalJson<T>(
   body: unknown,
   parser: (data: unknown) => T,
 ): Promise<T> {
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+  const response = await apiFetch(path, {
     method: 'POST',
     headers: {
-      Accept: 'application/json',
       'Content-Type': 'application/json',
-      'X-Actor-Id': 'asset:operator-console',
-      Authorization: 'Bearer synthetic-operator-token',
     },
     body: JSON.stringify(body),
   });

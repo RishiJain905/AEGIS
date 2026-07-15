@@ -9,6 +9,7 @@ import {
   newApprovalIdempotencyKey,
   useApprovalMutations,
 } from '@/features/approval/use-approval-mutations';
+import { useAuth } from '@/features/auth';
 import { ApiClientError } from '@/lib/api/types';
 
 export interface ApprovalControlsProps {
@@ -24,6 +25,7 @@ export function ApprovalControls({
   revision,
   latestDecision,
 }: ApprovalControlsProps) {
+  const auth = useAuth();
   const { approve, reject, modify } = useApprovalMutations(incidentId);
   const [comment, setComment] = useState('');
   const [rejectReason, setRejectReason] = useState('');
@@ -32,6 +34,7 @@ export function ApprovalControls({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const canDecide = auth.hasPermission('approvals:decide');
   const awaitingApproval =
     proposal.status === 'pending' && latestDecision?.outcome === 'approval_required';
   const busy = approve.isPending || reject.isPending || modify.isPending;
@@ -40,12 +43,23 @@ export function ApprovalControls({
     return null;
   }
 
+  if (!canDecide) {
+    return (
+      <Alert
+        variant="info"
+        data-testid={`approval-controls-readonly-${proposal.id}`}
+        title="Approval pending"
+      >
+        This proposal awaits an authorized operator. Your role cannot approve or reject.
+      </Alert>
+    );
+  }
+
   const baseFields = {
     schemaVersion: 1 as const,
     proposalId: proposal.id,
     expectedRevisionId: proposal.currentRevisionId ?? revision.id,
     expectedRevision: proposal.revision,
-    actorId: 'asset:operator-console',
   };
 
   const handleError = (error: unknown) => {

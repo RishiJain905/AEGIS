@@ -1,0 +1,70 @@
+/** Shared cookie-authenticated fetch helpers for Phase 30. */
+
+import { apiErrorEnvelopeSchema, parseContract } from '@aegis/contracts-ts';
+
+import { ApiClientError } from '@/lib/api/types';
+
+function getApiBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
+}
+
+let memoryCsrfToken: string | null = null;
+
+export function setMemoryCsrfToken(token: string | null): void {
+  memoryCsrfToken = token;
+}
+
+export function getCsrfToken(): string | null {
+  return memoryCsrfToken;
+}
+
+export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const method = (init.method ?? 'GET').toUpperCase();
+  const headers = new Headers(init.headers);
+  if (!headers.has('Accept')) {
+    headers.set('Accept', 'application/json');
+  }
+  if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+    const csrf = getCsrfToken();
+    if (csrf) {
+      headers.set('X-CSRF-Token', csrf);
+    }
+  }
+  return fetch(`${getApiBaseUrl()}${path}`, {
+    ...init,
+    headers,
+    credentials: 'include',
+  });
+}
+
+export async function apiFetchJson<T>(
+  path: string,
+  init: RequestInit = {},
+  parser?: (data: unknown) => T,
+): Promise<T> {
+  const response = await apiFetch(path, init);
+  if (!response.ok) {
+    let envelope;
+    try {
+      const body: unknown = await response.json();
+      envelope = parseContract(apiErrorEnvelopeSchema, body);
+    } catch {
+      throw new ApiClientError({
+        code: 'HTTP_ERROR',
+        message: `Request failed with status ${String(response.status)}`,
+        status: response.status,
+      });
+    }
+    throw new ApiClientError({
+      code: envelope.code,
+      message: envelope.message,
+      status: response.status,
+      traceId: envelope.traceId,
+    });
+  }
+  if (response.status === 204) {
+    return undefined as T;
+  }
+  const data: unknown = await response.json();
+  return parser ? parser(data) : (data as T);
+}

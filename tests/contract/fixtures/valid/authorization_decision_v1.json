@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "outcome": "allow",
+  "permission": "approvals:decide",
+  "userId": "user:operator-alpha",
+  "resourceType": "proposal",
+  "resourceId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "reasonCode": "ROLE_PERMISSION_GRANTED",
+  "decidedAt": "2026-01-01T00:00:00Z"
+}

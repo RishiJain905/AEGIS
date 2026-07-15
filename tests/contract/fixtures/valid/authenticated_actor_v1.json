@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "userId": "user:operator-alpha",
+  "displayName": "Operator Alpha",
+  "roles": ["operator"],
+  "permissions": [
+    "runs:read",
+    "runs:write",
+    "investigation:read",
+    "investigation:trigger",
+    "approvals:decide",
+    "replay:read",
+    "replay:write",
+    "reports:read",
+    "reports:export",
+    "reports:trigger",
+    "scoring:read",
+    "scoring:compute",
+    "scoring:export",
+    "ws:subscribe"
+  ],
+  "sessionId": "sess_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "authMethod": "dev"
+}

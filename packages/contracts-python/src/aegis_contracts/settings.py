@@ -56,6 +56,24 @@ class AegisSettings(BaseSettings):
     AEGIS_WS_GATEWAY_CONSUMER_GROUP: str = "aegis-ws-gateway"
     AEGIS_WS_SNAPSHOT_GAP_THRESHOLD: int = Field(ge=1, default=500)
 
+    AEGIS_DEV_AUTH_ENABLED: bool = True
+    AEGIS_SESSION_COOKIE_NAME: str = "aegis_session"
+    AEGIS_CSRF_COOKIE_NAME: str = "aegis_csrf"
+    AEGIS_CSRF_HEADER_NAME: str = "X-CSRF-Token"
+    AEGIS_SESSION_TTL_SECONDS: int = Field(ge=60, default=28800)
+    AEGIS_CORS_ALLOWED_ORIGINS: str = "http://localhost:3000"
+    AEGIS_OIDC_ENABLED: bool = False
+    AEGIS_OIDC_ISSUER: str = ""
+    AEGIS_OIDC_CLIENT_ID: str = ""
+    AEGIS_OIDC_CLIENT_SECRET: str = ""
+    AEGIS_OIDC_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/callback"
+    AEGIS_OIDC_SCOPES: str = "openid profile email"
+    AEGIS_WEB_BASE_URL: str = "http://localhost:3000"
+
+    @property
+    def cors_allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.AEGIS_CORS_ALLOWED_ORIGINS.split(",") if origin.strip()]
+
     @property
     def postgres_dsn(self) -> str:
         return str(

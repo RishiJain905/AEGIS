@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase29' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase30' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -185,6 +185,13 @@ export const RUN_SCORE_SCHEMA_VERSION = 1;
 export const AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION = 1;
 export const RUN_COMPARISON_SCORE_SCHEMA_VERSION = 1;
 export const SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION = 1;
+export const AUTHENTICATED_ACTOR_SCHEMA_VERSION = 1;
+export const ROLE_SCHEMA_VERSION = 1;
+export const PERMISSION_SCHEMA_VERSION = 1;
+export const RESOURCE_ACCESS_GRANT_SCHEMA_VERSION = 1;
+export const AUTHORIZATION_DECISION_SCHEMA_VERSION = 1;
+export const SESSION_INFO_SCHEMA_VERSION = 1;
+export const SECURITY_AUDIT_EVENT_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -364,4 +371,11 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   after_action_view_model: [AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION],
   run_comparison: [RUN_COMPARISON_SCORE_SCHEMA_VERSION],
   score_export_artifact: [SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION],
+  authenticated_actor: [AUTHENTICATED_ACTOR_SCHEMA_VERSION],
+  role: [ROLE_SCHEMA_VERSION],
+  permission: [PERMISSION_SCHEMA_VERSION],
+  resource_access_grant: [RESOURCE_ACCESS_GRANT_SCHEMA_VERSION],
+  authorization_decision: [AUTHORIZATION_DECISION_SCHEMA_VERSION],
+  session_info: [SESSION_INFO_SCHEMA_VERSION],
+  security_audit_event: [SECURITY_AUDIT_EVENT_SCHEMA_VERSION],
 };

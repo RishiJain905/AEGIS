@@ -34,6 +34,15 @@ from aegis_contracts.approvals import (
     RejectProposalResponseV1,
     StaleProposalErrorV1,
 )
+from aegis_contracts.auth import (
+    AuthenticatedActorV1,
+    AuthorizationDecisionV1,
+    PermissionContractV1,
+    ResourceAccessGrantV1,
+    RoleContractV1,
+    SecurityAuditEventV1,
+    SessionInfoV1,
+)
 from aegis_contracts.cinematic import (
     CameraDirectiveV1,
     CinematicBeatV1,
@@ -360,4 +369,11 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "after_action_view_model_v1": AfterActionViewModelV1,
     "run_comparison_v1": RunComparisonV1,
     "score_export_artifact_v1": ScoreExportArtifactV1,
+    "authenticated_actor_v1": AuthenticatedActorV1,
+    "role_v1": RoleContractV1,
+    "permission_v1": PermissionContractV1,
+    "resource_access_grant_v1": ResourceAccessGrantV1,
+    "authorization_decision_v1": AuthorizationDecisionV1,
+    "session_info_v1": SessionInfoV1,
+    "security_audit_event_v1": SecurityAuditEventV1,
 }

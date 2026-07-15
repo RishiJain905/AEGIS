@@ -1,0 +1,67 @@
+{
+  "$defs": {
+    "AuthMethodV1": {
+      "enum": ["oidc", "dev"],
+      "title": "AuthMethodV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "authMethod": {
+      "$ref": "#/$defs/AuthMethodV1"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "csrfToken": {
+      "maxLength": 128,
+      "minLength": 16,
+      "title": "Csrftoken",
+      "type": "string"
+    },
+    "expiresAt": {
+      "title": "Expiresat",
+      "type": "string"
+    },
+    "revokedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revokedat"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "maxLength": 128,
+      "minLength": 8,
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "userId": {
+      "title": "Userid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "sessionId",
+    "userId",
+    "authMethod",
+    "createdAt",
+    "expiresAt",
+    "csrfToken"
+  ],
+  "title": "SessionInfoV1",
+  "type": "object"
+}

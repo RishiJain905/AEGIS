@@ -1,0 +1,88 @@
+{
+  "$defs": {
+    "AuthorizationDecisionOutcomeV1": {
+      "enum": ["allow", "deny"],
+      "title": "AuthorizationDecisionOutcomeV1",
+      "type": "string"
+    },
+    "PermissionV1": {
+      "enum": [
+        "runs:read",
+        "runs:write",
+        "investigation:read",
+        "investigation:trigger",
+        "approvals:decide",
+        "replay:read",
+        "replay:write",
+        "reports:read",
+        "reports:export",
+        "reports:trigger",
+        "scoring:read",
+        "scoring:compute",
+        "scoring:export",
+        "scenarios:publish",
+        "admin:manage",
+        "ws:subscribe"
+      ],
+      "title": "PermissionV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "decidedAt": {
+      "title": "Decidedat",
+      "type": "string"
+    },
+    "outcome": {
+      "$ref": "#/$defs/AuthorizationDecisionOutcomeV1"
+    },
+    "permission": {
+      "$ref": "#/$defs/PermissionV1"
+    },
+    "reasonCode": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Reasoncode",
+      "type": "string"
+    },
+    "resourceId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Resourceid"
+    },
+    "resourceType": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Resourcetype"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "userId": {
+      "title": "Userid",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "outcome", "permission", "userId", "reasonCode", "decidedAt"],
+  "title": "AuthorizationDecisionV1",
+  "type": "object"
+}

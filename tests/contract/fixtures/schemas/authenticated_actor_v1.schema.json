@@ -1,0 +1,81 @@
+{
+  "$defs": {
+    "AuthMethodV1": {
+      "enum": ["oidc", "dev"],
+      "title": "AuthMethodV1",
+      "type": "string"
+    },
+    "PermissionV1": {
+      "enum": [
+        "runs:read",
+        "runs:write",
+        "investigation:read",
+        "investigation:trigger",
+        "approvals:decide",
+        "replay:read",
+        "replay:write",
+        "reports:read",
+        "reports:export",
+        "reports:trigger",
+        "scoring:read",
+        "scoring:compute",
+        "scoring:export",
+        "scenarios:publish",
+        "admin:manage",
+        "ws:subscribe"
+      ],
+      "title": "PermissionV1",
+      "type": "string"
+    },
+    "PlatformRoleV1": {
+      "enum": ["viewer", "analyst", "operator", "scenario_author", "admin"],
+      "title": "PlatformRoleV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "authMethod": {
+      "$ref": "#/$defs/AuthMethodV1"
+    },
+    "displayName": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Displayname",
+      "type": "string"
+    },
+    "permissions": {
+      "items": {
+        "$ref": "#/$defs/PermissionV1"
+      },
+      "title": "Permissions",
+      "type": "array"
+    },
+    "roles": {
+      "items": {
+        "$ref": "#/$defs/PlatformRoleV1"
+      },
+      "minItems": 1,
+      "title": "Roles",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sessionId": {
+      "maxLength": 128,
+      "minLength": 8,
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "userId": {
+      "title": "Userid",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "userId", "displayName", "roles", "sessionId", "authMethod"],
+  "title": "AuthenticatedActorV1",
+  "type": "object"
+}

@@ -21,6 +21,7 @@ import type {
   ReplayQueryParams,
   RunGraphResult,
 } from '@/lib/api/types';
+import { apiFetch } from '@/lib/api/auth-fetch';
 import { ApiClientError } from '@/lib/api/types';
 
 function buildReplayQuery(params?: ReplayQueryParams): string {
@@ -44,18 +45,13 @@ function buildReplayQuery(params?: ReplayQueryParams): string {
   return query ? `?${query}` : '';
 }
 
-function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
-}
-
 async function fetchJson<T>(
   path: string,
   signal?: AbortSignal,
   parser?: (data: unknown) => T,
 ): Promise<T> {
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+  const response = await apiFetch(path, {
     signal,
-    headers: { Accept: 'application/json' },
   });
 
   if (!response.ok) {

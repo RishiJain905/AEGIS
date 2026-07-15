@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "PermissionV1": {
+      "enum": [
+        "runs:read",
+        "runs:write",
+        "investigation:read",
+        "investigation:trigger",
+        "approvals:decide",
+        "replay:read",
+        "replay:write",
+        "reports:read",
+        "reports:export",
+        "reports:trigger",
+        "scoring:read",
+        "scoring:compute",
+        "scoring:export",
+        "scenarios:publish",
+        "admin:manage",
+        "ws:subscribe"
+      ],
+      "title": "PermissionV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "grantId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Grantid",
+      "type": "string"
+    },
+    "permissions": {
+      "items": {
+        "$ref": "#/$defs/PermissionV1"
+      },
+      "minItems": 1,
+      "title": "Permissions",
+      "type": "array"
+    },
+    "resourceId": {
+      "title": "Resourceid",
+      "type": "string"
+    },
+    "resourceType": {
+      "const": "run",
+      "title": "Resourcetype",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "userId": {
+      "title": "Userid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "grantId",
+    "userId",
+    "resourceType",
+    "resourceId",
+    "permissions",
+    "createdAt"
+  ],
+  "title": "ResourceAccessGrantV1",
+  "type": "object"
+}
