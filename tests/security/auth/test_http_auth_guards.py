@@ -22,7 +22,8 @@ def _settings() -> AegisSettings:
         S3_ACCESS_KEY="minio",
         S3_SECRET_KEY="minio123",
         S3_BUCKET="aegis",
-        AEGIS_DEV_AUTH_ENABLED=True,
+        AEGIS_DEV_AUTH_ENABLED=False,
+        AEGIS_WS_ENABLED=False,
         AEGIS_WS_DEV_AUTH_ENABLED=False,
         AEGIS_OIDC_ENABLED=False,
         AEGIS_CORS_ALLOWED_ORIGINS="http://localhost:3000",
@@ -30,25 +31,25 @@ def _settings() -> AegisSettings:
 
 
 def test_cors_allows_configured_origin_only() -> None:
-    settings = _settings().model_copy(update={"AEGIS_DEV_AUTH_ENABLED": False})
-    app = create_app(settings)
-    with TestClient(app) as client:
-        allowed = client.options(
-            "/api/v1/auth/session",
-            headers={
-                "Origin": "http://localhost:3000",
-                "Access-Control-Request-Method": "GET",
-            },
-        )
-        assert allowed.headers.get("access-control-allow-origin") == "http://localhost:3000"
-        denied = client.options(
-            "/api/v1/auth/session",
-            headers={
-                "Origin": "https://evil.example",
-                "Access-Control-Request-Method": "GET",
-            },
-        )
-        assert denied.headers.get("access-control-allow-origin") != "https://evil.example"
+    # Exercise CORS middleware without starting Redis/Postgres-backed lifespan work.
+    app = create_app(_settings())
+    client = TestClient(app)
+    allowed = client.options(
+        "/api/v1/auth/session",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert allowed.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    denied = client.options(
+        "/api/v1/auth/session",
+        headers={
+            "Origin": "https://evil.example",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert denied.headers.get("access-control-allow-origin") != "https://evil.example"
 
 
 @pytest.mark.asyncio
