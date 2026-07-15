@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "status": "ready",
+  "service": "api",
+  "environment": "development",
+  "dependencies": [
+    {
+      "schemaVersion": 1,
+      "name": "postgres",
+      "state": "ok",
+      "required": true,
+      "latencyMs": 3.2,
+      "message": null,
+      "checkedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "schemaVersion": 1,
+      "name": "redis",
+      "state": "ok",
+      "required": true,
+      "latencyMs": 1.1,
+      "message": null,
+      "checkedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "schemaVersion": 1,
+      "name": "object_storage",
+      "state": "ok",
+      "required": true,
+      "latencyMs": 5.0,
+      "message": null,
+      "checkedAt": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "checkedAt": "2026-01-01T00:00:00Z"
+}

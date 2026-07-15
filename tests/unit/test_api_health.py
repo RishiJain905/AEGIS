@@ -7,7 +7,39 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from aegis_api.main import create_app
 from aegis_contracts import AegisEnvironment, AegisSettings, LogLevel
+from aegis_contracts.observability import DependencyStateV1
+from aegis_observability.health import DependencyProbeResult
 from fastapi.testclient import TestClient
+
+
+def _probe(
+    name: str,
+    *,
+    state: DependencyStateV1 = DependencyStateV1.OK,
+    required: bool = True,
+    latency_ms: float = 1.0,
+) -> DependencyProbeResult:
+    return DependencyProbeResult(
+        name=name,
+        state=state,
+        required=required,
+        latency_ms=latency_ms,
+        message=None if state == DependencyStateV1.OK else f"{name} unavailable",
+    )
+
+
+def _ok_probes() -> tuple[AsyncMock, AsyncMock, AsyncMock]:
+    return (
+        AsyncMock(return_value=_probe("postgres")),
+        AsyncMock(return_value=_probe("redis")),
+        AsyncMock(
+            return_value=_probe(
+                "object_storage",
+                required=False,
+                state=DependencyStateV1.OK,
+            )
+        ),
+    )
 
 
 @pytest.fixture
@@ -27,6 +59,8 @@ def client() -> Iterator[TestClient]:
         "S3_BUCKET": "aegis-artifacts",
         "API_PORT": "8000",
         "WEB_PORT": "3000",
+        "AEGIS_READY_REQUIRE_REDIS": "true",
+        "AEGIS_READY_REQUIRE_OBJECT_STORAGE": "false",
     }
     previous = {key: os.environ.get(key) for key in env}
     os.environ.update(env)
@@ -48,8 +82,15 @@ def client() -> Iterator[TestClient]:
         AEGIS_WS_ENABLED=False,
         # Health unit tests do not provide PostgreSQL; skip identity seeding.
         AEGIS_DEV_AUTH_ENABLED=False,
+        AEGIS_READY_REQUIRE_REDIS=True,
+        AEGIS_READY_REQUIRE_OBJECT_STORAGE=False,
     )
-    with patch("aegis_api.main.check_postgres", new=AsyncMock(return_value=True)):
+    postgres, redis, object_storage = _ok_probes()
+    with (
+        patch("aegis_api.observability.routes.check_postgres_bounded", new=postgres),
+        patch("aegis_api.observability.routes.check_redis_bounded", new=redis),
+        patch("aegis_api.observability.routes.check_object_storage", new=object_storage),
+    ):
         app = create_app(settings=settings)
         with TestClient(app) as test_client:
             yield test_client
@@ -68,13 +109,27 @@ def test_health_endpoint(client: TestClient) -> None:
     assert payload["service"] == "api"
 
 
+def test_live_endpoint(client: TestClient) -> None:
+    response = client.get("/live")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["schemaVersion"] == 1
+    assert payload["status"] == "ok"
+    assert payload["service"] == "api"
+    assert "checkedAt" in payload
+
+
 def test_ready_endpoint(client: TestClient) -> None:
     response = client.get("/ready")
     assert response.status_code == 200
     payload = response.json()
+    assert payload["schemaVersion"] == 1
     assert payload["status"] == "ready"
     assert payload["environment"] == "test"
-    assert payload["database"] == "ok"
+    assert payload["service"] == "api"
+    names = {dep["name"]: dep["state"] for dep in payload["dependencies"]}
+    assert names["postgres"] == "ok"
+    assert names["redis"] == "ok"
 
 
 def test_ready_endpoint_fails_closed_when_database_unavailable() -> None:
@@ -95,12 +150,26 @@ def test_ready_endpoint_fails_closed_when_database_unavailable() -> None:
         WEB_PORT=3000,
         AEGIS_WS_ENABLED=False,
         AEGIS_DEV_AUTH_ENABLED=False,
+        AEGIS_READY_REQUIRE_REDIS=True,
+        AEGIS_READY_REQUIRE_OBJECT_STORAGE=False,
     )
-    with patch("aegis_api.main.check_postgres", new=AsyncMock(return_value=False)):
+    postgres = AsyncMock(
+        return_value=_probe("postgres", state=DependencyStateV1.UNAVAILABLE)
+    )
+    redis = AsyncMock(return_value=_probe("redis"))
+    object_storage = AsyncMock(
+        return_value=_probe("object_storage", required=False, state=DependencyStateV1.OK)
+    )
+    with (
+        patch("aegis_api.observability.routes.check_postgres_bounded", new=postgres),
+        patch("aegis_api.observability.routes.check_redis_bounded", new=redis),
+        patch("aegis_api.observability.routes.check_object_storage", new=object_storage),
+    ):
         app = create_app(settings=settings)
         with TestClient(app) as test_client:
             response = test_client.get("/ready")
     assert response.status_code == 503
     payload = response.json()
     assert payload["status"] == "not_ready"
-    assert payload["database"] == "unavailable"
+    deps = {dep["name"]: dep for dep in payload["dependencies"]}
+    assert deps["postgres"]["state"] == "unavailable"

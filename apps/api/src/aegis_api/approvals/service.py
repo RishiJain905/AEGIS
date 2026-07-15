@@ -99,6 +99,60 @@ class ApprovalWorkflowService:
         authenticated_actor: AuthenticatedActorV1,
         trace_id: str | None = None,
     ) -> ApproveProposalResponseV1:
+        import time
+
+        started = time.perf_counter()
+        try:
+            from aegis_contracts.observability import ActorKindV1
+            from aegis_observability.context import merge_context
+
+            merge_context(
+                actor_id=authenticated_actor.user_id,
+                actor_kind=ActorKindV1.USER,
+                actor_role=(
+                    authenticated_actor.roles[0].value if authenticated_actor.roles else None
+                ),
+                operation="approval.approve",
+            )
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            result = await self._approve_impl(
+                uow,
+                request,
+                authenticated_actor=authenticated_actor,
+                trace_id=trace_id,
+            )
+            try:
+                from aegis_observability.instrumentation import record_approval_wait
+
+                record_approval_wait(
+                    duration_ms=(time.perf_counter() - started) * 1000.0,
+                    status="approved",
+                )
+            except Exception:  # noqa: BLE001
+                pass
+            return result
+        except Exception:
+            try:
+                from aegis_observability.instrumentation import record_approval_wait
+
+                record_approval_wait(
+                    duration_ms=(time.perf_counter() - started) * 1000.0,
+                    status="error",
+                )
+            except Exception:  # noqa: BLE001
+                pass
+            raise
+
+    async def _approve_impl(
+        self,
+        uow: PostgresUnitOfWork,
+        request: ApproveProposalRequestV1,
+        *,
+        authenticated_actor: AuthenticatedActorV1,
+        trace_id: str | None = None,
+    ) -> ApproveProposalResponseV1:
         actor, authorization_token = self._resolve_authenticated_actor(authenticated_actor)
         existing = await uow.idempotency.get(
             scope=APPROVAL_IDEMPOTENCY_SCOPE,

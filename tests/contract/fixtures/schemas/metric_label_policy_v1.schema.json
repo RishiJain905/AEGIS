@@ -1,0 +1,55 @@
+{
+  "$defs": {
+    "MetricTypeV1": {
+      "enum": ["counter", "histogram", "gauge", "up_down_counter"],
+      "title": "MetricTypeV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Documents allowed metric labels and forbids unbounded cardinality labels.",
+  "properties": {
+    "allowedLabels": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowedlabels",
+      "type": "array"
+    },
+    "description": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "metricName": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Metricname",
+      "type": "string"
+    },
+    "metricType": {
+      "$ref": "#/$defs/MetricTypeV1"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "source": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+    },
+    "unit": {
+      "maxLength": 32,
+      "minLength": 1,
+      "title": "Unit",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "metricName", "metricType", "unit", "description", "source"],
+  "title": "MetricLabelPolicyV1",
+  "type": "object"
+}

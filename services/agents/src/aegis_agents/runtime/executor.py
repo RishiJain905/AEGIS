@@ -110,22 +110,68 @@ class TaskExecutor:
         self._cancelled.add(task_id)
 
     async def execute(self, uow: PostgresUnitOfWork, task_id: str) -> None:
-        task = await uow.agent_tasks.get_by_id(task_id)
-        if task is None:
-            raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.TASK_NOT_FOUND,
-                message=f"Agent task not found: {task_id}",
-            )
-        if task.status != AgentTaskStatus.QUEUED:
-            return
+        import time
 
-        session = await uow.agent_sessions.get_by_id(task.session_id)
-        if session is None:
-            raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.SESSION_NOT_FOUND,
-                message=f"Agent session not found: {task.session_id}",
-                trace_id=task.trace_id,
-            )
+        started = time.perf_counter()
+        agent_name = "unknown"
+        status = "ok"
+        tool_failure = False
+        try:
+            task = await uow.agent_tasks.get_by_id(task_id)
+            if task is None:
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.TASK_NOT_FOUND,
+                    message=f"Agent task not found: {task_id}",
+                )
+            if task.status != AgentTaskStatus.QUEUED:
+                return
+
+            session = await uow.agent_sessions.get_by_id(task.session_id)
+            if session is None:
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.SESSION_NOT_FOUND,
+                    message=f"Agent session not found: {task.session_id}",
+                    trace_id=task.trace_id,
+                )
+            agent_name = str(getattr(session, "role", None) or "unknown")
+            try:
+                from aegis_observability.context import merge_context
+
+                merge_context(
+                    service="agents",
+                    operation="agent.task",
+                    agent_session_id=session.id,
+                    run_id=getattr(session, "run_id", None),
+                    incident_id=task.incident_id,
+                    trace_id=task.trace_id,
+                )
+            except Exception:  # noqa: BLE001
+                pass
+            await self._execute_body(uow, task_id=task_id, task=task, session=session)
+        except Exception:
+            status = "error"
+            raise
+        finally:
+            try:
+                from aegis_observability.instrumentation import record_agent_task
+
+                record_agent_task(
+                    agent_name=agent_name,
+                    duration_ms=(time.perf_counter() - started) * 1000.0,
+                    status=status,
+                    tool_failure=tool_failure,
+                )
+            except Exception:  # noqa: BLE001
+                pass
+
+    async def _execute_body(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        task_id: str,
+        task: Any,
+        session: Any,
+    ) -> None:
         incident = await uow.incidents.get_by_id(task.incident_id)
         if incident is None:
             raise AgentRuntimeError(

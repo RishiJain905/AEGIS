@@ -1,0 +1,125 @@
+{
+  "$defs": {
+    "DependencyStateV1": {
+      "enum": ["ok", "degraded", "unavailable", "failed", "skipped"],
+      "title": "DependencyStateV1",
+      "type": "string"
+    },
+    "DependencyStatusV1": {
+      "additionalProperties": false,
+      "properties": {
+        "checkedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checkedat"
+        },
+        "latencyMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Latencyms"
+        },
+        "message": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Message"
+        },
+        "name": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "schemaVersion": {
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/$defs/DependencyStateV1"
+        }
+      },
+      "required": ["schemaVersion", "name", "state"],
+      "title": "DependencyStatusV1",
+      "type": "object"
+    },
+    "ReadyStatusV1": {
+      "enum": ["ready", "not_ready", "degraded"],
+      "title": "ReadyStatusV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Readiness response \u2014 service can safely receive intended traffic.",
+  "properties": {
+    "checkedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Checkedat"
+    },
+    "dependencies": {
+      "items": {
+        "$ref": "#/$defs/DependencyStatusV1"
+      },
+      "title": "Dependencies",
+      "type": "array"
+    },
+    "environment": {
+      "maxLength": 32,
+      "minLength": 1,
+      "title": "Environment",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "service": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Service",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ReadyStatusV1"
+    }
+  },
+  "required": ["schemaVersion", "status", "service", "environment"],
+  "title": "ReadyResponseV1",
+  "type": "object"
+}

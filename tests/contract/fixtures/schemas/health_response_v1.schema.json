@@ -1,0 +1,48 @@
+{
+  "$defs": {
+    "HealthStatusV1": {
+      "enum": ["ok", "degraded", "failed"],
+      "title": "HealthStatusV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Liveness response \u2014 process is alive. Does not check dependencies.",
+  "properties": {
+    "checkedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Checkedat"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "service": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Service",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/HealthStatusV1"
+    },
+    "version": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "status", "service", "version"],
+  "title": "HealthResponseV1",
+  "type": "object"
+}

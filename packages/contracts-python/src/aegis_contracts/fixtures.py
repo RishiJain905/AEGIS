@@ -128,6 +128,14 @@ from aegis_contracts.models import (
     ModelVerifyArtifactResponseV1,
     TrainingRunManifestV1,
 )
+from aegis_contracts.observability import (
+    DependencyStatusV1,
+    HealthResponseV1,
+    MetricLabelPolicyV1,
+    ReadyResponseV1,
+    StructuredLogRecordV1,
+    TelemetryContextV1,
+)
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
 from aegis_contracts.proposals import (
     ApprovalRequirementV1,
@@ -376,4 +384,10 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "authorization_decision_v1": AuthorizationDecisionV1,
     "session_info_v1": SessionInfoV1,
     "security_audit_event_v1": SecurityAuditEventV1,
+    "telemetry_context_v1": TelemetryContextV1,
+    "structured_log_record_v1": StructuredLogRecordV1,
+    "health_response_v1": HealthResponseV1,
+    "ready_response_v1": ReadyResponseV1,
+    "dependency_status_v1": DependencyStatusV1,
+    "metric_label_policy_v1": MetricLabelPolicyV1,
 }

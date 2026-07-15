@@ -18,6 +18,21 @@ logger = logging.getLogger(__name__)
 
 async def run_outbox_relay(settings: AegisSettings | None = None) -> None:
     resolved = settings or load_settings()
+    try:
+        from aegis_observability.setup import init_observability
+
+        init_observability(
+            service_name=getattr(resolved, "OTEL_SERVICE_NAME", "aegis-worker"),
+            enabled=getattr(resolved, "OTEL_ENABLED", True),
+            otlp_endpoint=getattr(
+                resolved, "OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"
+            ),
+            otlp_protocol=getattr(resolved, "OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"),
+            log_level=resolved.LOG_LEVEL.value,
+            json_logs=getattr(resolved, "AEGIS_LOG_JSON", True),
+        )
+    except Exception:  # noqa: BLE001
+        pass
     config = StreamingConfig.from_env()
     engine = create_engine(resolved)
     session_maker = get_session_maker(resolved, engine=engine)
@@ -41,9 +56,31 @@ async def run_outbox_relay(settings: AegisSettings | None = None) -> None:
     logger.info("Outbox relay started", extra={"claimOwner": relay._claim_owner})
     try:
         while not stop_event.is_set():
-            published = await relay.publish_batch()
+            try:
+                from aegis_observability.context import TelemetryContextState, use_context
+
+                ctx = TelemetryContextState(
+                    service="worker",
+                    operation="outbox.relay.publish_batch",
+                )
+                with use_context(ctx):
+                    published = await relay.publish_batch()
+            except Exception:
+                published = await relay.publish_batch()
             if published:
                 logger.info("Published outbox batch", extra={"count": published})
+                try:
+                    from aegis_observability.metrics import get_metrics, validate_metric_labels
+
+                    snap = GLOBAL_METRICS.snapshot()
+                    labels = validate_metric_labels(
+                        {"service": "worker", "operation": "outbox.relay", "status": "ok"}
+                    )
+                    get_metrics().outbox_unpublished.add(
+                        int(snap.get("outboxUnpublished") or 0), labels
+                    )
+                except Exception:  # noqa: BLE001
+                    pass
             try:
                 await asyncio.wait_for(
                     stop_event.wait(),
@@ -55,6 +92,12 @@ async def run_outbox_relay(settings: AegisSettings | None = None) -> None:
         await redis.aclose()
         await dispose_engine(engine)
         logger.info("Outbox relay stopped")
+        try:
+            from aegis_observability.setup import shutdown_observability
+
+            shutdown_observability()
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def main() -> None:

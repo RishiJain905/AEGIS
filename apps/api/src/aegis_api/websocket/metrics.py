@@ -41,19 +41,83 @@ class GatewayMetrics:
         with self._lock:
             self.active_connections += 1
             self.total_connections += 1
+        try:
+            from aegis_observability.metrics import get_metrics, validate_metric_labels
+
+            get_metrics().ws_connections.add(
+                1,
+                validate_metric_labels(
+                    {
+                        "service": "api",
+                        "operation": "ws.connect",
+                        "ws_event": "connect",
+                        "status": "ok",
+                    }
+                ),
+            )
+        except Exception:  # noqa: BLE001
+            pass
 
     def connection_closed(self, reason: str) -> None:
         with self._lock:
             self.active_connections = max(0, self.active_connections - 1)
             self.close_reasons[reason] = self.close_reasons.get(reason, 0) + 1
+        try:
+            from aegis_observability.metrics import get_metrics, validate_metric_labels
+
+            get_metrics().ws_connections.add(
+                -1,
+                validate_metric_labels(
+                    {
+                        "service": "api",
+                        "operation": "ws.disconnect",
+                        "ws_event": "disconnect",
+                        "status": "ok",
+                    }
+                ),
+            )
+        except Exception:  # noqa: BLE001
+            pass
 
     def record_sent(self) -> None:
         with self._lock:
             self.messages_sent += 1
+        try:
+            from aegis_observability.metrics import get_metrics, validate_metric_labels
+
+            get_metrics().ws_messages.add(
+                1,
+                validate_metric_labels(
+                    {
+                        "service": "api",
+                        "operation": "ws.message",
+                        "ws_event": "send",
+                        "status": "ok",
+                    }
+                ),
+            )
+        except Exception:  # noqa: BLE001
+            pass
 
     def record_received(self) -> None:
         with self._lock:
             self.messages_received += 1
+        try:
+            from aegis_observability.metrics import get_metrics, validate_metric_labels
+
+            get_metrics().ws_messages.add(
+                1,
+                validate_metric_labels(
+                    {
+                        "service": "api",
+                        "operation": "ws.message",
+                        "ws_event": "receive",
+                        "status": "ok",
+                    }
+                ),
+            )
+        except Exception:  # noqa: BLE001
+            pass
 
     def record_gap(self) -> None:
         with self._lock:

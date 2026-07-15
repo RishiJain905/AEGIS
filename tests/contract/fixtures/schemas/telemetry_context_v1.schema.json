@@ -1,0 +1,197 @@
+{
+  "$defs": {
+    "ActorKindV1": {
+      "enum": ["user", "service", "system", "agent", "anonymous"],
+      "title": "ActorKindV1",
+      "type": "string"
+    },
+    "LogOutcomeV1": {
+      "enum": ["success", "failure", "timeout", "cancelled", "rejected"],
+      "title": "LogOutcomeV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Correlation context propagated across HTTP, WS, workers, and agents.",
+  "properties": {
+    "actorId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actorid"
+    },
+    "actorKind": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ActorKindV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "actorRole": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actorrole"
+    },
+    "agentSessionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Agentsessionid"
+    },
+    "baggage": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Baggage",
+      "type": "object"
+    },
+    "correlationId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correlationid"
+    },
+    "durationMs": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Durationms"
+    },
+    "eventSequence": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Eventsequence"
+    },
+    "incidentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "operation": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Operation",
+      "type": "string"
+    },
+    "outcome": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LogOutcomeV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "requestId": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Requestid"
+    },
+    "runId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Runid"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "service": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Service",
+      "type": "string"
+    },
+    "spanId": {
+      "anyOf": [
+        {
+          "maxLength": 32,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Spanid"
+    },
+    "traceId": {
+      "title": "Traceid",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "traceId", "service", "operation"],
+  "title": "TelemetryContextV1",
+  "type": "object"
+}

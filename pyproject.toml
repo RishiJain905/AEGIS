@@ -37,6 +37,9 @@ aegis-api = { workspace = true }
 aegis-reports = { workspace = true }
 aegis-replay = { workspace = true }
 aegis-scoring = { workspace = true }
+aegis-observability = { workspace = true }
+aegis-graph-domain = { workspace = true }
+aegis-workers = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -45,6 +48,9 @@ dev = [
     "aegis-policy",
     "aegis-agents",
     "aegis-replay",
+    "aegis-observability",
+    "aegis-graph-domain",
+    "aegis-workers",
     "alembic>=1.15",
     "httpx>=0.28",
     "import-linter>=2.3",

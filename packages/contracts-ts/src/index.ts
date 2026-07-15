@@ -181,6 +181,7 @@ export * from './replay-frontend';
 export * from './cinematic';
 export * from './scoring';
 export * from './auth';
+export * from './observability';
 
 import {
   afterActionReportSchema,
@@ -248,6 +249,14 @@ import {
   securityAuditEventSchema,
   sessionInfoSchema,
 } from './auth';
+import {
+  dependencyStatusSchema,
+  healthResponseSchema,
+  metricLabelPolicySchema,
+  readyResponseSchema,
+  structuredLogRecordSchema,
+  telemetryContextSchema,
+} from './observability';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
@@ -403,4 +412,10 @@ export const FIXTURE_SCHEMA_MAP = {
   authorization_decision_v1: authorizationDecisionSchema,
   session_info_v1: sessionInfoSchema,
   security_audit_event_v1: securityAuditEventSchema,
+  telemetry_context_v1: telemetryContextSchema,
+  structured_log_record_v1: structuredLogRecordSchema,
+  health_response_v1: healthResponseSchema,
+  ready_response_v1: readyResponseSchema,
+  dependency_status_v1: dependencyStatusSchema,
+  metric_label_policy_v1: metricLabelPolicySchema,
 } as const;

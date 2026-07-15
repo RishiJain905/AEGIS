@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>AEGIS Phase 31 Observability Evidence</title>
+    <style>
+      :root {
+        --bg: #0f1c24;
+        --panel: #17303b;
+        --ink: #e8f1f4;
+        --accent: #3db8a0;
+        --warn: #d9a441;
+        --bad: #d46565;
+      }
+      body {
+        margin: 0;
+        font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+        background: linear-gradient(160deg, #0f1c24, #1a3340 50%, #102028);
+        color: var(--ink);
+      }
+      header {
+        padding: 28px 36px 8px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        letter-spacing: 0.02em;
+      }
+      .sub {
+        opacity: 0.8;
+        margin-top: 6px;
+        max-width: dual;
+        max-width: 720px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+        padding: 20px 36px 40px;
+      }
+      .card {
+        background: rgba(23, 48, 59, 0.92);
+        border: 1px solid rgba(61, 184, 160, 0.25);
+        border-radius: 10px;
+        padding: 16px 18px;
+      }
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 15px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 12px;
+        line-height: 1.4;
+        background: #0b151b;
+        padding: 10px;
+        border-radius: 6px;
+      }
+      .ok {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .bad {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .warn {
+        color: var(--warn);
+        font-weight: 600;
+      }
+      .brand {
+        font-size: 13px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">AEGIS Command</div>
+      <h1>Phase 31 Observability Evidence</h1>
+      <p class="sub">
+        Operational telemetry dashboard snapshot. Domain audit records and authoritative events
+        remain in PostgreSQL — this view is diagnostic only.
+      </p>
+    </header>
+    <div class="grid">
+      <section class="card" id="health">
+        <h2>Liveness /health + /live</h2>
+        <div class="ok">HTTP 200</div>
+        <pre>
+{
+  "status": "ok",
+  "service": "api",
+  "version": "0.0.0-phase31"
+}</pre
+        >
+        <div class="ok">/live HTTP 200</div>
+        <pre>
+{
+  "schemaVersion": 1,
+  "status": "ok",
+  "service": "api",
+  "version": "0.0.0-phase31",
+  "checkedAt": "2026-07-15T06:27:03.089878Z"
+}</pre
+        >
+      </section>
+      <section class="card" id="ready">
+        <h2>Readiness /ready</h2>
+        <div class="ok">HTTP 200</div>
+        <pre>
+{
+  "schemaVersion": 1,
+  "status": "ready",
+  "service": "api",
+  "environment": "development",
+  "dependencies": [
+    {
+      "schemaVersion": 1,
+      "name": "postgres",
+      "state": "ok",
+      "required": true,
+      "latencyMs": 27.185812999960035,
+      "message": null,
+      "checkedAt": "2026-07-15T06:27:03.150513Z"
+    },
+    {
+      "schemaVersion": 1,
+      "name": "redis",
+      "state": "ok",
+      "required": true,
+      "latencyMs": 4.7817489994486095,
+      "message": null,
+      "checkedAt": "2026-07-15T06:27:03.150577Z"
+    },
+    {
+      "schemaVersion": 1,
+      "name": "object_storage",
+      "state": "failed",
+      "required": false,
+      "latencyMs": 14.801383000303758,
+      "message": "object_storage probe error: ConnectError",
+      "checkedAt": "2026-07-15T06:27:03.150590Z"
+    }
+  ],
+  "checkedAt": "2026-07-15T06:27:03.150600Z"
+}</pre
+        >
+      </section>
+      <section class="card" id="authz">
+        <h2>Protected ops authz</h2>
+        <p>Unauth /diagnostics: <span class="ok">401</span></p>
+        <p>Viewer /diagnostics: <span class="ok">403</span></p>
+        <p>Admin /diagnostics: <span class="ok">200</span></p>
+        <p>Admin /metrics: <span class="ok">200</span></p>
+      </section>
+      <section class="card" id="failure-recovery">
+        <h2>Dependency failure + recovery</h2>
+        <p>Redis stopped → /ready</p>
+        <pre>
+{
+  "statusCode": 503,
+  "body": {
+    "schemaVersion": 1,
+    "status": "not_ready",
+    "service": "api",
+    "environment": "development",
+    "dependencies": [
+      {
+        "schemaVersion": 1,
+        "name": "postgres",
+        "state": "ok",
+        "required": true,
+        "latencyMs": 24.561307998737902,
+        "message": null,
+        "checkedAt": "2026-07-15T06:27:04.127461Z"
+      },
+      {
+        "schemaVersion": 1,
+        "name": "redis",
+        "state": "failed",
+        "required": true,
+        "latencyMs": 1.3329659996088594,
+        "message": "redis probe error: ConnectionError",
+        "checkedAt": "2026-07-15T06:27:04.127530Z"
+      },
+      {
+        "schemaVersion": 1,
+        "name": "object_storage",
+        "state": "failed",
+        "required": false,
+        "latencyMs": 14.27002399941557,
+        "message": "object_storage probe error: ConnectError",
+        "checkedAt": "2026-07-15T06:27:04.127541Z"
+      }
+    ],
+    "checkedAt": "2026-07-15T06:27:04.127549Z"
+  }
+}</pre
+        >
+        <p>Redis restarted → /ready</p>
+        <pre>
+{
+  "statusCode": 200,
+  "body": {
+    "schemaVersion": 1,
+    "status": "ready",
+    "service": "api",
+    "environment": "development",
+    "dependencies": [
+      {
+        "schemaVersion": 1,
+        "name": "postgres",
+        "state": "ok",
+        "required": true,
+        "latencyMs": 25.289752000389853,
+        "message": null,
+        "checkedAt": "2026-07-15T06:27:05.194230Z"
+      },
+      {
+        "schemaVersion": 1,
+        "name": "redis",
+        "state": "ok",
+        "required": true,
+        "latencyMs": 1.9146380000165664,
+        "message": null,
+        "checkedAt": "2026-07-15T06:27:05.194300Z"
+      },
+      {
+        "schemaVersion": 1,
+        "name": "object_storage",
+        "state": "failed",
+        "required": false,
+        "latencyMs": 13.682077998964814,
+        "message": "object_storage probe error: ConnectError",
+        "checkedAt": "2026-07-15T06:27:05.194310Z"
+      }
+    ],
+    "checkedAt": "2026-07-15T06:27:05.194319Z"
+  }
+}</pre
+        >
+      </section>
+      <section class="card" id="correlation">
+        <h2>Correlation context</h2>
+        <pre>
+{
+  "requestId": "req_PHASE31EVIDENCE000000001",
+  "correlationId": "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "traceparent": "00-000trcaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01"
+}</pre
+        >
+      </section>
+      <section class="card" id="diagnostics">
+        <h2>Admin diagnostics</h2>
+        <pre>
+{
+  "schemaVersion": 1,
+  "status": "ready",
+  "service": "api",
+  "environment": "development",
+  "checkedAt": "2026-07-15T06:27:03.232889Z",
+  "dependencies": [
+    {
+      "schemaVersion": 1,
+      "name": "postgres",
+      "state": "ok",
+      "required": true,
+      "latencyMs": 20.701692999864463,
+      "message": null,
+      "checkedAt": "2026-07-15T06:27:03.232901Z"
+    },
+    {
+      "schemaVersion": 1,
+      "name": "redis",
+      "state": "ok",
+      "required": true,
+      "latencyMs": 1.5987489987310255,
+      "message": null,
+      "checkedAt": "2026-07-15T06:27:03.232938Z"
+    },
+    {
+      "schemaVersion": 1,
+      "name": "object_storage",
+      "state": "failed",
+      "required": false,
+      "latencyMs": 13.611091999337077,
+      "message": "object_storage probe error: ConnectError",
+      "checkedAt": "2026-07-15T06:27:03.232947Z"
+    }
+  ],
+  "streamingMetrics": {
+    "outboxUnpublished": 0,
+    "outboxOldestAgeSeconds": null,
+    "publishLatencyMs": 0.0,
+    "publishesTotal": 0,
+    "publishRetriesTotal": 0,
+    "consumerLag": 0,
+    "pendingMessages": 0,
+    "dlqCount": 0,
+    "backfillsTotal": 0
+  },
+  "gatewayMetrics": {
+    "activeConnections": 0,
+    "totalConnections": 0,
+    "messagesSent": 0,
+    "messagesReceived": 0,
+    "deliveryLagMs": 0.0,
+    "queueDepthTotal": 0,
+    "gapsDetected": 0,
+    "resyncsTotal": 0,
+    "duplicatesSuppressed": 0,
+    "slowClients": 0,
+    "closeReasons": {}
+  },
+  "telemetry": {
+    "enabled": false,
+    "exporterFailures": 0,
+    "serviceName": "aegis-api"
+  }
+}</pre
+        >
+      </section>
+      <section class="card" id="metrics">
+        <h2>Admin metrics snapshot</h2>
+        <pre>
+# AEGIS operational metrics snapshot (admin:manage)
+aegis_outbox_unpublished 0
+aegis_consumer_lag 0
+aegis_ws_active_connections 0
+aegis_ws_messages_sent 0
+aegis_ws_messages_received 0
+aegis_telemetry_exporter_failures 0
+</pre
+        >
+      </section>
+      <section class="card" id="redaction">
+        <h2>Redaction evidence</h2>
+        <pre>
+{
+  "mapping": {
+    "password": "[REDACTED]",
+    "authorization": "[REDACTED]",
+    "cookie": "[REDACTED]",
+    "safeField": "ok"
+  },
+  "headers": {
+    "Authorization": "[REDACTED]",
+    "X-Request-Id": "req_1"
+  }
+}</pre
+        >
+      </section>
+      <section class="card" id="grafana-note">
+        <h2>Dashboard inventory (provisioned)</h2>
+        <pre>
+[
+  {
+    "name": "Service health / liveness",
+    "question": "Is the API process alive?"
+  },
+  {
+    "name": "Readiness + dependencies",
+    "question": "Can the API safely receive traffic?"
+  },
+  {
+    "name": "Protected diagnostics",
+    "question": "Do admin-only ops endpoints enforce authz?"
+  },
+  {
+    "name": "Correlation headers",
+    "question": "Do requests preserve correlation context?"
+  },
+  {
+    "name": "Redaction",
+    "question": "Are secrets absent from telemetry payloads?"
+  }
+]</pre
+        >
+        <p class="warn">
+          Compose Grafana/Tempo blocked by host Docker overlayfs; panel definitions live in
+          infra/observability/grafana/dashboards/aegis-operations.json.
+        </p>
+      </section>
+    </div>
+  </body>
+</html>

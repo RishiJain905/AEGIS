@@ -1,0 +1,72 @@
+{
+  "$defs": {
+    "DependencyStateV1": {
+      "enum": ["ok", "degraded", "unavailable", "failed", "skipped"],
+      "title": "DependencyStateV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "checkedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Checkedat"
+    },
+    "latencyMs": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Latencyms"
+    },
+    "message": {
+      "anyOf": [
+        {
+          "maxLength": 512,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Message"
+    },
+    "name": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "required": {
+      "default": true,
+      "title": "Required",
+      "type": "boolean"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "state": {
+      "$ref": "#/$defs/DependencyStateV1"
+    }
+  },
+  "required": ["schemaVersion", "name", "state"],
+  "title": "DependencyStatusV1",
+  "type": "object"
+}

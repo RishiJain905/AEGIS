@@ -1,4 +1,4 @@
-export const WORKSPACE_VERSION = '0.0.0-phase30' as const;
+export const WORKSPACE_VERSION = '0.0.0-phase31' as const;
 
 export const PROTOCOL_VERSION_V1 = 1;
 
@@ -192,6 +192,12 @@ export const RESOURCE_ACCESS_GRANT_SCHEMA_VERSION = 1;
 export const AUTHORIZATION_DECISION_SCHEMA_VERSION = 1;
 export const SESSION_INFO_SCHEMA_VERSION = 1;
 export const SECURITY_AUDIT_EVENT_SCHEMA_VERSION = 1;
+export const TELEMETRY_CONTEXT_SCHEMA_VERSION = 1;
+export const STRUCTURED_LOG_RECORD_SCHEMA_VERSION = 1;
+export const HEALTH_RESPONSE_SCHEMA_VERSION = 1;
+export const READY_RESPONSE_SCHEMA_VERSION = 1;
+export const DEPENDENCY_STATUS_SCHEMA_VERSION = 1;
+export const METRIC_LABEL_POLICY_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -378,4 +384,10 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   authorization_decision: [AUTHORIZATION_DECISION_SCHEMA_VERSION],
   session_info: [SESSION_INFO_SCHEMA_VERSION],
   security_audit_event: [SECURITY_AUDIT_EVENT_SCHEMA_VERSION],
+  telemetry_context: [TELEMETRY_CONTEXT_SCHEMA_VERSION],
+  structured_log_record: [STRUCTURED_LOG_RECORD_SCHEMA_VERSION],
+  health_response: [HEALTH_RESPONSE_SCHEMA_VERSION],
+  ready_response: [READY_RESPONSE_SCHEMA_VERSION],
+  dependency_status: [DEPENDENCY_STATUS_SCHEMA_VERSION],
+  metric_label_policy: [METRIC_LABEL_POLICY_SCHEMA_VERSION],
 };
