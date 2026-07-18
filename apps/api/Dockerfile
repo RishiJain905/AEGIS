@@ -36,6 +36,7 @@ COPY services/scoring/src services/scoring/src
 COPY services/ml/src services/ml/src
 COPY services/incidents/src services/incidents/src
 COPY services/simulation/src services/simulation/src
+COPY apps/api/src apps/api/src
 RUN uv sync --frozen --no-dev --package aegis-api
 
 FROM python:3.12.10-slim-bookworm AS runner
