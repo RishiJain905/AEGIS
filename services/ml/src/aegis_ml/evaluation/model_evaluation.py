@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
-import resource
+import sys
 import time
+
+if sys.platform != "win32":
+    import resource
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -133,7 +136,11 @@ def run_model_holdout_evaluation(*, steps: int = 300) -> dict[str, Any]:
     )
     cause_coverage = sum(item.cause_coverage for item in per_seed_metrics) / len(per_seed_metrics)
     mean_latency = sum(item.mean_latency_ms for item in per_seed_results) / len(per_seed_results)
-    peak_memory_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    # getrusage is POSIX-only; report 0 (unavailable) on Windows rather than crash.
+    if sys.platform == "win32":
+        peak_memory_kb = 0
+    else:
+        peak_memory_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
     rules_eval = load_rules_evaluation()
     evaluation = EvaluationRunV1(
