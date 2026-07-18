@@ -1,0 +1,232 @@
+name: Security Scans
+
+on:
+  push:
+    branches: [main, 'cursor/**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Prepare scan artifacts
+        run: mkdir -p security-artifacts
+      - name: Run Semgrep for Python and TypeScript
+        run: >-
+          docker run --rm
+          --volume "${GITHUB_WORKSPACE}:/src:ro"
+          --volume "${GITHUB_WORKSPACE}/security-artifacts:/artifacts"
+          --entrypoint semgrep
+          semgrep/semgrep:1.135.0@sha256:62aaded52737fc401299d994f29fcd3d4049bd90bbb77407eca2e29e51ab0d98
+          scan
+          --config p/python
+          --config p/typescript
+          --error
+          --severity ERROR
+          --sarif
+          --output /artifacts/semgrep.sarif
+          /src
+      - name: Upload SAST report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: security-sast
+          path: security-artifacts/semgrep.sarif
+          if-no-files-found: warn
+          retention-days: 14
+
+  dockerfile-lint:
+    name: Dockerfile lint (Hadolint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Prepare scan artifacts
+        run: mkdir -p security-artifacts
+      - name: Lint application Dockerfiles
+        shell: bash
+        run: |
+          set -uo pipefail
+          status=0
+          for dockerfile in apps/api/Dockerfile apps/web/Dockerfile services/workers/Dockerfile services/simulation/Dockerfile; do
+            name="${dockerfile%/Dockerfile}"
+            name="${name//\//-}"
+            if ! docker run --rm -i \
+              --entrypoint hadolint \
+              hadolint/hadolint:2.12.0-alpine@sha256:3c206a451cec6d486367e758645269fd7d696c5ccb6ff59d8b03b0e45268a199 \
+              --format sarif \
+              --failure-threshold error \
+              - \
+              < "$dockerfile" > "security-artifacts/hadolint-${name}.sarif"; then
+              status=1
+            fi
+          done
+          exit "$status"
+      - name: Upload Dockerfile lint reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: security-dockerfile-lint
+          path: security-artifacts/hadolint-*.sarif
+          if-no-files-found: warn
+          retention-days: 14
+
+  iac:
+    name: IaC and Compose scan (Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Prepare scan artifacts
+        run: mkdir -p security-artifacts
+      - name: Scan Compose and application Dockerfiles
+        shell: bash
+        run: |
+          set -uo pipefail
+          status=0
+          for target in docker-compose.yml apps/api/Dockerfile apps/web/Dockerfile services/workers/Dockerfile services/simulation/Dockerfile; do
+            name="${target//\//-}"
+            if ! docker run --rm \
+              --volume "${GITHUB_WORKSPACE}:/work:ro" \
+              --volume "${GITHUB_WORKSPACE}/security-artifacts:/artifacts" \
+              --volume aegis-trivy-config-cache:/root/.cache/trivy \
+              --entrypoint trivy \
+              aquasec/trivy:0.61.0@sha256:6967db29ce5294d054121e94b3cb1262de858af63b4547bb1bade66a4306f2e4 \
+              config \
+              --severity HIGH,CRITICAL \
+              --exit-code 1 \
+              --format sarif \
+              --output "/artifacts/trivy-config-${name}.sarif" \
+              "/work/${target}"; then
+              status=1
+            fi
+          done
+          exit "$status"
+      - name: Scan Compose application security policy with Checkov
+        if: always()
+        run: >-
+          docker run --rm
+          --volume "${GITHUB_WORKSPACE}:/work:ro"
+          --volume "${GITHUB_WORKSPACE}/security-artifacts:/artifacts"
+          --entrypoint checkov
+          bridgecrew/checkov:3.2.357@sha256:6e812e365a5c37e40fbb8e326e1f16c2a522ae8ab0e841130cc54e0c70442db9
+          -f /work/docker-compose.yml
+          --framework yaml
+          --skip-framework secrets
+          --external-checks-dir /work/infra/security/checkov
+          --skip-results-upload
+          --soft-fail
+          --hard-fail-on HIGH,CRITICAL
+          --output sarif
+          --output-file-path /artifacts/checkov-compose
+      - name: Upload IaC scan report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: security-iac
+          path: |
+            security-artifacts/trivy-config-*.sarif
+            security-artifacts/checkov-compose/**
+          if-no-files-found: warn
+          retention-days: 14
+
+  container-supply-chain:
+    name: Local image scan and SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      COMPOSE_PROJECT_NAME: aegis-security
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Prepare scan artifacts
+        run: mkdir -p security-artifacts
+      - name: Build application images locally
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" build api web worker simulator
+      - name: Generate image SBOMs and scan fixable high/critical vulnerabilities
+        shell: bash
+        run: |
+          set -uo pipefail
+          status=0
+          for service in api web worker simulator; do
+            image_ref="${COMPOSE_PROJECT_NAME}-${service}:latest"
+            if ! docker image inspect "$image_ref" > /dev/null 2>&1; then
+              echo "No locally built image found for Compose service $service: $image_ref" >&2
+              status=1
+              continue
+            fi
+
+            if ! docker run --rm \
+              --volume /var/run/docker.sock:/var/run/docker.sock \
+              --volume "${GITHUB_WORKSPACE}/security-artifacts:/artifacts" \
+              anchore/syft:v1.19.0@sha256:bc1ae555a43011d23bb011a4f50e175fc9a5984a008a3f8f2d692b211fcacd2a \
+              "docker:${image_ref}" \
+              --output "cyclonedx-json=/artifacts/sbom-${service}.cdx.json"; then
+              status=1
+            fi
+
+            if ! docker run --rm \
+              --volume /var/run/docker.sock:/var/run/docker.sock \
+              --volume "${GITHUB_WORKSPACE}/security-artifacts:/artifacts" \
+              --volume aegis-trivy-image-cache:/root/.cache/trivy \
+              --entrypoint trivy \
+              aquasec/trivy:0.61.0@sha256:6967db29ce5294d054121e94b3cb1262de858af63b4547bb1bade66a4306f2e4 \
+              image \
+              --scanners vuln \
+              --ignore-unfixed \
+              --severity HIGH,CRITICAL \
+              --exit-code 1 \
+              --format sarif \
+              --output "/artifacts/trivy-image-${service}.sarif" \
+              "$image_ref"; then
+              status=1
+            fi
+          done
+          exit "$status"
+      - name: Generate dependency-manifest SBOM
+        if: always()
+        run: >-
+          docker run --rm
+          --volume "${GITHUB_WORKSPACE}:/work:ro"
+          --volume "${GITHUB_WORKSPACE}/security-artifacts:/artifacts"
+          anchore/syft:v1.19.0@sha256:bc1ae555a43011d23bb011a4f50e175fc9a5984a008a3f8f2d692b211fcacd2a
+          dir:/work
+          --exclude ./.git/**
+          --exclude ./node_modules/**
+          --exclude ./.venv/**
+          --exclude ./.next/**
+          --exclude ./.turbo/**
+          --exclude ./security-artifacts/**
+          --scope all-layers
+          --output cyclonedx-json=/artifacts/dependencies.cdx.json
+      - name: Generate non-blocking license report
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [[ -f security-artifacts/dependencies.cdx.json ]]; then
+            jq '{bomFormat, specVersion, generatedAt: .metadata.timestamp, components: [.components[] | {type, name, version, licenses: [(.licenses // [])[]? | (.license.id // .license.name // .expression)] | map(select(. != null)) | unique}]}' \
+              security-artifacts/dependencies.cdx.json \
+              > security-artifacts/license-report.json
+          else
+            echo 'Dependency SBOM was not generated; license report unavailable.' >&2
+            exit 1
+          fi
+      - name: Upload container, SBOM, and license reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: security-container-supply-chain
+          path: security-artifacts/
+          if-no-files-found: warn
+          retention-days: 14

@@ -22,6 +22,7 @@ from aegis_contracts.versioning import (
 
 from aegis_model_provider.config import ProviderSettings
 from aegis_model_provider.cost import with_estimated_cost
+from aegis_model_provider.egress import assert_provider_destination_allowed
 from aegis_model_provider.errors import ProviderRuntimeError, make_provider_error
 from aegis_model_provider.structured_output import parse_json_content, validate_structured_output
 
@@ -35,8 +36,16 @@ def _map_finish_reason(value: str | None) -> ProviderFinishReason:
 class OpenAIHostedProvider:
     provider_id = "openai"
 
-    def __init__(self, settings: ProviderSettings) -> None:
+    def __init__(self, settings: ProviderSettings, *, base_url: str | None = None) -> None:
         self._settings = settings
+        configured_base_url = (
+            settings.AEGIS_PROVIDER_OPENAI_BASE_URL if base_url is None else base_url
+        )
+        self._base_url = assert_provider_destination_allowed(
+            base_url=configured_base_url,
+            allowed_base_urls=settings.provider_egress_allowlist,
+            provider_id=self.provider_id,
+        )
 
     def capabilities(self) -> ProviderCapabilitiesV1:
         return ProviderCapabilitiesV1(
@@ -67,7 +76,7 @@ class OpenAIHostedProvider:
             ) from exc
         return AsyncOpenAI(
             api_key=self._settings.AEGIS_PROVIDER_OPENAI_API_KEY,
-            base_url=self._settings.AEGIS_PROVIDER_OPENAI_BASE_URL,
+            base_url=self._base_url,
         )
 
     async def generate(self, request: GenerationRequestV1) -> GenerationResponseV1:

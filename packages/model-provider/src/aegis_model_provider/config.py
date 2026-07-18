@@ -43,6 +43,9 @@ class ProviderSettings(BaseSettings):
     AEGIS_PROVIDER_LOCAL_API_KEY: str = "ollama"
     AEGIS_PROVIDER_LOCAL_MODEL: str = "llama3.2"
     AEGIS_PROVIDER_IN_MEMORY_ARTIFACTS: bool = False
+    AEGIS_PROVIDER_EGRESS_ALLOWLIST: str = (
+        "https://api.openai.com/v1,http://localhost:11434/v1"
+    )
 
     @property
     def timeout_ms(self) -> int:
@@ -51,6 +54,14 @@ class ProviderSettings(BaseSettings):
     @property
     def recorded_fixtures_path(self) -> Path:
         return Path(self.AEGIS_PROVIDER_RECORDED_FIXTURES_DIR)
+
+    @property
+    def provider_egress_allowlist(self) -> list[str]:
+        return [
+            value.strip()
+            for value in self.AEGIS_PROVIDER_EGRESS_ALLOWLIST.split(",")
+            if value.strip()
+        ]
 
 
 def load_provider_settings() -> ProviderSettings:

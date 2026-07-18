@@ -85,6 +85,14 @@ class AegisSettings(BaseSettings):
     AEGIS_LOG_JSON: bool = True
     AEGIS_TELEMETRY_RETENTION_HOURS: int = Field(default=168, ge=1)
 
+    # Phase 32 HTTP trust-boundary hardening
+    AEGIS_REQUEST_BODY_MAX_BYTES: int = Field(default=1_048_576, ge=1)
+    AEGIS_RATE_LIMIT_REQUESTS_PER_MINUTE: int = Field(default=120, ge=1)
+    AEGIS_RATE_LIMIT_BURST: int = Field(default=30, ge=1)
+    AEGIS_RATE_LIMIT_MAX_BUCKETS: int = Field(default=10_000, ge=100)
+    AEGIS_SECURITY_HSTS_ENABLED: bool = False
+    AEGIS_SECURITY_HSTS_MAX_AGE_SECONDS: int = Field(default=31_536_000, ge=1)
+
     @property
     def cors_allowed_origins(self) -> list[str]:
         return [

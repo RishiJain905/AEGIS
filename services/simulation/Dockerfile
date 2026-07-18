@@ -18,13 +18,20 @@ RUN uv sync --frozen --no-dev --package aegis-simulation
 FROM python:3.12.10-slim-bookworm AS runner
 WORKDIR /app
 RUN groupadd -r aegis && useradd -r -g aegis aegis
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/.venv /app/.venv
-COPY services/simulation/src services/simulation/src
-COPY packages/contracts-python/src packages/contracts-python/src
-COPY packages/persistence/src packages/persistence/src
-COPY packages/scenario-sdk/src packages/scenario-sdk/src
-COPY packages/simulation-domain/src packages/simulation-domain/src
-ENV PATH="/app/.venv/bin:$PATH"
+COPY --chown=aegis:aegis services/simulation/src services/simulation/src
+COPY --chown=aegis:aegis packages/contracts-python/src packages/contracts-python/src
+COPY --chown=aegis:aegis packages/persistence/src packages/persistence/src
+COPY --chown=aegis:aegis packages/scenario-sdk/src packages/scenario-sdk/src
+COPY --chown=aegis:aegis packages/simulation-domain/src packages/simulation-domain/src
+ENV PATH="/app/.venv/bin:$PATH" \
+    HOME=/tmp \
+    TMPDIR=/tmp \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 USER aegis
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD python -c "from aegis_simulation import get_health; assert get_health('simulator').status == 'ok'"

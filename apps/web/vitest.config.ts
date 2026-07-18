@@ -22,6 +22,7 @@ export default defineConfig({
       '../../tests/unit/cinematic-replay/**/*.test.ts',
       '../../tests/unit/after-action/**/*.test.ts',
       '../../tests/performance/cinematic-replay/**/*.test.ts',
+      '../../tests/security/**/*.test.ts',
       'fixtures/**/*.test.ts',
     ],
     setupFiles: ['./tests/setup.ts'],

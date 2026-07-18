@@ -18,7 +18,7 @@ from aegis_api.approvals.router import router as approvals_router
 from aegis_api.auth.deps import AuthDependencyError, auth_error_response, require_permission
 from aegis_api.auth.router import router as auth_router
 from aegis_api.auth.service import AuthServiceError
-from aegis_api.auth.startup import assert_secure_auth_configuration, seed_dev_identities
+from aegis_api.auth.startup import seed_dev_identities
 from aegis_api.db.session import init_db, shutdown_db
 from aegis_api.detection.observability import router as detection_observability_router
 from aegis_api.detection.router import router as detection_router
@@ -42,6 +42,12 @@ from aegis_api.risk.observability import router as risk_observability_router
 from aegis_api.risk.router import router as risk_router
 from aegis_api.runs.router import router as runs_router
 from aegis_api.scoring.router import router as scoring_router
+from aegis_api.security.middleware import (
+    RequestBodyLimitMiddleware,
+    SecurityHeadersMiddleware,
+    TokenBucketRateLimitMiddleware,
+)
+from aegis_api.security.startup import assert_secure_startup_configuration
 from aegis_api.websocket.demo import router as websocket_demo_router
 from aegis_api.websocket.manager import WebSocketGatewayManager
 from aegis_api.websocket.router import create_websocket_router
@@ -68,7 +74,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         log_level=settings.LOG_LEVEL.value,
         json_logs=settings.AEGIS_LOG_JSON,
     )
-    assert_secure_auth_configuration(settings)
+    assert_secure_startup_configuration(settings)
     init_db(settings)
     await seed_dev_identities(settings)
     gateway: WebSocketGatewayManager = app.state.gateway
@@ -107,6 +113,23 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
         expose_headers=["X-Request-Id", "X-Correlation-Id", "traceparent"],
     )
     app.add_middleware(create_observability_middleware(resolved_settings.OTEL_SERVICE_NAME))
+    app.add_middleware(
+        RequestBodyLimitMiddleware,
+        max_bytes=resolved_settings.AEGIS_REQUEST_BODY_MAX_BYTES,
+    )
+    app.add_middleware(
+        TokenBucketRateLimitMiddleware,
+        session_cookie_name=resolved_settings.AEGIS_SESSION_COOKIE_NAME,
+        requests_per_minute=resolved_settings.AEGIS_RATE_LIMIT_REQUESTS_PER_MINUTE,
+        burst=resolved_settings.AEGIS_RATE_LIMIT_BURST,
+        max_buckets=resolved_settings.AEGIS_RATE_LIMIT_MAX_BUCKETS,
+    )
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        environment=resolved_settings.AEGIS_ENV,
+        hsts_enabled=resolved_settings.AEGIS_SECURITY_HSTS_ENABLED,
+        hsts_max_age_seconds=resolved_settings.AEGIS_SECURITY_HSTS_MAX_AGE_SECONDS,
+    )
 
     @app.exception_handler(AuthDependencyError)
     async def handle_auth_dependency_error(

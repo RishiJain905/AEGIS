@@ -271,6 +271,7 @@ version = "0.0.0"
 source = { editable = "packages/observability" }
 dependencies = [
     { name = "aegis-contracts" },
+    { name = "aegis-model-provider" },
     { name = "httpx" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
@@ -286,6 +287,7 @@ fastapi = [
 [package.metadata]
 requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
+    { name = "aegis-model-provider", editable = "packages/model-provider" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "opentelemetry-api", specifier = ">=1.27.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.27.0" },

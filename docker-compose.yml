@@ -1,3 +1,7 @@
+# Application containers use a read-only root filesystem. Their only expected
+# writable path is the bounded transient /tmp tmpfs declared below. Stateful
+# and observability services retain their writable data volumes and defaults so
+# the local development stack remains compatible with their upstream images.
 services:
   postgres:
     image: postgres:16.8-alpine
@@ -46,6 +50,13 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       AEGIS_ENV: development
       LOG_LEVEL: info
@@ -87,6 +98,13 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       HOSTNAME: '0.0.0.0'
       WEB_PORT: 3000
@@ -103,6 +121,13 @@ services:
     build:
       context: .
       dockerfile: services/workers/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       AEGIS_ENV: development
       AEGIS_WORKER_MODE: outbox-relay
@@ -136,6 +161,13 @@ services:
     build:
       context: .
       dockerfile: services/simulation/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       AEGIS_ENV: development
       LOG_LEVEL: info
