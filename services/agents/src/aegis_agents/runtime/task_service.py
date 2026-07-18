@@ -96,4 +96,19 @@ class AgentTaskService:
                 "error_message": None,
             }
         )
-        return await uow.agent_tasks.update(retried)
+        # Atomic requeue: only one concurrent retry may transition a terminal
+        # (FAILED/TIMED_OUT) task back to QUEUED, so a task cannot be requeued
+        # twice (and the attempt counter cannot be double-incremented).
+        claimed = await uow.agent_tasks.claim_transition(
+            retried,
+            from_statuses=(AgentTaskStatus.FAILED.value, AgentTaskStatus.TIMED_OUT.value),
+        )
+        if not claimed:
+            current = await uow.agent_tasks.get_by_id(task_id)
+            if current is None:
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.TASK_NOT_FOUND,
+                    message=f"Agent task not found: {task_id}",
+                )
+            return current
+        return retried

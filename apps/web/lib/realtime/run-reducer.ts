@@ -5,6 +5,13 @@ import {
   type RealtimeReducerAction,
 } from '@aegis/contracts-ts';
 
+/**
+ * Upper bound on the recently-seen event-id ring. `lastAppliedSequence` is the
+ * authoritative dedup key; `seenEventIds` is only a bounded secondary guard, so
+ * it must not grow without limit over a long-lived live session.
+ */
+const SEEN_EVENT_ID_LIMIT = 512;
+
 export function createInitialRunReplicatedState(
   runId: string,
   bootstrap?: SnapshotBootstrapPayloadV1,
@@ -124,7 +131,9 @@ export function runReplicatedReducer(
       return {
         ...state,
         lastAppliedSequence: action.sequence,
-        seenEventIds: [...new Set([...state.seenEventIds, action.eventId])],
+        seenEventIds: [...new Set([...state.seenEventIds, action.eventId])].slice(
+          -SEEN_EVENT_ID_LIMIT,
+        ),
       };
     case 'set_locally_paused':
       return {

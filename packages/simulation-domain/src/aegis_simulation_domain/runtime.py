@@ -154,6 +154,35 @@ class SimulationRuntime:
         )
         return checkpoint
 
+    def snapshot_checkpoint(
+        self, *, created_at: datetime | None = None
+    ) -> SimulationCheckpointV1:
+        """Build a runtime checkpoint without emitting a ``sim.checkpoint.created`` event.
+
+        Unlike :meth:`checkpoint`, this is a pure read of the current world/clock/queue/rng
+        state and does not mutate the runtime or its event stream. It is used by restart
+        recovery to persist a faithfully restorable snapshot (lifecycle status + RNG streams
+        + clock + world) after each command without perturbing the authoritative,
+        determinism-golden event sequence.
+        """
+        sequence = self.world.next_sequence
+        snapshot = self.world.to_snapshot(clock=self.clock, queue=self.queue, rng=self.rng)
+        payload = snapshot.model_dump(mode="json", by_alias=True)
+        checksum = checkpoint_checksum(payload)
+        created = created_at or (
+            self.configuration.recorded_at_epoch + timedelta(milliseconds=sequence)
+        )
+        return SimulationCheckpointV1(
+            schema_version=SIMULATION_CHECKPOINT_SCHEMA_VERSION,
+            id=derive_checkpoint_id(run_seed=self.configuration.seed, sequence=sequence),
+            run_id=self.run_id,
+            sequence_at_checkpoint=sequence,
+            engine_version=SIMULATION_ENGINE_VERSION,
+            checksum=checksum,
+            world_state=snapshot,
+            created_at=created.astimezone(UTC),
+        )
+
     def restore(self, checkpoint: SimulationCheckpointV1) -> None:
         if checkpoint.engine_version != SIMULATION_ENGINE_VERSION:
             raise SimulationError(

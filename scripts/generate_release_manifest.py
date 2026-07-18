@@ -37,6 +37,29 @@ _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 ImageInspector = Callable[[str], Mapping[str, Any]]
 
+# Stable artifacts the manifest must always cover. A newly added critical
+# artifact that is absent here still surfaces as missing coverage during
+# verification instead of silently passing (AEGIS-OITB-003).
+REQUIRED_ARTIFACT_PATHS: tuple[str, ...] = (
+    "docs/release/test-plan.md",
+    "docs/release/known-issues.md",
+    "docs/release/evidence-manifest.schema.json",
+    "docker-compose.yml",
+    "docker-compose.prod.yml",
+    ".dockerignore",
+    "apps/api/Dockerfile",
+    "scenarios/operation-silent-relay/package.manifest.yaml",
+    "models/manifests/isolation-forest-v1/manifest.json",
+    "models/manifests/isolation-forest-v1/artifact.joblib",
+    "models/baselines/v1/manifest.json",
+    "fixtures/model-responses/manifest.json",
+    "release/demo-manifest.json",
+    "release/manifest.schema.json",
+    "scripts/demo_v1.py",
+)
+# Coverage that varies by run: at least one Phase 34 evidence manifest.
+REQUIRED_ARTIFACT_PREFIXES: tuple[str, ...] = ("docs/release/evidence/release-",)
+
 
 def sha256_file(path: Path) -> str:
     """Return a prefixed SHA-256 digest for a file."""
@@ -249,6 +272,85 @@ def validate_manifest(manifest: Mapping[str, object], *, repo_root: Path) -> Non
             raise ValueError(f"invalid image digest: {image['digest']}")
 
 
+def verify_manifest_correspondence(
+    manifest: Mapping[str, object],
+    *,
+    repo_root: Path,
+    expected_revision: str | None,
+    expected_migration_head: str | None,
+    image_inspector: ImageInspector | None,
+    required_artifacts: Sequence[str] = REQUIRED_ARTIFACT_PATHS,
+    required_artifact_prefixes: Sequence[str] = REQUIRED_ARTIFACT_PREFIXES,
+) -> None:
+    """Fail closed unless the manifest still describes the current release state.
+
+    ``validate_manifest`` proves internal self-consistency (shape + on-disk
+    checksums). This adds *correspondence* to reality: source revision, migration
+    head, locally present image digests, and required-artifact coverage. Each
+    provider passed as ``None`` skips only that check (an explicit override for
+    detached or offline builds); a provider that disagrees fails closed.
+    """
+
+    del repo_root  # kept for signature symmetry with validate_manifest / future checks
+
+    source = manifest.get("source")
+    revision = source.get("revision") if isinstance(source, dict) else None
+    normalized_revision = revision.strip().lower() if isinstance(revision, str) else None
+    if (
+        expected_revision is not None
+        and normalized_revision != expected_revision.strip().lower()
+    ):
+        raise ValueError(
+            f"manifest source.revision {revision!r} does not match current HEAD "
+            f"{expected_revision!r}"
+        )
+
+    migration = manifest.get("migration")
+    head = migration.get("head") if isinstance(migration, dict) else None
+    if expected_migration_head is not None and head != expected_migration_head:
+        raise ValueError(
+            f"manifest migration.head {head!r} does not match current alembic head "
+            f"{expected_migration_head!r}"
+        )
+
+    if image_inspector is not None:
+        images = manifest.get("images")
+        if not isinstance(images, list) or not images:
+            raise ValueError("manifest images must be a non-empty list")
+        for image in images:
+            if not isinstance(image, dict):
+                raise ValueError("every image entry must be an object")
+            reference = image.get("reference")
+            digest = image.get("digest")
+            if not isinstance(reference, str) or not isinstance(digest, str):
+                raise ValueError("every image entry must contain reference and digest strings")
+            inspected = image_inspector(reference)
+            actual = inspected.get("Id") or inspected.get("imageId")
+            if not isinstance(actual, str) or not _DIGEST_RE.fullmatch(actual):
+                raise ValueError(
+                    f"docker inspect did not return a sha256 image ID for {reference}"
+                )
+            if actual != digest:
+                raise ValueError(
+                    f"image digest mismatch for {reference}: local {actual} != manifest {digest}"
+                )
+
+    checksums = manifest.get("checksums")
+    if not isinstance(checksums, dict):
+        raise ValueError("manifest checksums must be an object")
+    covered = set(checksums)
+    missing = [path for path in required_artifacts if path not in covered]
+    if missing:
+        raise ValueError(
+            f"manifest is missing required artifact coverage: {sorted(missing)}"
+        )
+    for prefix in required_artifact_prefixes:
+        if not any(key.startswith(prefix) for key in covered):
+            raise ValueError(
+                f"manifest is missing required artifact coverage for prefix: {prefix!r}"
+            )
+
+
 def _git_revision(repo_root: Path) -> str:
     completed = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -319,7 +421,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         validate_manifest(manifest, repo_root=repo_root)
         output = args.output if args.output.is_absolute() else repo_root / args.output
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        output.write_text(
+            json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
         print(f"Release manifest: {_relative_path(output, repo_root)}")
         print("RELEASE MANIFEST: PASS")
     except (OSError, RuntimeError, ValueError) as exc:

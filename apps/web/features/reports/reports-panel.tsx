@@ -141,17 +141,17 @@ export function ReportsPanel({ runId }: ReportsPanelProps) {
   const reportQuery = useAfterActionReport(runId);
   const versionsQuery = useReportVersions(runId);
 
-  if (reportQuery.isPending || versionsQuery.isPending || !reportQuery.data) {
-    return <LoadingState message="Loading after-action report" />;
-  }
-
   if (reportQuery.isError) {
     return (
       <EmptyState
-        title="No SCRIBE report yet"
-        description="Trigger SCRIBE after investigation, hypotheses, and proposals are available."
+        title="After-action report not ready"
+        description="The report is generated after the run completes. Trigger SCRIBE once investigation, hypotheses, and proposals are available."
       />
     );
+  }
+
+  if (reportQuery.isPending || versionsQuery.isPending) {
+    return <LoadingState message="Loading after-action report" />;
   }
 
   return (

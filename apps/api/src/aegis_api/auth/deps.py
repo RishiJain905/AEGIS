@@ -118,4 +118,7 @@ def require_permission(
             raise AuthDependencyError(exc) from exc
         return actor
 
+    # Expose the required permission for static introspection (route-guard audits
+    # in tests walk the dependant tree and read this attribute).
+    _dependency.required_permission = permission  # type: ignore[attr-defined]
     return _dependency

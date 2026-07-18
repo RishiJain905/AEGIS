@@ -42,6 +42,22 @@ class PostgresProposalRepository:
         row = await self._session.get(ActionProposalRow, proposal_id)
         return action_proposal_to_domain(row) if row else None
 
+    async def get_proposal_for_update(self, proposal_id: str) -> ActionProposalV1 | None:
+        """Load a proposal while taking a row-level lock (``SELECT ... FOR UPDATE``).
+
+        Serializes concurrent approve/reject/modify/cancel operations on the same
+        proposal so a decision is anchored to proposal identity rather than to a
+        caller-supplied idempotency key. On non-locking dialects (SQLite in unit
+        tests) the ``FOR UPDATE`` clause is silently omitted by SQLAlchemy.
+        """
+        result = await self._session.execute(
+            select(ActionProposalRow)
+            .where(ActionProposalRow.id == proposal_id)
+            .with_for_update()
+        )
+        row = result.scalar_one_or_none()
+        return action_proposal_to_domain(row) if row else None
+
     async def update_proposal(self, proposal: ActionProposalV1) -> ActionProposalV1:
         row = await self._session.get(ActionProposalRow, proposal.id)
         if row is None:

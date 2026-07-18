@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from aegis_contracts import (
@@ -28,7 +28,49 @@ from aegis_api.db.session import get_db_session_maker
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
+# Pending OIDC login state (nonce/PKCE verifier), keyed by the opaque `state`.
+#
+# Single-instance only: this store is process-local, so an OIDC callback must be
+# routed back to the same API instance that served /login. Horizontal scaling
+# requires a shared store (e.g. Redis); this limitation is recorded in
+# docs/release/known-issues.md. Entries are bounded by both a TTL sweep (below)
+# and a hard capacity cap so abandoned logins cannot grow memory without limit.
 _OIDC_STATE: dict[str, dict[str, str]] = {}
+_OIDC_STATE_TTL_SECONDS = 600
+_OIDC_STATE_MAX_ENTRIES = 512
+
+
+def _parse_oidc_created_at(value: str | None) -> datetime:
+    if not value:
+        return datetime.min.replace(tzinfo=UTC)
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return datetime.min.replace(tzinfo=UTC)
+
+
+def _prune_oidc_state(*, now: datetime) -> None:
+    """Evict expired and over-capacity pending OIDC states.
+
+    Uses the stored ``created_at`` to reject entries older than the TTL, then
+    enforces the capacity cap by evicting the oldest entries first.
+    """
+    cutoff = now - timedelta(seconds=_OIDC_STATE_TTL_SECONDS)
+    expired = [
+        key
+        for key, entry in _OIDC_STATE.items()
+        if _parse_oidc_created_at(entry.get("created_at")) < cutoff
+    ]
+    for key in expired:
+        _OIDC_STATE.pop(key, None)
+    overflow = len(_OIDC_STATE) - _OIDC_STATE_MAX_ENTRIES
+    if overflow > 0:
+        oldest = sorted(
+            _OIDC_STATE.items(),
+            key=lambda item: _parse_oidc_created_at(item[1].get("created_at")),
+        )
+        for key, _entry in oldest[:overflow]:
+            _OIDC_STATE.pop(key, None)
 
 
 def _error_response(exc: AuthServiceError | AuthOidcError) -> JSONResponse:
@@ -204,11 +246,13 @@ async def oidc_login(request: Request) -> Response:
     state = generate_opaque_token(nbytes=16)
     nonce = generate_opaque_token(nbytes=16)
     verifier, challenge = create_pkce_pair()
+    now = datetime.now(tz=UTC)
     _OIDC_STATE[state] = {
         "nonce": nonce,
         "verifier": verifier,
-        "created_at": datetime.now(tz=UTC).isoformat(),
+        "created_at": now.isoformat(),
     }
+    _prune_oidc_state(now=now)
     try:
         url = provider.build_authorize_url(
             state=state,
@@ -236,6 +280,8 @@ async def oidc_callback(
                 status_code=400,
             )
         )
+    # Sweep expired states first so an abandoned/expired login cannot complete.
+    _prune_oidc_state(now=datetime.now(tz=UTC))
     if not code or not state or state not in _OIDC_STATE:
         return _error_response(
             AuthServiceError(

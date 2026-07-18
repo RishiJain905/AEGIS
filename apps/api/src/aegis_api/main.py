@@ -184,7 +184,9 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     admin_manage = [Depends(require_permission(PermissionV1.ADMIN_MANAGE))]
 
     app.include_router(ops_protected_router, dependencies=admin_manage)
-    app.include_router(backfill_router, dependencies=read_runs)
+    # Backfill republishes persisted events to Redis (mass WS re-delivery to all
+    # subscribers) — a privileged operational action, not a read; gate admin:manage.
+    app.include_router(backfill_router, dependencies=admin_manage)
     app.include_router(events_router, dependencies=read_runs)
     app.include_router(status_router, dependencies=read_runs)
     app.include_router(observability_router, dependencies=admin_manage)

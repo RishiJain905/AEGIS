@@ -193,7 +193,12 @@ class TaskExecutor:
                 "updated_at": now,
             }
         )
-        await uow.agent_tasks.update(running)
+        # Atomic claim: exactly one executor may transition QUEUED -> RUNNING.
+        # A losing racer (worker + inline API execute, or two workers) observes
+        # zero rows updated and no-ops, so a task never executes twice.
+        claimed = await uow.agent_tasks.claim_transition(running, from_statuses=("queued",))
+        if not claimed:
+            return
         session = await self._sessions.transition(
             uow,
             session=session,

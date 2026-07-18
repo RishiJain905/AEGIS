@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from aegis_api.auth.deps import require_permission
 from aegis_api.db.session import db_session, get_db_session_maker
+from aegis_contracts import PermissionV1
 from aegis_contracts.entities import ModelManifestV1
 from aegis_contracts.models import (
     ModelScoreRequestV1,
@@ -18,7 +20,7 @@ from aegis_ml.inference.service import run_inference_for_events, to_response
 from aegis_ml.models.artifact_store import DEFAULT_MODEL_DIR, load_manifest, verify_artifact
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(prefix="/api/v1/models", tags=["models"])
 
@@ -31,7 +33,12 @@ async def get_model_manifest() -> ModelManifestV1:
     return load_manifest(model_dir=DEFAULT_MODEL_DIR)
 
 
-@router.post("/score", response_model=ModelScoreResponseV1)
+# Persists model detections (dry_run default False) — an investigation write action.
+@router.post(
+    "/score",
+    response_model=ModelScoreResponseV1,
+    dependencies=[Depends(require_permission(PermissionV1.INVESTIGATION_TRIGGER))],
+)
 async def score_run(request: ModelScoreRequestV1) -> ModelScoreResponseV1:
     if request.schema_version != MODEL_EVALUATE_REQUEST_SCHEMA_VERSION:
         raise HTTPException(status_code=400, detail="Unsupported schema version")
@@ -56,7 +63,13 @@ async def score_run(request: ModelScoreRequestV1) -> ModelScoreResponseV1:
         )
 
 
-@router.post("/verify-artifact", response_model=ModelVerifyArtifactResponseV1)
+# Reads arbitrary filesystem paths from the request body — a privileged/admin-only
+# operation; gate behind admin:manage (no read/trigger role should reach the FS).
+@router.post(
+    "/verify-artifact",
+    response_model=ModelVerifyArtifactResponseV1,
+    dependencies=[Depends(require_permission(PermissionV1.ADMIN_MANAGE))],
+)
 async def verify_model_artifact(
     request: ModelVerifyArtifactRequestV1,
 ) -> ModelVerifyArtifactResponseV1:

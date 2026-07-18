@@ -8,7 +8,9 @@ from aegis_agents.runtime.registry import DEFAULT_AGENT_REGISTRY
 from aegis_agents.runtime.session_service import AgentSessionService
 from aegis_agents.runtime.task_service import AgentTaskService
 from aegis_agents.tools.registry import DEFAULT_TOOL_REGISTRY
+from aegis_api.auth.deps import require_permission
 from aegis_api.db.session import get_db_session_maker
+from aegis_contracts import PermissionV1
 from aegis_contracts.agent_runtime import (
     AgentSessionDetailV1,
     CreateAgentSessionRequestV1,
@@ -19,9 +21,15 @@ from aegis_contracts.versioning import (
     CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION,
 )
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 
 router = APIRouter(prefix="/api/v1", tags=["agents"])
+
+# Agent seeding, session/task creation, cancel and retry all write authoritative
+# state or execute an agent (bypassing the proposal/approval trust model if
+# unguarded). They are investigation write actions — reuse investigation:trigger so
+# a read-only VIEWER cannot enqueue/execute agents. GET routes stay investigation:read.
+_TRIGGER = [Depends(require_permission(PermissionV1.INVESTIGATION_TRIGGER))]
 
 
 @router.get("/agents/registry")
@@ -38,7 +46,7 @@ async def list_agent_registry() -> dict[str, object]:
     }
 
 
-@router.post("/agents/harness/seed")
+@router.post("/agents/harness/seed", dependencies=_TRIGGER)
 async def seed_agent_harness() -> dict[str, str]:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
         incident_id = await seed_harness_incident(uow)
@@ -48,6 +56,7 @@ async def seed_agent_harness() -> dict[str, str]:
 @router.post(
     "/incidents/{incident_id}/agent-sessions",
     response_model=AgentSessionDetailV1,
+    dependencies=_TRIGGER,
 )
 async def create_agent_session(
     incident_id: str,
@@ -87,7 +96,7 @@ async def get_agent_session(session_id: str) -> AgentSessionDetailV1:
         return await sessions.get_detail(uow, session_id)
 
 
-@router.post("/agent-sessions/{session_id}/tasks")
+@router.post("/agent-sessions/{session_id}/tasks", dependencies=_TRIGGER)
 async def create_agent_task(
     session_id: str,
     request: CreateAgentTaskRequestV1,
@@ -112,7 +121,7 @@ async def create_agent_task(
         return completed.model_dump(by_alias=True, mode="json")
 
 
-@router.post("/agent-sessions/{session_id}/cancel")
+@router.post("/agent-sessions/{session_id}/cancel", dependencies=_TRIGGER)
 async def cancel_agent_session(session_id: str) -> dict[str, object]:
     sessions = AgentSessionService()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
@@ -120,7 +129,7 @@ async def cancel_agent_session(session_id: str) -> dict[str, object]:
         return session.model_dump(by_alias=True, mode="json")
 
 
-@router.post("/agent-tasks/{task_id}/retry")
+@router.post("/agent-tasks/{task_id}/retry", dependencies=_TRIGGER)
 async def retry_agent_task(task_id: str) -> dict[str, object]:
     tasks = AgentTaskService()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:

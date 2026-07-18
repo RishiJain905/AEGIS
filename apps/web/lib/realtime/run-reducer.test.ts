@@ -81,6 +81,62 @@ describe('runReplicatedReducer', () => {
     expect(state.timelineEntries).toHaveLength(0);
   });
 
+  it('freezes graph revision and applied sequence during a gap', () => {
+    let state = createInitialRunReplicatedState(baseEvent.runId);
+    state = runReplicatedReducer(state, {
+      type: 'mark_gap',
+      expectedSequence: 2,
+      receivedSequence: 5,
+    });
+    const revisionBefore = state.graphRevision;
+    const appliedBefore = state.lastAppliedSequence;
+
+    state = runReplicatedReducer(state, {
+      type: 'apply_graph_delta',
+      delta: {
+        schemaVersion: 1,
+        runId: baseEvent.runId,
+        sequence: 3,
+        revision: 99,
+        operation: 'upsert_node',
+        node: {
+          schemaVersion: 1,
+          id: 'asset:svc-api-gateway',
+          entityType: 'asset',
+          assetType: 'service',
+          label: 'API Gateway',
+          riskScore: 0.5,
+          criticality: 0.5,
+          status: 'suspicious',
+          revision: 99,
+        },
+      },
+    });
+
+    // The reducer must not advance the graph projection while frozen, so the
+    // rendered graph revision cannot drift ahead of the applied sequence.
+    expect(state.graphRevision).toBe(revisionBefore);
+    expect(state.lastAppliedSequence).toBe(appliedBefore);
+  });
+
+  it('bounds seenEventIds so a long live session cannot grow without limit', () => {
+    let state = createInitialRunReplicatedState(baseEvent.runId);
+    const total = 700;
+    for (let i = 1; i <= total; i += 1) {
+      state = runReplicatedReducer(state, {
+        type: 'advance_sequence',
+        sequence: i,
+        eventId: `evt_${String(i)}`,
+      });
+    }
+    expect(state.lastAppliedSequence).toBe(total);
+    expect(state.seenEventIds.length).toBeLessThanOrEqual(512);
+    // The most recent id is always retained (the authoritative recency guard).
+    expect(state.seenEventIds).toContain(`evt_${String(total)}`);
+    // The oldest ids are evicted once the bound is exceeded.
+    expect(state.seenEventIds).not.toContain('evt_1');
+  });
+
   it('suppresses duplicate events', () => {
     const state = createInitialRunReplicatedState(baseEvent.runId);
     const duplicate = projectDomainEventToActions(baseEvent, {

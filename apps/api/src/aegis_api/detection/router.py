@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from aegis_api.auth.deps import require_permission
 from aegis_api.db.session import db_session, get_db_session_maker
+from aegis_contracts import PermissionV1
 from aegis_contracts.detection import (
     DetectionEvaluateRequestV1,
     DetectionEvaluateResponseV1,
@@ -15,7 +17,7 @@ from aegis_incidents.rules.registry import DETECTION_RULE_REGISTRY_V1
 from aegis_ml.baselines.store import DEFAULT_BASELINE_DIR, load_baseline_manifest
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(prefix="/api/v1/detection", tags=["detection"])
 
@@ -33,7 +35,13 @@ async def get_baseline_manifest() -> StatisticalBaselineManifestV1:
     return load_baseline_manifest()
 
 
-@router.post("/evaluate", response_model=DetectionEvaluateResponseV1)
+# Persists alerts/incidents (dry_run defaults False) — an investigation write action;
+# reuse investigation:trigger so a read-only VIEWER cannot mutate authoritative state.
+@router.post(
+    "/evaluate",
+    response_model=DetectionEvaluateResponseV1,
+    dependencies=[Depends(require_permission(PermissionV1.INVESTIGATION_TRIGGER))],
+)
 async def evaluate_detection(request: DetectionEvaluateRequestV1) -> DetectionEvaluateResponseV1:
     if request.schema_version != DETECTION_EVALUATE_REQUEST_SCHEMA_VERSION:
         raise HTTPException(status_code=400, detail="Unsupported schema version")

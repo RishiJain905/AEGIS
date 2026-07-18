@@ -161,7 +161,16 @@ class ApprovalWorkflowService:
         if existing is not None and existing.response_ref:
             return await self._replay_approve_response(uow, existing.response_ref)
 
-        proposal = await self._require_proposal(uow, request.proposal_id)
+        proposal = await self._lock_proposal(uow, request.proposal_id)
+        # Re-check idempotency under the proposal lock: a concurrent same-key
+        # request may have committed while we waited for the lock; replay it
+        # rather than raising ALREADY_DECIDED.
+        existing = await uow.idempotency.get(
+            scope=APPROVAL_IDEMPOTENCY_SCOPE,
+            idempotency_key=request.idempotency_key,
+        )
+        if existing is not None and existing.response_ref:
+            return await self._replay_approve_response(uow, existing.response_ref)
         self._assert_pending(proposal)
         self._assert_revision_match(
             proposal,
@@ -303,7 +312,13 @@ class ApprovalWorkflowService:
         if existing is not None and existing.response_ref:
             return await self._replay_reject_response(uow, existing.response_ref)
 
-        proposal = await self._require_proposal(uow, request.proposal_id)
+        proposal = await self._lock_proposal(uow, request.proposal_id)
+        existing = await uow.idempotency.get(
+            scope=APPROVAL_IDEMPOTENCY_SCOPE,
+            idempotency_key=request.idempotency_key,
+        )
+        if existing is not None and existing.response_ref:
+            return await self._replay_reject_response(uow, existing.response_ref)
         self._assert_pending(proposal)
         self._assert_revision_match(
             proposal,
@@ -387,7 +402,15 @@ class ApprovalWorkflowService:
                 uow, existing.response_ref, request, actor=actor
             )
 
-        proposal = await self._require_proposal(uow, request.proposal_id)
+        proposal = await self._lock_proposal(uow, request.proposal_id)
+        existing = await uow.idempotency.get(
+            scope=APPROVAL_IDEMPOTENCY_SCOPE,
+            idempotency_key=request.idempotency_key,
+        )
+        if existing is not None and existing.response_ref:
+            return await self._replay_modify_response(
+                uow, existing.response_ref, request, actor=actor
+            )
         self._assert_pending(proposal)
         self._assert_revision_match(
             proposal,
@@ -570,7 +593,19 @@ class ApprovalWorkflowService:
                 replayed=True,
             )
 
-        proposal = await self._require_proposal(uow, request.proposal_id)
+        proposal = await self._lock_proposal(uow, request.proposal_id)
+        existing = await uow.idempotency.get(
+            scope=APPROVAL_IDEMPOTENCY_SCOPE,
+            idempotency_key=request.idempotency_key,
+        )
+        if existing is not None:
+            return CancelProposalResponseV1(
+                schema_version=CANCEL_PROPOSAL_RESPONSE_SCHEMA_VERSION,
+                proposal_id=request.proposal_id,
+                proposal_status=ProposalStatus.CANCELLED,
+                reason=request.reason,
+                replayed=True,
+            )
         if proposal.status in {
             ProposalStatus.EXECUTED,
             ProposalStatus.CANCELLED,
@@ -873,6 +908,23 @@ class ApprovalWorkflowService:
 
     async def _require_proposal(self, uow: PostgresUnitOfWork, proposal_id: str) -> Any:
         proposal = await uow.proposals.get_proposal(proposal_id)
+        if proposal is None:
+            raise ApprovalWorkflowError(
+                code=ApprovalErrorCode.NOT_FOUND,
+                message=f"Proposal not found: {proposal_id}",
+                status_code=404,
+            )
+        return proposal
+
+    async def _lock_proposal(self, uow: PostgresUnitOfWork, proposal_id: str) -> Any:
+        """Load and row-lock a proposal so concurrent decisions serialize on its identity.
+
+        The lock is held for the remainder of the request transaction, so a second
+        approver (even with a different idempotency key) blocks here until the first
+        decision commits, then observes the terminal proposal state and is rejected
+        by ``_assert_pending`` — closing the double-execution window.
+        """
+        proposal = await uow.proposals.get_proposal_for_update(proposal_id)
         if proposal is None:
             raise ApprovalWorkflowError(
                 code=ApprovalErrorCode.NOT_FOUND,

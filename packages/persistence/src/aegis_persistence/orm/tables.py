@@ -361,6 +361,7 @@ class ProposalRevisionRow(Base):
             "revision_number",
             name="uq_proposal_revision_number",
         ),
+        Index("ix_proposal_revisions_incident_created", "incident_id", "created_at"),
     )
 
 
@@ -383,6 +384,11 @@ class PolicyDecisionRow(Base):
     task_id: Mapped[str] = mapped_column(String(64), nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_policy_decisions_incident_evaluated", "incident_id", "evaluated_at"),
+        Index("ix_policy_decisions_proposal_revision", "proposal_id", "proposal_revision_id"),
+    )
 
 
 class ExecutedActionRow(Base):

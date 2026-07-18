@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Alert, Button } from '@aegis/ui';
 
@@ -15,10 +15,13 @@ interface DevUser {
   roles: string[];
 }
 
+type UsersStatus = 'loading' | 'ready' | 'error';
+
 export function SignInPanel() {
   const auth = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<DevUser[]>([]);
+  const [usersStatus, setUsersStatus] = useState<UsersStatus>('loading');
   const [error, setError] = useState<string | null>(null);
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
 
@@ -28,15 +31,21 @@ export function SignInPanel() {
     }
   }, [auth.isAuthenticated, router]);
 
-  useEffect(() => {
-    void apiFetchJson<{ users: DevUser[] }>('/api/v1/auth/dev/users')
-      .then((payload) => {
-        setUsers(payload.users);
-      })
-      .catch(() => {
-        setUsers([]);
-      });
+  const loadUsers = useCallback(async () => {
+    setUsersStatus('loading');
+    try {
+      const payload = await apiFetchJson<{ users: DevUser[] }>('/api/v1/auth/dev/users');
+      setUsers(payload.users);
+      setUsersStatus('ready');
+    } catch {
+      setUsers([]);
+      setUsersStatus('error');
+    }
   }, []);
+
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
 
   const onDevLogin = async (userId: string) => {
     setError(null);
@@ -110,24 +119,63 @@ export function SignInPanel() {
             <p className="text-xs leading-5 text-[var(--aegis-text-secondary)]">
               Explicit local auth is disabled and fail-closed in production.
             </p>
-            <ul className="space-y-2 pt-2">
-              {users.map((user) => (
-                <li key={user.userId}>
-                  <Button
-                    variant="secondary"
-                    className="h-auto min-h-12 w-full justify-between px-4 py-2.5"
-                    data-testid={`dev-login-${user.roles[0] ?? 'user'}`}
-                    disabled={busyUserId !== null}
-                    onClick={() => void onDevLogin(user.userId)}
-                  >
-                    <span className="text-left">{user.displayName}</span>
-                    <span className="font-mono text-[0.6875rem] uppercase tracking-[0.08em] text-[var(--aegis-text-muted)]">
-                      {user.roles.join(', ')}
-                    </span>
-                  </Button>
-                </li>
-              ))}
-            </ul>
+
+            {usersStatus === 'loading' ? (
+              <p
+                role="status"
+                className="pt-2 text-sm text-[var(--aegis-text-secondary)]"
+                data-testid="sign-in-users-loading"
+              >
+                Loading development identities…
+              </p>
+            ) : null}
+
+            {usersStatus === 'error' ? (
+              <div className="space-y-3 pt-2" data-testid="sign-in-users-error">
+                <Alert variant="error">
+                  Could not load development identities. The API may still be starting up.
+                </Alert>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  data-testid="sign-in-users-retry"
+                  onClick={() => void loadUsers()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : null}
+
+            {usersStatus === 'ready' && users.length === 0 ? (
+              <p
+                className="pt-2 text-sm text-[var(--aegis-text-secondary)]"
+                data-testid="sign-in-users-empty"
+              >
+                No development identities are available. Confirm the API has seeded local
+                identities.
+              </p>
+            ) : null}
+
+            {usersStatus === 'ready' && users.length > 0 ? (
+              <ul className="space-y-2 pt-2">
+                {users.map((user) => (
+                  <li key={user.userId}>
+                    <Button
+                      variant="secondary"
+                      className="h-auto min-h-12 w-full justify-between px-4 py-2.5"
+                      data-testid={`dev-login-${user.roles[0] ?? 'user'}`}
+                      disabled={busyUserId !== null}
+                      onClick={() => void onDevLogin(user.userId)}
+                    >
+                      <span className="text-left">{user.displayName}</span>
+                      <span className="font-mono text-[0.6875rem] uppercase tracking-[0.08em] text-[var(--aegis-text-muted)]">
+                        {user.roles.join(', ')}
+                      </span>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </section>
 
           <p className="border-t border-[var(--aegis-border-subtle)] pt-5 text-xs leading-5 text-[var(--aegis-text-secondary)]">
