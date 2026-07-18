@@ -30,7 +30,13 @@ import type {
   RunGraphResult,
 } from '@/lib/api/types';
 import { ApiClientError } from '@/lib/api/types';
-import { buildStressGraphSnapshot, STRESS_GRAPH_RUN_ID } from '@aegis/graph-domain';
+import {
+  buildStressGraphSnapshot,
+  buildTargetGraphSnapshot,
+  STRESS_GRAPH_RUN_ID,
+} from '@aegis/graph-domain';
+
+export const TARGET_GRAPH_RUN_ID = 'run_01ARZ3NDEKTSV4RRFFQ69G5FBY';
 
 const fixtureProfileSchema = z
   .object({
@@ -180,6 +186,21 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
     async getRun(runId, signal) {
       const run = dataset.runs.find((item) => item.id === runId);
       if (!run) {
+        if (runId === TARGET_GRAPH_RUN_ID) {
+          return applyProfile(
+            parseContract(runSchema, {
+              schemaVersion: 1,
+              id: TARGET_GRAPH_RUN_ID,
+              scenarioVersionId: 'scenario-version:v1.0.0-synthetic',
+              seed: 424242,
+              status: 'running',
+              startedAt: '2026-06-30T02:00:00.000Z',
+              simTime: '2026-01-01T18:00:00.000Z',
+              revision: 1,
+            }),
+            signal,
+          );
+        }
         if (
           runId === 'run_01ARZ3NDEKTSV4RRFFQ69G5FZ0' ||
           runId === 'run_01ARZ3NDEKTSV4RRFFQ69G5FZ1' ||
@@ -271,6 +292,15 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
         return applyProfile(
           {
             snapshot: buildStressGraphSnapshot(),
+            partial: false,
+          } satisfies RunGraphResult,
+          signal,
+        );
+      }
+      if (runId === TARGET_GRAPH_RUN_ID) {
+        return applyProfile(
+          {
+            snapshot: buildTargetGraphSnapshot(TARGET_GRAPH_RUN_ID),
             partial: false,
           } satisfies RunGraphResult,
           signal,

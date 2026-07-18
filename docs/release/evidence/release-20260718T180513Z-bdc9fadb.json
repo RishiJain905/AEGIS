@@ -1,0 +1,179 @@
+{
+  "schemaVersion": "aegis.release-evidence/v1",
+  "runId": "release-20260718T180513Z-bdc9fadb",
+  "timestamp": "2026-07-18T18:05:13Z",
+  "environment": "local",
+  "revision": "bdc9fadbd9237e35ede7531257ef68cb398244ea",
+  "status": "passed",
+  "scenario": {
+    "version": "operation-silent-relay@1.0.0",
+    "seed": 42
+  },
+  "commandResults": [
+    {
+      "name": "verify",
+      "command": [
+        "powershell",
+        "-NoProfile",
+        "-File",
+        "scripts/verify.ps1"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T18:05:13Z",
+      "durationSeconds": 52.593,
+      "artifactPath": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/verify.log",
+      "outputTail": "contracts do not import persistence KEPT\npackages do not import apps KEPT\npackages do not import services KEPT\n\nContracts: 4 kept, 0 broken.\n--- [import-linter] ok\n=== [pytest] uv run pytest -q --ignore=tests/integration\n....................ss.................................................. [  7%]\n........................................................................ [ 14%]\n........................................................................ [ 21%]\n........................................................................ [ 29%]\n........................................................................ [ 36%]\n........................................................................ [ 43%]\n........................................................................ [ 51%]\n........................................................................ [ 58%]\n........................................................................ [ 65%]\n.............................sssssssssssss.............................. [ 73%]\n........................................................................ [ 80%]\n........................................................................ [ 87%]\n........................................................................ [ 95%]\n..............................................                           [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  F:\\Personal\\A.E.G.I.S\\AEGIS\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\ntests/ml/models/test_artifact_verification.py: 604 warnings\ntests/ml/models/test_offline_online_parity.py: 1208 warnings\n  F:\\Personal\\A.E.G.I.S\\AEGIS\\.venv\\Lib\\site-packages\\joblib\\numpy_pickle.py:207: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\n  As an alternative, you can create a new view using np.reshape (with copy=False if needed).\n    array.shape = self.shape\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n967 passed, 15 skipped, 1813 warnings in 16.99s\n--- [pytest] ok\n=== [contracts] pnpm check-contracts\n$ uv run python scripts/check_contract_compatibility.py\nContract compatibility check passed.\n--- [contracts] ok\nVERIFY: PASS"
+    },
+    {
+      "name": "docker-services",
+      "command": [
+        "docker",
+        "compose",
+        "up",
+        "-d",
+        "--build",
+        "--wait",
+        "postgres",
+        "redis",
+        "minio",
+        "api",
+        "worker",
+        "simulator"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T18:06:05Z",
+      "durationSeconds": 9.328,
+      "artifactPath": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/docker-services.log",
+      "outputTail": " Container aegis-simulator-1 Recreate \n Container aegis-simulator-1 Recreated \n Container aegis-worker-1 Recreated \n Container aegis-api-1 Recreated \n Container aegis-postgres-1 Waiting \n Container aegis-redis-1 Waiting \n Container aegis-redis-1 Waiting \n Container aegis-minio-1 Waiting \n Container aegis-postgres-1 Waiting \n Container aegis-redis-1 Waiting \n Container aegis-postgres-1 Waiting \n Container aegis-minio-1 Healthy \n Container aegis-postgres-1 Healthy \n Container aegis-postgres-1 Healthy \n Container aegis-redis-1 Healthy \n Container aegis-simulator-1 Starting \n Container aegis-redis-1 Healthy \n Container aegis-api-1 Starting \n Container aegis-redis-1 Healthy \n Container aegis-postgres-1 Healthy \n Container aegis-worker-1 Starting \n Container aegis-api-1 Started \n Container aegis-worker-1 Started \n Container aegis-simulator-1 Started \n Container aegis-tempo-1 Waiting \n Container aegis-redis-1 Waiting \n Container aegis-api-1 Waiting \n Container aegis-simulator-1 Waiting \n Container aegis-minio-1 Waiting \n Container aegis-otel-collector-1 Waiting \n Container aegis-worker-1 Waiting \n Container aegis-postgres-1 Waiting \n Container aegis-redis-1 Healthy \n Container aegis-postgres-1 Healthy \n Container aegis-otel-collector-1 Healthy \n Container aegis-minio-1 Healthy \n Container aegis-tempo-1 Healthy \n Container aegis-simulator-1 Healthy \n Container aegis-api-1 Healthy \n Container aegis-worker-1 Healthy "
+    },
+    {
+      "name": "performance",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "tests/performance/release/run_performance.py"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T18:06:15Z",
+      "durationSeconds": 69.547,
+      "artifactPath": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/performance.log",
+      "outputTail": "\nRunning 1 test using 1 worker\n\n\u001b[1A\u001b[2K[1/1] [chromium] \ufffd ..\\..\\tests\\e2e\\release\\browser-performance.spec.ts:110:7 \ufffd Phase 34 graph/browser performance capability \ufffd measures benchmark target/stress layout and 3D capability\n\u001b[1A\u001b[2K  1 passed (35.0s)\nPerformance report: F:\\Personal\\A.E.G.I.S\\AEGIS\\docs\\release\\evidence\\release-20260718T180513Z-bdc9fadb\\performance.json\nPERFORMANCE BUDGET: PASS"
+    },
+    {
+      "name": "e2e",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "scripts/run_release_e2e.py"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T18:07:24Z",
+      "durationSeconds": 17.672,
+      "artifactPath": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/e2e.log",
+      "outputTail": "E2E report: F:\\Personal\\A.E.G.I.S\\AEGIS\\docs\\release\\evidence\\release-20260718T180513Z-bdc9fadb\\e2e.json\nRELEASE E2E: PASS"
+    },
+    {
+      "name": "integration",
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "tests/integration",
+        "-q"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T18:07:42Z",
+      "durationSeconds": 67.547,
+      "artifactPath": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/integration.log",
+      "outputTail": "s.......s.ssss.......................................                    [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  F:\\Personal\\A.E.G.I.S\\AEGIS\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n47 passed, 6 skipped, 1 warning in 65.67s (0:01:05)"
+    },
+    {
+      "name": "golden-replays",
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "tests/golden-replays",
+        "-q"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T18:08:49Z",
+      "durationSeconds": 2.438,
+      "artifactPath": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/golden-replays.log",
+      "outputTail": "..........                                                               [100%]\n10 passed in 1.89s"
+    },
+    {
+      "name": "failure-injection",
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "tests/failure-injection",
+        "-q"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T18:08:52Z",
+      "durationSeconds": 42.484,
+      "artifactPath": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/failure-injection.log",
+      "outputTail": ".....ss......                                                            [100%]\n11 passed, 2 skipped in 41.06s"
+    },
+    {
+      "name": "security",
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "tests/security",
+        "-q"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T18:09:34Z",
+      "durationSeconds": 3.781,
+      "artifactPath": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/security.log",
+      "outputTail": ".......................................................                  [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  F:\\Personal\\A.E.G.I.S\\AEGIS\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n55 passed, 1 warning in 2.89s"
+    },
+    {
+      "name": "deployment-smoke",
+      "command": [
+        "powershell",
+        "-NoProfile",
+        "-File",
+        "scripts/verify.ps1",
+        "-Deployment"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T18:09:38Z",
+      "durationSeconds": 177.906,
+      "artifactPath": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/deployment-smoke.log",
+      "outputTail": " Container aegis-phase33-verify-api-1 Removing \n Container aegis-phase33-verify-api-1 Removed \n Container aegis-phase33-verify-migrate-1 Stopping \n Container aegis-phase33-verify-otel-collector-1 Stopping \n Container aegis-phase33-verify-minio-1 Stopping \n Container aegis-phase33-verify-redis-1 Stopping \n Container aegis-phase33-verify-migrate-1 Stopped \n Container aegis-phase33-verify-migrate-1 Removing \n Container aegis-phase33-verify-migrate-1 Removed \n Container aegis-phase33-verify-postgres-1 Stopping \n Container aegis-phase33-verify-otel-collector-1 Stopped \n Container aegis-phase33-verify-otel-collector-1 Removing \n Container aegis-phase33-verify-otel-collector-1 Removed \n Container aegis-phase33-verify-tempo-1 Stopping \n Container aegis-phase33-verify-redis-1 Stopped \n Container aegis-phase33-verify-redis-1 Removing \n Container aegis-phase33-verify-redis-1 Removed \n Container aegis-phase33-verify-minio-1 Stopped \n Container aegis-phase33-verify-minio-1 Removing \n Container aegis-phase33-verify-postgres-1 Stopped \n Container aegis-phase33-verify-postgres-1 Removing \n Container aegis-phase33-verify-minio-1 Removed \n Container aegis-phase33-verify-postgres-1 Removed \n Container aegis-phase33-verify-tempo-1 Stopped \n Container aegis-phase33-verify-tempo-1 Removing \n Container aegis-phase33-verify-tempo-1 Removed \n Volume aegis-phase33-verify_prometheus_data Removing \n Volume aegis-phase33-verify_minio_data Removing \n Network aegis-phase33-verify_default Removing \n Volume aegis-phase33-verify_tempo_data Removing \n Volume aegis-phase33-verify_grafana_data Removing \n Volume aegis-phase33-verify_minio_data Removed \n Volume aegis-phase33-verify_postgres_data Removing \n Volume aegis-phase33-verify_tempo_data Removed \n Volume aegis-phase33-verify_grafana_data Removed \n Volume aegis-phase33-verify_prometheus_data Removed \n Volume aegis-phase33-verify_postgres_data Removed \n Network aegis-phase33-verify_default Removed \n--- [compose-prod-down] ok\nVERIFY: PASS"
+    }
+  ],
+  "artifactPaths": [
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/verify.log",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/docker-services.log",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/performance.log",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/e2e.log",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/integration.log",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/golden-replays.log",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/failure-injection.log",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/security.log",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/logs/deployment-smoke.log",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/performance.json",
+    "docs/release/evidence/release-20260718T180513Z-bdc9fadb/e2e.json"
+  ],
+  "reports": {
+    "performance": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/performance.json",
+    "e2e": "docs/release/evidence/release-20260718T180513Z-bdc9fadb/e2e.json"
+  }
+}

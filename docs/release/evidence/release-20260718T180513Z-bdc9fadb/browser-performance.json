@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "aegis.release-browser-performance/v1",
+  "browser": "chromium",
+  "capability": {
+    "webgl": true
+  },
+  "metrics": [
+    {
+      "metric": "graph.2d.target_layout",
+      "sampleCount": 1,
+      "p50Ms": 1885.158,
+      "p95Ms": 1885.158,
+      "p99Ms": 1885.158,
+      "budgetMs": {
+        "p50Ms": 8000,
+        "p95Ms": 8000,
+        "p99Ms": 8000
+      },
+      "status": "passed",
+      "visibleNodes": 500,
+      "visibleEdges": 900
+    },
+    {
+      "metric": "graph.2d.stress_layout",
+      "sampleCount": 1,
+      "p50Ms": 18009.32,
+      "p95Ms": 18009.32,
+      "p99Ms": 18009.32,
+      "budgetMs": {
+        "p50Ms": 20000,
+        "p95Ms": 20000,
+        "p99Ms": 20000
+      },
+      "status": "passed",
+      "visibleNodes": 2500,
+      "visibleEdges": 5000
+    },
+    {
+      "metric": "graph.3d.mount_to_visible",
+      "sampleCount": 1,
+      "p50Ms": 1076.686,
+      "p95Ms": 1076.686,
+      "p99Ms": 1076.686,
+      "budgetMs": {
+        "p50Ms": 8000,
+        "p95Ms": 8000,
+        "p99Ms": 10000
+      },
+      "status": "passed",
+      "visibleNodes": 12,
+      "visibleEdges": 19
+    }
+  ],
+  "skips": [],
+  "samples": [
+    {
+      "schemaVersion": 1,
+      "capturedAt": "2026-07-18T18:07:03.249Z",
+      "frameTimeMs": 1885.1579000000002,
+      "syncLatencyMs": 1885.1579000000002,
+      "workerDurationMs": null,
+      "visibleNodes": 500,
+      "visibleEdges": 900,
+      "lodTier": "balanced",
+      "droppedFrames": 0,
+      "droppedWorkerResults": 0
+    },
+    {
+      "schemaVersion": 1,
+      "capturedAt": "2026-07-18T18:07:22.741Z",
+      "frameTimeMs": 18009.320399999997,
+      "syncLatencyMs": 18009.320399999997,
+      "workerDurationMs": null,
+      "visibleNodes": 2500,
+      "visibleEdges": 5000,
+      "lodTier": "dense",
+      "droppedFrames": 0,
+      "droppedWorkerResults": 0
+    }
+  ],
+  "status": "passed"
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "aegis.release-e2e/v1",
+  "status": "passed",
+  "browsers": [
+    "chromium"
+  ],
+  "skippedBrowsers": [
+    {
+      "browser": "firefox",
+      "reason": "Playwright browser executable is not installed locally"
+    },
+    {
+      "browser": "webkit",
+      "reason": "Playwright browser executable is not installed locally"
+    }
+  ],
+  "tests": [
+    {
+      "id": "4b1c874276cd25e60841-f5c1e49d6f507faf57f9",
+      "title": "chromium > release\\silent-relay.spec.ts > Phase 34 Operation Silent Relay release journeys > starts or opens the golden scenario and shows live graph updates",
+      "project": "chromium",
+      "status": "passed",
+      "durationMs": 1291
+    },
+    {
+      "id": "4b1c874276cd25e60841-32672e04b5c0bbdd239c",
+      "title": "chromium > release\\silent-relay.spec.ts > Phase 34 Operation Silent Relay release journeys > triages an alert and exercises mock WATCHTOWER, TRACE, ORACLE, and BASTION workflow",
+      "project": "chromium",
+      "status": "passed",
+      "durationMs": 742
+    },
+    {
+      "id": "4b1c874276cd25e60841-4c4cb96ad932acd2a85b",
+      "title": "chromium > release\\silent-relay.spec.ts > Phase 34 Operation Silent Relay release journeys > covers approve, reject, and modify approval paths with a recorded mock provider",
+      "project": "chromium",
+      "status": "passed",
+      "durationMs": 1268
+    },
+    {
+      "id": "4b1c874276cd25e60841-14c84815ec82fff62142",
+      "title": "chromium > release\\silent-relay.spec.ts > Phase 34 Operation Silent Relay release journeys > creates a snapshot, opens replay and cinematic replay, and reads SCRIBE scoring",
+      "project": "chromium",
+      "status": "passed",
+      "durationMs": 1031
+    },
+    {
+      "id": "4b1c874276cd25e60841-064aeb967c84cf4246a0",
+      "title": "chromium > release\\silent-relay.spec.ts > Phase 34 Operation Silent Relay release journeys > covers keyboard-only navigation, reduced motion, responsive, loading, empty, error, and disconnected states",
+      "project": "chromium",
+      "status": "passed",
+      "durationMs": 9314
+    }
+  ]
+}

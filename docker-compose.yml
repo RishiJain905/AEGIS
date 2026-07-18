@@ -161,6 +161,7 @@ services:
     build:
       context: .
       dockerfile: services/simulation/Dockerfile
+    command: ['aegis-simulator', 'service']
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m

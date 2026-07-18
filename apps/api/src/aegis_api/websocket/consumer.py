@@ -21,7 +21,10 @@ StreamReadResponse = list[tuple[str, list[tuple[str, dict[str, Any]]]]]
 
 
 def _coerce_redis_fields(fields: dict[str, Any]) -> dict[str, str]:
-    return {str(key): str(value) for key, value in fields.items()}
+    def as_text(value: Any) -> str:
+        return value.decode('utf-8') if isinstance(value, bytes) else str(value)
+
+    return {as_text(key): as_text(value) for key, value in fields.items()}
 
 
 class GatewayStreamConsumer:
@@ -73,6 +76,10 @@ class GatewayStreamConsumer:
         self._running = False
 
     async def _process_once(self) -> int:
+        # Redis streams can be recreated independently of the API process. Reconcile
+        # the group before every read so a transient NOGROUP does not strand the
+        # gateway after a Redis restart or data reset.
+        await self.ensure_group()
         response = await self._redis.xreadgroup(
             groupname=self._consumer_group,
             consumername=self._consumer_name,

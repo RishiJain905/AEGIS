@@ -37,7 +37,7 @@
     {
       "name": "trace-step-v1",
       "path": "watchtower-trace/trace-step-v1.json",
-      "requestHash": "3bda3743c9d54e66",
+      "requestHash": "de82f8f2b13fec48",
       "providerId": "recorded",
       "modelId": "recorded-v1",
       "promptVersion": "phase20-trace-v1"

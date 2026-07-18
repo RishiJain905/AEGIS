@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { GraphSnapshotV1 } from '@aegis/contracts-ts';
 import { createGraphStore, GraphLayer, type GraphFilterSet } from '@aegis/graph-domain';
@@ -47,6 +47,85 @@ const LAYER_OPTIONS = [
   { id: GraphLayer.INVESTIGATION, label: 'Investigation' },
   { id: GraphLayer.PRESENTATION, label: 'Presentation' },
 ];
+
+type AccessibleGraphEntityListProps = {
+  nodeIds: string[];
+  nodeLabels: ReadonlyMap<string, string>;
+  selectedEntityId: string | null;
+  onNodeClick: (nodeId: string) => void;
+};
+
+const AccessibleGraphEntityList = memo(function AccessibleGraphEntityList({
+  nodeIds,
+  nodeLabels,
+  selectedEntityId,
+  onNodeClick,
+}: AccessibleGraphEntityListProps) {
+  const initialRenderCount = nodeIds.length > 1000 ? 50 : nodeIds.length;
+  const [renderCount, setRenderCount] = useState(initialRenderCount);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRenderCount(initialRenderCount);
+    if (initialRenderCount >= nodeIds.length) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    let timer: number | undefined;
+    const appendNextChunk = () => {
+      if (cancelled) {
+        return;
+      }
+      setRenderCount((current) => {
+        const next = Math.min(current + 250, nodeIds.length);
+        if (next < nodeIds.length) {
+          timer = window.requestAnimationFrame(appendNextChunk);
+        }
+        return next;
+      });
+    };
+    timer = window.requestAnimationFrame(appendNextChunk);
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) {
+        window.cancelAnimationFrame(timer);
+      }
+    };
+  }, [initialRenderCount, nodeIds.length]);
+
+  const renderedNodeIds = nodeIds.length > 1000 ? nodeIds.slice(0, renderCount) : nodeIds;
+
+  return (
+    <aside
+      aria-label="Accessible graph entity list"
+      data-testid="graph-entity-list"
+      className="graph-entity-index max-h-44 overflow-auto rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] p-3"
+    >
+      <p className="mb-2 text-xs font-semibold text-[var(--aegis-text-muted)]">
+        Nodes ({nodeIds.length}) · keyboard accessible list
+      </p>
+      <ul className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3">
+        {renderedNodeIds.map((nodeId) => (
+          <li key={nodeId}>
+            <button
+              type="button"
+              className="min-h-10 w-full rounded-[var(--aegis-radius-sm)] px-3 py-2 text-left text-xs text-[var(--aegis-text-secondary)] transition-[background-color,color,box-shadow] hover:bg-[var(--aegis-surface-elevated)] hover:text-[var(--aegis-text-primary)] aria-pressed:bg-[var(--aegis-accent-soft)] aria-pressed:text-[var(--aegis-text-primary)]"
+              aria-pressed={selectedEntityId === nodeId}
+              data-testid={`graph-entity-${nodeId}`}
+              onClick={() => {
+                onNodeClick(nodeId);
+              }}
+            >
+              {nodeLabels.get(nodeId) ?? nodeId}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+});
 
 const LEGEND_ITEMS = [
   { label: 'Service', color: '#36a9e1', shape: 'circle' as const },
@@ -478,6 +557,7 @@ export function OperationalGraphView({
       data-testid="operational-graph-view"
       data-layout-status={layoutStatus}
       data-lod-tier={lodTier}
+      data-node-count={filteredNodeIds.length}
     >
       <div className="graph-command-bar flex flex-col gap-3 lg:flex-row lg:items-center">
         <GraphSearchInput value={searchQuery} onChange={setSearchQuery} className="lg:max-w-sm" />
@@ -586,32 +666,12 @@ export function OperationalGraphView({
         />
       </div>
 
-      <aside
-        aria-label="Accessible graph entity list"
-        data-testid="graph-entity-list"
-        className="graph-entity-index max-h-44 overflow-auto rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] p-3"
-      >
-        <p className="mb-2 text-xs font-semibold text-[var(--aegis-text-muted)]">
-          Nodes ({filteredNodeIds.length}) — keyboard accessible list
-        </p>
-        <ul className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredNodeIds.map((nodeId) => (
-            <li key={nodeId}>
-              <button
-                type="button"
-                className="min-h-10 w-full rounded-[var(--aegis-radius-sm)] px-3 py-2 text-left text-xs text-[var(--aegis-text-secondary)] transition-[background-color,color,box-shadow] hover:bg-[var(--aegis-surface-elevated)] hover:text-[var(--aegis-text-primary)] aria-pressed:bg-[var(--aegis-accent-soft)] aria-pressed:text-[var(--aegis-text-primary)]"
-                aria-pressed={selectedEntityId === nodeId}
-                data-testid={`graph-entity-${nodeId}`}
-                onClick={() => {
-                  handleNodeClick(nodeId);
-                }}
-              >
-                {nodeLabels.get(nodeId) ?? nodeId}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
+      <AccessibleGraphEntityList
+        nodeIds={filteredNodeIds}
+        nodeLabels={nodeLabels}
+        selectedEntityId={selectedEntityId}
+        onNodeClick={handleNodeClick}
+      />
     </div>
   );
 }

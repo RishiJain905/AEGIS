@@ -97,6 +97,9 @@ testpaths = ["tests"]
 pythonpath = [".", "apps", "packages", "services", "tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "failure_injection: destructive local Docker recovery test; enabled by AEGIS_RUN_FAILURE_INJECTION=1",
+]
 
 [tool.importlinter]
 root_packages = [

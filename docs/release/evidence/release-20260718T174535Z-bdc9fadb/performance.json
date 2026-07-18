@@ -1,0 +1,317 @@
+{
+  "schemaVersion": "aegis.release-performance/v1",
+  "startedAt": "2026-07-18T17:47:39.863Z",
+  "environment": "local",
+  "scenario": {
+    "version": "operation-silent-relay@1.0.0",
+    "seed": 42
+  },
+  "budgets": {
+    "api.load.read": {
+      "p50Ms": 100,
+      "p95Ms": 250,
+      "p99Ms": 500
+    },
+    "api.load.command": {
+      "p50Ms": 300,
+      "p95Ms": 750,
+      "p99Ms": 1500
+    },
+    "stream.outbox_to_ws": {
+      "p50Ms": 250,
+      "p95Ms": 750,
+      "p99Ms": 1500
+    },
+    "db.event_range_fetch": {
+      "p50Ms": 100,
+      "p95Ms": 300,
+      "p99Ms": 750
+    },
+    "db.snapshot_load": {
+      "p50Ms": 100,
+      "p95Ms": 300,
+      "p99Ms": 750
+    },
+    "db.incident_list": {
+      "p50Ms": 100,
+      "p95Ms": 300,
+      "p99Ms": 750
+    },
+    "graph.2d.target_layout": {
+      "p50Ms": 8000,
+      "p95Ms": 8000,
+      "p99Ms": 8000
+    },
+    "graph.2d.stress_layout": {
+      "p50Ms": 20000,
+      "p95Ms": 20000,
+      "p99Ms": 20000
+    },
+    "graph.3d.mount_to_visible": {
+      "p50Ms": 8000,
+      "p95Ms": 8000,
+      "p99Ms": 10000
+    }
+  },
+  "metrics": [
+    {
+      "metric": "api.load.read",
+      "sampleCount": 73,
+      "p50Ms": 47.321,
+      "p95Ms": 302.248,
+      "p99Ms": 310.09,
+      "budgetMs": {
+        "p50Ms": 100,
+        "p95Ms": 250,
+        "p99Ms": 500
+      },
+      "status": "failed"
+    },
+    {
+      "metric": "api.load.command",
+      "sampleCount": 5,
+      "p50Ms": 17.591,
+      "p95Ms": 243.436,
+      "p99Ms": 288.508,
+      "budgetMs": {
+        "p50Ms": 300,
+        "p95Ms": 750,
+        "p99Ms": 1500
+      },
+      "status": "passed"
+    },
+    {
+      "metric": "db.event_range_fetch",
+      "sampleCount": 20,
+      "p50Ms": 2.092,
+      "p95Ms": 4.883,
+      "p99Ms": 37.138,
+      "budgetMs": {
+        "p50Ms": 100,
+        "p95Ms": 300,
+        "p99Ms": 750
+      },
+      "status": "passed"
+    },
+    {
+      "metric": "db.snapshot_load",
+      "sampleCount": 20,
+      "p50Ms": 0.634,
+      "p95Ms": 0.813,
+      "p99Ms": 2.26,
+      "budgetMs": {
+        "p50Ms": 100,
+        "p95Ms": 300,
+        "p99Ms": 750
+      },
+      "status": "passed"
+    },
+    {
+      "metric": "db.incident_list",
+      "sampleCount": 20,
+      "p50Ms": 0.558,
+      "p95Ms": 0.75,
+      "p99Ms": 2.333,
+      "budgetMs": {
+        "p50Ms": 100,
+        "p95Ms": 300,
+        "p99Ms": 750
+      },
+      "status": "passed"
+    },
+    {
+      "metric": "stream.outbox_to_ws",
+      "sampleCount": 20,
+      "p50Ms": 114.212,
+      "p95Ms": 129.012,
+      "p99Ms": 131.683,
+      "budgetMs": {
+        "p50Ms": 250,
+        "p95Ms": 750,
+        "p99Ms": 1500
+      },
+      "status": "passed"
+    },
+    {
+      "metric": "graph.2d.target_layout",
+      "sampleCount": 1,
+      "p50Ms": 2894.835,
+      "p95Ms": 2894.835,
+      "p99Ms": 2894.835,
+      "budgetMs": {
+        "p50Ms": 8000,
+        "p95Ms": 8000,
+        "p99Ms": 8000
+      },
+      "status": "passed",
+      "visibleNodes": 500,
+      "visibleEdges": 900
+    },
+    {
+      "metric": "graph.2d.stress_layout",
+      "sampleCount": 1,
+      "p50Ms": 18024.808,
+      "p95Ms": 18024.808,
+      "p99Ms": 18024.808,
+      "budgetMs": {
+        "p50Ms": 20000,
+        "p95Ms": 20000,
+        "p99Ms": 20000
+      },
+      "status": "passed",
+      "visibleNodes": 2500,
+      "visibleEdges": 5000
+    },
+    {
+      "metric": "graph.3d.mount_to_visible",
+      "sampleCount": 1,
+      "p50Ms": 1067.226,
+      "p95Ms": 1067.226,
+      "p99Ms": 1067.226,
+      "budgetMs": {
+        "p50Ms": 8000,
+        "p95Ms": 8000,
+        "p99Ms": 10000
+      },
+      "status": "passed",
+      "visibleNodes": 12,
+      "visibleEdges": 19
+    }
+  ],
+  "skips": [],
+  "errors": [
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/realtime/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/events?limit=500 returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/runs returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/realtime/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/events?limit=500 returned HTTP 429",
+    "GET /api/v1/scenarios returned HTTP 429",
+    "GET /api/v1/runs returned HTTP 429",
+    "GET /api/v1/realtime/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/events?limit=500 returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/realtime/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/events?limit=500 returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/scenarios returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/scenarios returned HTTP 429",
+    "GET /api/v1/runs returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/realtime/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/events?limit=500 returned HTTP 429",
+    "GET /api/v1/scenarios returned HTTP 429",
+    "GET /api/v1/realtime/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/events?limit=500 returned HTTP 429",
+    "GET /api/v1/runs returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/realtime/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/events?limit=500 returned HTTP 429",
+    "GET /api/v1/scenarios returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/runs returned HTTP 429",
+    "GET /api/v1/scenarios returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/realtime/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/events?limit=500 returned HTTP 429",
+    "GET /api/v1/runs returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/scenarios returned HTTP 429",
+    "GET /api/v1/runs returned HTTP 429",
+    "GET /api/v1/scenarios returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/runs returned HTTP 429",
+    "GET /api/v1/realtime/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/events?limit=500 returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/incidents returned HTTP 429",
+    "GET /api/v1/scenarios returned HTTP 429",
+    "GET /api/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FA3/graph returned HTTP 429"
+  ],
+  "status": "failed",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FA3",
+  "browser": {
+    "schemaVersion": "aegis.release-browser-performance/v1",
+    "browser": "chromium",
+    "capability": {
+      "webgl": true
+    },
+    "metrics": [
+      {
+        "metric": "graph.2d.target_layout",
+        "sampleCount": 1,
+        "p50Ms": 2894.835,
+        "p95Ms": 2894.835,
+        "p99Ms": 2894.835,
+        "budgetMs": {
+          "p50Ms": 8000,
+          "p95Ms": 8000,
+          "p99Ms": 8000
+        },
+        "status": "passed",
+        "visibleNodes": 500,
+        "visibleEdges": 900
+      },
+      {
+        "metric": "graph.2d.stress_layout",
+        "sampleCount": 1,
+        "p50Ms": 18024.808,
+        "p95Ms": 18024.808,
+        "p99Ms": 18024.808,
+        "budgetMs": {
+          "p50Ms": 20000,
+          "p95Ms": 20000,
+          "p99Ms": 20000
+        },
+        "status": "passed",
+        "visibleNodes": 2500,
+        "visibleEdges": 5000
+      },
+      {
+        "metric": "graph.3d.mount_to_visible",
+        "sampleCount": 1,
+        "p50Ms": 1067.226,
+        "p95Ms": 1067.226,
+        "p99Ms": 1067.226,
+        "budgetMs": {
+          "p50Ms": 8000,
+          "p95Ms": 8000,
+          "p99Ms": 10000
+        },
+        "status": "passed",
+        "visibleNodes": 12,
+        "visibleEdges": 19
+      }
+    ],
+    "skips": [],
+    "samples": [
+      {
+        "schemaVersion": 1,
+        "capturedAt": "2026-07-18T17:48:44.797Z",
+        "frameTimeMs": 2894.8348,
+        "syncLatencyMs": 2894.8348,
+        "workerDurationMs": null,
+        "visibleNodes": 500,
+        "visibleEdges": 900,
+        "lodTier": "balanced",
+        "droppedFrames": 0,
+        "droppedWorkerResults": 0
+      },
+      {
+        "schemaVersion": 1,
+        "capturedAt": "2026-07-18T17:49:04.255Z",
+        "frameTimeMs": 18024.8082,
+        "syncLatencyMs": 18024.8082,
+        "workerDurationMs": null,
+        "visibleNodes": 2500,
+        "visibleEdges": 5000,
+        "lodTier": "dense",
+        "droppedFrames": 0,
+        "droppedWorkerResults": 0
+      }
+    ],
+    "status": "passed",
+    "exitCode": 0
+  },
+  "durationSeconds": 86.066
+}
