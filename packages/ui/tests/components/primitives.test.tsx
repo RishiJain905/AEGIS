@@ -6,7 +6,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { Button, Badge, Dialog, DialogContent, DialogTitle, DialogTrigger } from '../../src';
+import {
+  Button,
+  Badge,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from '../../src';
 
 describe('Button', () => {
   it('is keyboard activatable', async () => {
@@ -26,6 +34,14 @@ describe('Button', () => {
     await user.keyboard('{Enter}');
     expect(clicked).toBe(true);
   });
+
+  it('keeps compact controls touchable and provides restrained press feedback', () => {
+    render(<Button size="sm">Compact action</Button>);
+    const button = screen.getByRole('button', { name: 'Compact action' });
+
+    expect(button.className).toContain('min-h-10');
+    expect(button.className).toContain('active:scale-[0.96]');
+  });
 });
 
 describe('Dialog', () => {
@@ -38,6 +54,7 @@ describe('Dialog', () => {
         </DialogTrigger>
         <DialogContent>
           <DialogTitle>Test dialog</DialogTitle>
+          <DialogDescription>Keyboard interaction test.</DialogDescription>
         </DialogContent>
       </Dialog>,
     );

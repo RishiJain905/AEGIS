@@ -1,83 +1,156 @@
 'use client';
 
-import { useMemo } from 'react';
 import { Html, Line, OrbitControls } from '@react-three/drei';
-import { Canvas, useThree } from '@react-three/fiber';
-import { useEffect, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 import type { SceneEdge, SceneNode } from '../contracts';
 import type { CameraBookmark3D } from '../contracts/camera-bookmark-3d';
 import { RenderQualityTier, type RenderQualityTierValue } from '../contracts/render-quality-tier';
 import { dprForTier } from '../lib/capability';
+import {
+  getSceneFrameloop,
+  getSceneQualityProfile,
+  type SceneQualityProfile,
+} from '../lib/scene-quality';
+import { resolveThreeColor } from '../lib/three-color';
 
-function parseCssColor(color: string, fallback = '#64748b'): THREE.Color {
-  try {
-    if (color === 'transparent' || color.length === 0) {
-      return new THREE.Color(fallback);
-    }
-    return new THREE.Color(color.length === 9 ? color.slice(0, 7) : color);
-  } catch {
-    return new THREE.Color(fallback);
-  }
+function nodeRadius(node: SceneNode): number {
+  return Math.max(5, node.size * 0.72) * (node.selected ? 1.12 : 1);
 }
 
 function InstancedNodes({
   nodes,
+  profile,
   onSelect,
 }: {
   nodes: SceneNode[];
+  profile: SceneQualityProfile;
   onSelect: (nodeId: string) => void;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const colorCoatRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
-  const color = useMemo(() => new THREE.Color(), []);
+  const scratchColor = useMemo(() => new THREE.Color(), []);
+  const nodeColors = useMemo(
+    () => nodes.map((node) => resolveThreeColor(node.color).color),
+    [nodes],
+  );
 
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) {
       return;
     }
+    const colorCoat = colorCoatRef.current;
+
     nodes.forEach((node, index) => {
+      const radius = nodeRadius(node);
       dummy.position.set(node.position.x, node.position.y, node.position.z);
-      const scale = Math.max(0.4, node.size / 8) * (node.selected ? 1.35 : 1);
-      dummy.scale.setScalar(node.dimmed ? scale * 0.7 : scale);
+      dummy.scale.setScalar(node.dimmed ? radius * 0.72 : radius);
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
-      color.copy(parseCssColor(node.color));
+
+      scratchColor.copy(nodeColors[index] ?? resolveThreeColor('#64748b').color);
       if (node.dimmed) {
-        color.multiplyScalar(0.35);
+        scratchColor.multiplyScalar(0.28);
+      } else if (node.highlighted || node.selected) {
+        scratchColor.offsetHSL(0, 0.08, 0.08);
       }
-      mesh.setColorAt(index, color);
+      mesh.setColorAt(index, scratchColor);
+
+      if (colorCoat) {
+        dummy.scale.setScalar((node.dimmed ? radius * 0.72 : radius) * 1.012);
+        dummy.updateMatrix();
+        colorCoat.setMatrixAt(index, dummy.matrix);
+        colorCoat.setColorAt(index, scratchColor);
+      }
     });
+
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) {
       mesh.instanceColor.needsUpdate = true;
     }
-  }, [nodes, dummy, color]);
+    if (colorCoat) {
+      colorCoat.instanceMatrix.needsUpdate = true;
+      if (colorCoat.instanceColor) {
+        colorCoat.instanceColor.needsUpdate = true;
+      }
+    }
+  }, [dummy, nodeColors, nodes, scratchColor]);
 
   return (
-    <instancedMesh
-      ref={meshRef}
-      args={[undefined, undefined, Math.max(nodes.length, 1)]}
-      castShadow={false}
-      receiveShadow={false}
-      onClick={(event) => {
-        event.stopPropagation();
-        const index = event.instanceId;
-        if (typeof index === 'number' && nodes[index]) {
-          onSelect(nodes[index].id);
-        }
-      }}
-    >
-      <sphereGeometry args={[6, 16, 16]} />
-      <meshStandardMaterial vertexColors />
-    </instancedMesh>
+    <group>
+      <instancedMesh
+        ref={meshRef}
+        args={[undefined, undefined, Math.max(nodes.length, 1)]}
+        castShadow={profile.shadows}
+        receiveShadow={profile.shadows}
+        onClick={(event) => {
+          event.stopPropagation();
+          const index = event.instanceId;
+          if (typeof index === 'number' && nodes[index]) {
+            onSelect(nodes[index].id);
+          }
+        }}
+      >
+        <icosahedronGeometry
+          args={[1, profile.nodeSegments >= 20 ? 3 : profile.nodeSegments >= 14 ? 2 : 1]}
+        />
+        {profile.material === 'physical' ? (
+          <meshPhysicalMaterial
+            vertexColors
+            roughness={0.36}
+            metalness={0.18}
+            clearcoat={0.68}
+            clearcoatRoughness={0.3}
+            emissive="#167d9c"
+            emissiveIntensity={0.62}
+          />
+        ) : (
+          <meshStandardMaterial
+            vertexColors
+            roughness={0.48}
+            metalness={0.12}
+            emissive="#12627b"
+            emissiveIntensity={0.52}
+          />
+        )}
+      </instancedMesh>
+      {profile.glow ? (
+        <instancedMesh
+          ref={colorCoatRef}
+          args={[undefined, undefined, Math.max(nodes.length, 1)]}
+          raycast={() => undefined}
+        >
+          <icosahedronGeometry
+            args={[1, profile.nodeSegments >= 20 ? 3 : profile.nodeSegments >= 14 ? 2 : 1]}
+          />
+          <meshBasicMaterial
+            vertexColors
+            transparent
+            opacity={0.24}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </instancedMesh>
+      ) : null}
+    </group>
   );
 }
 
-function SceneEdges({ edges, nodes }: { edges: SceneEdge[]; nodes: SceneNode[] }) {
-  const positions = useMemo(() => {
+function SceneEdges({
+  edges,
+  nodes,
+  profile,
+}: {
+  edges: SceneEdge[];
+  nodes: SceneNode[];
+  profile: SceneQualityProfile;
+}) {
+  const segments = useMemo(() => {
     const byId = new Map(nodes.map((node) => [node.id, node.position]));
     return edges
       .map((edge) => {
@@ -86,8 +159,11 @@ function SceneEdges({ edges, nodes }: { edges: SceneEdge[]; nodes: SceneNode[] }
         if (!source || !target) {
           return null;
         }
+        const resolved = resolveThreeColor(edge.color, '#94a3b8');
         return {
           edge,
+          color: resolved.color,
+          opacity: edge.opacity * resolved.opacity,
           points: [
             new THREE.Vector3(source.x, source.y, source.z),
             new THREE.Vector3(target.x, target.y, target.z),
@@ -99,46 +175,129 @@ function SceneEdges({ edges, nodes }: { edges: SceneEdge[]; nodes: SceneNode[] }
 
   return (
     <group>
-      {positions.map(({ edge, points }) => (
+      {segments.map(({ edge, color, opacity, points }) => (
         <Line
           key={edge.id}
           points={points}
-          color={parseCssColor(edge.color, '#94a3b8')}
-          lineWidth={Math.max(1, edge.width)}
+          color={color}
+          lineWidth={Math.max(0.75, edge.width * profile.edgeWidthScale)}
           transparent
-          opacity={edge.opacity}
+          opacity={opacity}
+          depthWrite={false}
+          toneMapped={false}
         />
       ))}
     </group>
   );
 }
 
-function StatusMarkers({ nodes }: { nodes: SceneNode[] }) {
+function RiskAndSelectionAccents({
+  nodes,
+  profile,
+}: {
+  nodes: SceneNode[];
+  profile: SceneQualityProfile;
+}) {
+  const accents = useMemo(
+    () =>
+      nodes.map((node) => ({
+        node,
+        radius: nodeRadius(node),
+        halo: resolveThreeColor(node.riskHaloColor, '#38bdf8'),
+      })),
+    [nodes],
+  );
+
   return (
     <group>
-      {nodes
-        .filter((node) => node.statusColor !== 'transparent')
-        .map((node) => (
+      {profile.glow
+        ? accents
+            .filter(({ halo }) => halo.opacity > 0)
+            .map(({ node, radius, halo }) => (
+              <mesh
+                key={`risk-halo-${node.id}`}
+                position={[node.position.x, node.position.y, node.position.z]}
+                scale={radius * (node.selected ? 1.7 : 1.52)}
+              >
+                <sphereGeometry args={[1, profile.nodeSegments, profile.nodeSegments]} />
+                <meshBasicMaterial
+                  color={halo.color}
+                  transparent
+                  opacity={Math.min(0.3, 0.09 + halo.opacity * 0.3)}
+                  blending={THREE.AdditiveBlending}
+                  depthWrite={false}
+                  side={THREE.BackSide}
+                  toneMapped={false}
+                />
+              </mesh>
+            ))
+        : null}
+
+      {accents
+        .filter(({ node }) => node.selected || node.highlighted)
+        .map(({ node, radius }) => (
+          <group
+            key={`selection-${node.id}`}
+            position={[node.position.x, node.position.y, node.position.z]}
+          >
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[radius * 1.42, Math.max(0.65, radius * 0.07), 8, 40]} />
+              <meshBasicMaterial
+                color={
+                  node.selected
+                    ? resolveThreeColor('#9ce7ff').color
+                    : resolveThreeColor('#fbbf24').color
+                }
+                transparent
+                opacity={node.selected ? 0.95 : 0.72}
+                depthWrite={false}
+                toneMapped={false}
+              />
+            </mesh>
+          </group>
+        ))}
+    </group>
+  );
+}
+
+function StatusMarkers({ nodes }: { nodes: SceneNode[] }) {
+  const markers = useMemo(
+    () =>
+      nodes.map((node) => ({
+        node,
+        radius: nodeRadius(node),
+        status: resolveThreeColor(node.statusColor, '#22c55e'),
+      })),
+    [nodes],
+  );
+
+  return (
+    <group>
+      {markers
+        .filter(({ status }) => status.opacity > 0)
+        .map(({ node, radius, status }) => (
           <mesh
             key={`status-${node.id}`}
-            position={[node.position.x, node.position.y + node.size * 0.9, node.position.z]}
+            position={[node.position.x, node.position.y + radius + 3.5, node.position.z]}
           >
-            <sphereGeometry args={[2.2, 8, 8]} />
-            <meshBasicMaterial color={parseCssColor(node.statusColor, '#22c55e')} />
+            <octahedronGeometry args={[2.2, 1]} />
+            <meshBasicMaterial color={status.color} toneMapped={false} />
           </mesh>
         ))}
-      {nodes
-        .filter((node) => node.evidenceMarked || node.incidentMarked)
-        .map((node) => (
+      {markers
+        .filter(({ node }) => node.evidenceMarked || node.incidentMarked)
+        .map(({ node, radius }) => (
           <mesh
             key={`marker-${node.id}`}
-            position={[node.position.x, node.position.y - node.size * 0.9, node.position.z]}
+            position={[node.position.x, node.position.y - radius - 3.5, node.position.z]}
+            rotation={[0, 0, Math.PI / 4]}
           >
-            <boxGeometry args={[3, 3, 3]} />
+            <boxGeometry args={[3.4, 3.4, 3.4]} />
             <meshBasicMaterial
-              color={node.incidentMarked ? '#ef4444' : '#eab308'}
+              color={resolveThreeColor(node.incidentMarked ? '#fb5b65' : '#fbbf24').color}
               transparent
-              opacity={0.9}
+              opacity={0.95}
+              toneMapped={false}
             />
           </mesh>
         ))}
@@ -151,66 +310,135 @@ function SelectedLabel({ nodes }: { nodes: SceneNode[] }) {
   if (!selected) {
     return null;
   }
+
   return (
-    <Html position={[selected.position.x, selected.position.y + 18, selected.position.z]} center>
-      <div
-        className="rounded bg-[var(--aegis-surface-elevated)] px-2 py-1 text-xs text-[var(--aegis-text-primary)] shadow"
-        data-testid="cinematic-selected-label"
-      >
-        {selected.label}
+    <Html
+      position={[
+        selected.position.x,
+        selected.position.y + nodeRadius(selected) + 14,
+        selected.position.z,
+      ]}
+      center
+    >
+      <div className="cinematic-node-label" data-testid="cinematic-selected-label">
+        <span>{selected.label}</span>
+        <small>Risk {Math.round(selected.riskScore * 100)}</small>
       </div>
     </Html>
   );
 }
 
 function CameraController({
-  camera,
+  bookmark,
   reducedMotion,
-  enableControls,
 }: {
-  camera: CameraBookmark3D;
+  bookmark: CameraBookmark3D;
   reducedMotion: boolean;
-  enableControls: boolean;
 }) {
-  const { camera: threeCamera } = useThree();
+  const { camera, invalidate } = useThree();
+  const destination = useRef(new THREE.Vector3());
+  const target = useRef(new THREE.Vector3());
+  const moving = useRef(false);
+
   useEffect(() => {
-    threeCamera.position.set(camera.position.x, camera.position.y, camera.position.z);
-    threeCamera.lookAt(camera.target.x, camera.target.y, camera.target.z);
-    if ('fov' in threeCamera) {
-      (threeCamera as THREE.PerspectiveCamera).fov = camera.fov;
-      (threeCamera as THREE.PerspectiveCamera).updateProjectionMatrix();
+    destination.current.set(bookmark.position.x, bookmark.position.y, bookmark.position.z);
+    target.current.set(bookmark.target.x, bookmark.target.y, bookmark.target.z);
+
+    if ('fov' in camera) {
+      const perspective = camera as THREE.PerspectiveCamera;
+      perspective.fov = bookmark.fov;
+      perspective.updateProjectionMatrix();
     }
-  }, [camera, threeCamera]);
+
+    if (reducedMotion) {
+      camera.position.copy(destination.current);
+      camera.lookAt(target.current);
+      moving.current = false;
+    } else {
+      moving.current = true;
+    }
+    invalidate();
+  }, [bookmark, camera, invalidate, reducedMotion]);
+
+  useFrame((_, delta) => {
+    if (!moving.current) {
+      return;
+    }
+
+    const factor = 1 - Math.exp(-4.6 * Math.min(delta, 0.05));
+    camera.position.lerp(destination.current, factor);
+    camera.lookAt(target.current);
+    if (camera.position.distanceToSquared(destination.current) < 0.4) {
+      camera.position.copy(destination.current);
+      camera.lookAt(target.current);
+      moving.current = false;
+    } else {
+      invalidate();
+    }
+  });
 
   return (
     <OrbitControls
       enableDamping={!reducedMotion}
-      enablePan={enableControls}
-      enableRotate={enableControls}
-      enableZoom={enableControls}
+      dampingFactor={0.075}
+      enablePan
+      enableRotate
+      enableZoom
+      minDistance={45}
+      maxDistance={7_500}
       makeDefault
-      target={[camera.target.x, camera.target.y, camera.target.z]}
+      target={[bookmark.target.x, bookmark.target.y, bookmark.target.z]}
     />
   );
 }
 
-function VisibilityGate({ children }: { children: React.ReactNode }) {
-  const { gl, invalidate } = useThree();
-  useEffect(() => {
-    const onVisibility = () => {
-      if (document.hidden) {
-        gl.setAnimationLoop(null);
-      } else {
-        invalidate();
-      }
+function SceneAtmosphere({ nodes, profile }: { nodes: SceneNode[]; profile: SceneQualityProfile }) {
+  const dimensions = useMemo(() => {
+    if (nodes.length === 0) {
+      return { size: 1_200, floor: -240 };
+    }
+    const xs = nodes.map((node) => node.position.x);
+    const ys = nodes.map((node) => node.position.y);
+    const zs = nodes.map((node) => node.position.z);
+    const span = Math.max(
+      Math.max(...xs) - Math.min(...xs),
+      Math.max(...ys) - Math.min(...ys),
+      Math.max(...zs) - Math.min(...zs),
+      600,
+    );
+    return {
+      size: span * 2.4,
+      floor: Math.min(...ys) - 110,
     };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibility);
-      gl.setAnimationLoop(null);
-    };
-  }, [gl, invalidate]);
-  return <>{children}</>;
+  }, [nodes]);
+
+  return (
+    <group>
+      <gridHelper
+        args={[
+          dimensions.size,
+          profile.nodeSegments >= 20 ? 42 : 28,
+          resolveThreeColor('#174c61').color,
+          resolveThreeColor('#0b2532').color,
+        ]}
+        position={[0, dimensions.floor, 0]}
+      />
+      <mesh
+        position={[0, dimensions.floor - 2, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        receiveShadow={profile.shadows}
+      >
+        <planeGeometry args={[dimensions.size, dimensions.size]} />
+        <meshStandardMaterial
+          color={resolveThreeColor('#061018').color}
+          roughness={0.9}
+          metalness={0.05}
+          transparent
+          opacity={0.72}
+        />
+      </mesh>
+    </group>
+  );
 }
 
 export interface CinematicSceneCanvasProps {
@@ -220,6 +448,7 @@ export interface CinematicSceneCanvasProps {
   qualityTier: RenderQualityTierValue;
   dprCap: number;
   reducedMotion: boolean;
+  onReady: () => void;
   onSelectNode: (nodeId: string) => void;
   onBackgroundClick: () => void;
 }
@@ -231,15 +460,17 @@ export function CinematicSceneCanvas({
   qualityTier,
   dprCap,
   reducedMotion,
+  onReady,
   onSelectNode,
   onBackgroundClick,
 }: CinematicSceneCanvasProps) {
   const dpr = dprForTier(qualityTier, dprCap);
-  const frameloop = qualityTier === RenderQualityTier.LOW || reducedMotion ? 'demand' : 'always';
+  const profile = getSceneQualityProfile(qualityTier);
+  const frameloop = getSceneFrameloop(qualityTier, reducedMotion);
 
   return (
     <div
-      className="h-full min-h-[16rem] w-full"
+      className="cinematic-canvas-shell relative h-full min-h-[22rem] w-full overflow-hidden"
       data-testid="cinematic-graph-canvas"
       role="img"
       aria-label="Three.js semantic graph canvas"
@@ -247,35 +478,68 @@ export function CinematicSceneCanvas({
       <Canvas
         dpr={dpr}
         frameloop={frameloop}
+        shadows={profile.shadows}
         camera={{
           position: [camera.position.x, camera.position.y, camera.position.z],
           fov: camera.fov,
           near: 0.1,
-          far: 5000,
+          far: 12_000,
         }}
-        gl={{ antialias: qualityTier === RenderQualityTier.HIGH, powerPreference: 'default' }}
-        onPointerMissed={() => {
-          onBackgroundClick();
+        gl={{
+          antialias: qualityTier === RenderQualityTier.HIGH,
+          alpha: false,
+          powerPreference: qualityTier === RenderQualityTier.HIGH ? 'high-performance' : 'default',
         }}
+        onPointerMissed={onBackgroundClick}
         onCreated={({ gl }) => {
-          gl.setClearColor(new THREE.Color('#0b1220'));
+          gl.outputColorSpace = THREE.SRGBColorSpace;
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = qualityTier === RenderQualityTier.HIGH ? 1.18 : 1.05;
+          gl.shadowMap.enabled = profile.shadows;
+          gl.shadowMap.type = THREE.PCFSoftShadowMap;
+          gl.setClearColor(0x050a10, 1);
+          onReady();
         }}
       >
-        <VisibilityGate>
-          <ambientLight intensity={0.55} />
-          <directionalLight position={[120, 180, 80]} intensity={0.85} />
-          <CameraController
-            camera={camera}
-            reducedMotion={reducedMotion}
-            enableControls={!reducedMotion || qualityTier !== RenderQualityTier.LOW}
-          />
-          <SceneEdges edges={edges} nodes={nodes} />
-          <InstancedNodes nodes={nodes} onSelect={onSelectNode} />
-          <StatusMarkers nodes={nodes} />
-          <SelectedLabel nodes={nodes} />
-          <gridHelper args={[600, 30, '#1e293b', '#122033']} position={[0, -40, 0]} />
-        </VisibilityGate>
+        <color attach="background" args={[resolveThreeColor('#050a10').color]} />
+        <fog
+          attach="fog"
+          args={[resolveThreeColor('#07111a').color, profile.fogNear, profile.fogFar]}
+        />
+        <ambientLight intensity={0.46} />
+        <hemisphereLight args={[0x9bdcff, 0x061018, 1.08]} />
+        <directionalLight
+          position={[620, 880, 540]}
+          intensity={2.15}
+          color={resolveThreeColor('#b9eaff').color}
+          castShadow={profile.shadows}
+        />
+        <pointLight
+          position={[-520, 180, 280]}
+          intensity={48_000}
+          distance={1_300}
+          decay={2}
+          color={resolveThreeColor('#1cb8e6').color}
+        />
+        <pointLight
+          position={[420, -260, -360]}
+          intensity={30_000}
+          distance={1_100}
+          decay={2}
+          color={resolveThreeColor('#f59e0b').color}
+        />
+        <CameraController bookmark={camera} reducedMotion={reducedMotion} />
+        <SceneAtmosphere nodes={nodes} profile={profile} />
+        <SceneEdges edges={edges} nodes={nodes} profile={profile} />
+        <RiskAndSelectionAccents nodes={nodes} profile={profile} />
+        <InstancedNodes nodes={nodes} profile={profile} onSelect={onSelectNode} />
+        <StatusMarkers nodes={nodes} />
+        <SelectedLabel nodes={nodes} />
       </Canvas>
+      <div
+        className="cinematic-canvas-vignette pointer-events-none absolute inset-0"
+        aria-hidden="true"
+      />
     </div>
   );
 }

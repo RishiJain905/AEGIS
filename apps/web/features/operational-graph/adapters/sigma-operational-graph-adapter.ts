@@ -19,9 +19,28 @@ import {
   getNodeVisualStyle,
   getRiskHaloColor,
 } from '../semantic/graph-semantic-styles';
+import { drawAegisNodeHover, drawAegisNodeLabel } from '../rendering/aegis-canvas-renderers';
 
-const DEFAULT_EDGE_COLOR = '#94a3b866';
 const DIMMED_OPACITY = 0.15;
+
+const NODE_SHAPES: Record<string, 'circle' | 'diamond' | 'square' | 'triangle' | 'hexagon'> = {
+  service: 'circle',
+  device: 'diamond',
+  database: 'square',
+  identity: 'hexagon',
+  user: 'hexagon',
+  control: 'triangle',
+  ai_model: 'hexagon',
+};
+
+function colorWithOpacity(color: string, opacity: number): string {
+  const match = color.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!match) {
+    return color;
+  }
+  const [, red = '00', green = '00', blue = '00'] = match;
+  return `rgba(${String(Number.parseInt(red, 16))}, ${String(Number.parseInt(green, 16))}, ${String(Number.parseInt(blue, 16))}, ${String(Math.min(1, Math.max(0, opacity)))})`;
+}
 
 function buildEntityMaps(snapshot: GraphSnapshotV1): {
   nodes: Map<string, GraphNodeV1>;
@@ -81,10 +100,23 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
     this.sigma = new Sigma(this.graph, this.container, {
       renderEdgeLabels: false,
       allowInvalidContainer: false,
-      defaultNodeColor: '#64748b',
-      defaultEdgeColor: DEFAULT_EDGE_COLOR,
-      labelRenderedSizeThreshold: 6,
-      labelDensity: 0.5,
+      defaultNodeColor: '#718397',
+      defaultEdgeColor: '#61788c',
+      labelFont: '"Cascadia Mono", "Segoe UI", sans-serif',
+      labelSize: 11,
+      labelWeight: '600',
+      labelColor: { color: '#d7e5ef' },
+      labelRenderedSizeThreshold: 9,
+      labelDensity: 0.72,
+      labelGridCellSize: 140,
+      stagePadding: 52,
+      hideLabelsOnMove: false,
+      hideEdgesOnMove: false,
+      defaultDrawNodeLabel: drawAegisNodeLabel,
+      defaultDrawNodeHover: drawAegisNodeHover,
+      minEdgeThickness: 0.75,
+      minCameraRatio: 0.06,
+      maxCameraRatio: 6,
       zIndex: true,
     });
     return this.sigma;
@@ -157,17 +189,35 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       const isDimmed = isIsolation && !isHighlighted;
       const isHovered = visualState.hoveredNodeId === nodeId;
       const isSelected = visualState.selection.primaryNodeId === nodeId;
+      const riskEmphasized = style.riskBand === 'high' || style.riskBand === 'critical';
+      const interactionHighlighted = isSelected || isHovered || isHighlighted;
+      const detailOverlay = labelMode === LabelMode.ALL;
+      const anchorLabel = detailOverlay && (riskEmphasized || style.size >= 17);
+      const riskSize = style.riskBand === 'critical' ? 3 : style.riskBand === 'high' ? 1.5 : 0;
 
       const attrs = {
         x: pos.x,
         y: pos.y,
-        size: style.size + (isSelected ? 4 : 0) + (isHovered ? 2 : 0),
+        size: style.size + riskSize + (isSelected ? 4 : 0) + (isHovered ? 2 : 0),
         color: isDimmed ? `${style.color}33` : style.color,
         label: shouldRenderLabel(labelMode, isSelected, isHighlighted, isHovered)
           ? canonical.label
           : '',
         borderColor: style.borderColor,
-        zIndex: isSelected ? 2 : isHighlighted ? 1 : 0,
+        zIndex: isSelected ? 12 : isHovered ? 11 : isHighlighted ? 8 : riskEmphasized ? 4 : 0,
+        type: 'circle',
+        assetType: canonical.assetType,
+        shape: NODE_SHAPES[canonical.assetType] ?? 'circle',
+        riskBand: style.riskBand,
+        riskColor: getRiskHaloColor(style.riskBand),
+        selected: isSelected,
+        hovered: isHovered,
+        forceLabel: interactionHighlighted || anchorLabel,
+        highlighted:
+          interactionHighlighted ||
+          detailOverlay ||
+          (visualState.overlayToggles.risk && riskEmphasized),
+        showHoverLabel: interactionHighlighted,
         riskHalo: visualState.overlayToggles.risk
           ? getRiskHaloColor(style.riskBand)
           : 'transparent',
@@ -205,6 +255,11 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
         label: `${presentationNode.label} (${String(presentationNode.memberCount)})`,
         borderColor: '#115e59',
         zIndex: 3,
+        type: 'circle',
+        assetType: 'cluster',
+        shape: 'hexagon',
+        forceLabel: true,
+        highlighted: false,
         presentationClusterId: presentationNode.clusterId,
         riskHalo: 'transparent',
         statusIndicator: 'transparent',
@@ -268,7 +323,14 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       const attrs = {
         key: edgeId,
         size: isHighlighted ? edgeStyle.size * 2 : edgeStyle.size,
-        color: isDimmed ? DEFAULT_EDGE_COLOR : isHighlighted ? highlightColor : edgeStyle.color,
+        color: colorWithOpacity(
+          isDimmed ? '#94a3b8' : isHighlighted ? highlightColor : edgeStyle.color,
+          isDimmed
+            ? DIMMED_OPACITY
+            : isHighlighted
+              ? 1
+              : Math.max(edgeStyle.opacity, edgeOpacityFloor),
+        ),
         type: edgeStyle.type,
         opacity: isDimmed
           ? DIMMED_OPACITY

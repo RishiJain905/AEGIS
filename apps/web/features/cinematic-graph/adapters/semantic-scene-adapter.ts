@@ -14,12 +14,14 @@ import {
   type SyncSceneOptions,
 } from '../contracts';
 import { mapCanonicalEdgeToSceneEdge, mapCanonicalNodeToSceneNode } from '../lib/semantic-mapping';
-import { resolveStablePositions } from '../lib/stable-positions';
+import { normalizeScenePositions, resolveStablePositions } from '../lib/stable-positions';
+import { frameSceneNodes } from '../lib/camera-framing';
 
 export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
   private lastProjection: SceneProjection | null = null;
   private capabilityReport: CapabilityReport = defaultCapabilityReport;
   private camera: CameraBookmark3D = defaultCameraBookmark3D;
+  private automaticCamera = true;
   private disposed = false;
 
   syncFromStore(
@@ -69,14 +71,16 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
     const visibleNodeIds = new Set(filtered.visibleNodeIds);
     const visibleEdgeIds = new Set(filtered.visibleEdgeIds);
     const visibleNodes = snapshot.nodes.filter((node) => visibleNodeIds.has(node.id));
-    const positions = resolveStablePositions(
-      visibleNodes,
-      snapshot.clusters,
-      {
-        ...visualState.nodePositions,
-        ...(options.nodePositions ?? {}),
-      },
-      options.workerPositions ?? {},
+    const positions = normalizeScenePositions(
+      resolveStablePositions(
+        visibleNodes,
+        snapshot.clusters,
+        {
+          ...visualState.nodePositions,
+          ...(options.nodePositions ?? {}),
+        },
+        options.workerPositions ?? {},
+      ),
     );
 
     const evidenceNodeIds = options.evidenceNodeIds ?? new Set<string>();
@@ -98,6 +102,10 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
       .filter((edge) => visibleEdgeIds.has(edge.id))
       .filter((edge) => nodeIdSet.has(edge.source) && nodeIdSet.has(edge.target))
       .map((edge) => mapCanonicalEdgeToSceneEdge({ edge, visualState }));
+
+    if (this.automaticCamera) {
+      this.camera = frameSceneNodes(nodes, this.camera.fov);
+    }
 
     const projection: SceneProjection = {
       nodes,
@@ -130,6 +138,7 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
   setCameraBookmark(bookmark: CameraBookmark3D): void {
     this.assertNotDisposed();
     this.camera = bookmark;
+    this.automaticCamera = false;
   }
 
   getCameraBookmark(): CameraBookmark3D {
@@ -153,12 +162,14 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
       fov: this.camera.fov,
     };
     this.camera = bookmark;
+    this.automaticCamera = false;
     return bookmark;
   }
 
   resetCamera(): CameraBookmark3D {
     this.assertNotDisposed();
-    this.camera = defaultCameraBookmark3D;
+    this.automaticCamera = true;
+    this.camera = frameSceneNodes(this.lastProjection?.nodes ?? [], defaultCameraBookmark3D.fov);
     return this.camera;
   }
 
@@ -166,6 +177,7 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
     this.lastProjection = null;
     this.capabilityReport = defaultCapabilityReport;
     this.camera = defaultCameraBookmark3D;
+    this.automaticCamera = true;
     this.disposed = true;
   }
 

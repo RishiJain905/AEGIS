@@ -53,4 +53,27 @@ describe('SigmaCanvas', () => {
     expect(onReady).toHaveBeenCalled();
     unmount();
   });
+
+  it('keeps the renderer mounted when event callback identities change', () => {
+    const onReady = vi.fn();
+    const { rerender } = render(
+      <SigmaCanvas
+        onAdapterReady={onReady}
+        onNodeClick={vi.fn()}
+        onStageClick={vi.fn()}
+        onNodeHover={vi.fn()}
+      />,
+    );
+
+    rerender(
+      <SigmaCanvas
+        onAdapterReady={onReady}
+        onNodeClick={vi.fn()}
+        onStageClick={vi.fn()}
+        onNodeHover={vi.fn()}
+      />,
+    );
+
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
 });

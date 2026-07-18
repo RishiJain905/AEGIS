@@ -17,13 +17,13 @@ export interface EdgeVisualStyle {
 }
 
 const ASSET_TYPE_COLORS: Record<string, string> = {
-  service: '#3b82f6',
-  device: '#8b5cf6',
-  user: '#06b6d4',
-  identity: '#14b8a6',
-  database: '#f59e0b',
-  control: '#ef4444',
-  ai_model: '#ec4899',
+  service: '#36a9e1',
+  device: '#8999ff',
+  user: '#49cfc5',
+  identity: '#5ad3bd',
+  database: '#efb85a',
+  control: '#ed6b79',
+  ai_model: '#cf88e8',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -64,12 +64,13 @@ export function getEdgeVisualStyle(edge: GraphEdgeV1): EdgeVisualStyle {
   const hasActivity = edge.eventCount > 0;
   const riskWeight = Math.min(1, edge.riskContribution);
 
-  const activityAlpha = 0.3 + riskWeight * 0.5;
+  const confidenceOpacity = isInferred ? 0.35 : 0.4 + edge.confidence * 0.6;
+  const activityOpacity = 0.3 + riskWeight * 0.5;
   return {
-    color: hasActivity ? `rgba(239, 68, 68, ${String(activityAlpha)})` : '#94a3b899',
+    color: hasActivity ? '#ef4444' : '#94a3b8',
     size: hasActivity ? 1.5 + Math.log10(edge.eventCount + 1) : 0.8,
-    type: 'line',
-    opacity: isInferred ? 0.35 : 0.4 + edge.confidence * 0.6,
+    type: edge.directed && edge.confidence >= 0.75 ? 'arrow' : 'line',
+    opacity: Math.min(1, hasActivity ? confidenceOpacity * activityOpacity : confidenceOpacity),
   };
 }
 

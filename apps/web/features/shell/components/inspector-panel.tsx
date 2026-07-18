@@ -37,7 +37,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
   if (collapsed) {
     return (
-      <div className="flex w-12 shrink-0 flex-col items-center border-l border-[var(--aegis-border-default)] p-2">
+      <div className="flex w-14 shrink-0 flex-col items-center rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-rail)] p-2 shadow-[var(--aegis-shadow-panel)]">
         <Button
           variant="ghost"
           size="sm"
@@ -75,12 +75,17 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
   return (
     <aside
-      className="flex w-full shrink-0 flex-col border-l border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] lg:w-80 xl:w-96"
+      className="flex w-full shrink-0 flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-panel)] lg:w-80 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:w-96"
       data-testid="inspector-panel"
       aria-label="Inspector"
     >
-      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] px-4 py-2">
-        <h2 className="text-sm font-semibold">Inspector</h2>
+      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] bg-[linear-gradient(180deg,var(--aegis-surface-raised),var(--aegis-surface-panel))] px-4 py-3">
+        <div>
+          <p className="font-mono text-[0.625rem] uppercase tracking-[0.15em] text-[var(--aegis-text-muted)]">
+            Context channel
+          </p>
+          <h2 className="text-sm font-semibold tracking-[0.04em]">Inspector</h2>
+        </div>
         <Button
           variant="ghost"
           size="sm"
@@ -153,7 +158,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                     <li key={incident.id}>
                       <button
                         type="button"
-                        className="w-full rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-3 py-2 text-left text-sm hover:bg-[var(--aegis-surface-elevated)]"
+                        className="min-h-10 w-full rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] px-3 py-2 text-left text-sm transition-[background-color,border-color,color] hover:border-[var(--aegis-border-strong)] hover:bg-[var(--aegis-surface-hover)] aria-pressed:border-[var(--aegis-accent-line)] aria-pressed:text-[var(--aegis-accent-strong)]"
                         onClick={() => {
                           setSelectedEntityId(incident.id);
                         }}
@@ -173,7 +178,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                   {alertsQuery.data.map((alert) => (
                     <li
                       key={alert.id}
-                      className="rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-3 py-2 text-sm"
+                      className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] border-l-[3px] border-l-[var(--aegis-risk-high)] bg-[var(--aegis-surface-elevated)] px-3 py-3 text-sm shadow-[var(--aegis-shadow-control)]"
                       data-testid={`alert-item-${alert.id}`}
                     >
                       <p className="font-medium">{alert.title}</p>
@@ -216,8 +221,11 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                           <p className="mt-1 font-mono text-[10px]">
                             Score:{' '}
                             {(
-                              (alert.anomalyExplanation as { observedScore?: number })
-                                .observedScore ??
+                              (
+                                alert.anomalyExplanation as {
+                                  observedScore?: number;
+                                }
+                              ).observedScore ??
                               alert.confidence ??
                               0
                             ).toFixed(2)}{' '}
@@ -231,12 +239,19 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                               Model: {String(alert.modelVersionId)}
                             </p>
                           ) : null}
-                          {(alert.anomalyExplanation as { topFeatures?: string[] }).topFeatures ? (
+                          {(
+                            alert.anomalyExplanation as {
+                              topFeatures?: string[];
+                            }
+                          ).topFeatures ? (
                             <p className="mt-1 text-[var(--aegis-text-muted)]">
                               Top features:{' '}
                               {(
-                                (alert.anomalyExplanation as { topFeatures?: string[] })
-                                  .topFeatures ?? []
+                                (
+                                  alert.anomalyExplanation as {
+                                    topFeatures?: string[];
+                                  }
+                                ).topFeatures ?? []
                               ).join(', ')}
                             </p>
                           ) : null}

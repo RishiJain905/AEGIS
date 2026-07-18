@@ -55,9 +55,20 @@ describe('graph semantic styles', () => {
     expect(style.opacity).toBeLessThan(0.5);
   });
 
+  it('keeps edge color opaque and represents activity alpha as opacity', () => {
+    const style = getEdgeVisualStyle(
+      makeEdge({ confidence: 1, eventCount: 12, riskContribution: 0.65 }),
+    );
+
+    expect(style.color).toBe('#ef4444');
+    expect(style.color).not.toMatch(/rgba|#[0-9a-f]{8}/i);
+    expect(style.opacity).toBeGreaterThan(0.5);
+    expect(style.opacity).toBeLessThanOrEqual(1);
+  });
+
   it('uses arrow type for high-confidence directed edges', () => {
     const style = getEdgeVisualStyle(makeEdge({ confidence: 1.0, directed: true }));
-    expect(style.type).toBe('line');
+    expect(style.type).toBe('arrow');
   });
 
   it('maps risk band to halo color', () => {

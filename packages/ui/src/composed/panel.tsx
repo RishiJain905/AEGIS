@@ -2,16 +2,16 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes } from 'react';
 
 import { cn } from '../lib/cn';
-import { densityTokens, type DensityToken } from '../tokens/tokens';
+import type { DensityToken } from '../tokens/tokens';
 
 const panelVariants = cva(
-  'flex flex-col rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-panel)]',
+  'relative flex flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-panel)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)]',
   {
     variants: {
       density: {
-        compact: densityTokens.compact,
-        comfortable: densityTokens.comfortable,
-        spacious: densityTokens.spacious,
+        compact: '',
+        comfortable: '',
+        spacious: '',
       },
       responsive: {
         true: 'w-full lg:max-w-none md:max-w-full',
@@ -25,6 +25,12 @@ const panelVariants = cva(
   },
 );
 
+const panelDensityClasses: Record<DensityToken, { header: string; body: string }> = {
+  compact: { header: 'px-4 py-3', body: 'p-4' },
+  comfortable: { header: 'px-5 py-4', body: 'p-5' },
+  spacious: { header: 'px-6 py-5', body: 'p-6' },
+};
+
 export interface PanelProps
   extends HTMLAttributes<HTMLElement>,
     VariantProps<typeof panelVariants> {
@@ -33,26 +39,48 @@ export interface PanelProps
 }
 
 export const Panel = forwardRef<HTMLElement, PanelProps>(
-  ({ className, density, responsive, title, description, children, ...props }, ref) => (
-    <section
-      ref={ref}
-      className={cn(panelVariants({ density, responsive }), className)}
-      aria-label={title}
-      {...props}
-    >
-      {(title ?? description) ? (
-        <header className="border-b border-[var(--aegis-border-subtle)] pb-3">
-          {title ? (
-            <h2 className="text-base font-semibold text-[var(--aegis-text-primary)]">{title}</h2>
-          ) : null}
-          {description ? (
-            <p className="text-sm text-[var(--aegis-text-secondary)]">{description}</p>
-          ) : null}
-        </header>
-      ) : null}
-      <div className="flex-1">{children}</div>
-    </section>
-  ),
+  (
+    { className, density = 'comfortable', responsive, title, description, children, ...props },
+    ref,
+  ) => {
+    const resolvedDensity = density ?? 'comfortable';
+
+    return (
+      <section
+        ref={ref}
+        className={cn(panelVariants({ density: resolvedDensity, responsive }), className)}
+        aria-label={title}
+        {...props}
+      >
+        {(title ?? description) ? (
+          <header
+            data-slot="panel-header"
+            className={cn(
+              'border-b border-[var(--aegis-border-subtle)] bg-[linear-gradient(180deg,var(--aegis-surface-raised),var(--aegis-surface-panel))]',
+              panelDensityClasses[resolvedDensity].header,
+            )}
+          >
+            {title ? (
+              <h2 className="font-[family-name:var(--aegis-font-display)] text-sm font-semibold uppercase tracking-[0.075em] text-[var(--aegis-text-primary)]">
+                {title}
+              </h2>
+            ) : null}
+            {description ? (
+              <p className="mt-1 max-w-3xl text-sm leading-5 text-[var(--aegis-text-secondary)]">
+                {description}
+              </p>
+            ) : null}
+          </header>
+        ) : null}
+        <div
+          data-slot="panel-body"
+          className={cn('min-h-0 flex-1', panelDensityClasses[resolvedDensity].body)}
+        >
+          {children}
+        </div>
+      </section>
+    );
+  },
 );
 Panel.displayName = 'Panel';
 

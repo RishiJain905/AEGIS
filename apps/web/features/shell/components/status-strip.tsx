@@ -51,42 +51,55 @@ export function StatusStrip({ runId }: StatusStripProps) {
 
   return (
     <div
-      className="flex flex-wrap items-center gap-3 border-b border-[var(--aegis-border-default)] bg-[var(--aegis-surface-elevated)] px-4 py-2"
+      className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--aegis-border-default)] bg-[rgb(9_18_27_/_0.94)] px-4 py-2 shadow-[0_8px_24px_rgb(0_0_0_/_0.2)] backdrop-blur-md"
       data-testid="status-strip"
       role="status"
       aria-live="polite"
     >
-      <Badge
-        nodeStatus={
-          connectionLabel === 'Live' || connectionLabel === 'Connected'
-            ? NodeStatus.NORMAL
-            : NodeStatus.SUSPICIOUS
-        }
-        data-testid="connection-status-badge"
-      >
-        {connectionLabel}
-      </Badge>
+      <div className="flex items-center gap-2.5 border-r border-[var(--aegis-border-subtle)] pr-4">
+        <span className="font-[family-name:var(--aegis-font-display)] text-[0.6875rem] font-semibold uppercase tracking-[0.13em] text-[var(--aegis-text-muted)]">
+          Control link
+        </span>
+        <Badge
+          nodeStatus={
+            connectionLabel === 'Live' || connectionLabel === 'Connected'
+              ? NodeStatus.NORMAL
+              : NodeStatus.SUSPICIOUS
+          }
+          data-testid="connection-status-badge"
+        >
+          {connectionLabel}
+        </Badge>
+      </div>
       {readOnly ? (
         <Badge nodeStatus={NodeStatus.UNDER_INVESTIGATION} data-testid="read-only-badge">
           Read-only
         </Badge>
       ) : null}
       {runId ? (
-        <span className="font-mono text-xs text-[var(--aegis-text-secondary)]">Run: {runId}</span>
+        <span className="font-mono text-[0.6875rem] text-[var(--aegis-text-secondary)] tabular-nums">
+          <span className="text-[var(--aegis-text-muted)]">RUN</span> {runId}
+        </span>
       ) : null}
       {runStatus ? (
         <span className="text-xs text-[var(--aegis-text-secondary)]" data-testid="run-status">
-          Status: {runStatus}
+          <span className="text-[var(--aegis-text-muted)]">Status</span> {runStatus}
         </span>
       ) : null}
       {simTime ? (
-        <span className="text-xs text-[var(--aegis-text-secondary)]" data-testid="sim-time">
-          Sim time: {simTime}
+        <span
+          className="font-mono text-[0.6875rem] text-[var(--aegis-text-secondary)] tabular-nums"
+          data-testid="sim-time"
+        >
+          <span className="text-[var(--aegis-text-muted)]">SIM</span> {simTime}
         </span>
       ) : null}
       {sequence !== undefined ? (
-        <span className="text-xs text-[var(--aegis-text-secondary)]" data-testid="applied-sequence">
-          Sequence: {sequence}
+        <span
+          className="font-mono text-[0.6875rem] text-[var(--aegis-text-secondary)] tabular-nums"
+          data-testid="applied-sequence"
+        >
+          <span className="text-[var(--aegis-text-muted)]">SEQ</span> {sequence}
         </span>
       ) : null}
       <div className="ml-auto">

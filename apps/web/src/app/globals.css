@@ -13,16 +13,64 @@
 
   html {
     color-scheme: dark;
+    background: var(--aegis-surface-base);
+    scroll-behavior: smooth;
   }
 
   body {
     margin: 0;
     min-height: 100vh;
     font-family: var(--aegis-font-sans);
-    background-color: var(--aegis-surface-base);
+    background:
+      radial-gradient(circle at 80% -20%, rgb(45 119 145 / 0.14), transparent 34rem),
+      radial-gradient(circle at -10% 70%, rgb(24 71 91 / 0.12), transparent 38rem),
+      var(--aegis-surface-base);
     color: var(--aegis-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--aegis-font-display);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  code,
+  kbd,
+  time,
+  .font-mono {
+    font-family: var(--aegis-font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  ::selection {
+    background: rgb(89 201 234 / 0.28);
+    color: var(--aegis-text-primary);
+  }
+
+  * {
+    scrollbar-color: var(--aegis-border-strong) var(--aegis-surface-elevated);
+    scrollbar-width: thin;
+  }
+
+  summary {
+    min-height: 2.5rem;
+    align-content: center;
+    color: var(--aegis-text-primary);
   }
 
   :focus-visible {
@@ -32,6 +80,155 @@
 }
 
 @layer utilities {
+  .aegis-command-shell {
+    position: relative;
+    isolation: isolate;
+    background:
+      linear-gradient(rgb(73 130 151 / 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(73 130 151 / 0.028) 1px, transparent 1px),
+      radial-gradient(circle at 62% 8%, rgb(28 99 124 / 0.13), transparent 32rem),
+      var(--aegis-surface-base);
+    background-size:
+      32px 32px,
+      32px 32px,
+      auto,
+      auto;
+  }
+
+  .aegis-command-shell::before {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    background: linear-gradient(110deg, rgb(2 7 12 / 0.35), transparent 52%, rgb(2 7 12 / 0.48));
+    content: '';
+    pointer-events: none;
+  }
+
+  .skip-link {
+    position: fixed;
+    z-index: 100;
+    top: 0.75rem;
+    left: 0.75rem;
+    transform: translateY(-150%);
+    border: 1px solid var(--aegis-focus-ring);
+    border-radius: var(--aegis-radius-md);
+    background: var(--aegis-surface-overlay);
+    padding: 0.65rem 1rem;
+    color: var(--aegis-text-primary);
+    box-shadow: var(--aegis-shadow-dialog);
+    transition: transform var(--aegis-motion-duration-fast) var(--aegis-motion-ease-standard);
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+
+  .graph-command-bar,
+  .graph-control-deck {
+    border: 1px solid var(--aegis-border-subtle);
+    border-radius: var(--aegis-radius-md);
+    background: linear-gradient(145deg, var(--aegis-surface-raised), var(--aegis-surface-elevated));
+    padding: 0.75rem;
+    box-shadow: var(--aegis-shadow-control);
+  }
+
+  .operations-rail-desktop {
+    display: none;
+  }
+
+  .graph-control-label {
+    margin-bottom: 0.5rem;
+    color: var(--aegis-text-muted);
+    font-family: var(--aegis-font-display);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .operational-graph-frame {
+    background:
+      radial-gradient(circle at 50% 45%, rgb(27 78 99 / 0.22), transparent 50%),
+      linear-gradient(rgb(89 201 234 / 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(89 201 234 / 0.025) 1px, transparent 1px),
+      var(--aegis-surface-canvas);
+    background-size:
+      auto,
+      28px 28px,
+      28px 28px,
+      auto;
+    box-shadow:
+      inset 0 1px 0 var(--aegis-border-highlight),
+      inset 0 0 70px rgb(0 0 0 / 0.38),
+      var(--aegis-shadow-panel);
+  }
+
+  .operational-graph-frame::after {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgb(89 201 234 / 0.04);
+    content: '';
+    pointer-events: none;
+  }
+
+  .graph-entity-index {
+    background: linear-gradient(145deg, var(--aegis-surface-panel), var(--aegis-surface-elevated));
+    box-shadow: inset 0 1px 0 var(--aegis-border-highlight);
+  }
+
+  .cinematic-canvas-shell {
+    background:
+      radial-gradient(circle at 50% 42%, rgb(17 62 80 / 0.38), transparent 58%),
+      var(--aegis-surface-canvas);
+    box-shadow:
+      inset 0 1px 0 var(--aegis-border-highlight),
+      inset 0 0 90px rgb(0 0 0 / 0.5);
+  }
+
+  .cinematic-canvas-vignette {
+    background:
+      linear-gradient(
+        180deg,
+        rgb(2 6 10 / 0.34),
+        transparent 20%,
+        transparent 72%,
+        rgb(2 6 10 / 0.58)
+      ),
+      radial-gradient(circle at center, transparent 46%, rgb(1 5 9 / 0.52) 100%);
+    box-shadow: inset 0 0 0 1px rgb(108 198 229 / 0.08);
+  }
+
+  .cinematic-node-label {
+    display: flex;
+    min-width: 9rem;
+    flex-direction: column;
+    gap: 0.125rem;
+    border: 1px solid var(--aegis-accent-line);
+    border-radius: var(--aegis-radius-md);
+    background: rgb(7 16 25 / 0.9);
+    padding: 0.55rem 0.75rem;
+    color: var(--aegis-text-primary);
+    font-family: var(--aegis-font-display);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    box-shadow:
+      0 0 0 1px rgb(89 201 234 / 0.08),
+      0 10px 30px rgb(0 0 0 / 0.5);
+    backdrop-filter: blur(8px);
+  }
+
+  .cinematic-node-label small {
+    color: var(--aegis-text-muted);
+    font-family: var(--aegis-font-mono);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
   .sr-only {
     position: absolute;
     width: 1px;
@@ -42,5 +239,17 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@media (min-width: 64rem) {
+  .operations-rail-desktop {
+    display: flex;
   }
 }

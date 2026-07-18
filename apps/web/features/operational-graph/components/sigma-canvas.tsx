@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useReducedMotion } from '@aegis/ui';
 
@@ -27,28 +27,19 @@ export function SigmaCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const adapterRef = useRef<SigmaOperationalGraphAdapter | null>(null);
   const reducedMotion = useReducedMotion();
-
-  const handleNodeClick = useCallback(
-    (event: { node: string }) => {
-      onNodeClick(event.node);
-    },
-    [onNodeClick],
-  );
-
-  const handleStageClick = useCallback(() => {
-    onStageClick();
-  }, [onStageClick]);
-
-  const handleEnterNode = useCallback(
-    (event: { node: string }) => {
-      onNodeHover(event.node);
-    },
-    [onNodeHover],
-  );
-
-  const handleLeaveNode = useCallback(() => {
-    onNodeHover(null);
-  }, [onNodeHover]);
+  const initialReducedMotionRef = useRef(reducedMotion);
+  const callbacksRef = useRef({
+    onAdapterReady,
+    onNodeClick,
+    onStageClick,
+    onNodeHover,
+  });
+  callbacksRef.current = {
+    onAdapterReady,
+    onNodeClick,
+    onStageClick,
+    onNodeHover,
+  };
 
   useEffect(() => {
     const container = containerRef.current;
@@ -56,16 +47,29 @@ export function SigmaCanvas({
       return;
     }
 
-    const adapter = createSigmaOperationalGraphAdapter(container, reducedMotion);
+    const adapter = createSigmaOperationalGraphAdapter(container, initialReducedMotionRef.current);
     adapterRef.current = adapter;
     const sigma = adapter.mount();
+
+    const handleNodeClick = (event: { node: string }) => {
+      callbacksRef.current.onNodeClick(event.node);
+    };
+    const handleStageClick = () => {
+      callbacksRef.current.onStageClick();
+    };
+    const handleEnterNode = (event: { node: string }) => {
+      callbacksRef.current.onNodeHover(event.node);
+    };
+    const handleLeaveNode = () => {
+      callbacksRef.current.onNodeHover(null);
+    };
 
     sigma.on('clickNode', handleNodeClick);
     sigma.on('clickStage', handleStageClick);
     sigma.on('enterNode', handleEnterNode);
     sigma.on('leaveNode', handleLeaveNode);
 
-    onAdapterReady(adapter);
+    callbacksRef.current.onAdapterReady(adapter);
 
     return () => {
       sigma.off('clickNode', handleNodeClick);
@@ -75,14 +79,7 @@ export function SigmaCanvas({
       adapter.dispose();
       adapterRef.current = null;
     };
-  }, [
-    reducedMotion,
-    onAdapterReady,
-    handleNodeClick,
-    handleStageClick,
-    handleEnterNode,
-    handleLeaveNode,
-  ]);
+  }, []);
 
   useEffect(() => {
     adapterRef.current?.setReducedMotion(reducedMotion);

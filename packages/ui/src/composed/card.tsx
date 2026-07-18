@@ -13,7 +13,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn(
-        'rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-elevated)] p-4 shadow-[var(--aegis-shadow-panel)]',
+        'relative overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[linear-gradient(145deg,var(--aegis-surface-panel),var(--aegis-surface-elevated))] p-4 shadow-[var(--aegis-shadow-panel)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)]',
         className,
       )}
       {...props}
@@ -21,10 +21,14 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       {(title ?? description) ? (
         <div className="mb-3">
           {title ? (
-            <h3 className="text-sm font-semibold text-[var(--aegis-text-primary)]">{title}</h3>
+            <h3 className="font-[family-name:var(--aegis-font-display)] text-sm font-semibold tracking-[0.025em] text-[var(--aegis-text-primary)]">
+              {title}
+            </h3>
           ) : null}
           {description ? (
-            <p className="text-xs text-[var(--aegis-text-secondary)]">{description}</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--aegis-text-secondary)]">
+              {description}
+            </p>
           ) : null}
         </div>
       ) : null}

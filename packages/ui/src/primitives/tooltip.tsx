@@ -18,7 +18,7 @@ export const TooltipContent = forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'z-50 overflow-hidden rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-overlay)] px-3 py-1.5 text-xs text-[var(--aegis-text-primary)] shadow-[var(--aegis-shadow-panel)]',
+        'z-50 max-w-xs overflow-hidden rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-strong)] bg-[var(--aegis-surface-overlay)] px-3 py-2 text-xs leading-5 text-[var(--aegis-text-primary)] shadow-[var(--aegis-shadow-dialog)]',
         className,
       )}
       {...props}

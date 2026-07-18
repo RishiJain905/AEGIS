@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 
-import { Alert, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
+import { Alert, Badge, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
 import { GraphViewModeToggle, useCinematicGraphStore } from '@/features/cinematic-graph';
 import { GraphViewMode } from '@/features/cinematic-graph/contracts';
@@ -60,11 +60,19 @@ function GraphPanelChrome({
   children: React.ReactNode;
 }) {
   return (
-    <Panel title={title} description={description} data-testid="visualization-slot">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-xs text-[var(--aegis-text-secondary)]">
-          Sigma.js remains the primary investigation tool. 3D is a derived semantic presentation.
-        </p>
+    <Panel
+      title={title}
+      description={description}
+      density="compact"
+      data-testid="visualization-slot"
+    >
+      <div className="mb-4 flex flex-col gap-3 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] p-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-2.5">
+          <Badge variant="outline">GraphStore synced</Badge>
+          <p className="text-xs leading-5 text-[var(--aegis-text-secondary)]">
+            2D analysis is authoritative; 3D is the read-only semantic presentation.
+          </p>
+        </div>
         <GraphViewModeToggle />
       </div>
       {children}

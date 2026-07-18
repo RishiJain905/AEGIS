@@ -19,7 +19,7 @@ export const DialogOverlay = forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-50 bg-black/60 aegis-motion-fade data-[state=open]:opacity-100 data-[state=closed]:opacity-0',
+      'fixed inset-0 z-50 bg-[rgb(1_5_9_/_0.78)] backdrop-blur-[3px] aegis-motion-fade data-[state=open]:opacity-100 data-[state=closed]:opacity-0',
       className,
     )}
     {...props}
@@ -36,7 +36,7 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] p-6 shadow-[var(--aegis-shadow-dialog)] aegis-motion-fade rounded-[var(--aegis-radius-lg)]',
+        'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-strong)] bg-[linear-gradient(145deg,var(--aegis-surface-raised),var(--aegis-surface-panel))] p-6 shadow-[var(--aegis-shadow-dialog)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)] aegis-motion-fade',
         focusTokens.ring,
         className,
       )}
@@ -45,7 +45,7 @@ export const DialogContent = forwardRef<
       {children}
       <DialogPrimitive.Close
         className={cn(
-          'absolute right-4 top-4 rounded-[var(--aegis-radius-sm)] opacity-70 hover:opacity-100',
+          'absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-[var(--aegis-radius-md)] border border-transparent text-[var(--aegis-text-muted)] transition-[background-color,border-color,color] hover:border-[var(--aegis-border-default)] hover:bg-[var(--aegis-surface-hover)] hover:text-[var(--aegis-text-primary)]',
           focusTokens.ring,
         )}
         aria-label="Close dialog"
@@ -67,7 +67,10 @@ export const DialogTitle = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-semibold text-[var(--aegis-text-primary)]', className)}
+    className={cn(
+      'font-[family-name:var(--aegis-font-display)] text-lg font-semibold tracking-[0.025em] text-[var(--aegis-text-primary)]',
+      className,
+    )}
     {...props}
   />
 ));
@@ -79,7 +82,7 @@ export const DialogDescription = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn('text-sm text-[var(--aegis-text-secondary)]', className)}
+    className={cn('text-sm leading-6 text-[var(--aegis-text-secondary)]', className)}
     {...props}
   />
 ));

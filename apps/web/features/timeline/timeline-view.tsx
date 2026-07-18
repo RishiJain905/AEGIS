@@ -72,7 +72,7 @@ export function TimelineView() {
       description={description}
       density="compact"
       data-testid="timeline-area"
-      className="border-t border-[var(--aegis-border-default)] rounded-none border-x-0"
+      className="min-h-0"
     >
       <div className="flex items-center justify-end pb-2">
         <Button
@@ -86,7 +86,7 @@ export function TimelineView() {
           Collapse
         </Button>
       </div>
-      <ol className="flex flex-col gap-2">
+      <ol className="max-h-72 overflow-y-auto pr-2">
         {marks.map((mark) => {
           const nodeStatus = STATUS_MAP[mark.status] ?? NodeStatus.NORMAL;
           const active = timelineCursorSequence === mark.sequence;

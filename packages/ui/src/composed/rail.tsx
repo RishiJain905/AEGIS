@@ -4,12 +4,12 @@ import { forwardRef, type HTMLAttributes } from 'react';
 import { cn } from '../lib/cn';
 
 const railVariants = cva(
-  'flex flex-col border-r border-[var(--aegis-border-default)] bg-[var(--aegis-surface-rail)] shadow-[var(--aegis-shadow-rail)]',
+  'flex flex-col overflow-y-auto border-r border-[var(--aegis-border-default)] bg-[linear-gradient(180deg,var(--aegis-surface-rail),var(--aegis-surface-base))] shadow-[var(--aegis-shadow-rail)] transition-[width] duration-[var(--aegis-motion-duration-normal)]',
   {
     variants: {
       collapsed: {
-        true: 'w-14',
-        false: 'w-64',
+        true: 'w-[4.5rem]',
+        false: 'w-60',
       },
       responsive: {
         true: 'hidden lg:flex',
@@ -35,7 +35,7 @@ export const Rail = forwardRef<HTMLElement, RailProps>(
       className={cn(railVariants({ collapsed, responsive }), className)}
       {...props}
     >
-      <div className={cn('flex flex-col gap-2 p-3', collapsed && 'items-center')}>{children}</div>
+      <div className={cn('flex flex-col gap-1.5 p-3', collapsed && 'items-center')}>{children}</div>
     </nav>
   ),
 );

@@ -21,7 +21,7 @@ export const TimelineMark = forwardRef<HTMLLIElement, TimelineMarkProps>(
       <li
         ref={ref}
         className={cn(
-          'relative flex gap-3 border-l-2 pl-4 pb-6',
+          'group relative flex gap-3 border-l pl-5 pb-7 last:pb-1',
           active
             ? 'border-[var(--aegis-status-under-investigation)]'
             : 'border-[var(--aegis-border-default)]',
@@ -31,15 +31,18 @@ export const TimelineMark = forwardRef<HTMLLIElement, TimelineMarkProps>(
       >
         <div
           className={cn(
-            'absolute -left-[5px] top-1 h-2 w-2 rounded-full',
+            'absolute -left-[6px] top-1.5 h-[11px] w-[11px] rounded-full border-2 border-[var(--aegis-surface-panel)] shadow-[0_0_0_2px_var(--aegis-border-default)]',
             active
               ? 'bg-[var(--aegis-status-under-investigation)]'
               : 'bg-[var(--aegis-border-strong)]',
           )}
           aria-hidden="true"
         />
-        <div className="flex flex-col gap-1">
-          <time className="text-xs text-[var(--aegis-text-muted)]" dateTime={timestamp}>
+        <div className="-mt-0.5 flex min-w-0 flex-col gap-1.5">
+          <time
+            className="font-mono text-[0.6875rem] tracking-[0.03em] text-[var(--aegis-text-muted)] tabular-nums"
+            dateTime={timestamp}
+          >
             {timestamp}
           </time>
           <div className="flex items-center gap-2">
@@ -50,10 +53,14 @@ export const TimelineMark = forwardRef<HTMLLIElement, TimelineMarkProps>(
                 label={presentation.label}
               />
             ) : null}
-            <span className="text-sm font-medium text-[var(--aegis-text-primary)]">{label}</span>
+            <span className="text-sm font-semibold leading-5 text-[var(--aegis-text-primary)]">
+              {label}
+            </span>
           </div>
           {description ? (
-            <p className="text-xs text-[var(--aegis-text-secondary)]">{description}</p>
+            <p className="max-w-prose text-xs leading-5 text-[var(--aegis-text-secondary)]">
+              {description}
+            </p>
           ) : null}
         </div>
       </li>

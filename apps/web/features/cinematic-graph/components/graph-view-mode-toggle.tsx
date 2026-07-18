@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { useReducedMotion } from '@aegis/ui';
+import { Button, useReducedMotion } from '@aegis/ui';
 
 import { GraphViewMode, type GraphViewModeValue } from '../contracts/graph-view-mode';
 import { RenderQualityTier } from '../contracts/render-quality-tier';
@@ -34,14 +34,15 @@ export function GraphViewModeToggle() {
 
   return (
     <div
-      className="inline-flex rounded border border-[var(--aegis-border)] p-0.5 text-xs"
+      className="inline-flex rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-canvas)] p-1 shadow-[inset_0_1px_5px_rgb(0_0_0_/_0.28)]"
       role="group"
       aria-label="Graph view mode"
       data-testid="graph-view-mode-toggle"
     >
-      <button
-        type="button"
-        className={`rounded px-2 py-1 ${viewMode === GraphViewMode.TWO_D ? 'bg-[var(--aegis-surface-elevated)] font-medium' : ''}`}
+      <Button
+        variant={viewMode === GraphViewMode.TWO_D ? 'secondary' : 'ghost'}
+        size="sm"
+        className="min-w-14 shadow-none"
         aria-pressed={viewMode === GraphViewMode.TWO_D}
         data-testid="graph-view-mode-2d"
         onClick={() => {
@@ -49,10 +50,11 @@ export function GraphViewModeToggle() {
         }}
       >
         2D
-      </button>
-      <button
-        type="button"
-        className={`rounded px-2 py-1 ${viewMode === GraphViewMode.THREE_D ? 'bg-[var(--aegis-surface-elevated)] font-medium' : ''}`}
+      </Button>
+      <Button
+        variant={viewMode === GraphViewMode.THREE_D ? 'secondary' : 'ghost'}
+        size="sm"
+        className="min-w-14 shadow-none"
         aria-pressed={viewMode === GraphViewMode.THREE_D}
         aria-disabled={threeDisabled}
         disabled={threeDisabled}
@@ -67,7 +69,7 @@ export function GraphViewModeToggle() {
         }}
       >
         3D
-      </button>
+      </Button>
     </div>
   );
 }

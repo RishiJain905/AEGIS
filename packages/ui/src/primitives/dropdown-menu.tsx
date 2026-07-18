@@ -15,12 +15,14 @@ export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
 export const DropdownMenuSubTrigger = forwardRef<
   HTMLDivElement,
-  ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & { inset?: boolean }
+  ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
+    inset?: boolean;
+  }
 >(({ className, inset, children, ...props }, ref) => (
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      'flex cursor-default select-none items-center rounded-[var(--aegis-radius-sm)] px-2 py-1.5 text-sm outline-none focus:bg-[var(--aegis-surface-elevated)] data-[state=open]:bg-[var(--aegis-surface-elevated)]',
+      'flex min-h-10 cursor-default select-none items-center rounded-[var(--aegis-radius-sm)] px-3 py-2 text-sm outline-none focus:bg-[var(--aegis-surface-hover)] data-[state=open]:bg-[var(--aegis-surface-hover)]',
       inset && 'pl-8',
       focusTokens.ring,
       className,
@@ -39,7 +41,7 @@ export const DropdownMenuSubContent = forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      'z-50 min-w-[8rem] overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] p-1 shadow-[var(--aegis-shadow-panel)]',
+      'z-50 min-w-[10rem] overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-strong)] bg-[var(--aegis-surface-overlay)] p-1.5 shadow-[var(--aegis-shadow-dialog)]',
       className,
     )}
     {...props}
@@ -56,7 +58,7 @@ export const DropdownMenuContent = forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'z-50 min-w-[8rem] overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] p-1 shadow-[var(--aegis-shadow-panel)]',
+        'z-50 min-w-[10rem] overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-strong)] bg-[var(--aegis-surface-overlay)] p-1.5 shadow-[var(--aegis-shadow-dialog)]',
         className,
       )}
       {...props}
@@ -75,7 +77,7 @@ export const DropdownMenuItem = forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex cursor-default select-none items-center rounded-[var(--aegis-radius-sm)] px-2 py-1.5 text-sm outline-none focus:bg-[var(--aegis-surface-elevated)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'relative flex min-h-10 cursor-default select-none items-center rounded-[var(--aegis-radius-sm)] px-3 py-2 text-sm outline-none transition-colors focus:bg-[var(--aegis-surface-hover)] focus:text-[var(--aegis-text-primary)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       destructive && 'text-[var(--aegis-risk-critical)] focus:text-[var(--aegis-risk-critical)]',
       inset && 'pl-8',
       focusTokens.ring,
@@ -88,12 +90,14 @@ DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
 export const DropdownMenuLabel = forwardRef<
   HTMLDivElement,
-  ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> & { inset?: boolean }
+  ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> & {
+    inset?: boolean;
+  }
 >(({ className, inset, ...props }, ref) => (
   <DropdownMenuPrimitive.Label
     ref={ref}
     className={cn(
-      'px-2 py-1.5 text-sm font-semibold text-[var(--aegis-text-secondary)]',
+      'px-3 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--aegis-text-muted)]',
       inset && 'pl-8',
       className,
     )}
@@ -116,7 +120,10 @@ DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 
 export const DropdownMenuShortcut = ({ className, ...props }: HTMLAttributes<HTMLSpanElement>) => (
   <span
-    className={cn('ml-auto text-xs tracking-widest text-[var(--aegis-text-muted)]', className)}
+    className={cn(
+      'ml-auto font-mono text-[0.6875rem] tracking-widest text-[var(--aegis-text-muted)]',
+      className,
+    )}
     {...props}
   />
 );

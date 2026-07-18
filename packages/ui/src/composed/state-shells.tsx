@@ -4,6 +4,10 @@ import { cn } from '../lib/cn';
 import { StatusIcon } from '../semantic/icons';
 import { getOperationalStatusPresentation } from '../semantic/status';
 import { Skeleton } from '../primitives/skeleton';
+import { Button } from '../primitives/button';
+
+const stateShellClass =
+  'relative min-h-48 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-dashed border-[var(--aegis-border-default)] bg-[radial-gradient(circle_at_50%_20%,var(--aegis-surface-raised),var(--aegis-surface-elevated)_58%)] p-8 text-center shadow-[inset_0_1px_0_var(--aegis-border-highlight)]';
 
 export interface LoadingStateProps extends HTMLAttributes<HTMLDivElement> {
   message?: string;
@@ -18,7 +22,11 @@ export const LoadingState = forwardRef<HTMLDivElement, LoadingStateProps>(
         role="status"
         aria-live="polite"
         aria-label={presentation.ariaLabel}
-        className={cn('flex flex-col items-center gap-3 p-6 text-center', className)}
+        className={cn(
+          stateShellClass,
+          'flex flex-col items-center justify-center gap-3',
+          className,
+        )}
         {...props}
       >
         <StatusIcon
@@ -51,7 +59,11 @@ export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
         ref={ref}
         role="status"
         aria-label={presentation.ariaLabel}
-        className={cn('flex flex-col items-center gap-3 p-6 text-center', className)}
+        className={cn(
+          stateShellClass,
+          'flex flex-col items-center justify-center gap-3',
+          className,
+        )}
         {...props}
       >
         <StatusIcon
@@ -59,8 +71,12 @@ export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
           shape={presentation.shape}
           label={presentation.label}
         />
-        <h3 className="text-sm font-semibold text-[var(--aegis-text-primary)]">{title}</h3>
-        <p className="text-sm text-[var(--aegis-text-secondary)]">{description}</p>
+        <h3 className="font-[family-name:var(--aegis-font-display)] text-base font-semibold text-[var(--aegis-text-primary)]">
+          {title}
+        </h3>
+        <p className="max-w-sm text-sm leading-6 text-[var(--aegis-text-secondary)]">
+          {description}
+        </p>
       </div>
     );
   },
@@ -90,7 +106,11 @@ export const ErrorState = forwardRef<HTMLDivElement, ErrorStateProps>(
         ref={ref}
         role="alert"
         aria-label={presentation.ariaLabel}
-        className={cn('flex flex-col items-center gap-3 p-6 text-center', className)}
+        className={cn(
+          stateShellClass,
+          'flex flex-col items-center justify-center gap-3',
+          className,
+        )}
         {...props}
       >
         <StatusIcon
@@ -98,16 +118,14 @@ export const ErrorState = forwardRef<HTMLDivElement, ErrorStateProps>(
           shape={presentation.shape}
           label={presentation.label}
         />
-        <h3 className="text-sm font-semibold text-[var(--aegis-text-primary)]">{title}</h3>
-        <p className="text-sm text-[var(--aegis-text-secondary)]">{message}</p>
+        <h3 className="font-[family-name:var(--aegis-font-display)] text-base font-semibold text-[var(--aegis-text-primary)]">
+          {title}
+        </h3>
+        <p className="max-w-sm text-sm leading-6 text-[var(--aegis-text-secondary)]">{message}</p>
         {onRetry ? (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-default)] px-3 py-1.5 text-sm text-[var(--aegis-text-primary)] hover:bg-[var(--aegis-surface-elevated)]"
-          >
+          <Button variant="outline" size="sm" onClick={onRetry}>
             Retry
-          </button>
+          </Button>
         ) : null}
       </div>
     );
