@@ -52,7 +52,7 @@ from aegis_observability.setup import (
     shutdown_observability,
 )
 
-WORKSPACE_VERSION = "0.0.0-phase31"
+WORKSPACE_VERSION = "1.0.0"
 
 __all__ = [
     "WORKSPACE_VERSION",

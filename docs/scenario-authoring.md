@@ -1,5 +1,9 @@
 # AEGIS Scenario Authoring
 
+For the v1.0 authoring contract, use the [Scenario SDK reference](AEGIS-v1.0-Agent-Specs/scenario-and-simulation/08-scenario-sdk.md)
+and the [scenario package validation guide](../packages/scenario-sdk/README.md). This
+page is the concise operational pointer; the SDK contracts and schemas are authoritative.
+
 > Phase 08 baseline — declarative scenario packages validated by `aegis-scenario-sdk`.
 
 ## Overview

@@ -1,6 +1,6 @@
 [project]
 name = "aegis-event-streaming"
-version = "0.0.0"
+version = "1.0.0"
 description = "AEGIS event streaming — outbox relay, Redis Streams, idempotent consumers"
 requires-python = ">=3.12,<3.13"
 dependencies = [

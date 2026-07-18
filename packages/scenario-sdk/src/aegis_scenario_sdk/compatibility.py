@@ -14,6 +14,8 @@ def is_platform_version_compatible(required: str, platform: str = WORKSPACE_VERS
     except InvalidVersion:
         if required == platform:
             return True
+        if required.startswith("0.0.0-phase") and platform == WORKSPACE_VERSION:
+            return True
         if required.startswith("0.0.0-phase") and platform.startswith("0.0.0-phase"):
             required_phase = int(required.removeprefix("0.0.0-phase"))
             platform_phase = int(platform.removeprefix("0.0.0-phase"))

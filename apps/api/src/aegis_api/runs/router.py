@@ -55,7 +55,7 @@ def _simulation_error_response(exc: SimulationError) -> JSONResponse:
         schema_version=1,
         code=api_code,
         message=exc.message,
-        details=exc.details,
+        details=exc.details or {},
     )
     return JSONResponse(status_code=status, content=envelope.model_dump(by_alias=True))
 

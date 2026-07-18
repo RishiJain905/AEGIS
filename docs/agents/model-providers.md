@@ -1,64 +1,51 @@
-# Phase 18 — Model Provider Abstraction
+# Model Provider Setup
 
-> Canonical provider-neutral LLM interface for AEGIS agent phases 19+.
+AEGIS routes model access through the provider abstraction. Provider output is
+untrusted, validated structured data and an unavailable provider must not mutate the
+simulation directly.
 
-## Scope
+## Supported modes
 
-Phase 18 delivers:
+| Mode | Use | Credentials/network | v1.0 behavior |
+| --- | --- | --- | --- |
+| `mock` | Deterministic local development, demo, and CI | None | Default; deterministic structured responses |
+| `recorded` | Replay fixtures from `fixtures/model-responses/` | None | Deterministic fixture responses |
+| `openai` | Optional hosted provider | API key and network | Graceful degradation on missing credentials or unavailable service |
+| `openai-compatible` | Optional local Ollama/vLLM-style endpoint | Local endpoint configuration | Graceful degradation when the endpoint is unavailable |
 
-- Canonical generation contracts in `aegis_contracts.generation`
-- `aegis_model_provider` package with registry, resilience, structured-output validation, and adapters
-- Mock and recorded providers for deterministic CI
-- Optional hosted OpenAI and local OpenAI-compatible adapters
-- PostgreSQL `generation_artifacts` audit persistence
-- API harness at `/providers/observability`
-
-Phase 18 does **not** implement agent runtime, tool execution, approval workflows, or simulator mutations.
-
-## Canonical interface
-
-All model access must go through `GenerationService.generate(GenerationRequestV1)`.
-
-Adapters implement `ModelProvider`:
-
-- `provider_id`
-- `capabilities() -> ProviderCapabilitiesV1`
-- `async generate(request) -> GenerationResponseV1`
-
-Provider SDK types must remain inside `aegis_model_provider.adapters.*`.
-
-## Providers
-
-| ID | Purpose | CI default |
-|----|---------|------------|
-| `mock` | Deterministic structured responses | Yes |
-| `recorded` | Fixture replay from `fixtures/model-responses/` | Yes |
-| `openai` | Hosted OpenAI API | Optional |
-| `openai-compatible` | Local Ollama/vLLM endpoint | Optional |
+The mock and recorded modes are the supported offline paths. Live and local modes are
+optional integrations; they are not required for the release validation gate.
 
 ## Configuration
 
-See `.env.example` variables prefixed with `AEGIS_PROVIDER_`.
+Copy `.env.example` to `.env` and inspect variables prefixed with `AEGIS_PROVIDER_`.
+Keep `AEGIS_PROVIDER_DEFAULT=mock` for local verification and the deterministic demo.
+Set a live or local provider explicitly only when its endpoint, credentials, model, and
+capabilities have been verified. Never commit credentials or put them in a scenario
+package.
 
-`AEGIS_PROVIDER_DEFAULT=mock` ensures core CI needs no external inference.
+## Validate a provider
 
-## Structured output
-
-Model output is untrusted. JSON is parsed and validated against `StructuredOutputSpecV1` using `jsonschema`. A bounded repair attempt may run when `maxRepairAttempts > 0`.
-
-## Errors
-
-Normalized `ProviderErrorCode` values include `CREDENTIALS_MISSING`, `TIMEOUT`, `RETRY_EXHAUSTED`, `CIRCUIT_OPEN`, `STRUCTURED_OUTPUT_INVALID`, and `CAPABILITY_UNSUPPORTED`.
-
-## Commands
-
-```bash
+```powershell
 uv run python scripts/run_provider_harness.py
 uv run pytest tests/agents/provider-conformance -q
 ```
 
-## Phase 19 constraints
+All adapters implement the canonical `GenerationService.generate` path. Vendor SDK
+types stay inside `aegis_model_provider.adapters.*`; agent roles consume the provider
+interface, not a vendor SDK.
 
-- Import `GenerationService` via `aegis_agents.providers.create_generation_service`
-- Do not import vendor SDKs in agent role implementations
-- Persist agent outputs as artifacts; never write model output directly to simulation state
+## No-model graceful degradation
+
+When a live or local provider is unavailable, the service returns a normalized provider
+error such as `CREDENTIALS_MISSING`, `TIMEOUT`, `RETRY_EXHAUSTED`, `CIRCUIT_OPEN`, or
+`CAPABILITY_UNSUPPORTED`. The operator can inspect the failure and continue with
+non-model portions of a simulation where the workflow permits it. A failed provider
+request is not approval, is not a simulation mutation, and must remain observable in
+the generation artifact/audit path.
+
+## References
+
+- [Provider contracts](../AEGIS-v1.0-Agent-Specs/agent-system/18-model-provider-abstraction.md)
+- [Provider implementation](../../packages/model-provider/src/aegis_model_provider/)
+- [Provider conformance tests](../../tests/agents/provider-conformance/)

@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase31",
+  "workspaceVersion": "1.0.0",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",
@@ -1406,7 +1406,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/health_response_v1.json",
-      "sha256": "858f264575604e5de74f28d243c00c2cd70cd8e2b10142bb0a63768b7b8c3754",
+      "sha256": "72f1ba90ef2d7db58d4bcd95d7d442643f51a103d0fc2687bb6e6e1768d1d404",
       "kind": "valid_fixture",
       "contract": "health_response_v1"
     },

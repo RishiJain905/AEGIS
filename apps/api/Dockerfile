@@ -63,6 +63,7 @@ COPY --chown=aegis:aegis packages/policy/src packages/policy/src
 COPY --chown=aegis:aegis packages/observability/src packages/observability/src
 COPY --chown=aegis:aegis services/reports/src services/reports/src
 COPY --chown=aegis:aegis services/agents/src services/agents/src
+COPY --chown=aegis:aegis scenarios/operation-silent-relay scenarios/operation-silent-relay
 COPY --chown=aegis:aegis alembic.ini alembic.ini
 COPY --chown=aegis:aegis migrations migrations
 ENV PATH="/app/.venv/bin:$PATH" \

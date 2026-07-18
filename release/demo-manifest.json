@@ -1,0 +1,18 @@
+{
+  "expectedHeadlineOutcomes": [
+    "run starts with a persisted graph snapshot",
+    "detection and model views remain advisory and evidence-linked",
+    "agent investigation uses the mock provider",
+    "state-changing proposals wait for explicit operator approval",
+    "the run can be opened in replay and cinematic mode",
+    "the after-action view exposes scoring and report review"
+  ],
+  "provider": "mock",
+  "scenario": {
+    "id": "scenario:operation-silent-relay",
+    "packageVersion": "1.0.0",
+    "version": "operation-silent-relay@1.0.0"
+  },
+  "schemaVersion": "aegis.demo/v1",
+  "seed": 42
+}

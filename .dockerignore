@@ -22,3 +22,6 @@ scenarios
 models
 infra
 *.md
+!scenarios/
+!scenarios/operation-silent-relay/
+!scenarios/operation-silent-relay/**

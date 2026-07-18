@@ -28,7 +28,7 @@ members = [
 
 [[package]]
 name = "aegis"
-version = "0.0.0"
+version = "1.0.0"
 source = { virtual = "." }
 
 [package.dev-dependencies]
@@ -79,7 +79,7 @@ dev = [
 
 [[package]]
 name = "aegis-agents"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "services/agents" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -102,7 +102,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-api"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "apps/api" }
 dependencies = [
     { name = "aegis-agents" },
@@ -143,7 +143,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-contracts"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/contracts-python" }
 dependencies = [
     { name = "pydantic" },
@@ -158,7 +158,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-event-streaming"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/event-streaming" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -175,7 +175,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-graph-domain"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/graph-domain" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -186,7 +186,7 @@ requires-dist = [{ name = "aegis-contracts", editable = "packages/contracts-pyth
 
 [[package]]
 name = "aegis-graph-risk"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/graph-risk" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -197,7 +197,7 @@ requires-dist = [{ name = "aegis-contracts", editable = "packages/contracts-pyth
 
 [[package]]
 name = "aegis-incidents"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "services/incidents" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -220,7 +220,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-ml"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "services/ml" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -247,7 +247,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-model-provider"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/model-provider" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -269,7 +269,7 @@ provides-extras = ["openai"]
 
 [[package]]
 name = "aegis-observability"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/observability" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -301,7 +301,7 @@ provides-extras = ["fastapi"]
 
 [[package]]
 name = "aegis-persistence"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/persistence" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -326,7 +326,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-policy"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/policy" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -337,7 +337,7 @@ requires-dist = [{ name = "aegis-contracts", editable = "packages/contracts-pyth
 
 [[package]]
 name = "aegis-replay"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "services/replay" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -354,7 +354,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-reports"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "services/reports" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -369,7 +369,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-scenario-sdk"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/scenario-sdk" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -386,7 +386,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-scoring"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "services/scoring" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -403,7 +403,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-simulation"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "services/simulation" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -422,7 +422,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-simulation-domain"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "packages/simulation-domain" }
 dependencies = [
     { name = "aegis-contracts" },
@@ -437,7 +437,7 @@ requires-dist = [
 
 [[package]]
 name = "aegis-workers"
-version = "0.0.0"
+version = "1.0.0"
 source = { editable = "services/workers" }
 dependencies = [
     { name = "aegis-agents" },
