@@ -6,10 +6,12 @@
 #   scripts\verify.ps1 -TestPath <path>    # scoped: run ONLY that test file (pytest or vitest)
 #   scripts\verify.ps1 -Build              # also run production builds (pnpm build)
 #   scripts\verify.ps1 -Integration        # also run tests/integration (needs postgres+redis+minio up)
+#   scripts\verify.ps1 -Deployment          # validate/build/smoke the local production-shaped stack
 param(
     [string]$TestPath = "",
     [switch]$Integration,
-    [switch]$Build
+    [switch]$Build,
+    [switch]$Deployment
 )
 
 $ErrorActionPreference = "Continue"
@@ -54,6 +56,35 @@ function Invoke-Stage {
     }
 }
 
+function Invoke-DeploymentReadiness {
+    $productionEnv = ".env.production.example"
+    $composeFiles = @("-f", "docker-compose.yml", "-f", "docker-compose.prod.yml")
+    $projectName = "aegis-phase33-verify"
+    $terraformImage = "hashicorp/terraform:1.9.8@sha256:18f9986038bbaf02cf49db9c09261c778161c51dcc7fb7e355ae8938459428cd"
+    $terraformRoot = Join-Path $repoRoot "infra\terraform"
+    $terraformMount = "$terraformRoot`:/workspace"
+
+    $env:AEGIS_PROD_ENV_FILE = $productionEnv
+    Invoke-Stage "compose-dev-config" "docker" @("compose", "-f", "docker-compose.yml", "config", "--quiet")
+    $prodConfigArgs = @("compose", "--env-file", $productionEnv) + $composeFiles + @("config", "--quiet")
+    Invoke-Stage "compose-prod-config" "docker" $prodConfigArgs
+    $prodBuildArgs = @("compose", "--project-name", $projectName, "--env-file", $productionEnv) + $composeFiles + @("build", "api", "web", "worker", "simulator")
+    Invoke-Stage "compose-prod-build" "docker" $prodBuildArgs
+
+    Invoke-Stage "terraform-fmt" "docker" @("run", "--rm", "-v", $terraformMount, "-w", "/workspace", $terraformImage, "fmt", "-check", "-recursive")
+    foreach ($environmentName in @("dev", "staging", "production")) {
+        $terraformCommand = "terraform -chdir=environments/$environmentName init -backend=false -input=false && terraform -chdir=environments/$environmentName validate"
+        Invoke-Stage "terraform-$environmentName" "docker" @("run", "--rm", "--entrypoint", "/bin/sh", "-v", $terraformMount, "-w", "/workspace", $terraformImage, "-c", $terraformCommand)
+    }
+
+    $prodUpArgs = @("compose", "--project-name", $projectName, "--env-file", $productionEnv) + $composeFiles + @("up", "-d", "--wait")
+    Invoke-Stage "compose-prod-up" "docker" $prodUpArgs
+    Invoke-Stage "deploy-smoke" "uv" @("run", "python", "scripts/deploy_smoke_test.py", "--environment", "local", "--env-file", $productionEnv)
+    $prodDownArgs = @("compose", "--project-name", $projectName, "--env-file", $productionEnv) + $composeFiles + @("down", "--volumes", "--remove-orphans")
+    Invoke-Stage "compose-prod-down" "docker" $prodDownArgs
+    $env:AEGIS_PROD_ENV_FILE = $null
+}
+
 if ($TestPath -ne "") {
     # Scoped iteration mode: run only the named test file.
     if ($TestPath -match '\.(test|spec)\.(ts|tsx|js|jsx|mts)$') {
@@ -76,6 +107,9 @@ if ($TestPath -ne "") {
     }
     if ($Integration) {
         Invoke-Stage "pytest-integration" "uv" @("run", "pytest", "tests/integration", "-q")
+    }
+    if ($Deployment) {
+        Invoke-DeploymentReadiness
     }
 }
 

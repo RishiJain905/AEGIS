@@ -22,6 +22,7 @@ htmlcov/
 .env
 .env.local
 .env.*.local
+.env.production
 
 # Build outputs
 .next/
@@ -50,6 +51,7 @@ coverage/
 # Local data
 *.sqlite
 *.db
+.terraform/
 
 # Generated graph-domain performance fixtures (see packages/graph-domain/fixtures/README.md)
 packages/graph-domain/fixtures/medium-graph-snapshot.json

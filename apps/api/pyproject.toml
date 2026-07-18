@@ -16,6 +16,7 @@ dependencies = [
     "aegis-replay",
     "aegis-scoring",
     "aegis-observability",
+    "alembic>=1.15",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
 ]

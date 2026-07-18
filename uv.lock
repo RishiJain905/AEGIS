@@ -117,6 +117,7 @@ dependencies = [
     { name = "aegis-reports" },
     { name = "aegis-scoring" },
     { name = "aegis-simulation" },
+    { name = "alembic" },
     { name = "fastapi" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -135,6 +136,7 @@ requires-dist = [
     { name = "aegis-reports", editable = "services/reports" },
     { name = "aegis-scoring", editable = "services/scoring" },
     { name = "aegis-simulation", editable = "services/simulation" },
+    { name = "alembic", specifier = ">=1.15" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]

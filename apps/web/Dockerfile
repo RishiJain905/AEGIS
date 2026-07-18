@@ -15,6 +15,10 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+ARG NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws/v1/realtime
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL \
+    NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 RUN pnpm --filter @aegis/web build
 
 FROM node:22.15.1-alpine AS runner

@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import signal
 import sys
+import threading
 from pathlib import Path
 
 from aegis_contracts import ActorRef, ActorType, SimulationCommandType, load_settings
@@ -133,6 +135,21 @@ def _seed_divergence_check(
     }
 
 
+def _run_service(*, stop_event: threading.Event | None = None) -> None:
+    """Keep the simulator role available as a managed, signal-aware process."""
+
+    event = stop_event or threading.Event()
+    if stop_event is None:
+        def handle_signal(_signum: int, _frame: object) -> None:
+            event.set()
+
+        signal.signal(signal.SIGTERM, handle_signal)
+        signal.signal(signal.SIGINT, handle_signal)
+
+    while not event.wait(60.0):
+        continue
+
+
 def _invalid_command_demo() -> dict[str, object]:
     from aegis_contracts import SimulationCommandV1
     from aegis_contracts.versioning import SIMULATION_COMMAND_SCHEMA_VERSION
@@ -252,6 +269,11 @@ def main() -> None:
 
     subparsers.add_parser("invalid-command-demo")
 
+    subparsers.add_parser(
+        "service",
+        help="Run the managed simulator role until it receives a shutdown signal",
+    )
+
     health_parser = subparsers.add_parser("health")
     health_parser.add_argument("--service", default="simulator")
 
@@ -263,6 +285,9 @@ def main() -> None:
 
             health = get_health(args.service)
             print(f"{health.service} {health.status} {health.version}")
+            return
+        if args.command == "service":
+            _run_service()
             return
         if args.command == "run":
             _print_json(_run_local(args.scenario, seed=args.seed, steps=args.steps))

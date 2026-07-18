@@ -1,0 +1,253 @@
+# Production-shaped local validation overlay. Apply it with
+# docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml ...
+# It deliberately has no cloud, registry, login, or deployment behavior.
+
+x-prod-env-file: &prod-env-file
+  - ${AEGIS_PROD_ENV_FILE:-.env.production}
+
+x-prod-python-environment: &prod-python-environment
+  AEGIS_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "${POSTGRES_DB:?POSTGRES_DB must be set via .env.production}"
+  POSTGRES_USER: "${POSTGRES_USER:?POSTGRES_USER must be set via .env.production}"
+  POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set via .env.production}"
+  REDIS_URL: redis://redis:6379/0
+  S3_ENDPOINT: http://minio:9000
+  S3_ACCESS_KEY: "${S3_ACCESS_KEY:?S3_ACCESS_KEY must be set via .env.production}"
+  S3_SECRET_KEY: "${S3_SECRET_KEY:?S3_SECRET_KEY must be set via .env.production}"
+  S3_BUCKET: "${S3_BUCKET:?S3_BUCKET must be set via .env.production}"
+  API_PORT: "8000"
+  WEB_PORT: "3000"
+  OTEL_ENABLED: "${OTEL_ENABLED:-true}"
+  OTEL_SERVICE_NAME: aegis-api
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}"
+  OTEL_TRACES_SAMPLER: "${OTEL_TRACES_SAMPLER:-parentbased_traceidratio}"
+  OTEL_TRACES_SAMPLER_ARG: "${OTEL_TRACES_SAMPLER_ARG:-1.0}"
+  OTEL_METRICS_EXPORT_INTERVAL_MS: "${OTEL_METRICS_EXPORT_INTERVAL_MS:-15000}"
+  OTEL_EXPORTER_FAILURE_MODE: "${OTEL_EXPORTER_FAILURE_MODE:-ignore}"
+  AEGIS_HEALTH_PROBE_TIMEOUT_MS: "${AEGIS_HEALTH_PROBE_TIMEOUT_MS:-2000}"
+  AEGIS_READY_REQUIRE_REDIS: "${AEGIS_READY_REQUIRE_REDIS:-true}"
+  AEGIS_READY_REQUIRE_OBJECT_STORAGE: "${AEGIS_READY_REQUIRE_OBJECT_STORAGE:-true}"
+  AEGIS_LOG_JSON: "${AEGIS_LOG_JSON:-true}"
+  AEGIS_REQUEST_BODY_MAX_BYTES: "${AEGIS_REQUEST_BODY_MAX_BYTES:-1048576}"
+  AEGIS_RATE_LIMIT_REQUESTS_PER_MINUTE: "${AEGIS_RATE_LIMIT_REQUESTS_PER_MINUTE:-120}"
+  AEGIS_RATE_LIMIT_BURST: "${AEGIS_RATE_LIMIT_BURST:-30}"
+  AEGIS_RATE_LIMIT_MAX_BUCKETS: "${AEGIS_RATE_LIMIT_MAX_BUCKETS:-10000}"
+  AEGIS_SECURITY_HSTS_ENABLED: "${AEGIS_SECURITY_HSTS_ENABLED:-false}"
+  AEGIS_SECURITY_HSTS_MAX_AGE_SECONDS: "${AEGIS_SECURITY_HSTS_MAX_AGE_SECONDS:-31536000}"
+
+x-prod-web-environment: &prod-web-environment
+  HOSTNAME: 0.0.0.0
+  WEB_PORT: "3000"
+  NEXT_PUBLIC_AEGIS_DATA_SOURCE: api
+  NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://localhost:18000}"
+  NEXT_PUBLIC_WS_URL: "${NEXT_PUBLIC_WS_URL:-ws://localhost:18000/ws/v1/realtime}"
+  NEXT_PUBLIC_AEGIS_WS_TOKEN: ""
+
+x-small-resources: &small-resources
+  deploy:
+    resources:
+      limits:
+        cpus: "1.00"
+        memory: 768M
+      reservations:
+        cpus: "0.25"
+        memory: 256M
+
+x-medium-resources: &medium-resources
+  deploy:
+    resources:
+      limits:
+        cpus: "2.00"
+        memory: 1G
+      reservations:
+        cpus: "0.50"
+        memory: 512M
+
+services:
+  postgres:
+    env_file: *prod-env-file
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:?POSTGRES_DB must be set via .env.production}"
+      POSTGRES_USER: "${POSTGRES_USER:?POSTGRES_USER must be set via .env.production}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set via .env.production}"
+    ports: !override
+      - "127.0.0.1:${AEGIS_SMOKE_POSTGRES_PORT:-55432}:5432"
+    restart: unless-stopped
+    <<: *small-resources
+
+  redis:
+    ports: !override
+      - "127.0.0.1:56379:6379"
+    restart: unless-stopped
+    <<: *small-resources
+
+  minio:
+    env_file: *prod-env-file
+    environment:
+      MINIO_ROOT_USER: "${S3_ACCESS_KEY:?S3_ACCESS_KEY must be set via .env.production}"
+      MINIO_ROOT_PASSWORD: "${S3_SECRET_KEY:?S3_SECRET_KEY must be set via .env.production}"
+    ports: !override
+      - "127.0.0.1:59000:9000"
+      - "127.0.0.1:59001:9001"
+    restart: unless-stopped
+    <<: *small-resources
+
+  migrate:
+    image: "${AEGIS_API_IMAGE:-aegis-api:phase33-local}"
+    env_file: *prod-env-file
+    environment:
+      <<: *prod-python-environment
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    read_only: true
+    tmpfs: !override
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: !override
+      - ALL
+    security_opt: !override
+      - no-new-privileges:true
+    <<: *small-resources
+
+  api:
+    image: "${AEGIS_API_IMAGE:-aegis-api:phase33-local}"
+    env_file: *prod-env-file
+    environment:
+      <<: *prod-python-environment
+    ports: !override
+      - "127.0.0.1:${AEGIS_API_HOST_PORT:-18000}:8000"
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    healthcheck:
+      test:
+        ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 6
+    read_only: true
+    tmpfs: !override
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: !override
+      - ALL
+    security_opt: !override
+      - no-new-privileges:true
+    <<: *medium-resources
+
+  web:
+    image: "${AEGIS_WEB_IMAGE:-aegis-web:phase33-local}"
+    build:
+      args:
+        NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://localhost:18000}"
+        NEXT_PUBLIC_WS_URL: "${NEXT_PUBLIC_WS_URL:-ws://localhost:18000/ws/v1/realtime}"
+    env_file: *prod-env-file
+    environment:
+      <<: *prod-web-environment
+    ports: !override
+      - "127.0.0.1:${AEGIS_WEB_HOST_PORT:-13000}:3000"
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs: !override
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: !override
+      - ALL
+    security_opt: !override
+      - no-new-privileges:true
+    <<: *small-resources
+
+  worker:
+    image: "${AEGIS_WORKER_IMAGE:-aegis-worker:phase33-local}"
+    env_file: *prod-env-file
+    environment:
+      <<: *prod-python-environment
+      AEGIS_WORKER_MODE: outbox-relay
+      OTEL_SERVICE_NAME: aegis-worker
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    read_only: true
+    tmpfs: !override
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: !override
+      - ALL
+    security_opt: !override
+      - no-new-privileges:true
+    <<: *small-resources
+
+  simulator:
+    image: "${AEGIS_SIMULATOR_IMAGE:-aegis-simulator:phase33-local}"
+    env_file: *prod-env-file
+    environment:
+      <<: *prod-python-environment
+      OTEL_SERVICE_NAME: aegis-simulator
+    command: ["aegis-simulator", "service"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    read_only: true
+    tmpfs: !override
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: !override
+      - ALL
+    security_opt: !override
+      - no-new-privileges:true
+    <<: *small-resources
+
+  otel-collector:
+    ports: !override
+      - "127.0.0.1:54317:4317"
+      - "127.0.0.1:54318:4318"
+      - "127.0.0.1:58889:8889"
+    restart: unless-stopped
+    <<: *small-resources
+
+  tempo:
+    ports: !override
+      - "127.0.0.1:53200:3200"
+    restart: unless-stopped
+    <<: *small-resources
+
+  prometheus:
+    ports: !override
+      - "127.0.0.1:59090:9090"
+    restart: unless-stopped
+    <<: *small-resources
+
+  grafana:
+    ports: !override
+      - "127.0.0.1:53001:3000"
+    restart: unless-stopped
+    <<: *small-resources

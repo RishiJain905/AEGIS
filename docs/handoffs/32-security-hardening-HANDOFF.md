@@ -95,10 +95,10 @@ No ADR required. All decisions stay inside existing architecture rules: rate lim
 
 ## Acceptance criteria evidence
 
-- *Threats map to implemented controls and tests* — `docs/security/threat-model.md` + `control-matrix.md` map TM-001–TM-014 → SEC-001–SEC-020 → implementation + test files.
-- *Scenario/model content cannot bypass policy or tool authorization* — `test_agent_policy_bypasses.py` (injection, unauthorized-tool fixtures, oversized content, WARDEN/approval revalidation) passes.
-- *Agents cannot reach arbitrary network/filesystem/execution* — execution-class tools categorically uncallable (`authorize_tool_call`), egress allowlist enforced at adapter construction (`test_provider_egress.py`), no filesystem/network tools exposed to models.
-- *Critical findings fixed or explicitly excepted* — local scans pass at the configured gates; the one open item (web transitive HIGHs) is recorded under the documented time-bounded exception contract.
+- _Threats map to implemented controls and tests_ — `docs/security/threat-model.md` + `control-matrix.md` map TM-001–TM-014 → SEC-001–SEC-020 → implementation + test files.
+- _Scenario/model content cannot bypass policy or tool authorization_ — `test_agent_policy_bypasses.py` (injection, unauthorized-tool fixtures, oversized content, WARDEN/approval revalidation) passes.
+- _Agents cannot reach arbitrary network/filesystem/execution_ — execution-class tools categorically uncallable (`authorize_tool_call`), egress allowlist enforced at adapter construction (`test_provider_egress.py`), no filesystem/network tools exposed to models.
+- _Critical findings fixed or explicitly excepted_ — local scans pass at the configured gates; the one open item (web transitive HIGHs) is recorded under the documented time-bounded exception contract.
 
 ## Prohibited-shortcut confirmation
 

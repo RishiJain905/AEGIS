@@ -1,0 +1,39 @@
+Phase 33 local application rollback rehearsal
+Date: 2026-07-18 (America/Toronto)
+Project: aegis-phase33
+Scope: application image references only; no migration rollback and no cloud action
+
+> docker compose --project-name aegis-phase33 --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml ps
+NAME                             IMAGE                         STATUS
+aegis-phase33-api-1              aegis-api:phase33-local       Up (healthy)
+aegis-phase33-simulator-1        aegis-simulator:phase33-local Up (healthy)
+aegis-phase33-web-1              aegis-web:phase33-local       Up (healthy)
+aegis-phase33-worker-1           aegis-worker:phase33-local    Up (healthy)
+
+> docker image tag aegis-api:phase33-local aegis-api:phase33-rollback-known-good
+> docker image tag aegis-web:phase33-local aegis-web:phase33-rollback-known-good
+> docker image tag aegis-worker:phase33-local aegis-worker:phase33-rollback-known-good
+> docker image tag aegis-simulator:phase33-local aegis-simulator:phase33-rollback-known-good
+rollback image tags created
+
+> docker compose --project-name aegis-phase33 --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --no-build
+... api, web, worker, and simulator recreated from rollback-known-good tags ...
+... all dependency and application health waits completed ...
+
+> uv run python scripts/deploy_smoke_test.py --environment local --env-file .env.production.example
+PASS health
+PASS ready
+PASS unauthenticated
+PASS websocket
+PASS migration
+DEPLOY SMOKE: PASS
+
+> docker compose --project-name aegis-phase33 --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml ps
+aegis-phase33-api-1              aegis-api:phase33-rollback-known-good          Up (healthy)
+aegis-phase33-web-1              aegis-web:phase33-rollback-known-good          Up (healthy)
+aegis-phase33-worker-1           aegis-worker:phase33-rollback-known-good       Up (healthy)
+aegis-phase33-simulator-1        aegis-simulator:phase33-rollback-known-good    Up (healthy)
+
+Result: PASS. The migration head remained 013_auth_identity; no schema rollback
+was attempted. The stack was subsequently reused for the backup/restore
+rehearsal and then torn down with the named validation project.
