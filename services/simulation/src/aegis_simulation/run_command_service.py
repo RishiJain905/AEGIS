@@ -90,6 +90,7 @@ class RunCommandService:
         request: RunCreateRequestV1,
         *,
         idempotency_key: str | None = None,
+        owner_user_id: str | None = None,
     ) -> RunCommandResponseV1:
         if idempotency_key is not None:
             existing = await uow.idempotency.get(
@@ -126,6 +127,7 @@ class RunCommandService:
             package_dir,
             seed=request.seed,
             run_id=request.run_id,
+            owner_user_id=owner_user_id,
         )
         _ = manifest
 

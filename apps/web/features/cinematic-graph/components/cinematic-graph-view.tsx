@@ -4,8 +4,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 import type { GraphSnapshotV1 } from '@aegis/contracts-ts';
-import { createGraphStore, type GraphFilterSet, type GraphStore } from '@aegis/graph-domain';
-import { Alert, Button, ErrorState, LoadingState, useReducedMotion } from '@aegis/ui';
+import {
+  createGraphStore,
+  GraphLayer,
+  type GraphFilterSet,
+  type GraphStore,
+} from '@aegis/graph-domain';
+import {
+  Alert,
+  Button,
+  ErrorState,
+  GraphIsolationControls,
+  GraphLayerControls,
+  GraphOverlayToggle,
+  LoadingState,
+  useReducedMotion,
+} from '@aegis/ui';
 
 import { createSemanticSceneAdapter } from '@/features/cinematic-graph/adapters/semantic-scene-adapter';
 import { CapabilityFallbackNotice } from '@/features/cinematic-graph/components/capability-fallback';
@@ -18,8 +32,18 @@ import {
 } from '@/features/cinematic-graph/contracts';
 import { probeCapabilityReport } from '@/features/cinematic-graph/lib/capability';
 import { useCinematicGraphStore } from '@/features/cinematic-graph/stores/cinematic-graph-store';
+import { GraphHighlightMode } from '@/features/operational-graph/contracts/graph-visual-state';
+import { computeHighlight } from '@/features/operational-graph/semantic/graph-highlights';
 import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-visual-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
+
+const LAYER_OPTIONS = [
+  { id: GraphLayer.INFRASTRUCTURE, label: 'Infrastructure' },
+  { id: GraphLayer.ACTIVITY, label: 'Activity' },
+  { id: GraphLayer.SECURITY_STATE, label: 'Security' },
+  { id: GraphLayer.INVESTIGATION, label: 'Investigation' },
+  { id: GraphLayer.PRESENTATION, label: 'Presentation' },
+];
 
 const CinematicSceneCanvas = dynamic(
   () =>
@@ -40,6 +64,7 @@ export interface CinematicGraphViewProps {
   graphStore?: GraphStore;
   graphRevision?: number;
   evidenceNodeIds?: string[];
+  /** Node ids in incident scope; defaults to status-derived membership. */
   incidentNodeIds?: string[];
 }
 
@@ -79,9 +104,24 @@ export function CinematicGraphView({
   graphStore,
   graphRevision = 0,
   evidenceNodeIds = EMPTY_NODE_IDS,
-  incidentNodeIds = EMPTY_NODE_IDS,
+  incidentNodeIds,
 }: CinematicGraphViewProps) {
   const store = useGraphStoreInstance(snapshot, graphStore);
+  // Same status-derived incident approximation the 2D view and replay use, so
+  // the Incident overlay stays consistent across renderers.
+  const effectiveIncidentNodeIds = useMemo(() => {
+    if (incidentNodeIds) {
+      return incidentNodeIds;
+    }
+    return snapshot.nodes
+      .filter(
+        (node) =>
+          node.status === 'under_investigation' ||
+          node.status === 'compromised' ||
+          node.status === 'contained',
+      )
+      .map((node) => node.id);
+  }, [incidentNodeIds, snapshot.nodes]);
   const adapterRef = useRef<SemanticSceneAdapter | null>(null);
   const framedSceneKeyRef = useRef<string | null>(null);
   const [projection, setProjection] = useState<SceneProjection | null>(null);
@@ -100,6 +140,13 @@ export function CinematicGraphView({
   const isolationActive = useGraphVisualStore((s) => s.visualState.isolationActive);
   const overlayToggles = useGraphVisualStore((s) => s.visualState.overlayToggles);
   const nodePositions = useGraphVisualStore((s) => s.visualState.nodePositions);
+  const pathModeActive = useGraphVisualStore((s) => s.visualState.pathModeActive);
+
+  const setFilterSet = useGraphVisualStore((s) => s.setFilterSet);
+  const toggleOverlay = useGraphVisualStore((s) => s.toggleOverlay);
+  const setHighlight = useGraphVisualStore((s) => s.setHighlight);
+  const clearHighlight = useGraphVisualStore((s) => s.clearHighlight);
+  const setPathModeActive = useGraphVisualStore((s) => s.setPathModeActive);
 
   const setSelectedEntityId = useWorkspaceUiStore((s) => s.setSelectedEntityId);
   const selectedEntityId = useWorkspaceUiStore((s) => s.workspace.selectedEntityId);
@@ -146,7 +193,7 @@ export function CinematicGraphView({
         nodePositions,
         qualityTier,
         evidenceNodeIds: new Set(evidenceNodeIds),
-        incidentNodeIds: new Set(incidentNodeIds),
+        incidentNodeIds: new Set(effectiveIncidentNodeIds),
       });
       setProjection(next);
       setCamera(next.camera);
@@ -164,7 +211,7 @@ export function CinematicGraphView({
     capability,
     evidenceNodeIds,
     filterSet,
-    incidentNodeIds,
+    effectiveIncidentNodeIds,
     nodePositions,
     qualityTier,
     selectedEntityId,
@@ -214,7 +261,16 @@ export function CinematicGraphView({
   const handleSelectNode = useCallback(
     (nodeId: string) => {
       setSelectedEntityId(nodeId);
-      setSelection(nodeId, null);
+      const current = useGraphVisualStore.getState().visualState;
+      if (
+        current.pathModeActive &&
+        current.selection.primaryNodeId &&
+        current.selection.primaryNodeId !== nodeId
+      ) {
+        setSelection(current.selection.primaryNodeId, nodeId);
+      } else {
+        setSelection(nodeId, null);
+      }
       const bookmark = adapterRef.current?.focusNode(nodeId);
       if (bookmark) {
         setCamera(bookmark);
@@ -227,6 +283,59 @@ export function CinematicGraphView({
     setSelectedEntityId(null);
     setSelection(null, null);
   }, [setSelectedEntityId, setSelection]);
+
+  const handleLayerToggle = useCallback(
+    (layerId: string) => {
+      const current = useGraphVisualStore.getState().visualState.filterSet;
+      const enabled = current.enabledLayers.includes(layerId)
+        ? current.enabledLayers.filter((layer) => layer !== layerId)
+        : [...current.enabledLayers, layerId];
+      if (enabled.length === 0) {
+        return;
+      }
+      setFilterSet({
+        ...current,
+        enabledLayers: enabled,
+      } as GraphFilterSet);
+    },
+    [setFilterSet],
+  );
+
+  const handleIsolate = useCallback(() => {
+    const state = useGraphVisualStore.getState().visualState;
+    const primaryId = state.selection.primaryNodeId ?? selectedEntityId;
+    if (!primaryId) {
+      return;
+    }
+    const highlight = computeHighlight(store, {
+      ...state,
+      highlightMode: GraphHighlightMode.NEIGHBORHOOD,
+      selection: { ...state.selection, primaryNodeId: primaryId },
+    });
+    setHighlight(
+      GraphHighlightMode.NEIGHBORHOOD,
+      highlight.highlightedNodeIds,
+      highlight.highlightedEdgeIds,
+      true,
+    );
+  }, [selectedEntityId, setHighlight, store]);
+
+  useEffect(() => {
+    if (!pathModeActive || !selection.primaryNodeId || !selection.secondaryNodeId) {
+      return;
+    }
+    const state = useGraphVisualStore.getState().visualState;
+    const highlight = computeHighlight(store, {
+      ...state,
+      highlightMode: GraphHighlightMode.PATH,
+    });
+    setHighlight(
+      GraphHighlightMode.PATH,
+      highlight.highlightedNodeIds,
+      highlight.highlightedEdgeIds,
+      false,
+    );
+  }, [pathModeActive, selection.primaryNodeId, selection.secondaryNodeId, setHighlight, store]);
 
   const handleCanvasReady = useCallback(() => {
     setCanvasGeneration((generation) => generation + 1);
@@ -313,6 +422,55 @@ export function CinematicGraphView({
           Camera easing is disabled. Semantic node, edge, risk, and status markings remain visible.
         </Alert>
       ) : null}
+      <div
+        className="grid gap-3 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] p-3 lg:grid-cols-2"
+        data-testid="cinematic-control-deck"
+      >
+        <div>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.09em] text-[var(--aegis-text-muted)]">
+            Data layers
+          </p>
+          <GraphLayerControls
+            layers={LAYER_OPTIONS}
+            enabledLayers={filterSet.enabledLayers}
+            onToggle={handleLayerToggle}
+          />
+        </div>
+        <div>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.09em] text-[var(--aegis-text-muted)]">
+            Signal overlays
+          </p>
+          <GraphOverlayToggle toggles={overlayToggles} onToggle={toggleOverlay} />
+        </div>
+        <div>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.09em] text-[var(--aegis-text-muted)]">
+            Investigation focus
+          </p>
+          <GraphIsolationControls
+            isolationActive={isolationActive}
+            onIsolate={handleIsolate}
+            onRestore={clearHighlight}
+            disabled={!selection.primaryNodeId && !selectedEntityId}
+          />
+        </div>
+        <div>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.09em] text-[var(--aegis-text-muted)]">
+            Analysis actions
+          </p>
+          <Button
+            variant={pathModeActive ? 'default' : 'outline'}
+            size="sm"
+            data-testid="cinematic-path-mode"
+            aria-pressed={pathModeActive}
+            onClick={() => {
+              setPathModeActive(!pathModeActive);
+            }}
+            className="text-xs"
+          >
+            {pathModeActive ? 'Path mode (select 2 nodes)' : 'Trace path'}
+          </Button>
+        </div>
+      </div>
       <div
         className="h-[clamp(28rem,62vh,46rem)] min-h-[28rem] shrink-0 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-canvas)] shadow-[var(--aegis-shadow-panel)]"
         data-testid="cinematic-canvas-frame"

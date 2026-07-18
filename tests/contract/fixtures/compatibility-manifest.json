@@ -528,7 +528,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_command_response_v1.schema.json",
-      "sha256": "ba999bfc838f87b1190ddf55af5e56cf55ea95df993fe9daf316eaf42489fca9"
+      "sha256": "87771d113d1fb063bb68d1b7f1e34263e5ae938ccc90a18fdbeb9c6a6fdb9000"
     },
     {
       "path": "tests/contract/fixtures/schemas/run_comparison_v1.schema.json",
@@ -550,7 +550,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_v1.schema.json",
-      "sha256": "e5483e0c0649d840a61c7f923fedd10eed6b9a6ae07b1d6ffe50b3dcca49571f"
+      "sha256": "93a791f4041b5ce17f6bb4c0776b127f6266de096b53c6e9dbad25db3893a52e"
     },
     {
       "path": "tests/contract/fixtures/schemas/scenario_v1.schema.json",
@@ -1214,7 +1214,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/run_command_response_v1.json",
-      "sha256": "95e53f4570808f9eb7032672e42116a0d0d215685954c45d3f4fc6562e1eabd4"
+      "sha256": "ebae21cb58a1ffc14e4cd29157510b0d6baf8784f34f4d39c0a81c21540646a4"
     },
     {
       "path": "tests/contract/fixtures/valid/run_comparison_v1.json",
@@ -1236,7 +1236,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/run_v1.json",
-      "sha256": "eb59e067565bdeff9a8db74ffa0683a2c5992a5479dbeb4b9bb12d884ec6fc17"
+      "sha256": "0511ec4b18763bd798cadc7c087043187564f55daca48ecd2c683c22e365272c"
     },
     {
       "path": "tests/contract/fixtures/valid/scenario_v1.json",

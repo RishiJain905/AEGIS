@@ -136,6 +136,9 @@ export const runSchema = z
     startedAt: utcTimestampSchema,
     simTime: simTimestampSchema,
     revision: revisionSchema,
+    // Owner of the run (the authenticated actor that created it). Additive optional
+    // field (schemaVersion stays 1); legacy/seeded rows may be null. See ADR 0034.
+    ownerUserId: authoredIdSchema.nullable().optional(),
   })
   .strict();
 

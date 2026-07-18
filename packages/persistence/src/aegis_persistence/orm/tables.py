@@ -66,6 +66,12 @@ class RunRow(Base):
     revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Owner of the run (creating actor's userId). Nullable for legacy/seeded rows,
+    # backfilled to a demo/admin owner by migration 014. No FK: auth users are seeded
+    # at app startup, not by migration, so an owner may not exist at migrate time.
+    owner_user_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+
+    __table_args__ = (Index("ix_runs_owner_user_id", "owner_user_id"),)
 
 
 class AssetInstanceRow(Base):

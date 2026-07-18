@@ -2,8 +2,10 @@
 
 import { Html, Line, OrbitControls } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type ComponentRef } from 'react';
 import * as THREE from 'three';
+
+type OrbitControlsImpl = NonNullable<ComponentRef<typeof OrbitControls>>;
 
 import type { SceneEdge, SceneNode } from '../contracts';
 import type { CameraBookmark3D } from '../contracts/camera-bookmark-3d';
@@ -17,7 +19,7 @@ import {
 import { resolveThreeColor } from '../lib/three-color';
 
 function nodeRadius(node: SceneNode): number {
-  return Math.max(5, node.size * 0.72) * (node.selected ? 1.12 : 1);
+  return Math.max(9, node.size * 1.05) * (node.selected ? 1.12 : 1);
 }
 
 function InstancedNodes({
@@ -305,29 +307,84 @@ function StatusMarkers({ nodes }: { nodes: SceneNode[] }) {
   );
 }
 
-function SelectedLabel({ nodes }: { nodes: SceneNode[] }) {
-  const selected = nodes.find((node) => node.selected);
-  if (!selected) {
-    return null;
-  }
+const MAX_SECONDARY_LABELS = 7;
+
+/**
+ * Legible labels with LOD by importance rather than raw distance: the selected
+ * node always gets the full label card; highlighted and the highest-risk
+ * undimmed nodes get compact tags. Everything else stays unlabeled to keep the
+ * scene readable — the accessible entity list below the canvas covers the rest.
+ */
+function SceneLabels({ nodes }: { nodes: SceneNode[] }) {
+  const labelled = useMemo(() => {
+    const selected = nodes.find((node) => node.selected) ?? null;
+    const secondary = nodes
+      .filter((node) => !node.selected && !node.dimmed)
+      .sort(
+        (a, b) =>
+          Number(b.highlighted) - Number(a.highlighted) ||
+          b.riskScore - a.riskScore ||
+          b.criticality - a.criticality,
+      )
+      .slice(0, MAX_SECONDARY_LABELS);
+    return { selected, secondary };
+  }, [nodes]);
 
   return (
-    <Html
-      position={[
-        selected.position.x,
-        selected.position.y + nodeRadius(selected) + 14,
-        selected.position.z,
-      ]}
-      center
-    >
-      <div className="cinematic-node-label" data-testid="cinematic-selected-label">
-        <span>{selected.label}</span>
-        <small>Risk {Math.round(selected.riskScore * 100)}</small>
-      </div>
-    </Html>
+    <group>
+      {labelled.selected ? (
+        <Html
+          position={[
+            labelled.selected.position.x,
+            labelled.selected.position.y + nodeRadius(labelled.selected) + 14,
+            labelled.selected.position.z,
+          ]}
+          center
+          style={{ pointerEvents: 'none' }}
+        >
+          <div className="cinematic-node-label" data-testid="cinematic-selected-label">
+            <span>{labelled.selected.label}</span>
+            <small>Risk {Math.round(labelled.selected.riskScore * 100)}</small>
+          </div>
+        </Html>
+      ) : null}
+      {labelled.secondary.map((node) => (
+        <Html
+          key={`label-${node.id}`}
+          position={[node.position.x, node.position.y + nodeRadius(node) + 9, node.position.z]}
+          center
+          style={{ pointerEvents: 'none' }}
+          zIndexRange={[20, 0]}
+        >
+          <div className="cinematic-node-tag" data-testid={`cinematic-node-tag-${node.id}`}>
+            {node.label}
+          </div>
+        </Html>
+      ))}
+    </group>
   );
 }
 
+interface CameraFlight {
+  fromPosition: THREE.Vector3;
+  fromTarget: THREE.Vector3;
+  toPosition: THREE.Vector3;
+  toTarget: THREE.Vector3;
+  elapsed: number;
+}
+
+const CAMERA_FLIGHT_SECONDS = 0.65;
+
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+/**
+ * Single owner of the camera pose. Bookmarks are applied by moving BOTH the
+ * camera position and the OrbitControls target through the controls instance,
+ * then calling controls.update() — never a bare camera.lookAt(), which would
+ * fight OrbitControls' own per-frame update and fling the scene off-screen.
+ */
 function CameraController({
   bookmark,
   reducedMotion,
@@ -336,49 +393,84 @@ function CameraController({
   reducedMotion: boolean;
 }) {
   const { camera, invalidate } = useThree();
-  const destination = useRef(new THREE.Vector3());
-  const target = useRef(new THREE.Vector3());
-  const moving = useRef(false);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
+  const flightRef = useRef<CameraFlight | null>(null);
 
   useEffect(() => {
-    destination.current.set(bookmark.position.x, bookmark.position.y, bookmark.position.z);
-    target.current.set(bookmark.target.x, bookmark.target.y, bookmark.target.z);
+    const controls = controlsRef.current;
+    const toPosition = new THREE.Vector3(
+      bookmark.position.x,
+      bookmark.position.y,
+      bookmark.position.z,
+    );
+    const toTarget = new THREE.Vector3(bookmark.target.x, bookmark.target.y, bookmark.target.z);
 
     if ('fov' in camera) {
       const perspective = camera as THREE.PerspectiveCamera;
-      perspective.fov = bookmark.fov;
-      perspective.updateProjectionMatrix();
+      if (perspective.fov !== bookmark.fov) {
+        perspective.fov = bookmark.fov;
+        perspective.updateProjectionMatrix();
+      }
     }
 
-    if (reducedMotion) {
-      camera.position.copy(destination.current);
-      camera.lookAt(target.current);
-      moving.current = false;
+    if (reducedMotion || !controls) {
+      camera.position.copy(toPosition);
+      if (controls) {
+        controls.target.copy(toTarget);
+        controls.update();
+      } else {
+        camera.lookAt(toTarget);
+      }
+      flightRef.current = null;
     } else {
-      moving.current = true;
+      flightRef.current = {
+        fromPosition: camera.position.clone(),
+        fromTarget: controls.target.clone(),
+        toPosition,
+        toTarget,
+        elapsed: 0,
+      };
     }
     invalidate();
   }, [bookmark, camera, invalidate, reducedMotion]);
 
+  // Operator input cancels any in-progress flight instead of fighting it.
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) {
+      return;
+    }
+    const cancelFlight = () => {
+      flightRef.current = null;
+    };
+    controls.addEventListener('start', cancelFlight);
+    return () => {
+      controls.removeEventListener('start', cancelFlight);
+    };
+  }, [bookmark]);
+
   useFrame((_, delta) => {
-    if (!moving.current) {
+    const flight = flightRef.current;
+    const controls = controlsRef.current;
+    if (!flight || !controls) {
       return;
     }
 
-    const factor = 1 - Math.exp(-4.6 * Math.min(delta, 0.05));
-    camera.position.lerp(destination.current, factor);
-    camera.lookAt(target.current);
-    if (camera.position.distanceToSquared(destination.current) < 0.4) {
-      camera.position.copy(destination.current);
-      camera.lookAt(target.current);
-      moving.current = false;
-    } else {
-      invalidate();
+    flight.elapsed = Math.min(CAMERA_FLIGHT_SECONDS, flight.elapsed + Math.min(delta, 0.05));
+    const k = easeOutCubic(flight.elapsed / CAMERA_FLIGHT_SECONDS);
+    camera.position.lerpVectors(flight.fromPosition, flight.toPosition, k);
+    controls.target.lerpVectors(flight.fromTarget, flight.toTarget, k);
+    controls.update();
+
+    if (flight.elapsed >= CAMERA_FLIGHT_SECONDS) {
+      flightRef.current = null;
     }
+    invalidate();
   });
 
   return (
     <OrbitControls
+      ref={controlsRef}
       enableDamping={!reducedMotion}
       dampingFactor={0.075}
       enablePan
@@ -387,7 +479,6 @@ function CameraController({
       minDistance={45}
       maxDistance={7_500}
       makeDefault
-      target={[bookmark.target.x, bookmark.target.y, bookmark.target.z]}
     />
   );
 }
@@ -467,6 +558,21 @@ export function CinematicSceneCanvas({
   const dpr = dprForTier(qualityTier, dprCap);
   const profile = getSceneQualityProfile(qualityTier);
   const frameloop = getSceneFrameloop(qualityTier, reducedMotion);
+  const glRef = useRef<THREE.WebGLRenderer | null>(null);
+
+  // Releasing the GL context explicitly on unmount stops Chromium from
+  // recycling the orphaned GPU tiles into the page compositor, which showed up
+  // as full-page tiling corruption when switching from 3D back to 2D.
+  useEffect(() => {
+    return () => {
+      try {
+        glRef.current?.forceContextLoss();
+      } catch {
+        // Context may already be lost; nothing to clean up.
+      }
+      glRef.current = null;
+    };
+  }, []);
 
   return (
     <div
@@ -492,6 +598,7 @@ export function CinematicSceneCanvas({
         }}
         onPointerMissed={onBackgroundClick}
         onCreated={({ gl }) => {
+          glRef.current = gl;
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = qualityTier === RenderQualityTier.HIGH ? 1.18 : 1.05;
@@ -534,7 +641,7 @@ export function CinematicSceneCanvas({
         <RiskAndSelectionAccents nodes={nodes} profile={profile} />
         <InstancedNodes nodes={nodes} profile={profile} onSelect={onSelectNode} />
         <StatusMarkers nodes={nodes} />
-        <SelectedLabel nodes={nodes} />
+        <SceneLabels nodes={nodes} />
       </Canvas>
       <div
         className="cinematic-canvas-vignette pointer-events-none absolute inset-0"

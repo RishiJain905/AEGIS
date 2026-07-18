@@ -155,6 +155,10 @@ class RunV1(BaseModel):
     started_at: UtcTimestamp = Field(alias="startedAt")
     sim_time: SimTimestamp = Field(alias="simTime")
     revision: Revision
+    # Owner of the run (the authenticated actor that created it). Additive optional
+    # field (schemaVersion stays 1): legacy/seeded rows may be null and are backfilled
+    # to a demo/admin owner by migration 014. See ADR 0034.
+    owner_user_id: AuthoredId | None = Field(default=None, alias="ownerUserId")
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> RunV1:

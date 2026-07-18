@@ -4,6 +4,8 @@ import { defaultCameraBookmark3D } from '../contracts/camera-bookmark-3d';
 const MIN_SCENE_RADIUS = 80;
 const CAMERA_PADDING = 1.2;
 const CAMERA_DIRECTION = { x: 0.68, y: 0.52, z: 0.72 } as const;
+const MIN_FOCUS_DISTANCE = 240;
+const MAX_FOCUS_DISTANCE = 2_400;
 
 type FrameableNode = Pick<SceneNode, 'position' | 'size'>;
 
@@ -64,5 +66,62 @@ export function frameSceneNodes(
     },
     target,
     fov,
+  };
+}
+
+function sceneRadiusAround(
+  center: { x: number; y: number; z: number },
+  nodes: readonly FrameableNode[],
+): number {
+  let radius = MIN_SCENE_RADIUS;
+  for (const node of nodes) {
+    radius = Math.max(
+      radius,
+      Math.hypot(
+        node.position.x - center.x,
+        node.position.y - center.y,
+        node.position.z - center.z,
+      ),
+    );
+  }
+  return radius;
+}
+
+/**
+ * Frame a single node while keeping the surrounding graph in view. The camera
+ * keeps its current view direction (no disorienting flip) and retreats to a
+ * distance proportional to the scene radius, so re-centering on the node never
+ * ejects the rest of the scene out of frame.
+ */
+export function focusNodeBookmark(
+  node: FrameableNode,
+  currentCamera: CameraBookmark3D,
+  sceneNodes: readonly FrameableNode[],
+): CameraBookmark3D {
+  const direction = {
+    x: currentCamera.position.x - currentCamera.target.x,
+    y: currentCamera.position.y - currentCamera.target.y,
+    z: currentCamera.position.z - currentCamera.target.z,
+  };
+  let length = Math.hypot(direction.x, direction.y, direction.z);
+  if (length < 1e-3) {
+    direction.x = CAMERA_DIRECTION.x;
+    direction.y = CAMERA_DIRECTION.y;
+    direction.z = CAMERA_DIRECTION.z;
+    length = directionLength();
+  }
+
+  const radius = sceneRadiusAround(node.position, sceneNodes);
+  const distance = Math.min(MAX_FOCUS_DISTANCE, Math.max(MIN_FOCUS_DISTANCE, radius * 1.05));
+
+  return {
+    schemaVersion: 1,
+    position: {
+      x: node.position.x + (direction.x / length) * distance,
+      y: node.position.y + (direction.y / length) * distance,
+      z: node.position.z + (direction.z / length) * distance,
+    },
+    target: { ...node.position },
+    fov: currentCamera.fov,
   };
 }

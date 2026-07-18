@@ -44,7 +44,7 @@ const RISK_HALO_COLORS: Record<RiskBand, string> = {
 export function getNodeVisualStyle(node: GraphNodeV1, criticalityScale = 1): NodeVisualStyle {
   const riskBand = scoreToRiskBand(node.riskScore);
   const baseColor = ASSET_TYPE_COLORS[node.assetType] ?? '#64748b';
-  const size = 8 + node.criticality * 12 * criticalityScale;
+  const size = 7 + node.criticality * 10 * criticalityScale;
 
   return {
     color: baseColor,

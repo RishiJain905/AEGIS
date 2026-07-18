@@ -15,6 +15,8 @@ export interface SyncFromStoreOptions {
   lodHints?: LodRenderHints;
   workerPositions?: Record<string, { x: number; y: number }>;
   zoomRatio?: number;
+  evidenceNodeIds?: ReadonlySet<string>;
+  incidentNodeIds?: ReadonlySet<string>;
 }
 
 export interface OperationalGraphAdapter {
@@ -34,6 +36,7 @@ export interface OperationalGraphAdapter {
   zoomIn(): void;
   zoomOut(): void;
   resetCamera(): void;
+  resize(): void;
   dispose(): void;
 }
 

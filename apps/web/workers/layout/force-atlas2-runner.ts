@@ -79,6 +79,8 @@ export function runForceAtlas2(
     onProgress?.(iterationsCompleted);
   }
 
+  resolveNodeOverlaps(graph, pinnedNodes);
+
   const positions: Record<string, { x: number; y: number }> = {};
   graph.forEachNode((nodeId, attributes) => {
     positions[nodeId] = {
@@ -88,6 +90,65 @@ export function runForceAtlas2(
   });
 
   return { positions, iterationsCompleted };
+}
+
+const OVERLAP_RADIUS = 60;
+const OVERLAP_SWEEPS = 32;
+
+/**
+ * Post-layout collision pass: FA2 without size awareness happily stacks nodes
+ * on top of each other in dense clusters. A few relaxation sweeps pushing any
+ * pair closer than 2×OVERLAP_RADIUS apart guarantees labels and hit targets
+ * never fully overlap. Deterministic (fixed order, no randomness).
+ */
+function resolveNodeOverlaps(graph: Graph, pinnedNodes: ReadonlySet<string>): void {
+  const nodeIds = graph.nodes().sort((a, b) => a.localeCompare(b));
+  const minDistance = OVERLAP_RADIUS * 2;
+
+  for (let sweep = 0; sweep < OVERLAP_SWEEPS; sweep += 1) {
+    let moved = false;
+    for (let i = 0; i < nodeIds.length; i += 1) {
+      for (let j = i + 1; j < nodeIds.length; j += 1) {
+        const a = nodeIds[i] as string;
+        const b = nodeIds[j] as string;
+        const ax = graph.getNodeAttribute(a, 'x') as number;
+        const ay = graph.getNodeAttribute(a, 'y') as number;
+        const bx = graph.getNodeAttribute(b, 'x') as number;
+        const by = graph.getNodeAttribute(b, 'y') as number;
+        let dx = bx - ax;
+        let dy = by - ay;
+        let distance = Math.hypot(dx, dy);
+        if (distance >= minDistance) {
+          continue;
+        }
+        if (distance < 1e-6) {
+          // Coincident nodes: separate along a deterministic direction derived
+          // from the pair's order so reruns stay reproducible.
+          const angle = ((i * 31 + j) % 360) * (Math.PI / 180);
+          dx = Math.cos(angle);
+          dy = Math.sin(angle);
+          distance = 1;
+        }
+        const push = (minDistance - distance) / 2;
+        const ux = (dx / distance) * push;
+        const uy = (dy / distance) * push;
+        const aPinned = pinnedNodes.has(a);
+        const bPinned = pinnedNodes.has(b);
+        if (!aPinned) {
+          graph.setNodeAttribute(a, 'x', ax - ux * (bPinned ? 2 : 1));
+          graph.setNodeAttribute(a, 'y', ay - uy * (bPinned ? 2 : 1));
+        }
+        if (!bPinned) {
+          graph.setNodeAttribute(b, 'x', bx + ux * (aPinned ? 2 : 1));
+          graph.setNodeAttribute(b, 'y', by + uy * (aPinned ? 2 : 1));
+        }
+        moved = true;
+      }
+    }
+    if (!moved) {
+      break;
+    }
+  }
 }
 
 export function createCancelledResult(

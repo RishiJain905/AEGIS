@@ -10,6 +10,8 @@ interface AegisNodeCanvasData {
   selected?: boolean;
   hovered?: boolean;
   showHoverLabel?: boolean;
+  evidenceMarked?: boolean;
+  incidentMarked?: boolean;
 }
 
 function roundedRect(
@@ -151,6 +153,33 @@ export const drawAegisNodeHover: NodeHoverDrawingFunction = (context, rawData, s
     context.fill();
     context.strokeStyle = '#071019';
     context.lineWidth = 1.5;
+    context.stroke();
+  }
+
+  // Incident overlay: red dashed containment rim around the node.
+  if (data.incidentMarked) {
+    context.beginPath();
+    context.setLineDash([4, 3]);
+    context.arc(rawData.x, rawData.y, radius + 8, 0, Math.PI * 2);
+    context.strokeStyle = '#fb5b65';
+    context.lineWidth = 2;
+    context.stroke();
+    context.setLineDash([]);
+  }
+
+  // Evidence overlay: amber diamond badge at the lower-right of the node.
+  if (data.evidenceMarked) {
+    drawShape(
+      context,
+      'diamond',
+      rawData.x + rawData.size * 0.85,
+      rawData.y + rawData.size * 0.85,
+      4,
+    );
+    context.fillStyle = '#fbbf24';
+    context.fill();
+    context.strokeStyle = '#071019';
+    context.lineWidth = 1.25;
     context.stroke();
   }
   context.restore();

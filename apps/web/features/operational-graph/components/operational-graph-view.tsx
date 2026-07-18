@@ -149,6 +149,18 @@ const LEGEND_ITEMS = [
     shape: 'line' as const,
     description: 'One-hop focus',
   },
+  {
+    label: 'Evidence',
+    color: '#fbbf24',
+    shape: 'diamond' as const,
+    description: 'Evidence-linked marker',
+  },
+  {
+    label: 'Incident scope',
+    color: '#fb5b65',
+    shape: 'ring' as const,
+    description: 'Dashed containment rim',
+  },
 ];
 
 export interface OperationalGraphViewProps {
@@ -157,6 +169,11 @@ export interface OperationalGraphViewProps {
   incidentId?: string;
   graphStore?: import('@aegis/graph-domain').GraphStore;
   graphRevision?: number;
+  /** Node ids with linked evidence (replay provides these); live runs have no
+   * evidence projection yet, so the overlay stays empty there. */
+  evidenceNodeIds?: string[];
+  /** Node ids in incident scope; defaults to status-derived membership. */
+  incidentNodeIds?: string[];
 }
 
 function useGraphStoreInstance(
@@ -186,6 +203,8 @@ export function OperationalGraphView({
   incidentId,
   graphStore,
   graphRevision = 0,
+  evidenceNodeIds,
+  incidentNodeIds,
 }: OperationalGraphViewProps) {
   const store = useGraphStoreInstance(snapshot, graphStore);
   const investigationQuery = useInvestigationDetail(incidentId ?? '');
@@ -237,6 +256,29 @@ export function OperationalGraphView({
     return map;
   }, [snapshot.nodes]);
 
+  const evidenceSet = useMemo(() => new Set(evidenceNodeIds ?? []), [evidenceNodeIds]);
+  // Without an explicit incident projection, approximate incident scope from
+  // node security status — the same derivation replay uses.
+  const incidentSet = useMemo(() => {
+    if (incidentNodeIds) {
+      return new Set(incidentNodeIds);
+    }
+    return new Set(
+      snapshot.nodes
+        .filter(
+          (node) =>
+            node.status === 'under_investigation' ||
+            node.status === 'compromised' ||
+            node.status === 'contained',
+        )
+        .map((node) => node.id),
+    );
+  }, [incidentNodeIds, snapshot.nodes]);
+  const evidenceSetRef = useRef(evidenceSet);
+  evidenceSetRef.current = evidenceSet;
+  const incidentSetRef = useRef(incidentSet);
+  incidentSetRef.current = incidentSet;
+
   const runSync = useCallback(() => {
     const adapter = adapterRef.current;
     if (!adapter) {
@@ -273,6 +315,8 @@ export function OperationalGraphView({
       {
         lodHints,
         workerPositions: workerPositionsRef.current,
+        evidenceNodeIds: evidenceSetRef.current,
+        incidentNodeIds: incidentSetRef.current,
       },
     );
     for (const id of projection.visibleNodeIds) {
@@ -341,6 +385,8 @@ export function OperationalGraphView({
     snapshot.revision,
     snapshot.sequence,
     graphRevision,
+    evidenceSet,
+    incidentSet,
   ]);
 
   useEffect(() => {
@@ -616,10 +662,15 @@ export function OperationalGraphView({
                 {pathModeActive ? 'Path mode (select 2 nodes)' : 'Trace path'}
               </Button>
               <Button
-                variant="outline"
+                variant={collapsedClusterIds.length > 0 ? 'default' : 'outline'}
                 size="sm"
                 data-testid="graph-collapse-clusters"
+                aria-pressed={collapsedClusterIds.length > 0}
                 onClick={() => {
+                  if (collapsedClusterIds.length > 0) {
+                    setCollapsedClusterIds([]);
+                    return;
+                  }
                   const filtered = store.applyFilters(
                     useGraphVisualStore.getState().visualState.filterSet as GraphFilterSet,
                   );
@@ -633,7 +684,9 @@ export function OperationalGraphView({
                 }}
                 className="text-xs"
               >
-                Collapse dense clusters
+                {collapsedClusterIds.length > 0
+                  ? 'Expand collapsed clusters'
+                  : 'Collapse dense clusters'}
               </Button>
             </div>
           </div>

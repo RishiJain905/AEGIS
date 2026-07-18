@@ -163,6 +163,14 @@ class PostgresRunRepository:
         result = await self._session.execute(select(RunRow).order_by(RunRow.started_at.desc()))
         return [run_to_domain(row) for row in result.scalars().all()]
 
+    async def list_for_owner(self, owner_user_id: str) -> list[RunV1]:
+        result = await self._session.execute(
+            select(RunRow)
+            .where(RunRow.owner_user_id == owner_user_id)
+            .order_by(RunRow.started_at.desc())
+        )
+        return [run_to_domain(row) for row in result.scalars().all()]
+
     async def get_by_id(self, run_id: str) -> RunV1 | None:
         row = await self._session.get(RunRow, run_id)
         return run_to_domain(row) if row else None
@@ -178,6 +186,7 @@ class PostgresRunRepository:
             revision=run.revision,
             payload=payload,
             started_at=run.started_at,
+            owner_user_id=run.owner_user_id,
         )
         self._session.add(row)
         await self._session.flush()

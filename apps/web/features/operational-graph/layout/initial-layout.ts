@@ -45,17 +45,23 @@ export function computeInitialLayout(
     nodesByCluster.set(key, group);
   }
 
+  // Deterministic phyllotaxis placement: nodes fill each cluster disc evenly
+  // instead of stacking on a single ring, which seeds ForceAtlas2 with a
+  // spread-out arrangement and avoids the central clump.
+  const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
   for (const [clusterId, clusterNodes] of nodesByCluster) {
     const center = clusterCenters[clusterId] ?? { x: 0, y: 0 };
+    const phase = (hashString(clusterId) % 360) * (Math.PI / 180);
     clusterNodes.forEach((node, index) => {
       if (positions[node.id]) {
         return;
       }
-      const angle = (2 * Math.PI * index) / Math.max(clusterNodes.length, 1);
+      const angle = phase + index * GOLDEN_ANGLE;
+      const radius = NODE_RADIUS * Math.sqrt(index + 0.5);
       const jitter = (hashString(node.id) % 20) - 10;
       positions[node.id] = {
-        x: center.x + Math.cos(angle) * (NODE_RADIUS + clusterNodes.length * 5) + jitter,
-        y: center.y + Math.sin(angle) * (NODE_RADIUS + clusterNodes.length * 5) + jitter,
+        x: center.x + Math.cos(angle) * radius + jitter,
+        y: center.y + Math.sin(angle) * radius + jitter,
       };
     });
   }

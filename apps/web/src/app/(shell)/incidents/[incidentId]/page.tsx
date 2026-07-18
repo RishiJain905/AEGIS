@@ -2,31 +2,16 @@
 
 import { use } from 'react';
 
-import { CommandCentreShell, ShellRouteGuard } from '@/features/shell/components';
-import { useIncident } from '@/features/shell/hooks/use-shell-queries';
+import { IncidentDetail } from '@/features/incidents';
 
+// Incident-centric detail route (triage/case-management, not the live-run graph).
 interface IncidentPageProps {
   params: Promise<{ incidentId: string }>;
-}
-
-function IncidentShell({ incidentId }: { incidentId: string }) {
-  const incidentQuery = useIncident(incidentId);
-  const runId = incidentQuery.data?.runId;
-
-  return (
-    <CommandCentreShell incidentId={incidentId} runId={runId}>
-      {!runId && incidentQuery.isSuccess ? null : null}
-    </CommandCentreShell>
-  );
 }
 
 export default function IncidentPage({ params }: IncidentPageProps) {
   const { incidentId: rawIncidentId } = use(params);
   const incidentId = decodeURIComponent(rawIncidentId);
 
-  return (
-    <ShellRouteGuard incidentId={incidentId}>
-      <IncidentShell incidentId={incidentId} />
-    </ShellRouteGuard>
-  );
+  return <IncidentDetail incidentId={incidentId} />;
 }

@@ -13,9 +13,11 @@ import {
   type SemanticSceneAdapter,
   type SyncSceneOptions,
 } from '../contracts';
+import { computeLayerEmphasis } from '@/features/operational-graph/semantic/layer-emphasis';
+
 import { mapCanonicalEdgeToSceneEdge, mapCanonicalNodeToSceneNode } from '../lib/semantic-mapping';
 import { normalizeScenePositions, resolveStablePositions } from '../lib/stable-positions';
-import { frameSceneNodes } from '../lib/camera-framing';
+import { focusNodeBookmark, frameSceneNodes } from '../lib/camera-framing';
 
 export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
   private lastProjection: SceneProjection | null = null;
@@ -85,6 +87,10 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
 
     const evidenceNodeIds = options.evidenceNodeIds ?? new Set<string>();
     const incidentNodeIds = options.incidentNodeIds ?? new Set<string>();
+    const emphasis = computeLayerEmphasis(
+      { nodes: snapshot.nodes, edges: snapshot.edges },
+      filterSet.enabledLayers,
+    );
 
     const nodes = visibleNodes.map((node) => {
       const position = positions[node.id] ?? { x: 0, y: 0, z: 0 };
@@ -94,6 +100,7 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
         visualState,
         evidenceMarked: evidenceNodeIds.has(node.id),
         incidentMarked: incidentNodeIds.has(node.id),
+        layerDimmed: emphasis.dimmedNodeIds.has(node.id),
       });
     });
 
@@ -101,9 +108,18 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
     const edges = snapshot.edges
       .filter((edge) => visibleEdgeIds.has(edge.id))
       .filter((edge) => nodeIdSet.has(edge.source) && nodeIdSet.has(edge.target))
-      .map((edge) => mapCanonicalEdgeToSceneEdge({ edge, visualState }));
+      .map((edge) =>
+        mapCanonicalEdgeToSceneEdge({
+          edge,
+          visualState,
+          layerDimmed: emphasis.dimmedEdgeIds.has(edge.id),
+        }),
+      );
 
-    if (this.automaticCamera) {
+    // Frame automatically only on the first projection; afterwards the camera
+    // belongs to the operator (orbit) or explicit focus/reset actions, so live
+    // graph revisions never yank the viewpoint.
+    if (this.automaticCamera && this.lastProjection === null) {
       this.camera = frameSceneNodes(nodes, this.camera.fov);
     }
 
@@ -147,20 +163,12 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
 
   focusNode(nodeId: string): CameraBookmark3D | null {
     this.assertNotDisposed();
-    const node = this.lastProjection?.nodes.find((entry) => entry.id === nodeId);
+    const projectionNodes = this.lastProjection?.nodes ?? [];
+    const node = projectionNodes.find((entry) => entry.id === nodeId);
     if (!node) {
       return null;
     }
-    const bookmark: CameraBookmark3D = {
-      schemaVersion: 1,
-      position: {
-        x: node.position.x,
-        y: node.position.y + 80,
-        z: node.position.z + 160,
-      },
-      target: { ...node.position },
-      fov: this.camera.fov,
-    };
+    const bookmark = focusNodeBookmark(node, this.camera, projectionNodes);
     this.camera = bookmark;
     this.automaticCamera = false;
     return bookmark;

@@ -2,7 +2,7 @@ import type { GraphClusterV1, GraphNodeV1 } from '@aegis/contracts-ts';
 
 import { computeInitialLayout } from '@/features/operational-graph/layout/initial-layout';
 
-const CLUSTER_Z_SPACING = 48;
+const CLUSTER_Z_SPACING = 90;
 const MAX_SCENE_XY_SPAN = 720;
 
 function hashString(value: string): number {

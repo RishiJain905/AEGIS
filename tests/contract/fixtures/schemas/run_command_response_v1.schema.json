@@ -43,6 +43,18 @@
           "title": "Id",
           "type": "string"
         },
+        "ownerUserId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owneruserid"
+        },
         "revision": {
           "minimum": 0,
           "title": "Revision",

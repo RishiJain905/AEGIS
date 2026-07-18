@@ -2,7 +2,12 @@
 
 import { Badge, Button, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
-import { GraphEntityInspector, IncidentContextInspector } from '@/features/inspector';
+import {
+  GraphEntityInspector,
+  IncidentContextInspector,
+  InspectorLabel,
+  InspectorMonoValue,
+} from '@/features/inspector';
 import { InvestigationPanel } from '@/features/investigation';
 import { ProposalsPanel } from '@/features/proposals/proposals-panel';
 import { ReportsPanel } from '@/features/reports/reports-panel';
@@ -143,11 +148,16 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
             {incidentQuery.data ? (
               <Panel title="Incident" density="compact">
-                <p className="text-sm font-medium">{incidentQuery.data.title}</p>
-                <Badge className="mt-2">{incidentQuery.data.state}</Badge>
-                <p className="mt-2 font-mono text-xs text-[var(--aegis-text-muted)]">
-                  {incidentQuery.data.id}
-                </p>
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm font-semibold leading-5 text-[var(--aegis-text-primary)]">
+                    {incidentQuery.data.title}
+                  </p>
+                  <Badge className="self-start">{incidentQuery.data.state}</Badge>
+                  <div className="flex flex-col gap-1">
+                    <InspectorLabel>Incident ID</InspectorLabel>
+                    <InspectorMonoValue value={incidentQuery.data.id} />
+                  </div>
+                </div>
               </Panel>
             ) : null}
 
@@ -196,14 +206,14 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                         ) : null}
                       </div>
                       {alert.explanation ? (
-                        <details className="mt-2 text-xs text-[var(--aegis-text-secondary)]">
-                          <summary className="cursor-pointer">Explanation</summary>
-                          <p className="mt-1">{alert.explanation.summary}</p>
-                          <p className="mt-1 font-mono text-[10px]">
+                        <details className="mt-2 text-xs leading-5 text-[var(--aegis-text-secondary)]">
+                          <summary className="cursor-pointer font-medium">Explanation</summary>
+                          <p className="mt-1.5 break-words">{alert.explanation.summary}</p>
+                          <p className="mt-1.5 break-words font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
                             {alert.explanation.comparison}
                           </p>
                           {alert.evidence ? (
-                            <p className="mt-1 text-[var(--aegis-text-muted)]">
+                            <p className="mt-1.5 break-words text-[var(--aegis-text-muted)]">
                               Window: {alert.evidence.windowKey}
                             </p>
                           ) : null}
@@ -211,14 +221,14 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                       ) : null}
                       {'anomalyExplanation' in alert && alert.anomalyExplanation ? (
                         <details
-                          className="mt-2 text-xs text-[var(--aegis-text-secondary)]"
+                          className="mt-2 text-xs leading-5 text-[var(--aegis-text-secondary)]"
                           open={alert.detectorId === 'isolation-forest'}
                         >
-                          <summary className="cursor-pointer">Anomaly model</summary>
-                          <p className="mt-1">
+                          <summary className="cursor-pointer font-medium">Anomaly model</summary>
+                          <p className="mt-1.5 break-words">
                             {(alert.anomalyExplanation as { summary?: string }).summary}
                           </p>
-                          <p className="mt-1 font-mono text-[10px]">
+                          <p className="mt-1.5 break-words font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
                             Score:{' '}
                             {(
                               (
@@ -235,7 +245,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                             ).threshold?.toFixed(2)}
                           </p>
                           {'modelVersionId' in alert && alert.modelVersionId ? (
-                            <p className="mt-1 font-mono text-[10px] text-[var(--aegis-text-muted)]">
+                            <p className="mt-1.5 break-words font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
                               Model: {String(alert.modelVersionId)}
                             </p>
                           ) : null}
@@ -244,7 +254,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                               topFeatures?: string[];
                             }
                           ).topFeatures ? (
-                            <p className="mt-1 text-[var(--aegis-text-muted)]">
+                            <p className="mt-1.5 break-words text-[var(--aegis-text-muted)]">
                               Top features:{' '}
                               {(
                                 (

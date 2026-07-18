@@ -69,9 +69,21 @@ export function SigmaCanvas({
     sigma.on('enterNode', handleEnterNode);
     sigma.on('leaveNode', handleLeaveNode);
 
+    // The container may have zero size at mount (mode toggle mid-layout) or
+    // change size later; resize the renderer whenever real dimensions arrive
+    // so the graph reliably appears without a manual window resize.
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        adapterRef.current?.resize();
+      });
+      resizeObserver.observe(container);
+    }
+
     callbacksRef.current.onAdapterReady(adapter);
 
     return () => {
+      resizeObserver?.disconnect();
       sigma.off('clickNode', handleNodeClick);
       sigma.off('clickStage', handleStageClick);
       sigma.off('enterNode', handleEnterNode);

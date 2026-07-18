@@ -8,7 +8,7 @@ import { Button, Drawer, DrawerContent, DrawerHeader, DrawerTitle, Rail } from '
 
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
-const INCIDENT_PATH = `/incidents/${encodeURIComponent('incident:inc_synthetic_001')}`;
+const INCIDENT_PATH = '/incidents';
 
 const NAV_ITEMS = [
   { href: '/scenarios', label: 'Scenarios', icon: 'grid' },
@@ -17,7 +17,7 @@ const NAV_ITEMS = [
     label: 'Active run',
     icon: 'pulse',
   },
-  { href: INCIDENT_PATH, label: 'Incident', icon: 'alert' },
+  { href: INCIDENT_PATH, label: 'Incidents', icon: 'alert' },
   {
     href: '/replay/run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
     label: 'Replay',
