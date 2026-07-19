@@ -624,7 +624,7 @@ export function OperationalGraphView({
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
-        <div className="graph-control-deck grid gap-3 lg:grid-cols-2">
+        <div className="graph-control-deck grid gap-x-5 gap-y-2.5 lg:grid-cols-2">
           <div>
             <p className="graph-control-label">Data layers</p>
             <GraphLayerControls

@@ -1,7 +1,7 @@
 'use client';
 
 import type { AlertV1, EvidenceAttachmentV1 } from '@aegis/contracts-ts';
-import { EmptyState, Panel } from '@aegis/ui';
+import { EmptyState, Panel, cn, typographyTokens } from '@aegis/ui';
 
 import { normalizeSeverity } from '../lib/incident-model';
 import { SeverityChip } from './incident-primitives';
@@ -21,7 +21,7 @@ export function IncidentAlertsEvidence({
     >
       <div className="flex flex-col gap-5">
         <section>
-          <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.09em] text-[var(--aegis-text-muted)]">
+          <h3 className={cn(typographyTokens.eyebrow, 'mb-2 text-[var(--aegis-text-muted)]')}>
             Alerts ({alerts.length})
           </h3>
           {alerts.length === 0 ? (
@@ -57,7 +57,7 @@ export function IncidentAlertsEvidence({
         </section>
 
         <section>
-          <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.09em] text-[var(--aegis-text-muted)]">
+          <h3 className={cn(typographyTokens.eyebrow, 'mb-2 text-[var(--aegis-text-muted)]')}>
             Evidence ({evidence.length})
           </h3>
           {evidence.length === 0 ? (

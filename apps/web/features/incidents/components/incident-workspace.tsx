@@ -41,7 +41,7 @@ export function IncidentWorkspace({
         <OperationsRail />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header
-            className="sticky top-0 z-30 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-[var(--aegis-border-default)] bg-[rgb(9_18_27_/_0.94)] px-4 py-4 shadow-[0_8px_24px_rgb(0_0_0_/_0.2)] backdrop-blur-md md:px-6"
+            className="sticky top-0 z-30 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-[var(--aegis-border-default)] bg-[color-mix(in_srgb,var(--aegis-surface-rail)_95%,transparent)] px-4 py-4 shadow-[0_8px_24px_rgb(0_0_0_/_0.2)] backdrop-blur-md md:px-6"
             data-testid="incident-workspace-header"
           >
             <div className="min-w-0">
