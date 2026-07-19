@@ -77,7 +77,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 className={cn(
                   'text-[var(--aegis-text-primary)] transition-colors duration-[var(--aegis-motion-duration-fast)] hover:bg-[var(--aegis-surface-hover)]',
                   zebra &&
-                    'odd:bg-[var(--aegis-surface-panel)] even:bg-[var(--aegis-surface-elevated)]',
+                    'odd:bg-[var(--aegis-surface-panel)] even:bg-[color-mix(in_srgb,var(--aegis-surface-panel)_96%,var(--aegis-text-primary))]',
                   focusTokens.ring,
                 )}
               >
