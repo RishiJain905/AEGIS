@@ -101,7 +101,7 @@ export function GraphLegend({ title = 'Legend', items, className }: GraphLegendP
   return (
     <div
       className={cn(
-        'rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[linear-gradient(145deg,var(--aegis-surface-raised),var(--aegis-surface-elevated))] p-3 shadow-[var(--aegis-shadow-control)]',
+        'rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] p-3 shadow-[var(--aegis-shadow-control)]',
         className,
       )}
       data-testid="graph-legend"

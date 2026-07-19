@@ -14,6 +14,7 @@ import {
   Alert,
   Button,
   ErrorState,
+  GraphCameraControls,
   GraphIsolationControls,
   GraphLayerControls,
   GraphOverlayToggle,
@@ -34,6 +35,7 @@ import { probeCapabilityReport } from '@/features/cinematic-graph/lib/capability
 import { useCinematicGraphStore } from '@/features/cinematic-graph/stores/cinematic-graph-store';
 import { GraphHighlightMode } from '@/features/operational-graph/contracts/graph-visual-state';
 import { computeHighlight } from '@/features/operational-graph/semantic/graph-highlights';
+import { resolveEdgeFlowProfile } from '@/features/operational-graph/semantic/graph-semantic-styles';
 import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-visual-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
@@ -341,6 +343,43 @@ export function CinematicGraphView({
     setCanvasGeneration((generation) => generation + 1);
   }, []);
 
+  // §7.7 camera actions mirroring the 2D GraphCameraControls button set,
+  // wired to the Three.js camera through the scene adapter.
+  const handleCameraFit = useCallback(() => {
+    const adapter = adapterRef.current;
+    if (!adapter) {
+      return;
+    }
+    const selectedId =
+      useGraphVisualStore.getState().visualState.selection.primaryNodeId ?? selectedEntityId;
+    const bookmark = (selectedId ? adapter.focusNode(selectedId) : null) ?? adapter.resetCamera();
+    setCamera(bookmark);
+  }, [selectedEntityId, setCamera]);
+
+  const handleCameraZoom = useCallback(
+    (factor: number) => {
+      const bookmark = adapterRef.current?.zoomCamera(factor);
+      if (bookmark) {
+        setCamera(bookmark);
+      }
+    },
+    [setCamera],
+  );
+
+  const handleCameraReset = useCallback(() => {
+    const bookmark = adapterRef.current?.resetCamera();
+    if (bookmark) {
+      setCamera(bookmark);
+    }
+  }, [setCamera]);
+
+  // §7.9 flow gate for the 3D renderer: reduced motion comes from the same
+  // capability probe the render tier does, so both converge on static edges.
+  const flowProfile = resolveEdgeFlowProfile(
+    qualityTier,
+    capability.reducedMotion || reducedMotion,
+  );
+
   if (qualityTier === RenderQualityTier.FALLBACK_2D || !capability.webglAvailable) {
     return (
       <CapabilityFallbackNotice
@@ -386,20 +425,17 @@ export function CinematicGraphView({
           {String(projection.revision)} · {String(projection.nodeCount)} nodes /{' '}
           {String(projection.edgeCount)} edges · tier {qualityTier}
         </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            data-testid="cinematic-reset-camera"
-            onClick={() => {
-              const bookmark = adapterRef.current?.resetCamera();
-              if (bookmark) {
-                setCamera(bookmark);
-              }
+        <div className="flex flex-wrap items-center gap-2">
+          <GraphCameraControls
+            onFit={handleCameraFit}
+            onZoomIn={() => {
+              handleCameraZoom(0.72);
             }}
-          >
-            Reset camera
-          </Button>
+            onZoomOut={() => {
+              handleCameraZoom(1.4);
+            }}
+            onReset={handleCameraReset}
+          />
           <Button
             variant="outline"
             size="sm"
@@ -482,6 +518,7 @@ export function CinematicGraphView({
           qualityTier={qualityTier}
           dprCap={capability.devicePixelRatioCap}
           reducedMotion={reducedMotion}
+          flowProfile={flowProfile}
           onReady={handleCanvasReady}
           onSelectNode={handleSelectNode}
           onBackgroundClick={handleBackgroundClick}

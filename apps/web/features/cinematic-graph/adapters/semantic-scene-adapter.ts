@@ -14,6 +14,7 @@ import {
   type SyncSceneOptions,
 } from '../contracts';
 import { computeLayerEmphasis } from '@/features/operational-graph/semantic/layer-emphasis';
+import { EdgeActivityTracker } from '@/features/operational-graph/semantic/edge-activity';
 
 import { mapCanonicalEdgeToSceneEdge, mapCanonicalNodeToSceneNode } from '../lib/semantic-mapping';
 import { normalizeScenePositions, resolveStablePositions } from '../lib/stable-positions';
@@ -21,6 +22,7 @@ import { focusNodeBookmark, frameSceneNodes } from '../lib/camera-framing';
 
 export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
   private lastProjection: SceneProjection | null = null;
+  private readonly edgeActivity = new EdgeActivityTracker();
   private capabilityReport: CapabilityReport = defaultCapabilityReport;
   private camera: CameraBookmark3D = defaultCameraBookmark3D;
   private automaticCamera = true;
@@ -104,6 +106,10 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
       });
     });
 
+    // Pulse detection (§7.9) runs on the same sync tick the GraphStore delta
+    // landed on — an edge lights up when its relationship receives a new event.
+    this.edgeActivity.update(snapshot.edges);
+
     const nodeIdSet = new Set(nodes.map((node) => node.id));
     const edges = snapshot.edges
       .filter((edge) => visibleEdgeIds.has(edge.id))
@@ -113,6 +119,7 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
           edge,
           visualState,
           layerDimmed: emphasis.dimmedEdgeIds.has(edge.id),
+          pulseAt: this.edgeActivity.getPulseAt(edge.id),
         }),
       );
 
@@ -181,8 +188,36 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
     return this.camera;
   }
 
+  /** §7.7 zoom: dolly the orbit camera along its current view direction,
+   * clamped to the same distance envelope as the OrbitControls. */
+  zoomCamera(factor: number): CameraBookmark3D {
+    this.assertNotDisposed();
+    const { position, target } = this.camera;
+    const direction = {
+      x: position.x - target.x,
+      y: position.y - target.y,
+      z: position.z - target.z,
+    };
+    const length = Math.hypot(direction.x, direction.y, direction.z) || 1;
+    const nextLength = Math.min(6_500, Math.max(60, length * factor));
+    const scale = nextLength / length;
+    this.camera = {
+      schemaVersion: 1,
+      position: {
+        x: target.x + direction.x * scale,
+        y: target.y + direction.y * scale,
+        z: target.z + direction.z * scale,
+      },
+      target: { ...target },
+      fov: this.camera.fov,
+    };
+    this.automaticCamera = false;
+    return this.camera;
+  }
+
   dispose(): void {
     this.lastProjection = null;
+    this.edgeActivity.clear();
     this.capabilityReport = defaultCapabilityReport;
     this.camera = defaultCameraBookmark3D;
     this.automaticCamera = true;

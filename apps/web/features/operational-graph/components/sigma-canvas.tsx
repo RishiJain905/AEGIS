@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useReducedMotion } from '@aegis/ui';
+
+import { probeCapabilityReport } from '@/features/cinematic-graph/lib/capability';
 
 import {
   createSigmaOperationalGraphAdapter,
   type SigmaOperationalGraphAdapter,
 } from '../adapters/sigma-operational-graph-adapter';
+import { resolveEdgeFlowProfile, type EdgeFlowProfile } from '../semantic/graph-semantic-styles';
 
 export interface SigmaCanvasProps {
   onAdapterReady: (adapter: SigmaOperationalGraphAdapter) => void;
@@ -96,6 +99,16 @@ export function SigmaCanvas({
   useEffect(() => {
     adapterRef.current?.setReducedMotion(reducedMotion);
   }, [reducedMotion]);
+
+  // §7.9 gate, applied independently in the 2D renderer: the live
+  // `prefers-reduced-motion` media query (via useReducedMotion) forces fully
+  // static edges, and the probed render tier maps HIGH → full flow, MEDIUM →
+  // coarse (shared phase), LOW/FALLBACK_2D → static.
+  const [flowTier] = useState(() => probeCapabilityReport().recommendedTier);
+  useEffect(() => {
+    const profile: EdgeFlowProfile = resolveEdgeFlowProfile(flowTier, reducedMotion);
+    adapterRef.current?.setEdgeFlowProfile(profile);
+  }, [flowTier, reducedMotion]);
 
   return (
     <div

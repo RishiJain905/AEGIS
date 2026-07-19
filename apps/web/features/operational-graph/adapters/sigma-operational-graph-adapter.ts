@@ -17,23 +17,44 @@ import { computeHighlight } from '../semantic/graph-highlights';
 import { computeLayerEmphasis } from '../semantic/layer-emphasis';
 import {
   getEdgeVisualStyle,
-  getHighlightColor,
+  getNodeShape,
   getNodeVisualStyle,
   getRiskHaloColor,
+  resolveEdgeFlowStyle,
+  resolveEdgeSemanticStyle,
+  type EdgeFlowProfile,
+  type EdgeHighlightKind,
 } from '../semantic/graph-semantic-styles';
+import { EdgeActivityTracker, edgeFlowPhase } from '../semantic/edge-activity';
 import { drawAegisNodeHover, drawAegisNodeLabel } from '../rendering/aegis-canvas-renderers';
+import {
+  AliveEdgeArrowProgram,
+  AliveEdgeLineProgram,
+  setAliveEdgeFlowProfile,
+} from '../rendering/alive-edge-program';
 
 const DIMMED_OPACITY = 0.15;
 
-const NODE_SHAPES: Record<string, 'circle' | 'diamond' | 'square' | 'triangle' | 'hexagon'> = {
-  service: 'circle',
-  device: 'diamond',
-  database: 'square',
-  identity: 'hexagon',
-  user: 'hexagon',
-  control: 'triangle',
-  ai_model: 'hexagon',
-};
+function highlightKindForMode(
+  mode: (typeof GraphHighlightMode)[keyof typeof GraphHighlightMode],
+): EdgeHighlightKind | null {
+  switch (mode) {
+    case GraphHighlightMode.NEIGHBORHOOD:
+      return 'neighborhood';
+    case GraphHighlightMode.PATH:
+      return 'path';
+    case GraphHighlightMode.INCIDENT:
+      return 'incident';
+    case GraphHighlightMode.DEPENDENCIES:
+      return 'dependencies';
+    case GraphHighlightMode.NONE:
+      return null;
+    default: {
+      const _exhaustive: never = mode;
+      throw new Error(`Unhandled highlight mode: ${String(_exhaustive)}`);
+    }
+  }
+}
 
 // Sigma's WebGL node/edge programs render colors opaquely — alpha channels in
 // `#RRGGBBAA`/`rgba()` values are ignored. To make dimming actually visible we
@@ -94,6 +115,9 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
   private sigma: Sigma | null = null;
   private readonly container: HTMLElement;
   private reducedMotion = false;
+  private readonly edgeActivity = new EdgeActivityTracker();
+  private flowProfile: EdgeFlowProfile = 'static';
+  private flowFrameHandle: number | null = null;
 
   constructor(container: HTMLElement, reducedMotion = false) {
     this.container = container;
@@ -133,12 +157,61 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       minCameraRatio: 0.06,
       maxCameraRatio: 6,
       zIndex: true,
+      // Alive-edge programs (§7.9): same visual contract as the stock
+      // line/arrow programs plus dash + shared-clock flow support.
+      edgeProgramClasses: {
+        line: AliveEdgeLineProgram,
+        arrow: AliveEdgeArrowProgram,
+      },
     });
+    this.syncFlowDriver();
     return this.sigma;
   }
 
   setReducedMotion(reduced: boolean): void {
     this.reducedMotion = reduced;
+  }
+
+  /**
+   * §7.9 gate for the 2D renderer. 'static' (reduced motion or LOW tier)
+   * freezes the shader clock and stops the render driver entirely; 'coarse'
+   * (MEDIUM) keeps the loop but collapses per-edge phases in the shader.
+   */
+  setEdgeFlowProfile(profile: EdgeFlowProfile): void {
+    if (this.flowProfile === profile) {
+      return;
+    }
+    this.flowProfile = profile;
+    setAliveEdgeFlowProfile(profile);
+    this.syncFlowDriver();
+    // One render so a profile change (e.g. reduced-motion toggle) takes
+    // effect immediately even when the loop is now stopped.
+    this.sigma?.scheduleRender();
+  }
+
+  /** rAF loop that only schedules WebGL re-renders — Sigma re-reads the shared
+   * clock via uniforms; no data reprocessing, no allocation per frame. */
+  private syncFlowDriver(): void {
+    const shouldRun = this.sigma !== null && this.flowProfile !== 'static';
+    if (!shouldRun) {
+      if (this.flowFrameHandle !== null) {
+        cancelAnimationFrame(this.flowFrameHandle);
+        this.flowFrameHandle = null;
+      }
+      return;
+    }
+    if (this.flowFrameHandle !== null) {
+      return;
+    }
+    const step = () => {
+      if (this.sigma === null || this.flowProfile === 'static') {
+        this.flowFrameHandle = null;
+        return;
+      }
+      this.sigma.scheduleRender();
+      this.flowFrameHandle = requestAnimationFrame(step);
+    };
+    this.flowFrameHandle = requestAnimationFrame(step);
   }
 
   syncFromStore(
@@ -230,7 +303,7 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
         zIndex: isSelected ? 12 : isHovered ? 11 : isHighlighted ? 8 : riskEmphasized ? 4 : 0,
         type: 'circle',
         assetType: canonical.assetType,
-        shape: NODE_SHAPES[canonical.assetType] ?? 'circle',
+        shape: getNodeShape(canonical.assetType),
         riskBand: style.riskBand,
         riskColor: getRiskHaloColor(style.riskBand),
         selected: isSelected,
@@ -311,6 +384,11 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       }
     }
 
+    // Pulse detection runs on the same sync tick the GraphStore delta landed
+    // on — a live event traversing a relationship lights that edge up now.
+    this.edgeActivity.update(snapshot.edges);
+    const highlightKind = highlightKindForMode(visualState.highlightMode);
+
     for (const edgeId of renderEdgeIds) {
       const canonical = entityMaps.edges.get(edgeId);
       if (!canonical) {
@@ -328,46 +406,37 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       const edgeStyle = getEdgeVisualStyle(canonical);
       const isHighlighted = highlightEdges.has(edgeId);
       const isDimmed = (isIsolation || emphasis.dimmedEdgeIds.has(edgeId)) && !isHighlighted;
-      let highlightColor = edgeStyle.color;
-      if (visualState.highlightMode !== GraphHighlightMode.NONE) {
-        switch (visualState.highlightMode) {
-          case GraphHighlightMode.NEIGHBORHOOD:
-            highlightColor = getHighlightColor('neighborhood');
-            break;
-          case GraphHighlightMode.PATH:
-            highlightColor = getHighlightColor('path');
-            break;
-          case GraphHighlightMode.INCIDENT:
-            highlightColor = getHighlightColor('incident');
-            break;
-          case GraphHighlightMode.DEPENDENCIES:
-            highlightColor = getHighlightColor('dependencies');
-            break;
-          default: {
-            const _exhaustive: never = visualState.highlightMode;
-            throw new Error(`Unhandled highlight mode: ${String(_exhaustive)}`);
-          }
-        }
-      }
+      const semantic = resolveEdgeSemanticStyle({
+        edge: canonical,
+        highlighted: isHighlighted,
+        dimmed: isDimmed,
+        highlightKind,
+      });
+      const flow = resolveEdgeFlowStyle({
+        directed: canonical.directed,
+        highlighted: isHighlighted,
+        dimmed: isDimmed,
+      });
+      const opacity = isDimmed
+        ? DIMMED_OPACITY
+        : isHighlighted
+          ? 1
+          : Math.max(semantic.opacity, edgeOpacityFloor);
 
       const attrs = {
         key: edgeId,
-        size: isHighlighted ? edgeStyle.size * 2 : edgeStyle.size,
-        color: colorWithOpacity(
-          isDimmed ? '#94a3b8' : isHighlighted ? highlightColor : edgeStyle.color,
-          isDimmed
-            ? DIMMED_OPACITY
-            : isHighlighted
-              ? 1
-              : Math.max(edgeStyle.opacity, edgeOpacityFloor),
-        ),
+        size: semantic.width,
+        color: colorWithOpacity(semantic.color, opacity),
         type: edgeStyle.type,
-        opacity: isDimmed
-          ? DIMMED_OPACITY
-          : isHighlighted
-            ? 1
-            : Math.max(edgeStyle.opacity, edgeOpacityFloor),
+        opacity,
         zIndex: isHighlighted ? 1 : 0,
+        // Alive-edge attributes (§7.4 dash + §7.9 flow), consumed by the
+        // custom edge programs in rendering/alive-edge-program.ts.
+        dashFlag: semantic.dashed ? 1 : 0,
+        flowSpeed: flow?.speed ?? 0,
+        flowAmplitude: flow?.amplitude ?? 0,
+        pulseAt: this.edgeActivity.getPulseAt(edgeId),
+        flowPhase: edgeFlowPhase(edgeId),
       };
 
       const existingEdge = this.graph.edges().find((e) => {
@@ -453,11 +522,16 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
   }
 
   dispose(): void {
+    if (this.flowFrameHandle !== null) {
+      cancelAnimationFrame(this.flowFrameHandle);
+      this.flowFrameHandle = null;
+    }
     if (this.sigma) {
       this.sigma.kill();
       this.sigma = null;
     }
     this.graph.clear();
+    this.edgeActivity.clear();
   }
 }
 

@@ -42,6 +42,8 @@ export interface SemanticSceneAdapter {
   getCameraBookmark(): CameraBookmark3D;
   focusNode(nodeId: string): CameraBookmark3D | null;
   resetCamera(): CameraBookmark3D;
+  /** §7.7: dolly the orbit camera toward (<1) or away from (>1) its target. */
+  zoomCamera(factor: number): CameraBookmark3D;
   dispose(): void;
 }
 

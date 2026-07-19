@@ -133,7 +133,7 @@ const LEGEND_ITEMS = [
   { label: 'Database', color: '#efb85a', shape: 'square' as const },
   {
     label: 'High risk',
-    color: '#ef5b66',
+    color: '#ff7078',
     shape: 'ring' as const,
     description: 'Risk-driven halo',
   },

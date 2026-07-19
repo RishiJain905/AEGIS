@@ -4,9 +4,15 @@ import type { GraphEdgeV1, GraphNodeV1 } from '@aegis/contracts-ts';
 
 import {
   getEdgeVisualStyle,
+  getNodeSemanticAccent,
   getNodeVisualStyle,
   getRiskHaloColor,
+  NEUTRAL_NODE_ACCENT,
+  resolveEdgeFlowProfile,
+  resolveEdgeFlowStyle,
+  resolveEdgeSemanticStyle,
 } from '@/features/operational-graph/semantic/graph-semantic-styles';
+import { RenderQualityTier } from '@/features/cinematic-graph/contracts/render-quality-tier';
 
 function makeNode(overrides: Partial<GraphNodeV1> = {}): GraphNodeV1 {
   return {
@@ -71,7 +77,99 @@ describe('graph semantic styles', () => {
     expect(style.type).toBe('arrow');
   });
 
-  it('maps risk band to halo color', () => {
-    expect(getRiskHaloColor('critical')).toContain('ef4444');
+  it('maps risk band to halo color from the risk tokens', () => {
+    // Dark-theme --aegis-risk-critical token value, with severity alpha.
+    expect(getRiskHaloColor('critical')).toBe('#ff707888');
+    expect(getRiskHaloColor('high')).toBe('#ff9b5566');
+  });
+});
+
+describe('node semantic accent (§7.1)', () => {
+  it('prefers status over risk when both signal', () => {
+    const accent = getNodeSemanticAccent({ status: 'compromised', riskScore: 0.9 });
+    expect(accent.source).toBe('status');
+    expect(accent.emissiveColor).toBe('#ff7078');
+  });
+
+  it('falls back to the risk band color for normal-status elevated risk', () => {
+    const accent = getNodeSemanticAccent({ status: 'normal', riskScore: 0.78 });
+    expect(accent.source).toBe('risk');
+    expect(accent.emissiveColor).toBe('#ff9b55');
+  });
+
+  it('keeps a quiet neutral accent for no-signal nodes', () => {
+    const accent = getNodeSemanticAccent({ status: 'normal', riskScore: 0.05 });
+    expect(accent.source).toBe('none');
+    expect(accent.emissiveColor).toBe(NEUTRAL_NODE_ACCENT);
+  });
+});
+
+describe('shared edge semantic style (§7.4)', () => {
+  it('dashes only incident-scope highlighted edges', () => {
+    const incident = resolveEdgeSemanticStyle({
+      edge: makeEdge(),
+      highlighted: true,
+      dimmed: false,
+      highlightKind: 'incident',
+    });
+    expect(incident.dashed).toBe(true);
+    expect(incident.color).toBe('#ef4444');
+    expect(incident.opacity).toBe(1);
+
+    const path = resolveEdgeSemanticStyle({
+      edge: makeEdge(),
+      highlighted: true,
+      dimmed: false,
+      highlightKind: 'path',
+    });
+    expect(path.dashed).toBe(false);
+    expect(path.color).toBe('#f59e0b');
+  });
+
+  it('keeps default edges thin and muted and doubles highlighted width', () => {
+    const edge = makeEdge({ confidence: 0.8 });
+    const base = resolveEdgeSemanticStyle({
+      edge,
+      highlighted: false,
+      dimmed: false,
+      highlightKind: null,
+    });
+    const highlighted = resolveEdgeSemanticStyle({
+      edge,
+      highlighted: true,
+      dimmed: false,
+      highlightKind: 'neighborhood',
+    });
+    expect(highlighted.width).toBe(base.width * 2);
+    expect(base.opacity).toBeLessThan(highlighted.opacity);
+  });
+});
+
+describe('edge flow gating (§7.9)', () => {
+  it('renders fully static under prefers-reduced-motion regardless of tier', () => {
+    expect(resolveEdgeFlowProfile(RenderQualityTier.HIGH, true)).toBe('static');
+    expect(resolveEdgeFlowProfile(RenderQualityTier.MEDIUM, true)).toBe('static');
+  });
+
+  it('converges LOW and FALLBACK_2D tiers on the same static endpoint', () => {
+    expect(resolveEdgeFlowProfile(RenderQualityTier.LOW, false)).toBe('static');
+    expect(resolveEdgeFlowProfile(RenderQualityTier.FALLBACK_2D, false)).toBe('static');
+  });
+
+  it('maps HIGH to full flow and MEDIUM to the coarse variant', () => {
+    expect(resolveEdgeFlowProfile(RenderQualityTier.HIGH, false)).toBe('full');
+    expect(resolveEdgeFlowProfile(RenderQualityTier.MEDIUM, false)).toBe('coarse');
+  });
+
+  it('animates directed edges only, muted by default and brighter when highlighted', () => {
+    expect(resolveEdgeFlowStyle({ directed: false, highlighted: false, dimmed: false })).toBeNull();
+    expect(resolveEdgeFlowStyle({ directed: true, highlighted: false, dimmed: true })).toBeNull();
+    const muted = resolveEdgeFlowStyle({ directed: true, highlighted: false, dimmed: false });
+    const active = resolveEdgeFlowStyle({ directed: true, highlighted: true, dimmed: false });
+    if (muted === null || active === null) {
+      throw new Error('expected flow styles for directed undimmed edges');
+    }
+    expect(active.speed).toBeGreaterThan(muted.speed);
+    expect(active.amplitude).toBeGreaterThan(muted.amplitude);
   });
 });
