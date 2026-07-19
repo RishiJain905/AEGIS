@@ -123,6 +123,24 @@ Codex or Claude, background or detached:
   dispatch note (implementation 20 - 30 min (not a minimum nor a hard limit), verify ≤10 min per pass). One
   phase exceeding its box with zero new writes → inspect the job log
   immediately; a dead child process under a live job is the default suspect.
+- **Make the watched log actually matchable — the recurring "monitor never
+  returns" bug (Windows).** A monitor that greps a detached run's log will
+  hang forever if the completion marker never lands in the log in a form the
+  grep can see. Two concrete causes hit repeatedly here: (1) PowerShell `*>`
+  redirect writes the file as **UTF-16**, so a bash `grep`/Monitor byte-match
+  for `PYEXIT=`/`VERIFY:` never matches — the run finished, the watcher didn't
+  notice. (2) `2>&1 | Out-File` captures stdout+stderr but **not** PowerShell's
+  `Write-Host` (host stream), so `scripts\verify.ps1`'s own final
+  `VERIFY: PASS` line and its `=== [stage]` markers never reach the log.
+  Rules: **do not rely on the tool's own final line as the sentinel.** Have the
+  wrapper script write an explicit sentinel to the file with a known encoding
+  and grep for *that* — e.g. a detached `.ps1` that runs the work then
+  `"DONE exit=$LASTEXITCODE" | Out-File -FilePath $log -Encoding utf8 -Append`,
+  with the Monitor keyed on `DONE exit=`. Prefer `-Encoding utf8` (or write
+  from `bash`) over `*>`; if you must read a `*>` log, decode it
+  (`Get-Content` in PowerShell, not bash byte-grep). And always give the
+  Monitor a stall timeout so a mis-encoded/mis-keyed log surfaces in minutes,
+  not never.
 
 ### Loops: which primitive to trigger
 
