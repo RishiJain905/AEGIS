@@ -1,7 +1,7 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 
 import { cn } from '../lib/cn';
-import { focusTokens } from '../tokens/tokens';
+import { focusTokens, typographyTokens } from '../tokens/tokens';
 
 export interface DataTableColumn<T> {
   key: keyof T & string;
@@ -15,6 +15,12 @@ export interface DataTableProps<T extends Record<string, unknown>>
   data: T[];
   caption?: string;
   emptyMessage?: string;
+  /**
+   * Alternating row backgrounds for wide, scan-heavy tables. Defaults OFF so
+   * existing call sites are visually unchanged. Zebra rows carry a stable
+   * `data-zebra` attribute for selection.
+   */
+  zebra?: boolean;
 }
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -23,6 +29,7 @@ export function DataTable<T extends Record<string, unknown>>({
   data,
   caption,
   emptyMessage = 'No data available',
+  zebra = false,
   ...props
 }: DataTableProps<T>) {
   return (
@@ -41,7 +48,10 @@ export function DataTable<T extends Record<string, unknown>>({
               <th
                 key={column.key}
                 scope="col"
-                className="border-b border-[var(--aegis-border-default)] px-4 py-3 text-[0.6875rem] font-semibold uppercase tracking-[0.075em]"
+                className={cn(
+                  'border-b border-[var(--aegis-border-default)] px-3 py-2',
+                  typographyTokens.eyebrow,
+                )}
               >
                 {column.header}
               </th>
@@ -63,15 +73,18 @@ export function DataTable<T extends Record<string, unknown>>({
               <tr
                 key={rowIndex}
                 tabIndex={0}
+                data-zebra={zebra ? 'true' : undefined}
                 className={cn(
                   'text-[var(--aegis-text-primary)] transition-colors duration-[var(--aegis-motion-duration-fast)] hover:bg-[var(--aegis-surface-hover)]',
+                  zebra &&
+                    'odd:bg-[var(--aegis-surface-panel)] even:bg-[var(--aegis-surface-elevated)]',
                   focusTokens.ring,
                 )}
               >
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className="border-b border-[var(--aegis-border-subtle)] px-4 py-3"
+                    className="border-b border-[var(--aegis-border-subtle)] px-3 py-2"
                   >
                     {column.render ? column.render(row) : String(row[column.key] ?? '')}
                   </td>

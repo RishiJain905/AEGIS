@@ -7,7 +7,7 @@ import { Skeleton } from '../primitives/skeleton';
 import { Button } from '../primitives/button';
 
 const stateShellClass =
-  'relative min-h-48 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-dashed border-[var(--aegis-border-default)] bg-[radial-gradient(circle_at_50%_20%,var(--aegis-surface-raised),var(--aegis-surface-elevated)_58%)] p-8 text-center shadow-[inset_0_1px_0_var(--aegis-border-highlight)]';
+  'relative min-h-48 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-dashed border-[var(--aegis-border-default)] bg-[var(--aegis-surface-elevated)] p-8 text-center shadow-[inset_0_1px_0_var(--aegis-border-highlight)]';
 
 export interface LoadingStateProps extends HTMLAttributes<HTMLDivElement> {
   message?: string;

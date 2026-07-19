@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type HTMLAttributes } from 'react';
 
 import { cn } from '../lib/cn';
-import type { DensityToken } from '../tokens/tokens';
+import { typographyTokens, type DensityToken } from '../tokens/tokens';
 
 const panelVariants = cva(
   'relative flex flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-panel)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)]',
@@ -56,12 +56,12 @@ export const Panel = forwardRef<HTMLElement, PanelProps>(
           <header
             data-slot="panel-header"
             className={cn(
-              'border-b border-[var(--aegis-border-subtle)] bg-[linear-gradient(180deg,var(--aegis-surface-raised),var(--aegis-surface-panel))]',
+              'border-b border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)]',
               panelDensityClasses[resolvedDensity].header,
             )}
           >
             {title ? (
-              <h2 className="font-[family-name:var(--aegis-font-display)] text-sm font-semibold uppercase tracking-[0.075em] text-[var(--aegis-text-primary)]">
+              <h2 className={cn(typographyTokens.displayMd, 'text-[var(--aegis-text-primary)]')}>
                 {title}
               </h2>
             ) : null}

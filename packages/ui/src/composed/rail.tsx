@@ -4,7 +4,7 @@ import { forwardRef, type HTMLAttributes } from 'react';
 import { cn } from '../lib/cn';
 
 const railVariants = cva(
-  'flex flex-col overflow-y-auto border-r border-[var(--aegis-border-default)] bg-[linear-gradient(180deg,var(--aegis-surface-rail),var(--aegis-surface-base))] shadow-[var(--aegis-shadow-rail)] transition-[width] duration-[var(--aegis-motion-duration-normal)]',
+  'flex flex-col overflow-y-auto border-r border-[var(--aegis-border-default)] bg-[var(--aegis-surface-rail)] shadow-[var(--aegis-shadow-rail)] transition-[width] duration-[var(--aegis-motion-duration-normal)]',
   {
     variants: {
       collapsed: {

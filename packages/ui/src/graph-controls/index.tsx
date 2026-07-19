@@ -2,6 +2,7 @@
 
 import { cn } from '../lib/cn';
 import { Button } from '../primitives/button';
+import { typographyTokens } from '../tokens/tokens';
 
 export interface GraphSearchInputProps {
   value: string;
@@ -106,9 +107,7 @@ export function GraphLegend({ title = 'Legend', items, className }: GraphLegendP
       data-testid="graph-legend"
       aria-label={title}
     >
-      <p className="mb-3 font-[family-name:var(--aegis-font-display)] text-[0.6875rem] font-semibold uppercase tracking-[0.09em] text-[var(--aegis-text-muted)]">
-        {title}
-      </p>
+      <p className={cn('mb-3 text-[var(--aegis-text-muted)]', typographyTokens.eyebrow)}>{title}</p>
       <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
         {items.map((item) => {
           const shape = item.shape ?? 'circle';
@@ -120,7 +119,7 @@ export function GraphLegend({ title = 'Legend', items, className }: GraphLegendP
             <li key={item.label} className="flex min-w-0 items-center gap-2.5 text-xs">
               <span
                 className={cn(
-                  'inline-block h-3.5 w-3.5 shrink-0 shadow-[0_0_10px_currentColor]',
+                  'inline-block h-3.5 w-3.5 shrink-0 shadow-[0_0_0_1px_currentColor]',
                   shape === 'circle' && 'rounded-full',
                   shape === 'diamond' && 'rotate-45 rounded-[2px]',
                   shape === 'square' && 'rounded-[2px]',

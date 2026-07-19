@@ -7,22 +7,22 @@ import { focusTokens } from '../tokens/tokens';
 
 const buttonVariants = cva(
   cn(
-    'inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap font-medium shadow-[var(--aegis-shadow-control)] transition-[background-color,border-color,color,box-shadow,transform] duration-[var(--aegis-motion-duration-fast)] ease-[var(--aegis-motion-ease-standard)] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none disabled:active:scale-100',
+    'inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap font-medium shadow-[var(--aegis-shadow-control)] transition-[background-color,border-color,color,box-shadow] duration-[var(--aegis-motion-duration-fast)] ease-[var(--aegis-motion-ease-standard)] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none',
     focusTokens.ring,
   ),
   {
     variants: {
       variant: {
         default:
-          'border border-[var(--aegis-accent-strong)]/30 bg-[var(--aegis-accent-cyan)] text-[var(--aegis-text-inverse)] hover:bg-[var(--aegis-accent-strong)]',
+          'border border-[var(--aegis-accent-strong)]/30 bg-[var(--aegis-accent-cyan)] text-[var(--aegis-text-inverse)] hover:bg-[var(--aegis-accent-strong)] active:border-[var(--aegis-accent-strong)] active:bg-[var(--aegis-accent-strong)]',
         destructive:
-          'border border-[var(--aegis-risk-critical)] bg-[var(--aegis-risk-critical-bg)] text-[var(--aegis-risk-critical)] hover:bg-[var(--aegis-risk-critical)] hover:text-[var(--aegis-text-inverse)]',
+          'border border-[var(--aegis-risk-critical)] bg-[var(--aegis-risk-critical-bg)] text-[var(--aegis-risk-critical)] hover:bg-[var(--aegis-risk-critical)] hover:text-[var(--aegis-text-inverse)] active:bg-[var(--aegis-risk-critical)] active:text-[var(--aegis-text-inverse)]',
         outline:
-          'border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-elevated)]/70 text-[var(--aegis-text-primary)] hover:border-[var(--aegis-border-strong)] hover:bg-[var(--aegis-surface-hover)]',
+          'border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-elevated)]/70 text-[var(--aegis-text-primary)] hover:border-[var(--aegis-border-strong)] hover:bg-[var(--aegis-surface-hover)] active:border-[var(--aegis-accent-line)] active:bg-[var(--aegis-surface-hover)]',
         ghost:
-          'border border-transparent bg-transparent text-[var(--aegis-text-secondary)] shadow-none hover:border-[var(--aegis-border-subtle)] hover:bg-[var(--aegis-surface-hover)] hover:text-[var(--aegis-text-primary)]',
+          'border border-transparent bg-transparent text-[var(--aegis-text-secondary)] shadow-none hover:border-[var(--aegis-border-subtle)] hover:bg-[var(--aegis-surface-hover)] hover:text-[var(--aegis-text-primary)] active:border-[var(--aegis-border-default)] active:bg-[var(--aegis-surface-hover)] active:text-[var(--aegis-text-primary)]',
         secondary:
-          'border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-raised)] text-[var(--aegis-text-primary)] hover:border-[var(--aegis-accent-line)] hover:bg-[var(--aegis-surface-hover)]',
+          'border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-raised)] text-[var(--aegis-text-primary)] hover:border-[var(--aegis-accent-line)] hover:bg-[var(--aegis-surface-hover)] active:border-[var(--aegis-accent-line)] active:bg-[var(--aegis-surface-raised)]',
       },
       size: {
         sm: 'min-h-10 rounded-[var(--aegis-radius-sm)] px-3 text-xs tracking-[0.01em]',

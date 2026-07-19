@@ -15,7 +15,7 @@ export const TabsList = forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      'inline-flex min-h-11 items-center justify-center rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] p-1 text-[var(--aegis-text-secondary)] shadow-[var(--aegis-shadow-control)]',
+      'inline-flex min-h-11 items-center justify-center rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-canvas)] p-1 text-[var(--aegis-text-secondary)] shadow-[var(--aegis-shadow-control)]',
       className,
     )}
     {...props}
