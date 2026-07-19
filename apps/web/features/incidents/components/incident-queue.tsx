@@ -13,7 +13,7 @@ function QueueRow({ row }: { row: IncidentQueueRow }) {
   return (
     <li
       data-zebra="true"
-      className="border-b border-[var(--aegis-border-subtle)] last:border-b-0 odd:bg-[var(--aegis-surface-panel)] even:bg-[var(--aegis-surface-elevated)]"
+      className="border-b border-[var(--aegis-border-subtle)] last:border-b-0 odd:bg-[var(--aegis-surface-panel)] even:bg-[color-mix(in_srgb,var(--aegis-surface-panel)_96%,var(--aegis-text-primary))]"
     >
       <Link
         href={`/incidents/${encodeURIComponent(row.incident.id)}`}
