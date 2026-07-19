@@ -39,10 +39,12 @@ class ProviderSettings(BaseSettings):
     AEGIS_PROVIDER_OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     AEGIS_PROVIDER_OPENAI_MODEL: str = "gpt-4o-mini"
 
-    # llama.cpp llama-server exposes an OpenAI-compatible API. Run it with:
-    #   llama-server -m <model.gguf> --host 0.0.0.0 --port 8080
-    # It serves /v1/chat/completions, /v1/completions, and /v1/models on :8080/v1.
-    AEGIS_PROVIDER_LOCAL_BASE_URL: str = "http://localhost:8080/v1"
+    # llama.cpp llama-server (host binary) exposes an OpenAI-compatible API. The
+    # supported default local path is the host-served server on :8086. Run it with:
+    #   llama-server -m <model.gguf> --host 127.0.0.1 --port 8086 -c 262144 -ngl 99 -fa on
+    # It serves /v1/chat/completions, /v1/completions, and /v1/models on :8086/v1.
+    # (From inside a container reach the host binary at host.docker.internal:8086.)
+    AEGIS_PROVIDER_LOCAL_BASE_URL: str = "http://localhost:8086/v1"
     # llama-server ignores the API key unless started with --api-key; the OpenAI
     # SDK still requires a non-empty value, so this is a harmless placeholder.
     AEGIS_PROVIDER_LOCAL_API_KEY: str = "llama-cpp"
@@ -51,7 +53,7 @@ class ProviderSettings(BaseSettings):
     AEGIS_PROVIDER_LOCAL_MODEL: str = "local-model"
     AEGIS_PROVIDER_IN_MEMORY_ARTIFACTS: bool = False
     AEGIS_PROVIDER_EGRESS_ALLOWLIST: str = (
-        "https://api.openai.com/v1,http://localhost:8080/v1"
+        "https://api.openai.com/v1,http://localhost:8086/v1"
     )
 
     @property

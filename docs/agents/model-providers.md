@@ -27,22 +27,29 @@ package.
 ### Local llama.cpp (`openai-compatible`)
 
 The local mode targets llama.cpp's `llama-server`, which exposes an OpenAI-compatible
-API (`/v1/chat/completions`, `/v1/completions`, `/v1/models`). Start it on port 8080:
+API (`/v1/chat/completions`, `/v1/completions`, `/v1/models`). **The supported default
+local path is the `llama-server` host binary on port 8086** — you supply your own GGUF
+model and run the server yourself. On the reference setup this is the AMD ROCm build
+(`build-rdna3-gfx1101\bin\llama-server.exe`) serving a Qwen3.5-9B GGUF:
 
 ```bash
-llama-server -m <model.gguf> --host 0.0.0.0 --port 8080 --alias local-model
+llama-server -m <model.gguf> --host 127.0.0.1 --port 8086 -c 262144 -ngl 99 -fa on --alias local-model
 ```
 
 Then set `AEGIS_PROVIDER_DEFAULT=openai-compatible`. The base URL
-(`AEGIS_PROVIDER_LOCAL_BASE_URL`, default `http://localhost:8080/v1`) must appear
+(`AEGIS_PROVIDER_LOCAL_BASE_URL`, default `http://localhost:8086/v1`) must appear
 verbatim in `AEGIS_PROVIDER_EGRESS_ALLOWLIST`; the egress guard fails closed on any
 destination not in the allowlist. `AEGIS_PROVIDER_LOCAL_MODEL` must match the id
 `llama-server` reports at `/v1/models` (its `--alias` or the loaded GGUF basename).
+Live inference against this endpoint is user-verified: AEGIS does not ship the GGUF and
+core CI never contacts it (agent tests use deterministic provider fakes).
 
-Under Docker Compose the server runs as the `llama` service behind the `llama` profile
-(`docker compose --profile llama up llama`); on the Compose network api/worker reach it
-at `http://llama:8080/v1`. The core stack stays fully offline (default `mock`) when the
-profile is not started.
+When AEGIS itself runs in containers, reach the host binary at
+`http://host.docker.internal:8086/v1`. A containerized `llama-server` is also available
+as an **optional** alternative behind the `llama` profile
+(`docker compose --profile llama up llama`, serving `:8086`); to use it, override
+`AEGIS_PROVIDER_LOCAL_BASE_URL`/`AEGIS_PROVIDER_EGRESS_ALLOWLIST` to `http://llama:8086/v1`.
+The core stack stays fully offline (default `mock`) when neither is configured.
 
 ## Validate a provider
 

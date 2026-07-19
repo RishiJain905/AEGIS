@@ -253,11 +253,14 @@ services:
     <<: *small-resources
 
   # Optional local LLM (llama.cpp), gated behind the `llama` profile. Loopback
-  # only, consistent with the rest of this production-shaped overlay. Reachable
-  # by api/worker on the Compose network at http://llama:8080/v1.
+  # only, consistent with the rest of this production-shaped overlay. This is NOT
+  # the supported default (a host-run llama-server binary on :8086 is — see
+  # docs/agents/model-providers.md); enable this profile only to use the
+  # containerized alternative, then set AEGIS_PROVIDER_LOCAL_BASE_URL to
+  # http://llama:8086/v1. Reachable by api/worker on the Compose network there.
   llama:
     profiles: ['llama']
     ports: !override
-      - "127.0.0.1:${LLAMA_PORT:-8080}:8080"
+      - "127.0.0.1:${LLAMA_PORT:-8086}:8086"
     restart: unless-stopped
     <<: *medium-resources
