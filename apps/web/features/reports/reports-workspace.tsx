@@ -52,34 +52,49 @@ function VersionRow({
   selected: boolean;
   onSelect: () => void;
 }) {
+  // The checksum chip carries its own copy <button>, so the full-row selection
+  // control cannot itself be a <button> (that would nest interactive elements
+  // and produce an invalid-nesting hydration warning). Instead the row is a
+  // non-interactive container with a stretched selection <button> sibling
+  // behind the content: content is `pointer-events-none` so clicks anywhere on
+  // the row fall through to the selection button, while the copy chip re-enables
+  // pointer events so it stays independently clickable. Selection still fires on
+  // a row click, the copy button still copies, tab order and the testid are
+  // unchanged.
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      data-testid={`report-version-${String(version.versionNumber)}`}
+    <div
       className={cn(
-        'w-full rounded-[var(--aegis-radius-md)] border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-[length:var(--aegis-focus-width)] focus-visible:ring-[var(--aegis-focus-ring)]',
+        'relative rounded-[var(--aegis-radius-md)] border px-3 py-3 transition-colors',
         selected
           ? 'border-[var(--aegis-accent-line)] bg-[var(--aegis-surface-elevated)]'
           : 'border-[var(--aegis-border-subtle)] hover:border-[var(--aegis-border-default)] hover:bg-[var(--aegis-surface-hover)]',
       )}
     >
-      <div className="flex items-center gap-2">
-        <Badge>{`v${String(version.versionNumber)}`}</Badge>
-        {isCurrent ? <Pill tone="accent">current</Pill> : null}
-        <StatusPill status={version.status} />
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-pressed={selected}
+        aria-label={`Select version ${String(version.versionNumber)}`}
+        data-testid={`report-version-${String(version.versionNumber)}`}
+        className="absolute inset-0 size-full rounded-[var(--aegis-radius-md)] focus-visible:outline-none focus-visible:ring-[length:var(--aegis-focus-width)] focus-visible:ring-[var(--aegis-focus-ring)]"
+      />
+      <div className="pointer-events-none relative flex flex-col text-left">
+        <div className="flex items-center gap-2">
+          <Badge>{`v${String(version.versionNumber)}`}</Badge>
+          {isCurrent ? <Pill tone="accent">current</Pill> : null}
+          <StatusPill status={version.status} />
+        </div>
+        <div className="pointer-events-auto mt-2 flex items-center gap-2">
+          <MonoChip value={version.checksum} label="version checksum" variant="checksum" />
+        </div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] text-[var(--aegis-text-muted)]">
+          {version.providerId ? <span>{version.providerId}</span> : null}
+          <span className="font-mono tabular-nums">
+            seq {version.sourceSequenceFrom}–{version.sourceSequenceTo}
+          </span>
+        </div>
       </div>
-      <div className="mt-2 flex items-center gap-2">
-        <MonoChip value={version.checksum} label="version checksum" variant="checksum" />
-      </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] text-[var(--aegis-text-muted)]">
-        {version.providerId ? <span>{version.providerId}</span> : null}
-        <span className="font-mono tabular-nums">
-          seq {version.sourceSequenceFrom}–{version.sourceSequenceTo}
-        </span>
-      </div>
-    </button>
+    </div>
   );
 }
 

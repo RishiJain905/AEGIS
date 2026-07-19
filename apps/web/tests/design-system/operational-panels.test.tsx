@@ -72,15 +72,23 @@ describe('design-system operational panels', () => {
     expect(screen.getByText('score ≥ 0.85')).toBeInTheDocument();
   });
 
-  it('has no detectable accessibility violations', async () => {
-    const { container } = render(
-      <>
-        <TokenInspector />
-        <ComponentPlayground />
-        <PlatformReference />
-      </>,
-    );
-    const results = await axe(container);
-    expect(results.violations).toHaveLength(0);
-  });
+  it.each(['dark', 'light'] as const)(
+    'has no detectable accessibility violations (%s theme)',
+    async (theme) => {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        const { container } = render(
+          <>
+            <TokenInspector />
+            <ComponentPlayground />
+            <PlatformReference />
+          </>,
+        );
+        const results = await axe(container);
+        expect(results.violations).toHaveLength(0);
+      } finally {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    },
+  );
 });

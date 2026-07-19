@@ -125,8 +125,11 @@
   /* Text */
   --aegis-text-primary: #10161c;
   --aegis-text-secondary: #3d4954;
-  --aegis-text-muted: #5f6d78;
-  --aegis-text-faint: #8794a0;
+  /* muted/faint tuned darker than the §2.2 starting points so muted clears
+   * AA (4.5:1) on surface-hover and the neutral status chips, and faint clears
+   * the 3:1 UI/large tier on every surface (verified in tests/a11y). */
+  --aegis-text-muted: #5d6a75;
+  --aegis-text-faint: #7e8c99;
   --aegis-text-inverse: #f3f5f7;
 
   /* Operator accent */
@@ -173,12 +176,12 @@
   --aegis-status-contained-bg: #e9e9fb;
   --aegis-status-compromised: #c0242f;
   --aegis-status-compromised-bg: #fce4e5;
-  --aegis-status-loading: #5f6d78;
+  --aegis-status-loading: #5d6a75;
   --aegis-status-loading-bg: #eef1f3;
   --aegis-status-error: #c0242f;
   --aegis-status-error-bg: #fce4e5;
-  --aegis-status-disconnected: #5f6d78;
+  --aegis-status-disconnected: #5d6a75;
   --aegis-status-disconnected-bg: #e6eaed;
-  --aegis-status-empty: #5f6d78;
+  --aegis-status-empty: #5d6a75;
   --aegis-status-empty-bg: #eef1f3;
 }

@@ -3,7 +3,7 @@
  */
 import { NodeStatus } from '@aegis/contracts-ts';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import {
@@ -42,7 +42,20 @@ function DesignSystemTree() {
   );
 }
 
-describe('design system accessibility', () => {
+// The redesign added a light theme (via `data-theme` on the document root)
+// alongside the dark default. Every a11y suite now runs against BOTH themes so
+// no theme-specific markup/ARIA regression slips through. (Colour-contrast is
+// verified deterministically against the token source in contrast.test.ts —
+// axe cannot measure CSS-custom-property pairings under jsdom.)
+describe.each(['dark', 'light'] as const)('design system accessibility (%s theme)', (theme) => {
+  beforeEach(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  });
+
+  afterEach(() => {
+    document.documentElement.removeAttribute('data-theme');
+  });
+
   it('has no axe violations on representative component tree', async () => {
     const { container } = render(<DesignSystemTree />);
     const results = await axe(container);
