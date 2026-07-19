@@ -82,6 +82,10 @@ services:
       AEGIS_HEALTH_PROBE_TIMEOUT_MS: ${AEGIS_HEALTH_PROBE_TIMEOUT_MS:-2000}
       AEGIS_READY_REQUIRE_REDIS: ${AEGIS_READY_REQUIRE_REDIS:-true}
       AEGIS_READY_REQUIRE_OBJECT_STORAGE: ${AEGIS_READY_REQUIRE_OBJECT_STORAGE:-true}
+      # Local LLM wiring. Default provider stays offline (mock); set
+      # AEGIS_PROVIDER_DEFAULT=local and start the `llama` profile to use it.
+      AEGIS_PROVIDER_LOCAL_BASE_URL: ${AEGIS_PROVIDER_LOCAL_BASE_URL:-http://llama:8080/v1}
+      AEGIS_PROVIDER_EGRESS_ALLOWLIST: ${AEGIS_PROVIDER_EGRESS_ALLOWLIST:-https://api.openai.com/v1,http://llama:8080/v1}
     ports:
       - '${API_PORT:-8000}:8000'
     depends_on:
@@ -149,6 +153,9 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
       AEGIS_LOG_JSON: ${AEGIS_LOG_JSON:-true}
+      # Local LLM wiring (offline by default; see the api service note above).
+      AEGIS_PROVIDER_LOCAL_BASE_URL: ${AEGIS_PROVIDER_LOCAL_BASE_URL:-http://llama:8080/v1}
+      AEGIS_PROVIDER_EGRESS_ALLOWLIST: ${AEGIS_PROVIDER_EGRESS_ALLOWLIST:-https://api.openai.com/v1,http://llama:8080/v1}
     depends_on:
       postgres:
         condition: service_healthy
@@ -196,6 +203,39 @@ services:
         condition: service_healthy
       otel-collector:
         condition: service_started
+
+  # Local LLM: llama.cpp llama-server exposing an OpenAI-compatible API on :8080.
+  # Gated behind the `llama` profile so the core stack still boots fully offline
+  # (default provider is mock) without requiring a downloaded GGUF model.
+  # Start it with:  docker compose --profile llama up llama
+  # NOTE FOR USER: confirm the image tag before relying on this. `:server` is the
+  # CPU build; for GPU use `:server-cuda`. Pin a specific build (e.g.
+  # `:server--b4735`) for reproducibility like the other services. Place your
+  # GGUF under ./models and set LLAMA_GGUF to its container path.
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    profiles: ['llama']
+    command:
+      - '-m'
+      - '${LLAMA_GGUF:-/models/model.gguf}'
+      - '--host'
+      - '0.0.0.0'
+      - '--port'
+      - '8080'
+      - '--alias'
+      - '${AEGIS_PROVIDER_LOCAL_MODEL:-local-model}'
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - '${LLAMA_PORT:-8080}:8080'
+    healthcheck:
+      # llama-server returns 200 on /health once the model is loaded. If the
+      # chosen image lacks curl, switch this to a wget-based probe.
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/health']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.120.0

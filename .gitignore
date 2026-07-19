@@ -63,3 +63,7 @@ apps/web/fixtures/generated/
 credentials.json
 
 dump.rdb
+
+# Playwright MCP temp artifacts + stray root screenshots
+.playwright-mcp/
+/after-action.png

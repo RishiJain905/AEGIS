@@ -50,8 +50,8 @@ def test_trailing_slash_normalization_preserves_exact_allowed_destination() -> N
 
 def test_openai_compatible_adapter_enforces_local_destination_allowlist() -> None:
     settings = ProviderSettings(
-        AEGIS_PROVIDER_LOCAL_BASE_URL="http://127.0.0.1:11434/v1",
-        AEGIS_PROVIDER_EGRESS_ALLOWLIST="http://localhost:11434/v1",
+        AEGIS_PROVIDER_LOCAL_BASE_URL="http://127.0.0.1:8080/v1",
+        AEGIS_PROVIDER_EGRESS_ALLOWLIST="http://localhost:8080/v1",
     )
     with pytest.raises(ProviderRuntimeError):
         OpenAICompatibleProvider(settings)
@@ -64,3 +64,24 @@ def test_empty_local_destination_does_not_fall_back_to_hosted_provider() -> None
     )
     with pytest.raises(ProviderRuntimeError):
         OpenAICompatibleProvider(settings)
+
+
+def test_llama_server_local_endpoint_is_allowlisted() -> None:
+    settings = ProviderSettings(
+        AEGIS_PROVIDER_LOCAL_BASE_URL="http://localhost:8080/v1",
+        AEGIS_PROVIDER_EGRESS_ALLOWLIST="http://localhost:8080/v1",
+    )
+    provider = OpenAICompatibleProvider(settings)
+    assert provider.provider_id == "openai-compatible"
+
+
+def test_default_settings_target_llama_server_and_build_registry() -> None:
+    # The default egress allowlist must cover both provider base URLs, since
+    # build_provider_registry constructs the hosted and compatible adapters and
+    # each enforces the allowlist in its constructor.
+    from aegis_model_provider import build_provider_registry
+
+    settings = ProviderSettings(_env_file=None)
+    assert settings.AEGIS_PROVIDER_LOCAL_BASE_URL == "http://localhost:8080/v1"
+    assert "http://localhost:8080/v1" in settings.provider_egress_allowlist
+    build_provider_registry(settings)

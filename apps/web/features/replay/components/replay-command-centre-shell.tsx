@@ -24,6 +24,7 @@ import { useReplayStore } from '@/stores/replay-store';
 
 export interface ReplayCommandCentreShellProps {
   runId: string;
+  initialSequence?: number;
 }
 
 function ReplayStatusExtras() {
@@ -100,7 +101,10 @@ function ReplayShellInner({ runId }: ReplayCommandCentreShellProps) {
   );
 }
 
-export function ReplayCommandCentreShell({ runId }: ReplayCommandCentreShellProps) {
+export function ReplayCommandCentreShell({
+  runId,
+  initialSequence,
+}: ReplayCommandCentreShellProps) {
   return (
     <div
       className="aegis-command-shell flex min-h-screen flex-col"
@@ -110,7 +114,7 @@ export function ReplayCommandCentreShell({ runId }: ReplayCommandCentreShellProp
       <a className="skip-link" href="#command-centre-content">
         Skip to replay workspace
       </a>
-      <ReplayProvider runId={runId}>
+      <ReplayProvider runId={runId} initialSequence={initialSequence}>
         <ReplayShellInner runId={runId} />
       </ReplayProvider>
     </div>

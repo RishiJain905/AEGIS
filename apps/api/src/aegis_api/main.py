@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from aegis_api.admin.router import router as admin_router
 from aegis_api.agents.observability import router as agents_observability_router
 from aegis_api.agents.router import router as agents_router
 from aegis_api.approvals.router import router as approvals_router
@@ -208,6 +209,7 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.include_router(replay_router, dependencies=read_replay)
     app.include_router(scoring_router, dependencies=read_scoring)
     app.include_router(agents_observability_router, dependencies=admin_manage)
+    app.include_router(admin_router, dependencies=admin_manage)
     app.include_router(create_websocket_router(gateway))
     app.include_router(websocket_demo_router, dependencies=admin_manage)
 

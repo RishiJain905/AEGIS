@@ -251,3 +251,13 @@ services:
       - "127.0.0.1:53001:3000"
     restart: unless-stopped
     <<: *small-resources
+
+  # Optional local LLM (llama.cpp), gated behind the `llama` profile. Loopback
+  # only, consistent with the rest of this production-shaped overlay. Reachable
+  # by api/worker on the Compose network at http://llama:8080/v1.
+  llama:
+    profiles: ['llama']
+    ports: !override
+      - "127.0.0.1:${LLAMA_PORT:-8080}:8080"
+    restart: unless-stopped
+    <<: *medium-resources

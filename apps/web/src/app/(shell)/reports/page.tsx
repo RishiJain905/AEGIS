@@ -1,7 +1,7 @@
 'use client';
 
 import { CommandCentreShell } from '@/features/shell/components';
-import { ReportsPanel } from '@/features/reports/reports-panel';
+import { ReportsWorkspace } from '@/features/reports/reports-workspace';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 export default function ReportsPage() {
@@ -9,11 +9,7 @@ export default function ReportsPage() {
 
   return (
     <CommandCentreShell>
-      {runId ? (
-        <ReportsPanel runId={runId} />
-      ) : (
-        <ReportsPanel runId="run_01ARZ3NDEKTSV4RRFFQ69G5FAV" />
-      )}
+      <ReportsWorkspace runId={runId ?? 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV'} />
     </CommandCentreShell>
   );
 }

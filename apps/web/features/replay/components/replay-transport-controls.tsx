@@ -27,6 +27,7 @@ export function ReplayTransportControls() {
   }
 
   const disabled = loadStatus === 'unavailable' || loadStatus === 'error';
+  const effectiveMax = Math.max(minSequence, maxSequence);
 
   return (
     <section
@@ -34,6 +35,33 @@ export function ReplayTransportControls() {
       data-testid="replay-transport-controls"
       aria-label="Replay transport controls"
     >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-baseline gap-2" data-testid="replay-position-readout">
+          <span className="font-mono text-lg text-[var(--aegis-text-primary)]">
+            {cursor.sequence}
+          </span>
+          <span className="text-xs text-[var(--aegis-text-secondary)]">
+            of {effectiveMax} · range {minSequence}–{effectiveMax}
+          </span>
+        </div>
+        <span
+          className="rounded border border-[var(--aegis-border-subtle)] px-2 py-0.5 text-xs uppercase tracking-wide text-[var(--aegis-text-secondary)]"
+          data-testid="replay-load-status"
+          role="status"
+          aria-live="polite"
+        >
+          {loadStatus === 'loading'
+            ? 'Reconstructing…'
+            : loadStatus === 'ready'
+              ? 'Ready'
+              : loadStatus === 'unavailable'
+                ? 'Unavailable'
+                : loadStatus === 'error'
+                  ? 'Error'
+                  : 'Idle'}
+        </span>
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant="outline"

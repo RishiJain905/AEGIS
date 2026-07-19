@@ -161,9 +161,9 @@ dropped when a provider-specific manifest is generated.
 | `AEGIS_PROVIDER_OPENAI_API_KEY`                | API/agents | no for mock                | empty                              | yes    | Phase 18 / 32 |
 | `AEGIS_PROVIDER_OPENAI_BASE_URL`               | API/agents | no                         | `https://api.openai.com/v1`        | no     | Phase 18      |
 | `AEGIS_PROVIDER_OPENAI_MODEL`                  | API/agents | no                         | `gpt-4o-mini`                      | no     | Phase 18      |
-| `AEGIS_PROVIDER_LOCAL_BASE_URL`                | API/agents | no                         | `http://localhost:11434/v1`        | no     | Phase 18      |
-| `AEGIS_PROVIDER_LOCAL_API_KEY`                 | API/agents | no                         | `ollama`                           | yes    | Phase 18      |
-| `AEGIS_PROVIDER_LOCAL_MODEL`                   | API/agents | no                         | `llama3.2`                         | no     | Phase 18      |
+| `AEGIS_PROVIDER_LOCAL_BASE_URL`                | API/agents | no                         | `http://localhost:8080/v1`         | no     | Phase 18      |
+| `AEGIS_PROVIDER_LOCAL_API_KEY`                 | API/agents | no                         | `llama-cpp`                        | yes    | Phase 18      |
+| `AEGIS_PROVIDER_LOCAL_MODEL`                   | API/agents | no                         | `local-model`                      | no     | Phase 18      |
 | `AEGIS_PROVIDER_IN_MEMORY_ARTIFACTS`           | API/agents | no                         | `false`                            | no     | Phase 18      |
 | `AEGIS_WS_PATH`                                | API/web    | no                         | `/ws/v1/realtime`                  | no     | Phase 12      |
 | `AEGIS_WS_ENABLED`                             | API        | no                         | `true`                             | no     | Phase 12      |

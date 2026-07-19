@@ -11,7 +11,7 @@ simulation directly.
 | `mock` | Deterministic local development, demo, and CI | None | Default; deterministic structured responses |
 | `recorded` | Replay fixtures from `fixtures/model-responses/` | None | Deterministic fixture responses |
 | `openai` | Optional hosted provider | API key and network | Graceful degradation on missing credentials or unavailable service |
-| `openai-compatible` | Optional local Ollama/vLLM-style endpoint | Local endpoint configuration | Graceful degradation when the endpoint is unavailable |
+| `openai-compatible` | Optional local llama.cpp `llama-server` (OpenAI-compatible) endpoint | Local endpoint configuration | Graceful degradation when the endpoint is unavailable |
 
 The mock and recorded modes are the supported offline paths. Live and local modes are
 optional integrations; they are not required for the release validation gate.
@@ -23,6 +23,26 @@ Keep `AEGIS_PROVIDER_DEFAULT=mock` for local verification and the deterministic 
 Set a live or local provider explicitly only when its endpoint, credentials, model, and
 capabilities have been verified. Never commit credentials or put them in a scenario
 package.
+
+### Local llama.cpp (`openai-compatible`)
+
+The local mode targets llama.cpp's `llama-server`, which exposes an OpenAI-compatible
+API (`/v1/chat/completions`, `/v1/completions`, `/v1/models`). Start it on port 8080:
+
+```bash
+llama-server -m <model.gguf> --host 0.0.0.0 --port 8080 --alias local-model
+```
+
+Then set `AEGIS_PROVIDER_DEFAULT=openai-compatible`. The base URL
+(`AEGIS_PROVIDER_LOCAL_BASE_URL`, default `http://localhost:8080/v1`) must appear
+verbatim in `AEGIS_PROVIDER_EGRESS_ALLOWLIST`; the egress guard fails closed on any
+destination not in the allowlist. `AEGIS_PROVIDER_LOCAL_MODEL` must match the id
+`llama-server` reports at `/v1/models` (its `--alias` or the loaded GGUF basename).
+
+Under Docker Compose the server runs as the `llama` service behind the `llama` profile
+(`docker compose --profile llama up llama`); on the Compose network api/worker reach it
+at `http://llama:8080/v1`. The core stack stays fully offline (default `mock`) when the
+profile is not started.
 
 ## Validate a provider
 
