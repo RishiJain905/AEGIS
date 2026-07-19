@@ -97,6 +97,7 @@ export default function ScenariosPage() {
       <Panel
         title="Scenario selection"
         description="Start a new run of a scenario, or resume a run this account already owns."
+        density="compact"
       >
         {scenariosQuery.isPending || runsQuery.isPending ? (
           <LoadingState message="Loading scenarios…" />
@@ -168,9 +169,12 @@ export default function ScenariosPage() {
           </DataTableContainer>
         ) : null}
         <div className="mt-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/design-system">Design system showcase</Link>
-          </Button>
+          <Link
+            href="/design-system"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-raised)] px-3 py-1 text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.08em] text-[var(--aegis-text-secondary)] transition-colors hover:border-[var(--aegis-accent-line)] hover:text-[var(--aegis-accent-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aegis-focus-ring)] motion-reduce:transition-none"
+          >
+            Design system showcase
+          </Link>
         </div>
       </Panel>
     </CommandCentreShell>

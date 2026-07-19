@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import {
@@ -8,10 +8,18 @@ import {
   TokenInspector,
 } from '@/components/design-system/operational-panels';
 import { countTokens } from '@/components/design-system/token-catalogue';
+import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 describe('design-system operational panels', () => {
+  beforeEach(() => {
+    // The token showcase switcher drives the shared shell theme preference; reset
+    // it so each test starts from the default rather than a prior test's choice.
+    useWorkspaceUiStore.getState().setTheme('system');
+  });
+
   afterEach(() => {
     cleanup();
+    useWorkspaceUiStore.getState().setTheme('system');
   });
 
   it('renders a copyable swatch for every catalogued token', () => {
@@ -24,6 +32,26 @@ describe('design-system operational panels', () => {
     }
     fireEvent.click(firstSwatch);
     expect(within(firstSwatch).getByText('Copied')).toBeInTheDocument();
+  });
+
+  it('flips the shared theme preference from the token showcase switcher', () => {
+    render(<TokenInspector />);
+    const switcher = screen.getByTestId('design-system-theme-switcher');
+
+    // Defaults to the `system` preference; light is not yet selected.
+    expect(within(switcher).getByTestId('theme-switch-light')).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+
+    fireEvent.click(within(switcher).getByTestId('theme-switch-light'));
+
+    expect(within(switcher).getByTestId('theme-switch-light')).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(within(switcher).getByText('Resolved: light')).toBeInTheDocument();
+    expect(useWorkspaceUiStore.getState().panelPreferences.theme).toBe('light');
   });
 
   it('updates the playground preview and JSX snippet from live props', () => {

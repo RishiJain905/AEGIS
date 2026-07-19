@@ -83,10 +83,27 @@
   .aegis-command-shell {
     position: relative;
     isolation: isolate;
+    /* Gridlines run ~30% quieter than before so they read as texture, not pattern. */
     background:
-      linear-gradient(rgb(73 130 151 / 0.028) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(73 130 151 / 0.028) 1px, transparent 1px),
+      linear-gradient(rgb(73 130 151 / 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(73 130 151 / 0.02) 1px, transparent 1px),
       radial-gradient(circle at 62% 8%, rgb(28 99 124 / 0.13), transparent 32rem),
+      var(--aegis-surface-base);
+    background-size:
+      32px 32px,
+      32px 32px,
+      auto,
+      auto;
+  }
+
+  /* Light theme: the surface base themes automatically, but the alpha grid/radial
+   * layers are tuned for a dark canvas — retune them so the backdrop reads as a
+   * light-mode texture rather than staying dark-tuned. */
+  :root[data-theme='light'] .aegis-command-shell {
+    background:
+      linear-gradient(rgb(59 88 108 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(59 88 108 / 0.05) 1px, transparent 1px),
+      radial-gradient(circle at 62% 8%, rgb(28 99 124 / 0.06), transparent 32rem),
       var(--aegis-surface-base);
     background-size:
       32px 32px,
@@ -102,6 +119,17 @@
     background: linear-gradient(110deg, rgb(2 7 12 / 0.35), transparent 52%, rgb(2 7 12 / 0.48));
     content: '';
     pointer-events: none;
+  }
+
+  /* Soften the corner vignette to a barely-there light tint so it doesn't darken
+   * the light-theme canvas the way the dark near-black gradient would. */
+  :root[data-theme='light'] .aegis-command-shell::before {
+    background: linear-gradient(
+      110deg,
+      rgb(16 22 28 / 0.03),
+      transparent 52%,
+      rgb(16 22 28 / 0.05)
+    );
   }
 
   .skip-link {
