@@ -11,6 +11,7 @@ import argparse
 import base64
 import json
 import os
+import re
 import secrets
 import socket
 import ssl
@@ -25,7 +26,41 @@ from urllib.request import Request, urlopen
 DEFAULT_LOCAL_URL = "http://127.0.0.1:8000"
 DEFAULT_WS_PATH = "/ws/v1/realtime"
 DEFAULT_PROTECTED_PATH = "/api/v1/scenarios"
-DEFAULT_MIGRATION_HEAD = "013_auth_identity"
+
+
+def _discover_migration_head() -> str:
+    """Resolve the Alembic head by parsing migrations/versions (stdlib only).
+
+    Derived from the revision graph so it never goes stale as migrations are
+    added — the head is the revision that no other revision lists as its
+    down_revision. Keeps this script DB- and alembic-import-free by design.
+    """
+
+    versions = Path(__file__).resolve().parents[1] / "migrations" / "versions"
+    revisions: set[str] = set()
+    down_revisions: set[str] = set()
+    if versions.is_dir():
+        for path in versions.glob("*.py"):
+            text = path.read_text(encoding="utf-8")
+            # revision/down_revision may carry a type annotation, e.g.
+            # `revision: str = "015_..."` / `down_revision: str | None = "014_..."`.
+            rev = re.search(r'^revision\s*(?::[^=\n]+)?=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
+            down = re.search(
+                r'^down_revision\s*(?::[^=\n]+)?=\s*["\']([^"\']+)["\']', text, re.MULTILINE
+            )
+            if rev:
+                revisions.add(rev.group(1))
+            if down and down.group(1):
+                down_revisions.add(down.group(1))
+    heads = sorted(revisions - down_revisions)
+    if len(heads) == 1:
+        return heads[0]
+    if revisions:  # linear-migration fallback: highest numeric-prefixed revision
+        return sorted(revisions)[-1]
+    return "013_auth_identity"
+
+
+DEFAULT_MIGRATION_HEAD = _discover_migration_head()
 
 
 @dataclass(frozen=True)
