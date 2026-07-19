@@ -8,7 +8,7 @@
  */
 import { NodeStatus } from '@aegis/contracts-ts';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import {
@@ -47,7 +47,18 @@ function DesignSystemTree() {
   );
 }
 
-describe('design system accessibility', () => {
+// Mirrors the canonical suite: runs against BOTH the dark default and the light
+// theme (applied via `data-theme` on the document root). Colour-contrast is
+// verified deterministically in packages/ui/tests/a11y/contrast.test.ts.
+describe.each(['dark', 'light'] as const)('design system accessibility (%s theme)', (theme) => {
+  beforeEach(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  });
+
+  afterEach(() => {
+    document.documentElement.removeAttribute('data-theme');
+  });
+
   it('has no axe violations on representative component tree', async () => {
     const { container } = render(<DesignSystemTree />);
     const results = await axe(container);

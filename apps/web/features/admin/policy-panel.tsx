@@ -6,6 +6,10 @@ import type { DataTableColumn } from '@aegis/ui';
 import { useAdminPolicy } from './use-admin-queries';
 import type { AdminCommand, AdminRolePermissions } from './types';
 
+// Permission chips shrink to the eyebrow scale with tighter horizontal padding
+// so the densest table in the app wraps far less across its rows (spec §4.8).
+const PERMISSION_CHIP_CLASS = 'min-h-5 px-1.5 py-0.5 tracking-[0.06em]';
+
 const roleColumns: DataTableColumn<AdminRolePermissions & Record<string, unknown>>[] = [
   {
     key: 'role',
@@ -16,9 +20,9 @@ const roleColumns: DataTableColumn<AdminRolePermissions & Record<string, unknown
     key: 'permissions',
     header: 'Permissions',
     render: (row) => (
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1">
         {row.permissions.map((permission) => (
-          <Badge key={permission} variant="outline">
+          <Badge key={permission} variant="outline" className={PERMISSION_CHIP_CLASS}>
             {permission}
           </Badge>
         ))}
@@ -56,6 +60,7 @@ export function PolicyPanel() {
   return (
     <Panel
       title="Policy"
+      density="compact"
       description="The permission-role matrix and action-class rules enforced server-side. This view is read-only — enforcement lives in the API policy engine, never the UI."
     >
       {query.isPending ? (
@@ -80,6 +85,7 @@ export function PolicyPanel() {
               columns={roleColumns}
               data={query.data.roles as (AdminRolePermissions & Record<string, unknown>)[]}
               caption="Roles and the permissions they grant"
+              zebra
             />
           </section>
 
@@ -91,7 +97,7 @@ export function PolicyPanel() {
               {query.data.actionClasses.map((entry) => (
                 <li
                   key={entry.actionClass}
-                  className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] p-3"
+                  className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] p-3"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium text-[var(--aegis-text-primary)]">
@@ -122,6 +128,7 @@ export function PolicyPanel() {
               columns={commandColumns}
               data={query.data.commands as (AdminCommand & Record<string, unknown>)[]}
               caption="Allowlisted commands and their action classes"
+              zebra
             />
           </section>
         </div>

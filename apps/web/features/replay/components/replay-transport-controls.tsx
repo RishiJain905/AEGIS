@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@aegis/ui';
+import { Button, Separator } from '@aegis/ui';
 
 import { nextSpeed, previousSpeed, REPLAY_SPEEDS } from '@/features/replay/lib/playback';
 import { useReplay } from '@/features/replay/replay-provider';
@@ -63,106 +63,120 @@ export function ReplayTransportControls() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          data-testid="replay-jump-start"
-          disabled={disabled}
-          onClick={jumpToMin}
-        >
-          Start
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          data-testid="replay-step-back"
-          disabled={disabled}
-          onClick={() => {
-            step(-1);
-          }}
-        >
-          Step −
-        </Button>
+        {/* Position controls: jump/step/play along the timeline. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="replay-jump-start"
+            disabled={disabled}
+            onClick={jumpToMin}
+          >
+            Start
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="replay-step-back"
+            disabled={disabled}
+            onClick={() => {
+              step(-1);
+            }}
+          >
+            Step −
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            data-testid="replay-play-pause"
+            aria-pressed={playbackStatus === 'playing'}
+            disabled={disabled || reducedMotion}
+            onClick={() => {
+              setPlaybackStatus(playbackStatus === 'playing' ? 'paused' : 'playing');
+            }}
+          >
+            {playbackStatus === 'playing' ? 'Pause' : 'Play'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="replay-step-forward"
+            disabled={disabled}
+            onClick={() => {
+              step(1);
+            }}
+          >
+            Step +
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="replay-jump-end"
+            disabled={disabled}
+            onClick={jumpToMax}
+          >
+            End
+          </Button>
+        </div>
+
+        <Separator
+          orientation="vertical"
+          className="hidden h-6 sm:block"
+          data-testid="replay-transport-separator"
+        />
+
+        {/* Rate controls: playback speed. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="replay-speed-down"
+            disabled={disabled}
+            onClick={() => {
+              setSpeed(previousSpeed(speed));
+            }}
+          >
+            Speed −
+          </Button>
+          <span
+            className="rounded border border-[var(--aegis-border-subtle)] px-2 py-1 font-mono text-xs"
+            data-testid="replay-speed-label"
+          >
+            {speed}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="replay-speed-up"
+            disabled={disabled}
+            onClick={() => {
+              setSpeed(nextSpeed(speed));
+            }}
+          >
+            Speed +
+          </Button>
+          {REPLAY_SPEEDS.map((value) => (
+            <Button
+              key={value}
+              variant={speed === value ? 'secondary' : 'ghost'}
+              size="sm"
+              data-testid={`replay-speed-${value}`}
+              aria-pressed={speed === value}
+              disabled={disabled}
+              onClick={() => {
+                setSpeed(value);
+              }}
+            >
+              {value}
+            </Button>
+          ))}
+        </div>
+
         <Button
           variant="secondary"
           size="sm"
-          data-testid="replay-play-pause"
-          aria-pressed={playbackStatus === 'playing'}
-          disabled={disabled || reducedMotion}
-          onClick={() => {
-            setPlaybackStatus(playbackStatus === 'playing' ? 'paused' : 'playing');
-          }}
-        >
-          {playbackStatus === 'playing' ? 'Pause' : 'Play'}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          data-testid="replay-step-forward"
-          disabled={disabled}
-          onClick={() => {
-            step(1);
-          }}
-        >
-          Step +
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          data-testid="replay-jump-end"
-          disabled={disabled}
-          onClick={jumpToMax}
-        >
-          End
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          data-testid="replay-speed-down"
-          disabled={disabled}
-          onClick={() => {
-            setSpeed(previousSpeed(speed));
-          }}
-        >
-          Speed −
-        </Button>
-        <span
-          className="rounded border border-[var(--aegis-border-subtle)] px-2 py-1 font-mono text-xs"
-          data-testid="replay-speed-label"
-        >
-          {speed}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          data-testid="replay-speed-up"
-          disabled={disabled}
-          onClick={() => {
-            setSpeed(nextSpeed(speed));
-          }}
-        >
-          Speed +
-        </Button>
-        {REPLAY_SPEEDS.map((value) => (
-          <Button
-            key={value}
-            variant={speed === value ? 'secondary' : 'ghost'}
-            size="sm"
-            data-testid={`replay-speed-${value}`}
-            aria-pressed={speed === value}
-            disabled={disabled}
-            onClick={() => {
-              setSpeed(value);
-            }}
-          >
-            {value}
-          </Button>
-        ))}
-        <Button
-          variant="outline"
-          size="sm"
           data-testid="return-to-live"
-          className="ml-auto"
+          className="ml-auto border border-[var(--aegis-accent-line)]"
           onClick={() => {
             replay?.returnToLive();
           }}

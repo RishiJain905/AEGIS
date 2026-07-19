@@ -1,6 +1,15 @@
 'use client';
 
-import { Badge, Button, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  Panel,
+  cn,
+  typographyTokens,
+} from '@aegis/ui';
 
 import {
   GraphEntityInspector,
@@ -84,12 +93,14 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
       data-testid="inspector-panel"
       aria-label="Inspector"
     >
-      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] bg-[linear-gradient(180deg,var(--aegis-surface-raised),var(--aegis-surface-panel))] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-4 py-3">
         <div>
-          <p className="font-mono text-[0.625rem] uppercase tracking-[0.15em] text-[var(--aegis-text-muted)]">
+          <p className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-text-muted)]')}>
             Context channel
           </p>
-          <h2 className="text-sm font-semibold tracking-[0.04em]">Inspector</h2>
+          <h2 className={cn(typographyTokens.displayMd, 'text-[var(--aegis-text-primary)]')}>
+            Inspector
+          </h2>
         </div>
         <Button
           variant="ghost"

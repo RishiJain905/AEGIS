@@ -40,7 +40,11 @@ describe('Button', () => {
     const button = screen.getByRole('button', { name: 'Compact action' });
 
     expect(button.className).toContain('min-h-10');
-    expect(button.className).toContain('active:scale-[0.96]');
+    // Palantir-style console chrome: press feedback is a flat color/shadow shift,
+    // not a transform squash (see redesign spec §3/§6).
+    expect(button.className).not.toContain('active:scale-[0.96]');
+    expect(button.className).toContain('active:shadow-none');
+    expect(button.className).toContain('active:bg-[var(--aegis-accent-strong)]');
   });
 });
 

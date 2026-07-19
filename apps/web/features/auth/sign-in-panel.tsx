@@ -113,13 +113,13 @@ export function SignInPanel() {
 
   return (
     <main
-      className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[var(--aegis-surface-base)] px-4 py-10 text-[var(--aegis-text-primary)] before:absolute before:inset-0 before:-z-10 before:bg-[linear-gradient(rgb(89_201_234_/_0.035)_1px,transparent_1px),linear-gradient(90deg,rgb(89_201_234_/_0.035)_1px,transparent_1px),radial-gradient(circle_at_22%_28%,rgb(34_111_139_/_0.25),transparent_30rem)] before:bg-[size:32px_32px,32px_32px,auto]"
+      className="aegis-command-shell flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 text-[var(--aegis-text-primary)]"
       data-testid="sign-in-page"
     >
       <div className="grid w-full max-w-4xl overflow-hidden rounded-[var(--aegis-radius-xl)] border border-[var(--aegis-border-strong)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-dialog)] md:grid-cols-[0.9fr_1.1fr]">
-        <section className="relative flex min-h-64 flex-col justify-between overflow-hidden border-b border-[var(--aegis-border-default)] bg-[radial-gradient(circle_at_30%_20%,rgb(40_126_157_/_0.25),transparent_18rem),linear-gradient(145deg,var(--aegis-surface-raised),var(--aegis-surface-rail))] p-7 md:min-h-[34rem] md:border-b-0 md:border-r">
+        <section className="relative flex min-h-64 flex-col justify-between overflow-hidden border-b border-[var(--aegis-border-default)] bg-[var(--aegis-surface-raised)] bg-[radial-gradient(circle_at_30%_20%,rgb(40_126_157_/_0.12),transparent_18rem)] p-7 md:min-h-[34rem] md:border-b-0 md:border-r">
           <div>
-            <div className="mb-7 flex h-12 w-12 items-center justify-center rounded-[var(--aegis-radius-md)] border border-[var(--aegis-accent-line)] bg-[var(--aegis-accent-soft)] font-[family-name:var(--aegis-font-display)] text-lg font-bold tracking-[0.12em] text-[var(--aegis-accent-strong)] shadow-[0_0_30px_rgb(89_201_234_/_0.12)]">
+            <div className="mb-7 flex h-12 w-12 items-center justify-center rounded-[var(--aegis-radius-md)] border border-[var(--aegis-accent-line)] bg-[var(--aegis-accent-soft)] font-[family-name:var(--aegis-font-display)] text-lg font-bold tracking-[0.12em] text-[var(--aegis-accent-strong)]">
               A
             </div>
             <p className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-[var(--aegis-accent-cyan)]">
@@ -174,7 +174,7 @@ export function SignInPanel() {
             </p>
           ) : (
             <form
-              className="space-y-4"
+              className="space-y-3"
               onSubmit={(event) => void onSubmit(event)}
               data-testid="sign-in-form"
             >
@@ -284,13 +284,17 @@ export function SignInPanel() {
 
           {devUsers.length > 0 ? (
             <section
-              className="space-y-3 border-t border-[var(--aegis-border-subtle)] pt-5"
+              className="space-y-3 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-canvas)] p-4"
               aria-label="Development identities"
               data-testid="dev-identity-picker"
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold">Development identities</h3>
-                <span className="rounded-full border border-[var(--aegis-status-suspicious)]/40 bg-[var(--aegis-status-suspicious-bg)] px-2 py-1 font-mono text-[0.625rem] uppercase tracking-[0.1em] text-[var(--aegis-status-suspicious)]">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--aegis-status-suspicious)]/50 bg-[var(--aegis-status-suspicious-bg)] px-2.5 py-1 font-mono text-[0.625rem] font-semibold uppercase leading-none tracking-[0.12em] text-[var(--aegis-status-suspicious)]">
+                  <span
+                    aria-hidden="true"
+                    className="h-1.5 w-1.5 rounded-full bg-[var(--aegis-status-suspicious)]"
+                  />
                   Local only
                 </span>
               </div>

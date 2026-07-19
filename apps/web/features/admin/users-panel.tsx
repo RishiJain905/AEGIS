@@ -53,6 +53,7 @@ export function UsersPanel() {
   return (
     <Panel
       title="Users & Roles"
+      density="compact"
       description="Authorized identities in the platform registry and the roles that grant their permissions."
     >
       {query.isPending ? (

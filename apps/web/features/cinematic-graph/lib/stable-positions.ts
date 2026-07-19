@@ -2,35 +2,24 @@ import type { GraphClusterV1, GraphNodeV1 } from '@aegis/contracts-ts';
 
 import { computeInitialLayout } from '@/features/operational-graph/layout/initial-layout';
 
-const CLUSTER_Z_SPACING = 90;
-const MAX_SCENE_XY_SPAN = 720;
-
-function hashString(value: string): number {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
+const MAX_SCENE_GROUND_SPAN = 720;
 
 /**
- * Deterministic Z from cluster identity so 3D positions stay stable across
- * mode switches and replay scrubbing without writing into domain state.
+ * §7.6 ground-plane mapping: the 2D layout lies flat on the scene's XZ ground
+ * plane (scene X = layout X, scene Z = layout Y), staying synced to the
+ * operational graph's authoritative placement. Scene Y (altitude) is left at
+ * zero here — the semantic mapper derives it from risk score at render time,
+ * so the skyline never feeds back into shared layout state.
  */
-export function clusterZ(clusterId: string | null | undefined): number {
-  const key = clusterId ?? 'unclustered';
-  const bucket = hashString(key) % 7;
-  return (bucket - 3) * CLUSTER_Z_SPACING;
-}
-
-export function toScenePosition(
-  xy: { x: number; y: number },
-  clusterId: string | null | undefined,
-): { x: number; y: number; z: number } {
+export function toScenePosition(xy: { x: number; y: number }): {
+  x: number;
+  y: number;
+  z: number;
+} {
   return {
     x: xy.x,
-    y: xy.y,
-    z: clusterZ(clusterId),
+    y: 0,
+    z: xy.y,
   };
 }
 
@@ -47,7 +36,7 @@ export function resolveStablePositions(
   const result: Record<string, { x: number; y: number; z: number }> = {};
   for (const node of nodes) {
     const xy = layout2d[node.id] ?? { x: 0, y: 0 };
-    result[node.id] = toScenePosition(xy, node.clusterId);
+    result[node.id] = toScenePosition(xy);
   }
   return result;
 }
@@ -55,7 +44,8 @@ export function resolveStablePositions(
 /**
  * Sigma normalizes arbitrary graph coordinates internally before drawing.
  * Three.js consumes world units directly, so its read-only projection needs
- * the equivalent bounded scale to keep node geometry legible.
+ * the equivalent bounded scale to keep node geometry legible. Only the ground
+ * plane (X/Z) is normalized; altitude is derived later from risk score.
  */
 export function normalizeScenePositions(
   positions: Record<string, { x: number; y: number; z: number }>,
@@ -66,23 +56,23 @@ export function normalizeScenePositions(
   }
 
   const xs = entries.map(([, position]) => position.x);
-  const ys = entries.map(([, position]) => position.y);
+  const zs = entries.map(([, position]) => position.z);
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
+  const minZ = Math.min(...zs);
+  const maxZ = Math.max(...zs);
   const centerX = (minX + maxX) / 2;
-  const centerY = (minY + maxY) / 2;
-  const largestSpan = Math.max(maxX - minX, maxY - minY);
-  const scale = largestSpan > MAX_SCENE_XY_SPAN ? MAX_SCENE_XY_SPAN / largestSpan : 1;
+  const centerZ = (minZ + maxZ) / 2;
+  const largestSpan = Math.max(maxX - minX, maxZ - minZ);
+  const scale = largestSpan > MAX_SCENE_GROUND_SPAN ? MAX_SCENE_GROUND_SPAN / largestSpan : 1;
 
   return Object.fromEntries(
     entries.map(([nodeId, position]) => [
       nodeId,
       {
         x: (position.x - centerX) * scale,
-        y: (position.y - centerY) * scale,
-        z: position.z,
+        y: position.y,
+        z: (position.z - centerZ) * scale,
       },
     ]),
   );

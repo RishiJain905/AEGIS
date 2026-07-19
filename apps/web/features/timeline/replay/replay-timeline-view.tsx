@@ -118,20 +118,22 @@ export function ReplayTimelineView() {
       <ol className="flex max-h-64 flex-col gap-2 overflow-auto" data-testid="replay-timeline-list">
         {marks.map((mark) => {
           const active = cursor?.sequence === mark.sequence;
+          // TimelineMark renders its own <li>, so it is placed directly under
+          // the <ol> (no wrapping <li>, which would be invalid nesting) —
+          // matching the live TimelineView.
           return (
-            <li key={`${mark.eventId}-${String(mark.sequence)}`}>
-              <TimelineMark
-                label={mark.label}
-                timestamp={mark.timestamp}
-                nodeStatus={mark.status}
-                active={active}
-                data-testid={`timeline-mark-${String(mark.sequence)}`}
-                onClick={() => {
-                  setCursorSequence(mark.sequence);
-                  setPlaybackStatus('paused');
-                }}
-              />
-            </li>
+            <TimelineMark
+              key={`${mark.eventId}-${String(mark.sequence)}`}
+              label={mark.label}
+              timestamp={mark.timestamp}
+              nodeStatus={mark.status}
+              active={active}
+              data-testid={`timeline-mark-${String(mark.sequence)}`}
+              onClick={() => {
+                setCursorSequence(mark.sequence);
+                setPlaybackStatus('paused');
+              }}
+            />
           );
         })}
       </ol>

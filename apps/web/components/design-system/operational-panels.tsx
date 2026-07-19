@@ -6,6 +6,9 @@ import { NodeStatus } from '@aegis/contracts-ts';
 import type { ButtonProps, NodeStatusValue } from '@aegis/ui';
 import { Badge, Button, MetricTile, Panel } from '@aegis/ui';
 
+import type { ThemePreference } from '@/features/shell/contracts/panel-preferences';
+import { useTheme } from '@/features/shell/hooks/use-theme';
+
 import {
   countTokens,
   readTokenValue,
@@ -59,13 +62,97 @@ function useCopy(): {
   return { copiedKey, copy };
 }
 
-function TokenSwatch({ token }: { token: DesignToken }) {
+/**
+ * Track the concrete `data-theme` applied to the document root, re-reading on
+ * every attribute mutation. Keyed off the DOM attribute (which `ThemeManager`
+ * writes) rather than the resolved-theme React state so token re-reads happen
+ * *after* the new theme is on the element and `getComputedStyle` reflects it —
+ * a single observer feeds every swatch its cue to re-resolve.
+ */
+function useDataThemeKey(): string {
+  const [themeKey, setThemeKey] = useState('');
+  useEffect(() => {
+    const root = document.documentElement;
+    const read = () => root.getAttribute('data-theme') ?? 'dark';
+    setThemeKey(read());
+    const observer = new MutationObserver(() => {
+      setThemeKey(read());
+    });
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  return themeKey;
+}
+
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
+
+/**
+ * Live theme switcher for the token showcase. Consumes the shared shell theme
+ * preference so flipping it here drives the same `data-theme` swap the rest of
+ * the app uses, letting every swatch below update in place. Guarded against
+ * hydration mismatch: until mounted it renders the SSR default (`system`)
+ * active, matching the server output (see the rail ThemeToggle for the pattern).
+ */
+function ThemeSwitcher() {
+  const { theme, resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const activePreference: ThemePreference = mounted ? theme : 'system';
+  const effectiveResolved = mounted ? resolvedTheme : 'dark';
+
+  return (
+    <div
+      className="flex flex-wrap items-center gap-3 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-canvas)] px-3 py-2.5"
+      data-testid="design-system-theme-switcher"
+    >
+      <span className="text-xs font-semibold uppercase tracking-wide text-[var(--aegis-text-secondary)]">
+        Theme
+      </span>
+      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Preview theme">
+        {THEME_OPTIONS.map((option) => (
+          <Button
+            key={option.value}
+            type="button"
+            size="sm"
+            variant={activePreference === option.value ? 'secondary' : 'ghost'}
+            role="radio"
+            aria-checked={activePreference === option.value}
+            data-testid={`theme-switch-${option.value}`}
+            onClick={() => {
+              setTheme(option.value);
+            }}
+          >
+            {option.label}
+          </Button>
+        ))}
+      </div>
+      <span className="font-mono text-xs text-[var(--aegis-text-muted)]" aria-live="polite">
+        Resolved: {effectiveResolved}
+      </span>
+    </div>
+  );
+}
+
+function TokenSwatch({ token, themeKey }: { token: DesignToken; themeKey: string }) {
   // Values are resolved on the client so the inspector always reflects the
-  // live stylesheet rather than a hardcoded copy that could drift.
+  // live stylesheet rather than a hardcoded copy that could drift. Re-reading on
+  // `themeKey` keeps every swatch in sync when the theme is switched in place.
   const [value, setValue] = useState('');
   useEffect(() => {
     setValue(readTokenValue(token.name));
-  }, [token.name]);
+  }, [token.name, themeKey]);
 
   const { copiedKey, copy } = useCopy();
   const reference = tokenReference(token.name);
@@ -120,6 +207,7 @@ function TokenSwatch({ token }: { token: DesignToken }) {
 
 export function TokenInspector() {
   const total = useMemo(() => countTokens(), []);
+  const themeKey = useDataThemeKey();
   return (
     <Panel
       title="Design tokens"
@@ -127,6 +215,7 @@ export function TokenInspector() {
       data-testid="token-inspector"
     >
       <div className="mt-3 flex flex-col gap-6">
+        <ThemeSwitcher />
         {TOKEN_GROUPS.map((group) => (
           <div key={group.id}>
             <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--aegis-text-secondary)]">
@@ -135,7 +224,7 @@ export function TokenInspector() {
             <p className="mb-2 text-xs text-[var(--aegis-text-muted)]">{group.description}</p>
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {group.tokens.map((token) => (
-                <TokenSwatch key={token.name} token={token} />
+                <TokenSwatch key={token.name} token={token} themeKey={themeKey} />
               ))}
             </div>
           </div>

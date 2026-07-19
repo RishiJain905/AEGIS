@@ -12,7 +12,7 @@
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light dark;
     background: var(--aegis-surface-base);
     scroll-behavior: smooth;
   }
@@ -83,10 +83,27 @@
   .aegis-command-shell {
     position: relative;
     isolation: isolate;
+    /* Gridlines run ~30% quieter than before so they read as texture, not pattern. */
     background:
-      linear-gradient(rgb(73 130 151 / 0.028) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(73 130 151 / 0.028) 1px, transparent 1px),
+      linear-gradient(rgb(73 130 151 / 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(73 130 151 / 0.02) 1px, transparent 1px),
       radial-gradient(circle at 62% 8%, rgb(28 99 124 / 0.13), transparent 32rem),
+      var(--aegis-surface-base);
+    background-size:
+      32px 32px,
+      32px 32px,
+      auto,
+      auto;
+  }
+
+  /* Light theme: the surface base themes automatically, but the alpha grid/radial
+   * layers are tuned for a dark canvas — retune them so the backdrop reads as a
+   * light-mode texture rather than staying dark-tuned. */
+  :root[data-theme='light'] .aegis-command-shell {
+    background:
+      linear-gradient(rgb(59 88 108 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(59 88 108 / 0.05) 1px, transparent 1px),
+      radial-gradient(circle at 62% 8%, rgb(28 99 124 / 0.06), transparent 32rem),
       var(--aegis-surface-base);
     background-size:
       32px 32px,
@@ -102,6 +119,17 @@
     background: linear-gradient(110deg, rgb(2 7 12 / 0.35), transparent 52%, rgb(2 7 12 / 0.48));
     content: '';
     pointer-events: none;
+  }
+
+  /* Soften the corner vignette to a barely-there light tint so it doesn't darken
+   * the light-theme canvas the way the dark near-black gradient would. */
+  :root[data-theme='light'] .aegis-command-shell::before {
+    background: linear-gradient(
+      110deg,
+      rgb(16 22 28 / 0.03),
+      transparent 52%,
+      rgb(16 22 28 / 0.05)
+    );
   }
 
   .skip-link {
@@ -123,12 +151,14 @@
     transform: translateY(0);
   }
 
+  /* Flat, hairline-bordered surface (no glossy gradient) so the command bar and
+   * control clusters read as one architectural toolbar per §1/§4.3. */
   .graph-command-bar,
   .graph-control-deck {
     border: 1px solid var(--aegis-border-subtle);
     border-radius: var(--aegis-radius-md);
-    background: linear-gradient(145deg, var(--aegis-surface-raised), var(--aegis-surface-elevated));
-    padding: 0.75rem;
+    background: var(--aegis-surface-elevated);
+    padding: 0.625rem;
     box-shadow: var(--aegis-shadow-control);
   }
 
@@ -136,13 +166,16 @@
     display: none;
   }
 
+  /* eyebrow role (§2.3): 11px/16px, 600, 0.08em, uppercase, sans — tightened
+   * bottom margin so each cluster label hugs its control group. */
   .graph-control-label {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.375rem;
     color: var(--aegis-text-muted);
-    font-family: var(--aegis-font-display);
+    font-family: var(--aegis-font-sans);
     font-size: 0.6875rem;
+    line-height: 1rem;
     font-weight: 600;
-    letter-spacing: 0.09em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
@@ -173,72 +206,80 @@
   }
 
   .graph-entity-index {
-    background: linear-gradient(145deg, var(--aegis-surface-panel), var(--aegis-surface-elevated));
+    background: var(--aegis-surface-panel);
     box-shadow: inset 0 1px 0 var(--aegis-border-highlight);
   }
 
+  /* Grid/vignette quieted ~30-40% per §7.7 — ambient orientation aid rather
+   * than a competing pattern against the risk-colored nodes. */
   .cinematic-canvas-shell {
     background:
-      radial-gradient(circle at 50% 42%, rgb(17 62 80 / 0.38), transparent 58%),
+      radial-gradient(circle at 50% 42%, rgb(17 62 80 / 0.25), transparent 58%),
       var(--aegis-surface-canvas);
     box-shadow:
       inset 0 1px 0 var(--aegis-border-highlight),
-      inset 0 0 90px rgb(0 0 0 / 0.5);
+      inset 0 0 90px rgb(0 0 0 / 0.32);
   }
 
   .cinematic-canvas-vignette {
     background:
       linear-gradient(
         180deg,
-        rgb(2 6 10 / 0.34),
+        rgb(2 6 10 / 0.22),
         transparent 20%,
         transparent 72%,
-        rgb(2 6 10 / 0.58)
+        rgb(2 6 10 / 0.38)
       ),
-      radial-gradient(circle at center, transparent 46%, rgb(1 5 9 / 0.52) 100%);
-    box-shadow: inset 0 0 0 1px rgb(108 198 229 / 0.08);
+      radial-gradient(circle at center, transparent 46%, rgb(1 5 9 / 0.34) 100%);
+    box-shadow: inset 0 0 0 1px rgb(108 198 229 / 0.05);
   }
 
+  /* §7.5 floating node card: flattened per §2/§3 — hairline border, tight
+   * radius, small ambient shadow instead of a glow ring; sub-line uses the
+   * mono-sm role from the §2.3 type scale. Deliberately dark in both themes:
+   * it floats over the always-dark 3D canvas. */
   .cinematic-node-label {
     display: flex;
     min-width: 9rem;
     flex-direction: column;
     gap: 0.125rem;
     border: 1px solid var(--aegis-accent-line);
-    border-radius: var(--aegis-radius-md);
-    background: rgb(7 16 25 / 0.9);
-    padding: 0.55rem 0.75rem;
-    color: var(--aegis-text-primary);
+    border-radius: var(--aegis-radius-sm);
+    background: rgb(7 16 25 / 0.92);
+    padding: 0.45rem 0.7rem;
+    color: #f0f6fa;
     font-family: var(--aegis-font-display);
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1.2;
     text-align: center;
-    box-shadow:
-      0 0 0 1px rgb(89 201 234 / 0.08),
-      0 10px 30px rgb(0 0 0 / 0.5);
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.45);
     backdrop-filter: blur(8px);
   }
 
+  /* mono-sm role (§2.3): 11px/16px, 500, 0.02em, tabular figures. */
   .cinematic-node-label small {
-    color: var(--aegis-text-muted);
+    color: #8297a8;
     font-family: var(--aegis-font-mono);
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
     font-weight: 500;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.02em;
+    line-height: 1rem;
+    font-variant-numeric: tabular-nums;
     text-transform: uppercase;
   }
 
   .cinematic-node-tag {
     border: 1px solid rgb(112 148 171 / 0.32);
     border-radius: var(--aegis-radius-sm);
-    background: rgb(7 16 25 / 0.82);
+    background: rgb(7 16 25 / 0.86);
     padding: 0.15rem 0.45rem;
-    color: var(--aegis-text-secondary);
+    color: #b3c2cd;
     font-family: var(--aegis-font-mono);
-    font-size: 0.625rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
 

@@ -23,6 +23,12 @@ export const sceneNodeSchema = z
     color: z.string(),
     statusColor: z.string(),
     riskHaloColor: z.string(),
+    // §7.1/§7.2 derived presentation fields, resolved by the semantic scene
+    // adapter from the shared risk/status token values — never stored on the
+    // network/store node.
+    emissiveColor: z.string(),
+    sizeTier: z.number().positive(),
+    glyphShape: z.enum(['circle', 'diamond', 'square', 'triangle', 'hexagon']),
     size: z.number().positive(),
     selected: z.boolean(),
     highlighted: z.boolean(),

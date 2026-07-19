@@ -5,5 +5,5 @@ export { GraphViewModeToggle } from './components/graph-view-mode-toggle';
 export { CapabilityFallbackNotice } from './components/capability-fallback';
 export * from './contracts';
 export { probeCapabilityReport, recommendQualityTier, dprForTier } from './lib/capability';
-export { resolveStablePositions, clusterZ, toScenePosition } from './lib/stable-positions';
+export { resolveStablePositions, toScenePosition } from './lib/stable-positions';
 export { useCinematicGraphStore } from './stores/cinematic-graph-store';

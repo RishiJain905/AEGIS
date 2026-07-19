@@ -51,7 +51,7 @@ export function StatusStrip({ runId }: StatusStripProps) {
 
   return (
     <div
-      className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--aegis-border-default)] bg-[rgb(9_18_27_/_0.94)] px-4 py-2 shadow-[0_8px_24px_rgb(0_0_0_/_0.2)] backdrop-blur-md"
+      className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--aegis-border-default)] bg-[color-mix(in_srgb,var(--aegis-surface-rail)_95%,transparent)] px-4 py-2 shadow-[0_8px_24px_rgb(0_0_0_/_0.2)] backdrop-blur-md"
       data-testid="status-strip"
       role="status"
       aria-live="polite"

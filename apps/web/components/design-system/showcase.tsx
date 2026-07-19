@@ -69,6 +69,9 @@ export function DesignSystemShowcase() {
             <a href="#tokens-section">Tokens</a>
           </Button>
           <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+            <a href="#components-section">Components</a>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="w-full justify-start">
             <a href="#playground-section">Playground</a>
           </Button>
           <Button asChild variant="ghost" size="sm" className="w-full justify-start">
@@ -105,6 +108,14 @@ export function DesignSystemShowcase() {
           <div id="tokens-section">
             <TokenInspector />
           </div>
+
+          <h2
+            id="components-section"
+            className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--aegis-text-muted)]"
+            data-testid="components-section-heading"
+          >
+            Components
+          </h2>
 
           <div id="playground-section">
             <ComponentPlayground />

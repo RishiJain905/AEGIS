@@ -36,7 +36,10 @@ function roundedRect(
   context.closePath();
 }
 
-function drawShape(
+/** Canonical shape painter for the per-asset-type glyph language — used by
+ * the 2D label/hover renderers here and by the 3D billboard glyph textures
+ * (§7.2), so the type glyphs are defined in exactly one place. */
+export function drawShape(
   context: CanvasRenderingContext2D,
   shape: NodeShape,
   x: number,

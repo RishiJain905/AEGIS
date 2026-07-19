@@ -11,10 +11,13 @@ import { IncidentStateBadge, SeverityChip } from './incident-primitives';
 
 function QueueRow({ row }: { row: IncidentQueueRow }) {
   return (
-    <li>
+    <li
+      data-zebra="true"
+      className="border-b border-[var(--aegis-border-subtle)] last:border-b-0 odd:bg-[var(--aegis-surface-panel)] even:bg-[color-mix(in_srgb,var(--aegis-surface-panel)_96%,var(--aegis-text-primary))]"
+    >
       <Link
         href={`/incidents/${encodeURIComponent(row.incident.id)}`}
-        className="group flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-raised)] px-4 py-3 transition-colors hover:border-[var(--aegis-accent-line)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-accent-cyan)]"
+        className="group flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 transition-colors hover:bg-[var(--aegis-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-accent-cyan)]"
         data-testid={`queue-row-${row.incident.id}`}
       >
         <SeverityChip severity={row.severity} />
@@ -64,8 +67,11 @@ export function IncidentQueue() {
       ) : (
         <>
           <QueueSummaryRow rows={queueQuery.data} />
-          <Panel title="Open cases" data-testid="incident-queue-list">
-            <ul className="flex flex-col gap-2" role="list">
+          <Panel title="Open cases" density="compact" data-testid="incident-queue-list">
+            <ul
+              className="flex flex-col overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)]"
+              role="list"
+            >
               {queueQuery.data.map((row) => (
                 <QueueRow key={row.incident.id} row={row} />
               ))}

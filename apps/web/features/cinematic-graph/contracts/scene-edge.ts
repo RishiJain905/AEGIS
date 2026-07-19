@@ -18,6 +18,14 @@ export const sceneEdgeSchema = z
     width: z.number().positive(),
     highlighted: z.boolean(),
     dimmed: z.boolean(),
+    // §7.4/§7.9 derived presentation fields (dashed containment + alive-flow
+    // parameters). Presentation-only: pulseAt is a shared-animation-clock
+    // timestamp (NO_PULSE sentinel when the edge never pulsed) and is never
+    // part of any deterministic projection tests hash.
+    dashed: z.boolean(),
+    flowSpeed: z.number().min(0),
+    flowAmplitude: z.number().min(0).max(1),
+    pulseAt: z.number(),
   })
   .strict();
 

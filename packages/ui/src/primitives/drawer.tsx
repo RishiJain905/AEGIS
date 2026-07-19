@@ -19,7 +19,7 @@ export const DrawerOverlay = forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-50 bg-[rgb(1_5_9_/_0.78)] backdrop-blur-[3px] aegis-motion-fade',
+      'fixed inset-0 z-50 bg-[rgb(1_5_9_/_0.6)] backdrop-blur-[3px] aegis-motion-fade',
       className,
     )}
     {...props}

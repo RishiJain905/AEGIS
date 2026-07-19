@@ -6,7 +6,7 @@ import {
   recommendQualityTier,
 } from '@/features/cinematic-graph/lib/capability';
 import { RenderQualityTier } from '@/features/cinematic-graph/contracts';
-import { clusterZ, resolveStablePositions } from '@/features/cinematic-graph/lib/stable-positions';
+import { resolveStablePositions } from '@/features/cinematic-graph/lib/stable-positions';
 import type { GraphNodeV1 } from '@aegis/contracts-ts';
 
 describe('cinematic capability probing', () => {
@@ -39,7 +39,7 @@ describe('cinematic capability probing', () => {
 });
 
 describe('stable 3D positions', () => {
-  it('derives deterministic z from cluster id and preserves xy across calls', () => {
+  it('maps the 2D layout onto the ground plane deterministically across calls', () => {
     const nodes = [
       {
         schemaVersion: 1,
@@ -76,9 +76,11 @@ describe('stable 3D positions', () => {
     expect(secondA).toBeDefined();
     expect(firstB).toBeDefined();
     expect(firstA).toEqual(secondA);
+    // Ground-plane mapping (§7.6): scene X = layout X, scene Z = layout Y,
+    // altitude left at 0 for the risk-skyline derivation at render time.
     expect(firstA?.x).toBe(10);
-    expect(firstA?.y).toBe(20);
-    expect(firstA?.z).toBe(clusterZ('business-unit:retail'));
-    expect(firstB?.z).toBe(clusterZ('business-unit:retail'));
+    expect(firstA?.z).toBe(20);
+    expect(firstA?.y).toBe(0);
+    expect(firstB?.y).toBe(0);
   });
 });
