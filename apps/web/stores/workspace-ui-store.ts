@@ -10,9 +10,11 @@ import {
 } from '@/features/shell/contracts/operator-workspace-state';
 import {
   defaultPanelPreferences,
+  PANEL_PREFERENCES_STORAGE_KEY,
   parsePanelPreferences,
   type PanelPreferences,
   type PanelRegion,
+  type ThemePreference,
 } from '@/features/shell/contracts/panel-preferences';
 
 interface WorkspaceUiState {
@@ -28,6 +30,7 @@ interface WorkspaceUiState {
   setFocusRestorationToken: (token: string | null) => void;
   togglePanelCollapsed: (region: PanelRegion) => void;
   setPanelCollapsed: (region: PanelRegion, collapsed: boolean) => void;
+  setTheme: (theme: ThemePreference) => void;
   setMobileRailOpen: (open: boolean) => void;
   resetForRun: (runId: string | null) => void;
 }
@@ -108,6 +111,12 @@ export const useWorkspaceUiStore = create<WorkspaceUiState>()(
         }));
       },
 
+      setTheme: (theme) => {
+        set((state) => ({
+          panelPreferences: { ...state.panelPreferences, theme },
+        }));
+      },
+
       setMobileRailOpen: (open) => {
         set({ mobileRailOpen: open });
       },
@@ -127,7 +136,7 @@ export const useWorkspaceUiStore = create<WorkspaceUiState>()(
       },
     }),
     {
-      name: 'aegis-panel-preferences-v1',
+      name: PANEL_PREFERENCES_STORAGE_KEY,
       partialize: (state) => ({ panelPreferences: state.panelPreferences }),
       merge: (persisted, current) => {
         const persistedState = persisted as Partial<WorkspaceUiState> | undefined;

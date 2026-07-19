@@ -41,4 +41,22 @@ describe('panel preferences', () => {
     expect(parsed.regions.inspector?.collapsed).toBe(true);
     expect(parsed.regions.inspector?.width).toBe(320);
   });
+
+  it('defaults the theme when absent from persisted data', () => {
+    expect(defaultPanelPreferences.theme).toBe('system');
+    const parsed = parsePanelPreferences({
+      schemaVersion: 1,
+      regions: defaultPanelPreferences.regions,
+    });
+    expect(parsed.theme).toBe('system');
+  });
+
+  it('preserves an explicit theme preference', () => {
+    const parsed = parsePanelPreferences({
+      schemaVersion: 1,
+      theme: 'light',
+      regions: defaultPanelPreferences.regions,
+    });
+    expect(parsed.theme).toBe('light');
+  });
 });

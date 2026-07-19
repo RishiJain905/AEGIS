@@ -17,6 +17,25 @@ export const typographyTokens = {
   uiBase: 'text-base leading-6',
   uiLg: 'text-lg leading-7',
   uiXl: 'text-xl leading-8',
+  // Formal numeric scale — role-based type ramp (see design tokens §2.3).
+  displayXl:
+    'font-[family-name:var(--aegis-font-display)] text-[1.75rem] leading-[2.125rem] font-semibold tracking-[-0.01em]',
+  displayLg:
+    'font-[family-name:var(--aegis-font-display)] text-[1.25rem] leading-[1.625rem] font-semibold tracking-normal',
+  displayMd:
+    'font-[family-name:var(--aegis-font-display)] text-[0.8125rem] leading-[1.125rem] font-semibold uppercase tracking-[0.06em]',
+  bodyLg:
+    'font-[family-name:var(--aegis-font-sans)] text-[0.9375rem] leading-[1.375rem] font-normal tracking-normal',
+  bodyMd:
+    'font-[family-name:var(--aegis-font-sans)] text-[0.875rem] leading-[1.25rem] font-normal tracking-normal',
+  bodySm:
+    'font-[family-name:var(--aegis-font-sans)] text-[0.8125rem] leading-[1.125rem] font-normal tracking-normal',
+  eyebrow:
+    'font-[family-name:var(--aegis-font-sans)] text-[0.6875rem] leading-[1rem] font-semibold uppercase tracking-[0.08em]',
+  monoMd:
+    'font-[family-name:var(--aegis-font-mono)] text-[0.8125rem] leading-[1.125rem] font-medium tracking-[0.01em] tabular-nums',
+  monoSm:
+    'font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] leading-[1rem] font-medium tracking-[0.02em] tabular-nums',
 } as const;
 
 export const spacingTokens = {
@@ -69,5 +88,6 @@ export const breakpointTokens = {
 } as const;
 
 export type SurfaceToken = keyof typeof surfaceTokens;
+export type TypographyToken = keyof typeof typographyTokens;
 export type RiskToken = keyof typeof riskTokens;
 export type DensityToken = keyof typeof densityTokens;

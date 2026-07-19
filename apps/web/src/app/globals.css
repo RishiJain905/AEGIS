@@ -12,7 +12,7 @@
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light dark;
     background: var(--aegis-surface-base);
     scroll-behavior: smooth;
   }

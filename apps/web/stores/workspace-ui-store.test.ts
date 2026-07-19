@@ -16,6 +16,7 @@ describe('workspace ui store', () => {
       },
       panelPreferences: {
         schemaVersion: 1,
+        theme: 'system',
         regions: {
           operationsRail: { docked: true, collapsed: false, width: null },
           inspector: { docked: true, collapsed: false, width: 360 },
@@ -52,5 +53,11 @@ describe('workspace ui store', () => {
   it('opens command palette', () => {
     useWorkspaceUiStore.getState().setCommandPaletteOpen(true);
     expect(useWorkspaceUiStore.getState().workspace.commandPaletteOpen).toBe(true);
+  });
+
+  it('updates the theme preference', () => {
+    expect(useWorkspaceUiStore.getState().panelPreferences.theme).toBe('system');
+    useWorkspaceUiStore.getState().setTheme('light');
+    expect(useWorkspaceUiStore.getState().panelPreferences.theme).toBe('light');
   });
 });
