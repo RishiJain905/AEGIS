@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 import { Button, Drawer, DrawerContent, DrawerHeader, DrawerTitle, Rail } from '@aegis/ui';
 
+import type { ResolvedTheme } from '@/features/shell/contracts/panel-preferences';
+import { useTheme } from '@/features/shell/hooks/use-theme';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 const INCIDENT_PATH = '/incidents';
@@ -77,6 +79,63 @@ function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
     >
       <path d={direction === 'left' ? 'm12.5 4-6 6 6 6' : 'm7.5 4 6 6-6 6'} />
     </svg>
+  );
+}
+
+function ThemeIcon({ target }: { target: ResolvedTheme }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-[18px] w-[18px] shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {target === 'light' ? (
+        <>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+        </>
+      ) : (
+        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+      )}
+    </svg>
+  );
+}
+
+function ThemeToggle({ collapsed }: { collapsed: boolean }) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // `resolvedTheme` is 'dark' on the server / first render and only corrects to
+  // the real value in an effect; assume that SSR value until mounted so the icon
+  // and accessible name match on hydration (no mismatch warning).
+  const effectiveTheme: ResolvedTheme = mounted ? resolvedTheme : 'dark';
+  const nextTheme: ResolvedTheme = effectiveTheme === 'dark' ? 'light' : 'dark';
+  const actionLabel = `Switch to ${nextTheme} theme`;
+
+  return (
+    <Button
+      variant="ghost"
+      size={collapsed ? 'icon' : 'sm'}
+      className={collapsed ? 'w-10 justify-center px-0' : 'w-full justify-start'}
+      data-testid="toggle-theme"
+      onClick={() => {
+        setTheme(nextTheme);
+      }}
+      aria-label={collapsed ? actionLabel : undefined}
+      title={actionLabel}
+    >
+      <ThemeIcon target={nextTheme} />
+      {!collapsed ? <span>{nextTheme === 'light' ? 'Light theme' : 'Dark theme'}</span> : null}
+    </Button>
   );
 }
 
@@ -176,6 +235,7 @@ export function OperationsRail() {
           </DrawerHeader>
           <nav aria-label="Mobile operations navigation" className="flex flex-col gap-2 p-4">
             <NavLinks collapsed={false} />
+            <ThemeToggle collapsed={false} />
           </nav>
         </DrawerContent>
       </Drawer>
@@ -188,6 +248,7 @@ export function OperationsRail() {
         className="operations-rail-desktop shrink-0"
       >
         <RailIdentity collapsed={collapsed} />
+        <ThemeToggle collapsed={collapsed} />
         <Button
           variant="ghost"
           size={collapsed ? 'icon' : 'sm'}
