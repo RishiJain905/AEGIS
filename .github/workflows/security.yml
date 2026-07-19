@@ -203,12 +203,12 @@ jobs:
           --volume "${GITHUB_WORKSPACE}/security-artifacts:/artifacts"
           anchore/syft:v1.19.0@sha256:bc1ae555a43011d23bb011a4f50e175fc9a5984a008a3f8f2d692b211fcacd2a
           dir:/work
-          --exclude ./.git/**
-          --exclude ./node_modules/**
-          --exclude ./.venv/**
-          --exclude ./.next/**
-          --exclude ./.turbo/**
-          --exclude ./security-artifacts/**
+          --exclude './.git/**'
+          --exclude './node_modules/**'
+          --exclude './.venv/**'
+          --exclude './.next/**'
+          --exclude './.turbo/**'
+          --exclude './security-artifacts/**'
           --scope all-layers
           --output cyclonedx-json=/artifacts/dependencies.cdx.json
       - name: Generate non-blocking license report
