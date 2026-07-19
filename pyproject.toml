@@ -93,6 +93,7 @@ module = ["sklearn.*", "joblib.*", "jsonschema.*", "openai.*", "boto3.*", "botoc
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
 testpaths = ["tests"]
 pythonpath = [".", "apps", "packages", "services", "tests"]
 asyncio_mode = "auto"
