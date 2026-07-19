@@ -178,12 +178,14 @@ jobs:
             if ! docker run --rm \
               --volume /var/run/docker.sock:/var/run/docker.sock \
               --volume "${GITHUB_WORKSPACE}/security-artifacts:/artifacts" \
+              --volume "${GITHUB_WORKSPACE}/.trivyignore.yaml:/config/.trivyignore.yaml:ro" \
               --volume aegis-trivy-image-cache:/root/.cache/trivy \
               --entrypoint trivy \
               aquasec/trivy:0.61.0@sha256:6967db29ce5294d054121e94b3cb1262de858af63b4547bb1bade66a4306f2e4 \
               image \
               --scanners vuln \
               --ignore-unfixed \
+              --ignorefile /config/.trivyignore.yaml \
               --severity HIGH,CRITICAL \
               --exit-code 1 \
               --format sarif \

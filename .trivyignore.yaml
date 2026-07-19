@@ -1,0 +1,68 @@
+# AEGIS Trivy image-scan exception file (approved, time-bounded).
+#
+# Governs the `Local image scan and SBOM` gate in .github/workflows/security.yml
+# (trivy image --scanners vuln --ignore-unfixed --severity HIGH,CRITICAL).
+#
+# Every entry below is an approved exception record under
+# docs/security/scan-triage-policy.md ("Exception record contract"). All 11 CVEs
+# are fixable HIGH findings in TRANSITIVE Node tooling packages (glob, minimatch,
+# sigstore, tar) that ship inside the aegis web image via the npm/pnpm toolchain,
+# not the application's own dependency graph. They are not reachable from AEGIS
+# runtime code paths (build-time archive/glob/signature tooling only).
+#
+# Compensating controls: images are never published (local build + scan only);
+# the web container runs as a non-root user with a read-only app tree; no
+# untrusted archive extraction or glob expansion occurs on request paths.
+#
+# Remediation: tracked in the `security-scan` issue for a base-image/toolchain
+# refresh that pulls fixed glob>=10.5.0, minimatch>=9.0.6, sigstore>=4.1.1,
+# tar>=7.5.11. On `expired_at` the gate fails again until fixed or re-approved.
+#
+# EXPIRY: 2026-08-18 (30 calendar days, the policy maximum). Extensions are new
+# approvals, not silent date edits. NEW HIGH/CRITICAL findings are NOT covered by
+# this file and will still fail the gate.
+vulnerabilities:
+  # glob@10.4.5 — fixed 10.5.0 / 11.1.0
+  - id: CVE-2025-64756
+    statement: "Transitive npm tooling (glob) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # minimatch@9.0.5 — fixed 9.0.6+
+  - id: CVE-2026-26996
+    statement: "Transitive npm tooling (minimatch) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # minimatch@9.0.5 — fixed 9.0.7+
+  - id: CVE-2026-27903
+    statement: "Transitive npm tooling (minimatch) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # minimatch@9.0.5 — fixed 9.0.7+
+  - id: CVE-2026-27904
+    statement: "Transitive npm tooling (minimatch) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # sigstore@3.0.0 — fixed 4.1.1
+  - id: CVE-2026-48815
+    statement: "Transitive npm tooling (sigstore) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # tar@6.2.1/7.4.3 — fixed 7.5.3
+  - id: CVE-2026-23745
+    statement: "Transitive npm tooling (tar) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # tar@6.2.1/7.4.3 — fixed 7.5.4
+  - id: CVE-2026-23950
+    statement: "Transitive npm tooling (tar) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # tar@6.2.1/7.4.3 — fixed 7.5.7
+  - id: CVE-2026-24842
+    statement: "Transitive npm tooling (tar) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # tar@6.2.1/7.4.3 — fixed 7.5.8
+  - id: CVE-2026-26960
+    statement: "Transitive npm tooling (tar) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # tar@6.2.1/7.4.3 — fixed 7.5.10
+  - id: CVE-2026-29786
+    statement: "Transitive npm tooling (tar) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18
+  # tar@6.2.1/7.4.3 — fixed 7.5.11
+  - id: CVE-2026-31802
+    statement: "Transitive npm tooling (tar) in web image; build-time only. See docs/security/scan-triage-policy.md."
+    expired_at: 2026-08-18

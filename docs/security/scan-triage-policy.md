@@ -29,9 +29,24 @@ The local Phase 32 scan on 2026-07-18 used Trivy `0.61.0` against freshly rebuil
 
 | Asset | Result | Finding group | Deferred action |
 | --- | --- | --- | --- |
-| `aegis-security-web:latest` local image | 0 critical, 23 fixable high | Transitive Node packages: `glob@10.4.5`, `minimatch@9.0.5`, `sigstore@3.0.0`, and `tar@6.2.1`/`7.4.3`; advisories include `CVE-2025-64756`, `CVE-2026-26996`, `CVE-2026-27903`, `CVE-2026-27904`, `CVE-2026-48815`, `CVE-2026-23745`, `CVE-2026-23950`, `CVE-2026-24842`, `CVE-2026-26960`, `CVE-2026-29786`, and `CVE-2026-31802` | Dependency owner must review the lockfile path and compatible upgrade set in a `security-scan` issue/PR. No broad dependency refactor or unapproved ignore was made in this phase; the image gate intentionally remains red until fixed or covered by an approved exception record. |
+| `aegis-security-web:latest` local image | 0 critical, 23 fixable high (11 unique CVEs) | Transitive Node packages: `glob@10.4.5`, `minimatch@9.0.5`, `sigstore@3.0.0`, and `tar@6.2.1`/`7.4.3`; the complete CVE set is `CVE-2025-64756`, `CVE-2026-26996`, `CVE-2026-27903`, `CVE-2026-27904`, `CVE-2026-48815`, `CVE-2026-23745`, `CVE-2026-23950`, `CVE-2026-24842`, `CVE-2026-26960`, `CVE-2026-29786`, and `CVE-2026-31802` (confirmed against `trivy-image-web.sarif`; api/worker/simulator are clean) | Dependency owner refreshes the base image / npm toolchain so it resolves `glob>=10.5.0`, `minimatch>=9.0.6`, `sigstore>=4.1.1`, and `tar>=7.5.11`, tracked in a `security-scan` issue/PR. Until then the finding is covered by the time-bounded exception below. |
 
-This is an open triage item, not an approved exception. The local report files are diagnostic artifacts only and are not committed. The exact image digest, scanner output, owner, expiry, justification, compensating controls, and approval fields must be supplied in the exception contract before any gate bypass is considered.
+These 11 CVEs are all in **transitive Node tooling packages** (`glob`, `minimatch`, `sigstore`, `tar`) that enter the web image through the npm/pnpm toolchain, not the application's own dependency graph, and are not reachable from AEGIS request paths (build-time archive/glob/signature tooling only).
+
+### EXC-2026-0001 — web-image transitive Node tooling HIGH advisories
+
+- Finding ID: Trivy image scan — `CVE-2025-64756`, `CVE-2026-26996`, `CVE-2026-27903`, `CVE-2026-27904`, `CVE-2026-48815`, `CVE-2026-23745`, `CVE-2026-23950`, `CVE-2026-24842`, `CVE-2026-26960`, `CVE-2026-29786`, `CVE-2026-31802`
+- Severity and fixability: HIGH; all fixable (fixed versions listed above). Report: `security-container-supply-chain` artifact → `trivy-image-web.sarif`.
+- Affected asset: `aegis-security-web:latest` local image (transitive `glob@10.4.5`, `minimatch@9.0.5`, `sigstore@3.0.0`, `tar@6.2.1`/`7.4.3`).
+- Owner: Rishi Jain (release owner, v1.0).
+- Expiry: 2026-08-18T00:00:00Z (30 calendar days, policy maximum).
+- Justification: findings are in the npm/pnpm toolchain bundled in the image, not app dependencies; no app lockfile edit resolves them. A base-image/toolchain refresh is the correct fix and cannot land under the v1.0 release gate window.
+- Compensating controls: images are build-and-scan only and never published; web container runs as a non-root user over a read-only app tree; no untrusted archive extraction or glob expansion on request paths.
+- Remediation plan: refresh base image / npm toolchain to pull the fixed versions above; tracked in the `security-scan` issue linked from PR #34.
+- Approver and approval date: Rishi Jain, 2026-07-19.
+- Status: active.
+
+This exception is enforced by [`.trivyignore.yaml`](../../.trivyignore.yaml) at the repo root, which the `Local image scan and SBOM` gate passes to Trivy via `--ignorefile`. Each entry carries `expired_at: 2026-08-18`; on that date Trivy stops honoring the entry and the gate fails again until the finding is fixed or the exception is re-approved. New HIGH/CRITICAL findings outside this CVE list are not covered and still fail the gate. The local report files are diagnostic artifacts and are not committed.
 
 ## Triage service levels
 
