@@ -67,3 +67,6 @@ dump.rdb
 # Playwright MCP temp artifacts + stray root screenshots
 .playwright-mcp/
 /after-action.png
+
+# Stray release-e2e artifact (belongs only in dated evidence subdirs)
+/docs/release/evidence/e2e.json
