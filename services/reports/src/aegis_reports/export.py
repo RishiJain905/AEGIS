@@ -6,7 +6,7 @@ import hashlib
 import html
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from aegis_contracts.reports import AfterActionReportV1, ReportExportFormatV1
 from aegis_contracts.versioning import WORKSPACE_VERSION
@@ -107,6 +107,17 @@ def render_export(
 
 
 def load_template(name: str) -> str:
+    # Reject absolute paths and Windows drive-letter/UNC paths on ANY host OS.
+    # Without this, a name like "C:/Windows/win.ini" is treated as relative on
+    # POSIX and would slip past the containment check below (which resolves it
+    # inside the template root). Checking both path flavours keeps the guard
+    # platform-independent.
+    if (
+        PureWindowsPath(name).is_absolute()
+        or bool(PureWindowsPath(name).drive)
+        or PurePosixPath(name).is_absolute()
+    ):
+        raise ValueError("Invalid report template path")
     template_root = (Path(__file__).resolve().parents[4] / "templates" / "reports").resolve()
     template_path = (template_root / name).resolve()
     root_prefix = f"{template_root}{os.sep}"
