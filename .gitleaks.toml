@@ -4,8 +4,12 @@ title = "AEGIS gitleaks configuration"
 useDefault = true
 
 [allowlist]
-description = "Synthetic cross-language contract fixtures and web demo fixtures are not secrets"
+description = "Synthetic cross-language contract fixtures, web demo fixtures, and test auth password fixtures are not secrets"
 paths = [
   '''tests/contract/fixtures/''',
   '''apps/web/fixtures/''',
+  # Integration auth tests use throwaway in-test passwords (e.g. "wrong-pass-123")
+  # to exercise the login/setup flow against an ephemeral DB. These are literal
+  # test fixtures, never real credentials — scoped narrowly to the auth test dir.
+  '''tests/integration/auth/.*''',
 ]
