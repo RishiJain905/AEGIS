@@ -7,6 +7,7 @@ import type {
   IncidentV1,
   InvestigationDetailV1,
   PolicyDecisionV1,
+  ProposalRevisionV1,
   RunV1,
 } from '@aegis/contracts-ts';
 import type { NodeStatusValue, RiskBand } from '@aegis/ui';
@@ -463,27 +464,45 @@ export function buildAgentRoster(
 
 export interface ProposalView {
   proposal: ActionProposalV1;
+  revision: ProposalRevisionV1 | null;
   policy: PolicyDecisionV1 | null;
   approval: ApprovalV1 | null;
   executed: ExecutedActionV1 | null;
 }
 
-/** Join each proposal to its latest policy decision, approval, and execution. */
+/**
+ * Join each proposal to its current revision, latest policy decision, approval,
+ * and execution. The revision and the *latest* policy decision are what the
+ * interactive approval gate needs (idempotency + stale-revision guard), so this
+ * carries them alongside the read-only status fields.
+ */
 export function buildProposalViews(
   investigation: InvestigationDetailV1 | null | undefined,
 ): ProposalView[] {
   if (!investigation) {
     return [];
   }
-  return investigation.proposals.map((proposal) => ({
-    proposal,
-    policy:
-      investigation.policyDecisions.find((decision) => decision.proposalId === proposal.id) ?? null,
-    approval:
-      investigation.approvals.find((approval) => approval.proposalId === proposal.id) ?? null,
-    executed:
-      investigation.executedActions.find((action) => action.proposalId === proposal.id) ?? null,
-  }));
+  return investigation.proposals.map((proposal) => {
+    const proposalRevisions = investigation.proposalRevisions.filter(
+      (revision) => revision.proposalId === proposal.id,
+    );
+    const revision =
+      proposalRevisions.find((candidate) => candidate.id === proposal.currentRevisionId) ??
+      proposalRevisions.at(-1) ??
+      null;
+    const decisions = investigation.policyDecisions.filter(
+      (decision) => decision.proposalId === proposal.id,
+    );
+    return {
+      proposal,
+      revision,
+      policy: decisions.at(-1) ?? null,
+      approval:
+        investigation.approvals.find((approval) => approval.proposalId === proposal.id) ?? null,
+      executed:
+        investigation.executedActions.find((action) => action.proposalId === proposal.id) ?? null,
+    };
+  });
 }
 
 export function countPendingProposals(views: readonly ProposalView[]): number {

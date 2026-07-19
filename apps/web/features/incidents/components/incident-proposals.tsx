@@ -2,6 +2,8 @@
 
 import { Badge, EmptyState, Panel, cn } from '@aegis/ui';
 
+import { ApprovalControls } from '@/features/approval/approval-controls';
+
 import type { ProposalView } from '../lib/incident-model';
 
 function statusTone(status: string): string {
@@ -41,7 +43,13 @@ function ApprovalState({ view }: { view: ProposalView }) {
   return <span className="text-[var(--aegis-text-muted)]">Pending evaluation</span>;
 }
 
-export function IncidentProposals({ views }: { views: readonly ProposalView[] }) {
+export function IncidentProposals({
+  incidentId,
+  views,
+}: {
+  incidentId: string;
+  views: readonly ProposalView[];
+}) {
   const pending = views.filter((view) => view.proposal.status === 'pending').length;
 
   return (
@@ -99,6 +107,20 @@ export function IncidentProposals({ views }: { views: readonly ProposalView[] })
               <p className="mt-2 border-t border-[var(--aegis-border-subtle)] pt-2 text-xs">
                 <ApprovalState view={view} />
               </p>
+              {/*
+                Interactive human-approval gate. ApprovalControls renders the
+                approve/reject/modify actions only for a PENDING proposal that
+                carries an `approval_required` policy decision and its current
+                revision, and only for an actor holding `approvals:decide`
+                (server remains authoritative). For already-decided proposals it
+                renders nothing, leaving the read-only status above intact.
+              */}
+              <ApprovalControls
+                incidentId={incidentId}
+                proposal={view.proposal}
+                revision={view.revision ?? undefined}
+                latestDecision={view.policy ?? undefined}
+              />
             </li>
           ))}
         </ul>

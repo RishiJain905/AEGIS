@@ -38,6 +38,23 @@ vi.mock('@/stores/workspace-ui-store', () => ({
 
 vi.mock('@/lib/api', () => ({ isNotFoundError: () => false }));
 
+// The incident proposals section now mounts the interactive ApprovalControls,
+// which read the auth context and the approval mutations. Stub both so the
+// detail render stays a pure incident-shape assertion (a VIEWER without
+// approvals:decide) — the interactive path has its own dedicated test.
+vi.mock('@/features/auth', () => ({
+  useAuth: () => ({ hasPermission: () => false }),
+}));
+
+vi.mock('@/features/approval/use-approval-mutations', () => ({
+  useApprovalMutations: () => ({
+    approve: { isPending: false, mutate: vi.fn() },
+    reject: { isPending: false, mutate: vi.fn() },
+    modify: { isPending: false, mutate: vi.fn() },
+  }),
+  newApprovalIdempotencyKey: (prefix: string) => `${prefix}-test`,
+}));
+
 vi.mock('next/link', () => ({
   default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
     <a href={href} {...rest}>
@@ -113,6 +130,7 @@ const investigation = {
       createdAt: '2026-06-30T02:09:00.000Z',
     },
   ],
+  proposalRevisions: [],
   policyDecisions: [
     {
       id: 'pdc_1',

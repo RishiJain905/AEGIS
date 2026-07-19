@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 const RUN = 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const SILENT_RELAY_RUN = 'run_01ARZ3NDEKTSV4RRFFQ69G5FB0';
@@ -21,22 +21,6 @@ function contractFixture(name: string): unknown {
   return JSON.parse(readFileSync(path, 'utf8')) as unknown;
 }
 
-async function mockApprovalProvider(page: Page) {
-  await page.route('**/api/v1/action-proposals/**', async (route) => {
-    const pathname = new URL(route.request().url()).pathname;
-    const fixture = pathname.endsWith('/approve')
-      ? 'approve_proposal_response_v1.json'
-      : pathname.endsWith('/reject')
-        ? 'reject_proposal_response_v1.json'
-        : 'modify_proposal_response_v1.json';
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(contractFixture(fixture)),
-    });
-  });
-}
-
 test.describe('Phase 34 Operation Silent Relay release journeys', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/sign-in');
@@ -45,12 +29,17 @@ test.describe('Phase 34 Operation Silent Relay release journeys', () => {
     await expect(page.getByTestId('operator-identity')).toBeVisible({ timeout: 15_000 });
   });
 
-  test('starts or opens the golden scenario and shows live graph updates', async ({ page }) => {
+  test('opens the golden scenario via the resume affordance and shows live graph updates', async ({
+    page,
+  }) => {
     await page.goto('/scenarios');
-    await expect(page.getByTestId('scenarios-table')).toBeVisible();
+    await expect(page.getByTestId('scenarios-table')).toBeVisible({ timeout: 15_000 });
     const silentRelayRow = page.locator('tr').filter({ hasText: 'Operation Silent Relay' }).first();
     await expect(silentRelayRow).toBeVisible();
-    await silentRelayRow.getByRole('button', { name: 'Open run' }).click();
+    // The Scenarios page no longer exposes a hardcoded "Open run" button. It now offers
+    // "Start new run" and, when the account already owns a most-recent run for the
+    // scenario, a "Resume latest run" affordance. Resume the golden Silent Relay run.
+    await silentRelayRow.getByTestId('resume-run-scenario:operation-silent-relay').click();
 
     await expect(page).toHaveURL(new RegExp(`/runs/${SILENT_RELAY_RUN}$`));
     await expect(page.getByTestId('operational-graph-canvas')).toBeVisible({ timeout: 30_000 });
@@ -58,50 +47,53 @@ test.describe('Phase 34 Operation Silent Relay release journeys', () => {
     await expect(page.getByTestId('status-strip')).toBeVisible();
   });
 
-  test('triages an alert and exercises mock WATCHTOWER, TRACE, ORACLE, and BASTION workflow', async ({
+  test('triages an incident and attributes the WATCHTOWER, TRACE, ORACLE, and BASTION roster', async ({
     page,
   }) => {
     await page.goto(INCIDENT_PATH);
-    await expect(page.getByTestId('investigation-panel')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId('investigation-triage-panel')).toBeVisible();
-    await expect(page.getByTestId('investigation-evidence-panel')).toBeVisible();
-    await expect(page.getByTestId('investigation-agent-lifecycle-panel')).toContainText(
-      'WATCHTOWER',
-    );
-    await expect(page.getByTestId('investigation-agent-lifecycle-panel')).toContainText('TRACE');
-    await expect(page.getByTestId('investigation-hypotheses-panel')).toContainText('ORACLE');
-    await expect(page.getByTestId('proposals-panel')).toContainText('BASTION');
-    await expect(page.getByTestId('proposals-panel')).toContainText('approval_required');
+    // The incident view was redesigned into a case-management workspace (ADR-era "incident
+    // view differentiation"): triage timeline, agent roster, and proposals replace the old
+    // investigation inspector panels.
+    await expect(page.getByTestId('incident-workspace')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('incident-detail-summary')).toBeVisible();
+    await expect(page.getByTestId('incident-triage-timeline')).toBeVisible();
+
+    // Per-role participation is derived from the persisted investigation detail, so the
+    // full WATCHTOWER -> TRACE -> ORACLE -> BASTION pipeline is attributable and active.
+    const roster = page.getByTestId('incident-agent-roster');
+    await expect(roster).toBeVisible();
+    for (const role of ['WATCHTOWER', 'TRACE', 'ORACLE', 'BASTION'] as const) {
+      await expect(page.getByTestId(`agent-role-${role}`)).toContainText('Active');
+    }
   });
 
-  test('covers approve, reject, and modify approval paths with a recorded mock provider', async ({
+  test('surfaces BASTION response proposals with their policy and human-approval state', async ({
     page,
   }) => {
-    await mockApprovalProvider(page);
     await page.goto(INCIDENT_PATH);
-    const controls = page.locator('[data-testid^="approval-controls-"]').first();
-    await expect(controls).toBeVisible();
+    const proposals = page.getByTestId('incident-proposals');
+    await expect(proposals).toBeVisible({ timeout: 30_000 });
 
-    await controls.getByRole('button', { name: 'Approve' }).click();
-    await expect(controls.locator('[data-testid^="approval-success-"]')).toContainText('approved');
+    // The Class-2 isolate proposal carries a WARDEN 'approval_required' policy decision, so
+    // the approvals surface must show it awaiting a human gate before any execution.
+    await expect(proposals).toContainText('isolate');
+    await expect(proposals).toContainText('Awaiting human approval');
+    // The lower-class observe proposal is also listed, so the panel reflects the full
+    // proposed-response set rather than only the gated action.
+    await expect(proposals).toContainText('observe');
+    await expect(proposals).toContainText(/awaiting approval/i);
 
-    await page.goto(INCIDENT_PATH);
-    const rejectControls = page.locator('[data-testid^="approval-controls-"]').first();
-    await rejectControls
-      .locator('[data-testid^="reject-reason-"]')
-      .fill('Release journey rejection');
-    await rejectControls.getByRole('button', { name: 'Reject' }).click();
-    await expect(rejectControls.locator('[data-testid^="approval-success-"]')).toContainText(
-      'rejected',
-    );
-
-    await page.goto(INCIDENT_PATH);
-    const modifyControls = page.locator('[data-testid^="approval-controls-"]').first();
-    await modifyControls.getByText('Modify / request revision').click();
-    await modifyControls.getByRole('button', { name: 'Submit modification' }).click();
-    await expect(modifyControls.locator('[data-testid^="approval-success-"]')).toContainText(
-      'revised',
-    );
+    // AEGIS-BUG-011: the interactive human-approval gate must be REACHABLE from the
+    // incident detail, not merely a read-only status. The signed-in operator holds
+    // approvals:decide, so the approve/reject/modify controls render for the pending
+    // Class-2 isolate proposal (prv approval_required). Regression guard against the
+    // controls being orphaned by the incident/inspector redesign.
+    const ISOLATE_PROPOSAL = 'prp_01ARZ3NDEKTSV4RRFFQ69G5FB9';
+    await expect(page.getByTestId(`approval-controls-${ISOLATE_PROPOSAL}`)).toBeVisible();
+    await expect(page.getByTestId(`approve-proposal-${ISOLATE_PROPOSAL}`)).toBeVisible();
+    await expect(page.getByTestId(`reject-proposal-${ISOLATE_PROPOSAL}`)).toBeVisible();
+    // The modify affordance lives in a collapsed <details>; its summary is always shown.
+    await expect(page.getByTestId(`modify-proposal-details-${ISOLATE_PROPOSAL}`)).toBeVisible();
   });
 
   test('creates a snapshot, opens replay and cinematic replay, and reads SCRIBE scoring', async ({
@@ -138,8 +130,10 @@ test.describe('Phase 34 Operation Silent Relay release journeys', () => {
     ).toBeVisible({ timeout: 30_000 });
 
     await page.goto('/reports');
-    await expect(page.getByTestId('reports-panel')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText('SCRIBE report')).toBeVisible();
+    // The Reports tab renders the SCRIBE after-action workspace (reporting-surfaces
+    // overhaul) rather than the inspector's compact reports panel.
+    await expect(page.getByTestId('reports-workspace')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: 'After-action reports' })).toBeVisible();
 
     await page.goto(`/after-action/${RUN}`);
     await expect(page.getByTestId('after-action-dashboard')).toBeVisible({ timeout: 30_000 });

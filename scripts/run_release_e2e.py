@@ -143,6 +143,14 @@ def main() -> int:
             "AEGIS_RELEASE_REPORT_PATH": str(output_path),
             "AEGIS_BROWSER_PROJECTS": ",".join(installed),
             "AEGIS_BROWSER_SKIP_REASONS": json.dumps(skipped),
+            # Self-contained fixture-mode web server. The release e2e is the fixture-mode
+            # UI-flow validation (backend correctness is covered by the real-service
+            # integration/golden/scoring suites), so Playwright owns its own Next dev
+            # server on :3000 serving the fixture dataset. This stage must not depend on
+            # an externally running web container. Auth (dev-login) still hits the real
+            # API on :8000; CORS there only allows the :3000 origin, so the port is fixed.
+            "AEGIS_E2E_LOCAL_WEB": "1",
+            "AEGIS_E2E_WEB_PORT": "3000",
             "NEXT_PUBLIC_AEGIS_DATA_SOURCE": "fixture",
             "NEXT_PUBLIC_API_BASE_URL": "http://localhost:8000",
             "AEGIS_E2E_BASE_URL": "http://localhost:3000",

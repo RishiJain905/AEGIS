@@ -147,7 +147,7 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
       <div className="grid min-h-0 grid-cols-1 gap-5 xl:grid-cols-3">
         <div className="flex flex-col gap-5 xl:col-span-2">
           <IncidentTriageTimeline events={timeline} />
-          <IncidentProposals views={proposalViews} />
+          <IncidentProposals incidentId={incidentId} views={proposalViews} />
           <IncidentAlertsEvidence alerts={linkedAlerts} evidence={evidence} />
         </div>
         <div className="flex flex-col gap-5">
