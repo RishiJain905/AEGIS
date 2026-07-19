@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from aegis_api.auth.deps import require_permission
 from aegis_api.db.session import db_session, get_db_session_maker
+from aegis_contracts import PermissionV1
 from aegis_contracts.risk import (
     RiskComputeRequestV1,
     RiskComputeResponseV1,
@@ -17,7 +19,7 @@ from aegis_graph_risk import DEFAULT_RISK_ENGINE_CONFIG_V1
 from aegis_incidents.risk_pipeline import run_risk_propagation_for_run
 from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(prefix="/api/v1/risk", tags=["risk"])
 
@@ -27,7 +29,12 @@ async def get_risk_config() -> RiskEngineConfigV1:
     return DEFAULT_RISK_ENGINE_CONFIG_V1
 
 
-@router.post("/compute", response_model=RiskComputeResponseV1)
+# Persists risk scores (dry_run default False) — an investigation write action.
+@router.post(
+    "/compute",
+    response_model=RiskComputeResponseV1,
+    dependencies=[Depends(require_permission(PermissionV1.INVESTIGATION_TRIGGER))],
+)
 async def compute_risk(request: RiskComputeRequestV1) -> RiskComputeResponseV1:
     if request.schema_version != RISK_COMPUTE_REQUEST_SCHEMA_VERSION:
         raise HTTPException(status_code=400, detail="Unsupported schema version")

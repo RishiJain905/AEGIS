@@ -2,7 +2,12 @@
 
 import { Badge, Button, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
-import { GraphEntityInspector, IncidentContextInspector } from '@/features/inspector';
+import {
+  GraphEntityInspector,
+  IncidentContextInspector,
+  InspectorLabel,
+  InspectorMonoValue,
+} from '@/features/inspector';
 import { InvestigationPanel } from '@/features/investigation';
 import { ProposalsPanel } from '@/features/proposals/proposals-panel';
 import { ReportsPanel } from '@/features/reports/reports-panel';
@@ -37,7 +42,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
   if (collapsed) {
     return (
-      <div className="flex w-12 shrink-0 flex-col items-center border-l border-[var(--aegis-border-default)] p-2">
+      <div className="flex w-14 shrink-0 flex-col items-center rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-rail)] p-2 shadow-[var(--aegis-shadow-panel)]">
         <Button
           variant="ghost"
           size="sm"
@@ -75,12 +80,17 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
   return (
     <aside
-      className="flex w-full shrink-0 flex-col border-l border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] lg:w-80 xl:w-96"
+      className="flex w-full shrink-0 flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-panel)] lg:w-80 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:w-96"
       data-testid="inspector-panel"
       aria-label="Inspector"
     >
-      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] px-4 py-2">
-        <h2 className="text-sm font-semibold">Inspector</h2>
+      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] bg-[linear-gradient(180deg,var(--aegis-surface-raised),var(--aegis-surface-panel))] px-4 py-3">
+        <div>
+          <p className="font-mono text-[0.625rem] uppercase tracking-[0.15em] text-[var(--aegis-text-muted)]">
+            Context channel
+          </p>
+          <h2 className="text-sm font-semibold tracking-[0.04em]">Inspector</h2>
+        </div>
         <Button
           variant="ghost"
           size="sm"
@@ -138,11 +148,16 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
             {incidentQuery.data ? (
               <Panel title="Incident" density="compact">
-                <p className="text-sm font-medium">{incidentQuery.data.title}</p>
-                <Badge className="mt-2">{incidentQuery.data.state}</Badge>
-                <p className="mt-2 font-mono text-xs text-[var(--aegis-text-muted)]">
-                  {incidentQuery.data.id}
-                </p>
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm font-semibold leading-5 text-[var(--aegis-text-primary)]">
+                    {incidentQuery.data.title}
+                  </p>
+                  <Badge className="self-start">{incidentQuery.data.state}</Badge>
+                  <div className="flex flex-col gap-1">
+                    <InspectorLabel>Incident ID</InspectorLabel>
+                    <InspectorMonoValue value={incidentQuery.data.id} />
+                  </div>
+                </div>
               </Panel>
             ) : null}
 
@@ -153,7 +168,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                     <li key={incident.id}>
                       <button
                         type="button"
-                        className="w-full rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-3 py-2 text-left text-sm hover:bg-[var(--aegis-surface-elevated)]"
+                        className="min-h-10 w-full rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] px-3 py-2 text-left text-sm transition-[background-color,border-color,color] hover:border-[var(--aegis-border-strong)] hover:bg-[var(--aegis-surface-hover)] aria-pressed:border-[var(--aegis-accent-line)] aria-pressed:text-[var(--aegis-accent-strong)]"
                         onClick={() => {
                           setSelectedEntityId(incident.id);
                         }}
@@ -173,7 +188,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                   {alertsQuery.data.map((alert) => (
                     <li
                       key={alert.id}
-                      className="rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-3 py-2 text-sm"
+                      className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] border-l-[3px] border-l-[var(--aegis-risk-high)] bg-[var(--aegis-surface-elevated)] px-3 py-3 text-sm shadow-[var(--aegis-shadow-control)]"
                       data-testid={`alert-item-${alert.id}`}
                     >
                       <p className="font-medium">{alert.title}</p>
@@ -191,14 +206,14 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                         ) : null}
                       </div>
                       {alert.explanation ? (
-                        <details className="mt-2 text-xs text-[var(--aegis-text-secondary)]">
-                          <summary className="cursor-pointer">Explanation</summary>
-                          <p className="mt-1">{alert.explanation.summary}</p>
-                          <p className="mt-1 font-mono text-[10px]">
+                        <details className="mt-2 text-xs leading-5 text-[var(--aegis-text-secondary)]">
+                          <summary className="cursor-pointer font-medium">Explanation</summary>
+                          <p className="mt-1.5 break-words">{alert.explanation.summary}</p>
+                          <p className="mt-1.5 break-words font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
                             {alert.explanation.comparison}
                           </p>
                           {alert.evidence ? (
-                            <p className="mt-1 text-[var(--aegis-text-muted)]">
+                            <p className="mt-1.5 break-words text-[var(--aegis-text-muted)]">
                               Window: {alert.evidence.windowKey}
                             </p>
                           ) : null}
@@ -206,18 +221,21 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                       ) : null}
                       {'anomalyExplanation' in alert && alert.anomalyExplanation ? (
                         <details
-                          className="mt-2 text-xs text-[var(--aegis-text-secondary)]"
+                          className="mt-2 text-xs leading-5 text-[var(--aegis-text-secondary)]"
                           open={alert.detectorId === 'isolation-forest'}
                         >
-                          <summary className="cursor-pointer">Anomaly model</summary>
-                          <p className="mt-1">
+                          <summary className="cursor-pointer font-medium">Anomaly model</summary>
+                          <p className="mt-1.5 break-words">
                             {(alert.anomalyExplanation as { summary?: string }).summary}
                           </p>
-                          <p className="mt-1 font-mono text-[10px]">
+                          <p className="mt-1.5 break-words font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
                             Score:{' '}
                             {(
-                              (alert.anomalyExplanation as { observedScore?: number })
-                                .observedScore ??
+                              (
+                                alert.anomalyExplanation as {
+                                  observedScore?: number;
+                                }
+                              ).observedScore ??
                               alert.confidence ??
                               0
                             ).toFixed(2)}{' '}
@@ -227,16 +245,23 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                             ).threshold?.toFixed(2)}
                           </p>
                           {'modelVersionId' in alert && alert.modelVersionId ? (
-                            <p className="mt-1 font-mono text-[10px] text-[var(--aegis-text-muted)]">
+                            <p className="mt-1.5 break-words font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
                               Model: {String(alert.modelVersionId)}
                             </p>
                           ) : null}
-                          {(alert.anomalyExplanation as { topFeatures?: string[] }).topFeatures ? (
-                            <p className="mt-1 text-[var(--aegis-text-muted)]">
+                          {(
+                            alert.anomalyExplanation as {
+                              topFeatures?: string[];
+                            }
+                          ).topFeatures ? (
+                            <p className="mt-1.5 break-words text-[var(--aegis-text-muted)]">
                               Top features:{' '}
                               {(
-                                (alert.anomalyExplanation as { topFeatures?: string[] })
-                                  .topFeatures ?? []
+                                (
+                                  alert.anomalyExplanation as {
+                                    topFeatures?: string[];
+                                  }
+                                ).topFeatures ?? []
                               ).join(', ')}
                             </p>
                           ) : null}

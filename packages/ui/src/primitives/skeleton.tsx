@@ -12,7 +12,7 @@ export const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
       ref={ref}
       aria-hidden="true"
       className={cn(
-        'rounded-[var(--aegis-radius-sm)] bg-[var(--aegis-surface-overlay)]',
+        'rounded-[var(--aegis-radius-sm)] bg-[linear-gradient(90deg,var(--aegis-surface-overlay),var(--aegis-surface-raised),var(--aegis-surface-overlay))]',
         animate && 'aegis-motion-pulse',
         className,
       )}

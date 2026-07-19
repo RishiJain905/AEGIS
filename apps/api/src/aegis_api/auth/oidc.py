@@ -63,12 +63,17 @@ class ConfiguredOidcProvider:
         code_verifier: str,
     ) -> OidcTokenClaims:
         # Production deployments plug a real HTTP JWKS/token exchange here.
-        # Without configured credentials this adapter fails closed.
+        # AEGIS v1.0 is deployment-readiness only (ADR 0033) with no real IdP to
+        # test against, so this adapter deliberately fails closed rather than
+        # shipping an unverified token exchange. See docs/release/known-issues.md.
         _ = (code, code_verifier)
         if not self._settings.AEGIS_OIDC_ENABLED:
             raise AuthOidcError("OIDC is not enabled")
         raise AuthOidcError(
-            "OIDC token exchange requires a configured identity provider adapter"
+            "Production OIDC authorization-code token exchange is not implemented in "
+            "AEGIS v1.0. Hosted login requires completing the identity-provider "
+            "token/JWKS exchange adapter; local/dev identities are the supported v1.0 "
+            "authentication path."
         )
 
 
@@ -124,6 +129,9 @@ def create_pkce_pair() -> tuple[str, str]:
 
 
 def create_oidc_provider(settings: AegisSettings) -> OidcProvider:
-    if settings.AEGIS_OIDC_ENABLED:
-        return ConfiguredOidcProvider(settings)
+    # Callers must gate on AEGIS_OIDC_ENABLED before requesting a provider; the
+    # factory is honest about that precondition instead of silently returning a
+    # provider that would fail closed on first use.
+    if not settings.AEGIS_OIDC_ENABLED:
+        raise AuthOidcError("OIDC is not enabled")
     return ConfiguredOidcProvider(settings)

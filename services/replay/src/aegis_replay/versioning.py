@@ -20,6 +20,10 @@ def is_compatible_snapshot(
 ) -> bool:
     if projector_version != REPLAY_PROJECTOR_VERSION:
         return False
+    if workspace_version == WORKSPACE_VERSION:
+        return not (
+            expected_engine_version is not None and engine_version != expected_engine_version
+        )
     if not workspace_version.startswith("0.0.0-phase"):
         return False
     # Workspace may be older than current; allow same major phase family.

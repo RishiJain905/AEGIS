@@ -26,6 +26,7 @@ from aegis_agents.runtime.registry import (
     build_definition,
 )
 from aegis_agents.runtime.session_service import AgentSessionService
+from aegis_agents.security.scenario_content import build_scenario_data_message
 from aegis_agents.tools.executor import ToolExecutor
 from aegis_agents.tools.handlers import ToolExecutionContext
 from aegis_agents.tools.registry import ToolRegistry
@@ -192,7 +193,12 @@ class TaskExecutor:
                 "updated_at": now,
             }
         )
-        await uow.agent_tasks.update(running)
+        # Atomic claim: exactly one executor may transition QUEUED -> RUNNING.
+        # A losing racer (worker + inline API execute, or two workers) observes
+        # zero rows updated and no-ops, so a task never executes twice.
+        claimed = await uow.agent_tasks.claim_transition(running, from_statuses=("queued",))
+        if not claimed:
+            return
         session = await self._sessions.transition(
             uow,
             session=session,
@@ -220,6 +226,7 @@ class TaskExecutor:
                     task=running,
                     session=session,
                     incident_run_id=incident.run_id,
+                    incident_title=incident.title,
                     definition=definition,
                     budget=budget,
                 ),
@@ -271,6 +278,7 @@ class TaskExecutor:
         task: Any,
         session: Any,
         incident_run_id: str,
+        incident_title: str,
         definition: Any,
         budget: Any,
     ) -> None:
@@ -330,6 +338,7 @@ class TaskExecutor:
                     role=GenerationMessageRole.USER,
                     content=user_prompt,
                 ),
+                build_scenario_data_message({"incidentTitle": incident_title}),
             ],
             structured_output=StructuredOutputSpecV1(
                 schema_version=STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION,

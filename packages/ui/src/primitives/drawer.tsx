@@ -18,7 +18,10 @@ export const DrawerOverlay = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn('fixed inset-0 z-50 bg-black/60 aegis-motion-fade', className)}
+    className={cn(
+      'fixed inset-0 z-50 bg-[rgb(1_5_9_/_0.78)] backdrop-blur-[3px] aegis-motion-fade',
+      className,
+    )}
     {...props}
   />
 ));
@@ -36,7 +39,7 @@ export const DrawerContent = forwardRef<HTMLDivElement, DrawerContentProps>(
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          'fixed z-50 flex h-full w-full max-w-md flex-col border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-dialog)] aegis-motion-slide',
+          'fixed z-50 flex h-full w-[min(26rem,92vw)] flex-col border border-[var(--aegis-border-strong)] bg-[linear-gradient(180deg,var(--aegis-surface-raised),var(--aegis-surface-panel))] shadow-[var(--aegis-shadow-dialog)] aegis-motion-slide',
           side === 'right' ? 'right-0 top-0' : 'left-0 top-0',
           focusTokens.ring,
           className,
@@ -46,7 +49,7 @@ export const DrawerContent = forwardRef<HTMLDivElement, DrawerContentProps>(
         {children}
         <DialogPrimitive.Close
           className={cn(
-            'absolute right-4 top-4 rounded-[var(--aegis-radius-sm)]',
+            'absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-[var(--aegis-radius-md)] border border-transparent text-[var(--aegis-text-muted)] hover:border-[var(--aegis-border-default)] hover:bg-[var(--aegis-surface-hover)] hover:text-[var(--aegis-text-primary)]',
             focusTokens.ring,
           )}
           aria-label="Close drawer"
@@ -62,7 +65,7 @@ DrawerContent.displayName = 'DrawerContent';
 export const DrawerHeader = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      'flex flex-col gap-1.5 border-b border-[var(--aegis-border-subtle)] p-4',
+      'flex flex-col gap-1.5 border-b border-[var(--aegis-border-subtle)] p-5 pr-14',
       className,
     )}
     {...props}
@@ -75,7 +78,10 @@ export const DrawerTitle = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-semibold text-[var(--aegis-text-primary)]', className)}
+    className={cn(
+      'font-[family-name:var(--aegis-font-display)] text-lg font-semibold tracking-[0.025em] text-[var(--aegis-text-primary)]',
+      className,
+    )}
     {...props}
   />
 ));

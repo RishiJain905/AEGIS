@@ -36,6 +36,70 @@ describe('SemanticSceneAdapter', () => {
     adapter.dispose();
   });
 
+  it('frames the projected scene outside its full bounding radius on first sync', () => {
+    const snapshot = parseContract(graphSnapshotSchema, shellDataset.graphSnapshots[1]);
+    const store = createGraphStore();
+    store.loadSnapshot(snapshot);
+    const adapter = createSemanticSceneAdapter();
+
+    const projection = adapter.syncFromStore(
+      store,
+      defaultGraphVisualState.filterSet as import('@aegis/graph-domain').GraphFilterSet,
+      defaultGraphVisualState,
+      { qualityTier: RenderQualityTier.HIGH },
+    );
+
+    const cameraDistance = Math.hypot(
+      projection.camera.position.x - projection.camera.target.x,
+      projection.camera.position.y - projection.camera.target.y,
+      projection.camera.position.z - projection.camera.target.z,
+    );
+    const maxNodeDistance = Math.max(
+      ...projection.nodes.map((node) =>
+        Math.hypot(
+          node.position.x - projection.camera.target.x,
+          node.position.y - projection.camera.target.y,
+          node.position.z - projection.camera.target.z,
+        ),
+      ),
+    );
+
+    expect(cameraDistance).toBeGreaterThan(maxNodeDistance * 1.25);
+    adapter.dispose();
+  });
+
+  it('normalizes Sigma layout units before framing the 38-node scene', () => {
+    const snapshot = parseContract(graphSnapshotSchema, shellDataset.graphSnapshots[1]);
+    const store = createGraphStore();
+    store.loadSnapshot(snapshot);
+    const adapter = createSemanticSceneAdapter();
+    const sigmaPositions = Object.fromEntries(
+      snapshot.nodes.map((node, index) => [
+        node.id,
+        {
+          x: (index % 8) * 130 - 455,
+          y: Math.floor(index / 8) * 400 - 800,
+        },
+      ]),
+    );
+
+    const projection = adapter.syncFromStore(
+      store,
+      defaultGraphVisualState.filterSet as import('@aegis/graph-domain').GraphFilterSet,
+      defaultGraphVisualState,
+      {
+        nodePositions: sigmaPositions,
+        qualityTier: RenderQualityTier.HIGH,
+      },
+    );
+    const xs = projection.nodes.map((node) => node.position.x);
+    const ys = projection.nodes.map((node) => node.position.y);
+
+    expect(Math.max(...xs) - Math.min(...xs)).toBeLessThanOrEqual(760);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(760);
+    adapter.dispose();
+  });
+
   it('maps risk, status, and evidence markers from canonical fields only', () => {
     const snapshot = parseContract(graphSnapshotSchema, shellDataset.graphSnapshots[0]);
     const store = createGraphStore();
@@ -49,7 +113,12 @@ describe('SemanticSceneAdapter', () => {
       defaultGraphVisualState.filterSet as import('@aegis/graph-domain').GraphFilterSet,
       {
         ...defaultGraphVisualState,
-        overlayToggles: { risk: true, status: true, evidence: true, incident: true },
+        overlayToggles: {
+          risk: true,
+          status: true,
+          evidence: true,
+          incident: true,
+        },
         selection: {
           schemaVersion: 1,
           primaryNodeId: 'asset:svc-api-gateway',

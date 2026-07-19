@@ -15,7 +15,7 @@ export const TabsList = forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      'inline-flex h-10 items-center justify-center rounded-[var(--aegis-radius-md)] bg-[var(--aegis-surface-elevated)] p-1 text-[var(--aegis-text-secondary)]',
+      'inline-flex min-h-11 items-center justify-center rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] p-1 text-[var(--aegis-text-secondary)] shadow-[var(--aegis-shadow-control)]',
       className,
     )}
     {...props}
@@ -30,7 +30,7 @@ export const TabsTrigger = forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      'inline-flex items-center justify-center whitespace-nowrap rounded-[var(--aegis-radius-sm)] px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-[var(--aegis-surface-panel)] data-[state=active]:text-[var(--aegis-text-primary)] data-[state=active]:shadow-sm',
+      'relative inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-[var(--aegis-radius-sm)] px-3 py-1.5 text-sm font-medium transition-[background-color,color,box-shadow] disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-[var(--aegis-surface-raised)] data-[state=active]:text-[var(--aegis-accent-strong)] data-[state=active]:shadow-[var(--aegis-shadow-control)]',
       focusTokens.ring,
       className,
     )}

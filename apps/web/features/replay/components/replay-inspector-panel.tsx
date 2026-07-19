@@ -2,7 +2,13 @@
 
 import { Badge, Button, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
-import { GraphEntityInspector } from '@/features/inspector';
+import {
+  GraphEntityInspector,
+  InspectorLabel,
+  InspectorMetric,
+  InspectorMetricGrid,
+  InspectorMonoValue,
+} from '@/features/inspector';
 import { useReplayStore } from '@/stores/replay-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
@@ -49,8 +55,13 @@ export function ReplayInspectorPanel() {
       data-testid="inspector-panel"
       aria-label="Historical inspector"
     >
-      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] px-4 py-2">
-        <h2 className="text-sm font-semibold">Historical inspector</h2>
+      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] bg-[linear-gradient(180deg,var(--aegis-surface-raised),var(--aegis-surface-panel))] px-4 py-3">
+        <div>
+          <p className="font-mono text-[0.625rem] uppercase tracking-[0.15em] text-[var(--aegis-text-muted)]">
+            Context channel
+          </p>
+          <h2 className="text-sm font-semibold tracking-[0.04em]">Historical inspector</h2>
+        </div>
         <Button
           variant="ghost"
           size="sm"
@@ -75,10 +86,19 @@ export function ReplayInspectorPanel() {
         {loadStatus === 'ready' && state ? (
           <div className="flex flex-col gap-4">
             <Panel title="Replay cursor" density="compact" data-testid="replay-inspector-cursor">
-              <p className="text-sm">Sequence {cursor?.sequence ?? state.cursor.sequence}</p>
-              <p className="text-xs text-[var(--aegis-text-secondary)]">
-                Digest {state.stateDigest.slice(0, 24)}…
-              </p>
+              <div className="flex flex-col gap-3">
+                <InspectorMetricGrid>
+                  <InspectorMetric
+                    label="Sequence"
+                    value={cursor?.sequence ?? state.cursor.sequence}
+                    span
+                  />
+                </InspectorMetricGrid>
+                <div className="flex flex-col gap-1">
+                  <InspectorLabel>State digest</InspectorLabel>
+                  <InspectorMonoValue value={state.stateDigest} />
+                </div>
+              </div>
             </Panel>
 
             {snapshot ? (
@@ -138,9 +158,13 @@ export function ReplayInspectorPanel() {
               {state.evidence.length === 0 ? (
                 <p className="text-sm text-[var(--aegis-text-secondary)]">No evidence yet.</p>
               ) : (
-                <ul className="flex flex-col gap-2 text-sm">
+                <ul className="flex flex-col gap-2">
                   {state.evidence.map((item: (typeof state.evidence)[number]) => (
-                    <li key={item.id} data-testid={`replay-evidence-${item.id}`}>
+                    <li
+                      key={item.id}
+                      className="break-words rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] px-3 py-2 text-xs leading-5 text-[var(--aegis-text-secondary)]"
+                      data-testid={`replay-evidence-${item.id}`}
+                    >
                       {item.summary}
                     </li>
                   ))}
@@ -156,10 +180,17 @@ export function ReplayInspectorPanel() {
               {state.proposals.length === 0 ? (
                 <p className="text-sm text-[var(--aegis-text-secondary)]">No proposals yet.</p>
               ) : (
-                <ul className="flex flex-col gap-2 text-sm">
+                <ul className="flex flex-col gap-2">
                   {state.proposals.map((proposal: (typeof state.proposals)[number]) => (
-                    <li key={proposal.id} data-testid={`replay-proposal-${proposal.id}`}>
-                      {proposal.command} · {proposal.status}
+                    <li
+                      key={proposal.id}
+                      className="break-words rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] px-3 py-2 text-xs leading-5 text-[var(--aegis-text-secondary)]"
+                      data-testid={`replay-proposal-${proposal.id}`}
+                    >
+                      <span className="font-mono text-[var(--aegis-text-primary)]">
+                        {proposal.command}
+                      </span>{' '}
+                      · {proposal.status}
                       {state.approvals.some(
                         (approval: (typeof state.approvals)[number]) =>
                           approval.proposalId === proposal.id,
@@ -179,10 +210,17 @@ export function ReplayInspectorPanel() {
               {state.reports.length === 0 ? (
                 <p className="text-sm text-[var(--aegis-text-secondary)]">No reports yet.</p>
               ) : (
-                <ul className="flex flex-col gap-2 text-sm">
+                <ul className="flex flex-col gap-2">
                   {state.reports.map((report: (typeof state.reports)[number]) => (
-                    <li key={report.reportId} data-testid={`replay-report-${report.reportId}`}>
-                      {report.reportId} · {report.status}
+                    <li
+                      key={report.reportId}
+                      className="break-words rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] px-3 py-2 text-xs leading-5 text-[var(--aegis-text-secondary)]"
+                      data-testid={`replay-report-${report.reportId}`}
+                    >
+                      <span className="font-mono text-[var(--aegis-text-primary)]">
+                        {report.reportId}
+                      </span>{' '}
+                      · {report.status}
                     </li>
                   ))}
                 </ul>

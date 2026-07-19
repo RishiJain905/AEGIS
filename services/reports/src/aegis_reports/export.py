@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
-from pathlib import Path
+import os
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from aegis_contracts.reports import AfterActionReportV1, ReportExportFormatV1
 from aegis_contracts.versioning import WORKSPACE_VERSION
@@ -54,22 +56,29 @@ def render_markdown(report: AfterActionReportV1) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _escape_html(value: object) -> str:
+    return html.escape(str(value), quote=True)
+
+
 def render_html(report: AfterActionReportV1) -> str:
     claim_rows = "\n".join(
-        f"<li><strong>{claim.category.value}</strong> {claim.text}</li>"
+        f"<li><strong>{_escape_html(claim.category.value)}</strong> "
+        f"{_escape_html(claim.text)}</li>"
         for claim in report.claims[:200]
     )
     timeline_rows = "\n".join(
-        f"<li>seq {entry.sequence} <code>{entry.event_id}</code> {entry.label}</li>"
+        f"<li>seq {_escape_html(entry.sequence)} "
+        f"<code>{_escape_html(entry.event_id)}</code> {_escape_html(entry.label)}</li>"
         for entry in report.timeline[:200]
     )
     return f"""<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>{report.title}</title></head>
+<head><meta charset="utf-8"><title>{_escape_html(report.title)}</title></head>
 <body>
-<h1>{report.title}</h1>
-<p>Version {report.version_number} · checksum <code>{report.checksum}</code></p>
-<h2>Executive summary</h2><p>{report.executive_summary}</p>
+<h1>{_escape_html(report.title)}</h1>
+<p>Version {_escape_html(report.version_number)} · checksum
+<code>{_escape_html(report.checksum)}</code></p>
+<h2>Executive summary</h2><p>{_escape_html(report.executive_summary)}</p>
 <h2>Timeline</h2><ul>{timeline_rows}</ul>
 <h2>Claims</h2><ul>{claim_rows}</ul>
 </body>
@@ -98,5 +107,20 @@ def render_export(
 
 
 def load_template(name: str) -> str:
-    template_path = Path(__file__).resolve().parents[4] / "templates" / "reports" / name
+    # Reject absolute paths and Windows drive-letter/UNC paths on ANY host OS.
+    # Without this, a name like "C:/Windows/win.ini" is treated as relative on
+    # POSIX and would slip past the containment check below (which resolves it
+    # inside the template root). Checking both path flavours keeps the guard
+    # platform-independent.
+    if (
+        PureWindowsPath(name).is_absolute()
+        or bool(PureWindowsPath(name).drive)
+        or PurePosixPath(name).is_absolute()
+    ):
+        raise ValueError("Invalid report template path")
+    template_root = (Path(__file__).resolve().parents[4] / "templates" / "reports").resolve()
+    template_path = (template_root / name).resolve()
+    root_prefix = f"{template_root}{os.sep}"
+    if template_path == template_root or not str(template_path).startswith(root_prefix):
+        raise ValueError("Invalid report template path")
     return template_path.read_text(encoding="utf-8")

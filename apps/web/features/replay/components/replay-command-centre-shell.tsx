@@ -24,6 +24,7 @@ import { useReplayStore } from '@/stores/replay-store';
 
 export interface ReplayCommandCentreShellProps {
   runId: string;
+  initialSequence?: number;
 }
 
 function ReplayStatusExtras() {
@@ -74,7 +75,10 @@ function ReplayShellInner({ runId }: ReplayCommandCentreShellProps) {
           <StatusStrip runId={runId} />
           <ReplayStatusExtras />
           <HistoricalModeBanner />
-          <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 xl:flex-row">
+          <main
+            id="command-centre-content"
+            className="flex min-h-0 flex-1 flex-col gap-5 p-4 md:p-5 xl:flex-row xl:p-6"
+          >
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <CinematicModeToggle />
@@ -90,21 +94,27 @@ function ReplayShellInner({ runId }: ReplayCommandCentreShellProps) {
               <ReplayTimelineView />
             </div>
             <ReplayInspectorPanel />
-          </div>
+          </main>
         </div>
       </div>
     </>
   );
 }
 
-export function ReplayCommandCentreShell({ runId }: ReplayCommandCentreShellProps) {
+export function ReplayCommandCentreShell({
+  runId,
+  initialSequence,
+}: ReplayCommandCentreShellProps) {
   return (
     <div
-      className="flex min-h-screen flex-col bg-[var(--aegis-surface-base)]"
+      className="aegis-command-shell flex min-h-screen flex-col"
       data-testid="command-centre-shell"
       data-aegis-mode="historical"
     >
-      <ReplayProvider runId={runId}>
+      <a className="skip-link" href="#command-centre-content">
+        Skip to replay workspace
+      </a>
+      <ReplayProvider runId={runId} initialSequence={initialSequence}>
         <ReplayShellInner runId={runId} />
       </ReplayProvider>
     </div>

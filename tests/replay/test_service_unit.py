@@ -39,9 +39,39 @@ def test_build_cursor() -> None:
     assert cursor.incident_id == "incident:inc_synthetic_001"
 
 
-def test_assert_read_only_is_noop() -> None:
+def test_assert_read_only_blocks_event_append() -> None:
+    """The replay read-only guard must mechanically fail closed on a live-event append."""
+    import asyncio
+
+    from aegis_contracts.replay import ReplayErrorCode
+    from aegis_replay.errors import ReplayEngineError
+
+    class _FakeUnitOfWork:
+        def __init__(self) -> None:
+            self.appended: list[object] = []
+
+        async def append_event(self, envelope: object) -> object:
+            self.appended.append(envelope)
+            return envelope
+
     service = ReplayService(InMemoryObjectStorage.create())
-    service.assert_read_only()
+    uow = _FakeUnitOfWork()
+
+    # Before arming, appends are permitted (models a normal live command context).
+    assert asyncio.run(uow.append_event("live-event")) == "live-event"
+
+    service.assert_read_only(uow)  # type: ignore[arg-type]
+
+    try:
+        asyncio.run(uow.append_event("replay-event"))
+    except ReplayEngineError as exc:
+        assert exc.code is ReplayErrorCode.REPLAY_LIVE_MUTATION_FORBIDDEN
+    else:  # pragma: no cover - guard must fail closed
+        raise AssertionError("assert_read_only did not block append_event")
+
+    # No second live event slipped through, and re-arming stays idempotent.
+    assert uow.appended == ["live-event"]
+    service.assert_read_only(uow)  # type: ignore[arg-type]
 
 
 def test_contiguous_history_passes() -> None:

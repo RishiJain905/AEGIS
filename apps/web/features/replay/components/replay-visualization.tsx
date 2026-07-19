@@ -129,6 +129,8 @@ export function ReplayVisualization() {
           snapshot={state.graph}
           graphStore={replay.graphStore}
           graphRevision={replay.graphRevision}
+          evidenceNodeIds={evidenceNodeIds}
+          incidentNodeIds={incidentNodeIds}
         />
       )}
     </Panel>

@@ -1,18 +1,29 @@
 :root {
-  /* Surfaces */
-  --aegis-surface-base: #0b0f14;
-  --aegis-surface-elevated: #121820;
-  --aegis-surface-panel: #161d27;
-  --aegis-surface-rail: #10161f;
-  --aegis-surface-overlay: #1c2430;
+  /* Surfaces — blue-black layers tuned for dense operational work */
+  --aegis-surface-base: #05090e;
+  --aegis-surface-canvas: #04080d;
+  --aegis-surface-elevated: #09121b;
+  --aegis-surface-panel: #0d1722;
+  --aegis-surface-rail: #071019;
+  --aegis-surface-overlay: #122230;
+  --aegis-surface-raised: #172a3a;
+  --aegis-surface-hover: #142535;
 
   /* Typography */
-  --aegis-font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --aegis-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
-  --aegis-text-primary: #e8edf4;
-  --aegis-text-secondary: #9aa8b8;
-  --aegis-text-muted: #6b7a8c;
-  --aegis-text-inverse: #0b0f14;
+  --aegis-font-sans: 'Aptos', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  --aegis-font-display: 'Bahnschrift', 'DIN Alternate', 'Aptos Display', 'Segoe UI', sans-serif;
+  --aegis-font-mono: 'Cascadia Code', 'Cascadia Mono', 'SFMono-Regular', Consolas, monospace;
+  --aegis-text-primary: #f0f6fa;
+  --aegis-text-secondary: #b3c2cd;
+  --aegis-text-muted: #8297a8;
+  --aegis-text-faint: #617788;
+  --aegis-text-inverse: #041016;
+
+  /* Operator accent — state colors remain semantically reserved */
+  --aegis-accent-cyan: #59c9ea;
+  --aegis-accent-strong: #91e2f7;
+  --aegis-accent-soft: #0d3040;
+  --aegis-accent-line: #2b7188;
 
   /* Spacing (4px grid) */
   --aegis-space-1: 0.25rem;
@@ -27,53 +38,64 @@
   --aegis-space-16: 4rem;
 
   /* Borders */
-  --aegis-border-default: #2a3544;
-  --aegis-border-subtle: #1e2835;
-  --aegis-border-strong: #3d4d62;
-  --aegis-radius-sm: 0.25rem;
-  --aegis-radius-md: 0.5rem;
-  --aegis-radius-lg: 0.75rem;
-  --aegis-radius-xl: 1rem;
+  --aegis-border-default: #263a49;
+  --aegis-border-subtle: #182834;
+  --aegis-border-strong: #3b586c;
+  --aegis-border-highlight: rgb(185 226 244 / 0.13);
+  --aegis-radius-sm: 0.375rem;
+  --aegis-radius-md: 0.625rem;
+  --aegis-radius-lg: 0.875rem;
+  --aegis-radius-xl: 1.125rem;
 
   /* Depth */
-  --aegis-shadow-panel: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 12px rgb(0 0 0 / 0.25);
-  --aegis-shadow-dialog: 0 8px 32px rgb(0 0 0 / 0.45);
-  --aegis-shadow-rail: 2px 0 8px rgb(0 0 0 / 0.2);
+  --aegis-shadow-panel:
+    inset 0 1px 0 rgb(255 255 255 / 0.035), 0 0 0 1px rgb(111 163 188 / 0.045),
+    0 14px 34px rgb(0 0 0 / 0.28);
+  --aegis-shadow-panel-hover:
+    inset 0 1px 0 rgb(255 255 255 / 0.055), 0 0 0 1px rgb(104 200 234 / 0.13),
+    0 16px 40px rgb(0 0 0 / 0.34);
+  --aegis-shadow-control:
+    inset 0 1px 0 rgb(255 255 255 / 0.055), 0 0 0 1px rgb(156 202 221 / 0.075),
+    0 3px 10px rgb(0 0 0 / 0.2);
+  --aegis-shadow-dialog:
+    inset 0 1px 0 rgb(255 255 255 / 0.05), 0 0 0 1px rgb(130 190 216 / 0.12),
+    0 26px 70px rgb(0 0 0 / 0.58);
+  --aegis-shadow-rail: 8px 0 28px rgb(0 0 0 / 0.24);
 
   /* Focus */
-  --aegis-focus-ring: #4da3ff;
-  --aegis-focus-ring-offset: #0b0f14;
+  --aegis-focus-ring: #7adbf4;
+  --aegis-focus-ring-offset: #05090e;
   --aegis-focus-width: 2px;
 
   /* Risk */
-  --aegis-risk-low: #3d9a6a;
-  --aegis-risk-low-bg: #132820;
-  --aegis-risk-medium: #c9a227;
-  --aegis-risk-medium-bg: #2a2410;
-  --aegis-risk-high: #e07a2f;
-  --aegis-risk-high-bg: #2a1a10;
-  --aegis-risk-critical: #e05252;
-  --aegis-risk-critical-bg: #2a1212;
+  --aegis-risk-low: #63d6a2;
+  --aegis-risk-low-bg: #0b291f;
+  --aegis-risk-medium: #f1c257;
+  --aegis-risk-medium-bg: #30240c;
+  --aegis-risk-high: #ff9b55;
+  --aegis-risk-high-bg: #321a0d;
+  --aegis-risk-critical: #ff7078;
+  --aegis-risk-critical-bg: #351116;
 
   /* Status — NodeStatus + UI states */
-  --aegis-status-normal: #3d9a6a;
-  --aegis-status-normal-bg: #132820;
-  --aegis-status-suspicious: #c9a227;
-  --aegis-status-suspicious-bg: #2a2410;
-  --aegis-status-under-investigation: #4da3ff;
-  --aegis-status-under-investigation-bg: #102030;
-  --aegis-status-contained: #7b8cff;
-  --aegis-status-contained-bg: #181a30;
-  --aegis-status-compromised: #e05252;
-  --aegis-status-compromised-bg: #2a1212;
-  --aegis-status-loading: #6b7a8c;
-  --aegis-status-loading-bg: #1a2030;
-  --aegis-status-error: #e05252;
-  --aegis-status-error-bg: #2a1212;
-  --aegis-status-disconnected: #9aa8b8;
-  --aegis-status-disconnected-bg: #1a2030;
-  --aegis-status-empty: #6b7a8c;
-  --aegis-status-empty-bg: #161d27;
+  --aegis-status-normal: #63d6a2;
+  --aegis-status-normal-bg: #0b291f;
+  --aegis-status-suspicious: #f1c257;
+  --aegis-status-suspicious-bg: #30240c;
+  --aegis-status-under-investigation: #68d0ee;
+  --aegis-status-under-investigation-bg: #0d2d3b;
+  --aegis-status-contained: #9aa8ff;
+  --aegis-status-contained-bg: #1c2140;
+  --aegis-status-compromised: #ff7078;
+  --aegis-status-compromised-bg: #351116;
+  --aegis-status-loading: #9db1c0;
+  --aegis-status-loading-bg: #142331;
+  --aegis-status-error: #ff7078;
+  --aegis-status-error-bg: #351116;
+  --aegis-status-disconnected: #bac5cd;
+  --aegis-status-disconnected-bg: #18232d;
+  --aegis-status-empty: #9db1c0;
+  --aegis-status-empty-bg: #111d27;
 
   /* Density */
   --aegis-density-compact-gap: var(--aegis-space-2);

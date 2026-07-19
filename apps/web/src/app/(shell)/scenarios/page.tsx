@@ -17,26 +17,62 @@ import { CommandCentreShell } from '@/features/shell/components/command-centre-s
 import { useCreateRun } from '@/features/live-run';
 import { useRuns, useScenarios } from '@/features/shell/hooks/use-shell-queries';
 
-const SILENT_RELAY_SCENARIO_ID = 'scenario:operation-silent-relay';
-const SILENT_RELAY_VERSION_ID = 'scenario-version:1.0.0-silent-relay';
-const SYNTHETIC_VERSION_ID = 'scenario-version:v1.0.0-synthetic';
-const DEFAULT_SYNTHETIC_RUN_ID = 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV';
+// Demo/admin owner assigned to seeded/legacy runs by migration 014. Runs owned by this
+// identity are surfaced as demo/fixture data, not an ordinary result. See ADR 0034.
+const DEMO_OWNER_USER_ID = 'user:admin-alpha';
 
-function resolveRunId(
+interface ScenarioLaunchConfig {
+  packagePath: string;
+  seed: number;
+  // Scenario-version ids that belong to this scenario, used to match the caller's owned
+  // runs (GET /runs is already owner-scoped server-side) to a "Resume latest run" action.
+  versionIds: string[];
+}
+
+const SCENARIO_LAUNCH_CONFIG: Record<string, ScenarioLaunchConfig> = {
+  'scenario:operation-silent-relay': {
+    packagePath: 'scenarios/operation-silent-relay',
+    seed: 1000,
+    versionIds: ['scenario-version:1.0.0-silent-relay'],
+  },
+};
+
+function scenarioPackagePath(scenarioId: string): string {
+  const configured = SCENARIO_LAUNCH_CONFIG[scenarioId];
+  if (configured) {
+    return configured.packagePath;
+  }
+  // Fallback for scenarios without explicit config: derive from the id slug.
+  return `scenarios/${scenarioId.split(':')[1] ?? ''}`;
+}
+
+function scenarioSeed(scenarioId: string): number {
+  return SCENARIO_LAUNCH_CONFIG[scenarioId]?.seed ?? 1000;
+}
+
+interface RunSummary {
+  id: string;
+  scenarioVersionId: string;
+  status: string;
+  startedAt: string;
+  ownerUserId?: string | null;
+}
+
+function latestOwnedRun(
   scenarioId: string,
-  runs: { id: string; scenarioVersionId: string }[] | undefined,
-): string {
-  if (!runs?.length) {
-    return DEFAULT_SYNTHETIC_RUN_ID;
+  runs: RunSummary[] | undefined,
+): RunSummary | undefined {
+  const versionIds = SCENARIO_LAUNCH_CONFIG[scenarioId]?.versionIds;
+  if (!versionIds || !runs?.length) {
+    return undefined;
   }
-  if (scenarioId === SILENT_RELAY_SCENARIO_ID) {
-    const silentRelayRun = runs.find((run) => run.scenarioVersionId === SILENT_RELAY_VERSION_ID);
-    if (silentRelayRun) {
-      return silentRelayRun.id;
-    }
+  const matching = runs.filter((run) => versionIds.includes(run.scenarioVersionId));
+  if (!matching.length) {
+    return undefined;
   }
-  const syntheticRun = runs.find((run) => run.scenarioVersionId === SYNTHETIC_VERSION_ID);
-  return syntheticRun?.id ?? DEFAULT_SYNTHETIC_RUN_ID;
+  // Most recent by start time. GET /runs only returns the caller's own runs (admins see
+  // all), so any match here is a run the current account may resume.
+  return [...matching].sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
 }
 
 export default function ScenariosPage() {
@@ -44,31 +80,24 @@ export default function ScenariosPage() {
   const scenariosQuery = useScenarios();
   const runsQuery = useRuns();
   const createRun = useCreateRun();
-  const isLiveMode = process.env.NEXT_PUBLIC_AEGIS_DATA_SOURCE === 'api';
+
+  const startRun = (scenarioId: string) => {
+    void createRun
+      .mutateAsync({
+        scenarioPackagePath: scenarioPackagePath(scenarioId),
+        seed: scenarioSeed(scenarioId),
+      })
+      .then((result) => {
+        router.push(`/runs/${result.run.id}`);
+      });
+  };
 
   return (
     <CommandCentreShell>
-      <Panel title="Scenario selection" description="Choose a scenario to start or resume a run">
-        {isLiveMode ? (
-          <div className="mb-4">
-            <Button
-              data-testid="start-silent-relay"
-              disabled={createRun.isPending}
-              onClick={() => {
-                void createRun
-                  .mutateAsync({
-                    scenarioPackagePath: 'scenarios/operation-silent-relay',
-                    seed: 1000,
-                  })
-                  .then((result) => {
-                    router.push(`/runs/${result.run.id}`);
-                  });
-              }}
-            >
-              Start Operation Silent Relay
-            </Button>
-          </div>
-        ) : null}
+      <Panel
+        title="Scenario selection"
+        description="Start a new run of a scenario, or resume a run this account already owns."
+      >
         {scenariosQuery.isPending || runsQuery.isPending ? (
           <LoadingState message="Loading scenarios…" />
         ) : null}
@@ -97,16 +126,37 @@ export default function ScenariosPage() {
                 {
                   key: 'actions',
                   header: 'Actions',
-                  render: (row: { id: string }) => (
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        router.push(`/runs/${resolveRunId(row.id, runsQuery.data)}`);
-                      }}
-                    >
-                      Open run
-                    </Button>
-                  ),
+                  render: (row: { id: string }) => {
+                    const scenarioId = row.id;
+                    const latestRun = latestOwnedRun(scenarioId, runsQuery.data as RunSummary[]);
+                    const isDemoRun = latestRun?.ownerUserId === DEMO_OWNER_USER_ID;
+                    return (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          size="sm"
+                          data-testid={`start-run-${scenarioId}`}
+                          disabled={createRun.isPending}
+                          onClick={() => {
+                            startRun(scenarioId);
+                          }}
+                        >
+                          Start new run
+                        </Button>
+                        {latestRun ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            data-testid={`resume-run-${scenarioId}`}
+                            onClick={() => {
+                              router.push(`/runs/${latestRun.id}`);
+                            }}
+                          >
+                            {isDemoRun ? 'Open demo run' : 'Resume latest run'} ({latestRun.status})
+                          </Button>
+                        ) : null}
+                      </div>
+                    );
+                  },
                 },
               ]}
               data={scenariosQuery.data.map((scenario: { name: string; id: string }) => ({

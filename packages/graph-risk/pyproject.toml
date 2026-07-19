@@ -1,6 +1,6 @@
 [project]
 name = "aegis-graph-risk"
-version = "0.0.0"
+version = "1.0.0"
 requires-python = ">=3.12,<3.13"
 dependencies = ["aegis-contracts"]
 

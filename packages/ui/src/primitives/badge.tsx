@@ -7,12 +7,14 @@ import { getNodeStatusPresentation, getOperationalStatusPresentation } from '../
 import type { NodeStatusValue } from '../tokens/status-tokens';
 
 const badgeVariants = cva(
-  'inline-flex items-center gap-1.5 rounded-[var(--aegis-radius-sm)] border border-transparent px-2 py-0.5 text-xs font-medium',
+  'inline-flex min-h-6 items-center gap-1.5 rounded-full border border-transparent px-2.5 py-1 text-[0.6875rem] font-semibold leading-none tracking-[0.045em] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.04)]',
   {
     variants: {
       variant: {
-        default: 'bg-[var(--aegis-surface-elevated)] text-[var(--aegis-text-primary)]',
-        outline: 'border-[var(--aegis-border-default)] text-[var(--aegis-text-secondary)]',
+        default:
+          'border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] text-[var(--aegis-text-primary)]',
+        outline:
+          'border-[var(--aegis-border-default)] bg-[var(--aegis-surface-elevated)]/60 text-[var(--aegis-text-secondary)]',
       },
     },
     defaultVariants: {

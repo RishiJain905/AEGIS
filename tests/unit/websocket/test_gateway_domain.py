@@ -9,6 +9,7 @@ import pytest
 from aegis_api.websocket.auth import AuthenticatedPrincipal, DevWebSocketAuthenticator
 from aegis_api.websocket.config import GatewayConfig as GatewayConfigCls
 from aegis_api.websocket.connection import ConnectionState, SubscriptionState, new_connection_id
+from aegis_api.websocket.consumer import _coerce_redis_fields
 from aegis_api.websocket.errors import GatewayError
 from aegis_api.websocket.recovery import RecoveryPlan, SubscriptionRecoveryService
 from aegis_contracts import (
@@ -68,6 +69,13 @@ def test_connection_dedup_tracks_event_ids() -> None:
     )
     assert connection.remember_event_id("evt_01ARZ3NDEKTSV4RRFFQ69G5FAW") is True
     assert connection.remember_event_id("evt_01ARZ3NDEKTSV4RRFFQ69G5FAW") is False
+
+
+def test_gateway_consumer_decodes_redis_bytes() -> None:
+    assert _coerce_redis_fields({b"payload": b"{}", b"sequence": 7}) == {
+        "payload": "{}",
+        "sequence": "7",
+    }
 
 
 def test_gateway_error_to_frame() -> None:

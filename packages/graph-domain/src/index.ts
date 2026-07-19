@@ -34,4 +34,4 @@ export {
   TARGET_GRAPH_NODE_COUNT,
 } from './fixtures/graph-performance-snapshots';
 
-export const GRAPH_DOMAIN_VERSION = '0.0.0-phase07' as const;
+export const GRAPH_DOMAIN_VERSION = '1.0.0' as const;

@@ -24,14 +24,26 @@ export function mapCanonicalNodeToSceneNode(input: {
   visualState: GraphVisualState;
   evidenceMarked: boolean;
   incidentMarked: boolean;
+  layerDimmed?: boolean;
 }): SceneNode {
-  const { node, position, visualState, evidenceMarked, incidentMarked } = input;
+  const {
+    node,
+    position,
+    visualState,
+    evidenceMarked,
+    incidentMarked,
+    layerDimmed = false,
+  } = input;
   const style = getNodeVisualStyle(node);
   const highlightNodes = new Set(visualState.highlightedNodeIds);
   const isHighlighted = highlightNodes.has(node.id);
   const isSelected = visualState.selection.primaryNodeId === node.id;
   const isIsolation = visualState.isolationActive && highlightNodes.size > 0;
-  const isDimmed = isIsolation && !isHighlighted;
+  const isDimmed =
+    (isIsolation && !isHighlighted) || (layerDimmed && !isHighlighted && !isSelected);
+  // Halo only for genuinely elevated risk — a halo on every low-risk node
+  // reads as noise, not signal.
+  const riskEmphasized = style.riskBand === 'high' || style.riskBand === 'critical';
 
   return {
     schemaVersion: SCENE_NODE_SCHEMA_VERSION,
@@ -45,10 +57,14 @@ export function mapCanonicalNodeToSceneNode(input: {
     status: node.status,
     position,
     color: style.color,
-    statusColor: visualState.overlayToggles.status ? style.statusColor : 'transparent',
-    riskHaloColor: visualState.overlayToggles.risk
-      ? getRiskHaloColor(style.riskBand)
-      : 'transparent',
+    statusColor:
+      visualState.overlayToggles.status && node.status !== 'normal'
+        ? style.statusColor
+        : 'transparent',
+    riskHaloColor:
+      visualState.overlayToggles.risk && riskEmphasized
+        ? getRiskHaloColor(style.riskBand)
+        : 'transparent',
     size: style.size + (isSelected ? 4 : 0),
     selected: isSelected,
     highlighted: isHighlighted,
@@ -61,14 +77,15 @@ export function mapCanonicalNodeToSceneNode(input: {
 export function mapCanonicalEdgeToSceneEdge(input: {
   edge: GraphEdgeV1;
   visualState: GraphVisualState;
+  layerDimmed?: boolean;
 }): SceneEdge {
-  const { edge, visualState } = input;
+  const { edge, visualState, layerDimmed = false } = input;
   const edgeStyle = getEdgeVisualStyle(edge);
   const highlightEdges = new Set(visualState.highlightedEdgeIds);
   const highlightNodes = new Set(visualState.highlightedNodeIds);
   const isHighlighted = highlightEdges.has(edge.id);
   const isIsolation = visualState.isolationActive && highlightNodes.size > 0;
-  const isDimmed = isIsolation && !isHighlighted;
+  const isDimmed = (isIsolation || layerDimmed) && !isHighlighted;
 
   let color = edgeStyle.color;
   if (isHighlighted && visualState.highlightMode !== GraphHighlightMode.NONE) {

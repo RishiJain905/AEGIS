@@ -13,15 +13,46 @@ import { GraphHighlightMode, type GraphVisualState } from '../contracts/graph-vi
 import { LabelMode } from '../contracts/lod-policy';
 import { computeInitialLayout } from '../layout/initial-layout';
 import { buildClusterPresentationNodes } from '../performance/cluster-presentation';
+import { computeHighlight } from '../semantic/graph-highlights';
+import { computeLayerEmphasis } from '../semantic/layer-emphasis';
 import {
   getEdgeVisualStyle,
   getHighlightColor,
   getNodeVisualStyle,
   getRiskHaloColor,
 } from '../semantic/graph-semantic-styles';
+import { drawAegisNodeHover, drawAegisNodeLabel } from '../rendering/aegis-canvas-renderers';
 
-const DEFAULT_EDGE_COLOR = '#94a3b866';
 const DIMMED_OPACITY = 0.15;
+
+const NODE_SHAPES: Record<string, 'circle' | 'diamond' | 'square' | 'triangle' | 'hexagon'> = {
+  service: 'circle',
+  device: 'diamond',
+  database: 'square',
+  identity: 'hexagon',
+  user: 'hexagon',
+  control: 'triangle',
+  ai_model: 'hexagon',
+};
+
+// Sigma's WebGL node/edge programs render colors opaquely — alpha channels in
+// `#RRGGBBAA`/`rgba()` values are ignored. To make dimming actually visible we
+// pre-composite against the canvas background and emit a solid hex.
+const CANVAS_BACKGROUND = { red: 10, green: 17, blue: 24 };
+
+function colorWithOpacity(color: string, opacity: number): string {
+  const match = color.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!match) {
+    return color;
+  }
+  const [, red = '00', green = '00', blue = '00'] = match;
+  const alpha = Math.min(1, Math.max(0, opacity));
+  const blend = (channel: string, background: number) =>
+    Math.round(background + (Number.parseInt(channel, 16) - background) * alpha)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${blend(red, CANVAS_BACKGROUND.red)}${blend(green, CANVAS_BACKGROUND.green)}${blend(blue, CANVAS_BACKGROUND.blue)}`;
+}
 
 function buildEntityMaps(snapshot: GraphSnapshotV1): {
   nodes: Map<string, GraphNodeV1>;
@@ -80,11 +111,27 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
     }
     this.sigma = new Sigma(this.graph, this.container, {
       renderEdgeLabels: false,
-      allowInvalidContainer: false,
-      defaultNodeColor: '#64748b',
-      defaultEdgeColor: DEFAULT_EDGE_COLOR,
-      labelRenderedSizeThreshold: 6,
-      labelDensity: 0.5,
+      // The container can legitimately be mid-layout (mode toggle, panel
+      // remount); mounting must never throw — a ResizeObserver in SigmaCanvas
+      // resizes the renderer as soon as real dimensions arrive.
+      allowInvalidContainer: true,
+      defaultNodeColor: '#718397',
+      defaultEdgeColor: '#61788c',
+      labelFont: '"Cascadia Mono", "Segoe UI", sans-serif',
+      labelSize: 11,
+      labelWeight: '600',
+      labelColor: { color: '#d7e5ef' },
+      labelRenderedSizeThreshold: 9,
+      labelDensity: 0.72,
+      labelGridCellSize: 140,
+      stagePadding: 52,
+      hideLabelsOnMove: false,
+      hideEdgesOnMove: false,
+      defaultDrawNodeLabel: drawAegisNodeLabel,
+      defaultDrawNodeHover: drawAegisNodeHover,
+      minEdgeThickness: 0.75,
+      minCameraRatio: 0.06,
+      maxCameraRatio: 6,
       zIndex: true,
     });
     return this.sigma;
@@ -128,6 +175,12 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
     const highlightNodes = new Set(visualState.highlightedNodeIds);
     const highlightEdges = new Set(visualState.highlightedEdgeIds);
     const isIsolation = visualState.isolationActive && highlightNodes.size > 0;
+    const emphasis = computeLayerEmphasis(
+      { nodes: snapshot.nodes, edges: snapshot.edges },
+      filterSet.enabledLayers,
+    );
+    const evidenceNodeIds = options.evidenceNodeIds ?? new Set<string>();
+    const incidentNodeIds = options.incidentNodeIds ?? new Set<string>();
     const labelMode = lodHints?.labelMode ?? LabelMode.ALL;
     const edgeOpacityFloor = lodHints?.edgeOpacityFloor ?? 0.4;
     const renderEdgeIds = lodHints?.visibleEdgeIds ?? filtered.visibleEdgeIds;
@@ -154,24 +207,49 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       const pos = positions[nodeId] ?? { x: 0, y: 0 };
       const style = getNodeVisualStyle(canonical);
       const isHighlighted = highlightNodes.has(nodeId);
-      const isDimmed = isIsolation && !isHighlighted;
       const isHovered = visualState.hoveredNodeId === nodeId;
       const isSelected = visualState.selection.primaryNodeId === nodeId;
+      const isLayerDimmed = emphasis.dimmedNodeIds.has(nodeId) && !isHighlighted && !isSelected;
+      const isDimmed = (isIsolation && !isHighlighted) || isLayerDimmed;
+      const riskEmphasized = style.riskBand === 'high' || style.riskBand === 'critical';
+      const interactionHighlighted = isSelected || isHovered || isHighlighted;
+      const detailOverlay = labelMode === LabelMode.ALL;
+      const anchorLabel = detailOverlay && (riskEmphasized || style.size >= 17);
+      const riskSize = style.riskBand === 'critical' ? 3 : style.riskBand === 'high' ? 1.5 : 0;
 
       const attrs = {
         x: pos.x,
         y: pos.y,
-        size: style.size + (isSelected ? 4 : 0) + (isHovered ? 2 : 0),
-        color: isDimmed ? `${style.color}33` : style.color,
-        label: shouldRenderLabel(labelMode, isSelected, isHighlighted, isHovered)
-          ? canonical.label
-          : '',
+        size: style.size + riskSize + (isSelected ? 4 : 0) + (isHovered ? 2 : 0),
+        color: isDimmed ? colorWithOpacity(style.color, 0.22) : style.color,
+        label:
+          !isDimmed && shouldRenderLabel(labelMode, isSelected, isHighlighted, isHovered)
+            ? canonical.label
+            : '',
         borderColor: style.borderColor,
-        zIndex: isSelected ? 2 : isHighlighted ? 1 : 0,
-        riskHalo: visualState.overlayToggles.risk
-          ? getRiskHaloColor(style.riskBand)
-          : 'transparent',
-        statusIndicator: visualState.overlayToggles.status ? style.statusColor : 'transparent',
+        zIndex: isSelected ? 12 : isHovered ? 11 : isHighlighted ? 8 : riskEmphasized ? 4 : 0,
+        type: 'circle',
+        assetType: canonical.assetType,
+        shape: NODE_SHAPES[canonical.assetType] ?? 'circle',
+        riskBand: style.riskBand,
+        riskColor: getRiskHaloColor(style.riskBand),
+        selected: isSelected,
+        hovered: isHovered,
+        forceLabel: !isDimmed && (interactionHighlighted || anchorLabel),
+        highlighted:
+          interactionHighlighted ||
+          (!isDimmed && (detailOverlay || (visualState.overlayToggles.risk && riskEmphasized))),
+        showHoverLabel: interactionHighlighted,
+        riskHalo:
+          visualState.overlayToggles.risk && !isDimmed
+            ? getRiskHaloColor(style.riskBand)
+            : 'transparent',
+        statusIndicator:
+          visualState.overlayToggles.status && !isDimmed ? style.statusColor : 'transparent',
+        evidenceMarked:
+          visualState.overlayToggles.evidence && !isDimmed && evidenceNodeIds.has(nodeId),
+        incidentMarked:
+          visualState.overlayToggles.incident && !isDimmed && incidentNodeIds.has(nodeId),
       };
 
       if (this.graph.hasNode(nodeId)) {
@@ -205,9 +283,16 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
         label: `${presentationNode.label} (${String(presentationNode.memberCount)})`,
         borderColor: '#115e59',
         zIndex: 3,
+        type: 'circle',
+        assetType: 'cluster',
+        shape: 'hexagon',
+        forceLabel: true,
+        highlighted: false,
         presentationClusterId: presentationNode.clusterId,
         riskHalo: 'transparent',
         statusIndicator: 'transparent',
+        evidenceMarked: false,
+        incidentMarked: false,
       };
 
       if (this.graph.hasNode(presentationNode.id)) {
@@ -242,7 +327,7 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
 
       const edgeStyle = getEdgeVisualStyle(canonical);
       const isHighlighted = highlightEdges.has(edgeId);
-      const isDimmed = isIsolation && !isHighlighted;
+      const isDimmed = (isIsolation || emphasis.dimmedEdgeIds.has(edgeId)) && !isHighlighted;
       let highlightColor = edgeStyle.color;
       if (visualState.highlightMode !== GraphHighlightMode.NONE) {
         switch (visualState.highlightMode) {
@@ -268,7 +353,14 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       const attrs = {
         key: edgeId,
         size: isHighlighted ? edgeStyle.size * 2 : edgeStyle.size,
-        color: isDimmed ? DEFAULT_EDGE_COLOR : isHighlighted ? highlightColor : edgeStyle.color,
+        color: colorWithOpacity(
+          isDimmed ? '#94a3b8' : isHighlighted ? highlightColor : edgeStyle.color,
+          isDimmed
+            ? DIMMED_OPACITY
+            : isHighlighted
+              ? 1
+              : Math.max(edgeStyle.opacity, edgeOpacityFloor),
+        ),
         type: edgeStyle.type,
         opacity: isDimmed
           ? DIMMED_OPACITY
@@ -304,87 +396,25 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
     store: GraphStore,
     visualState: GraphVisualState,
   ): { highlightedNodeIds: string[]; highlightedEdgeIds: string[] } {
-    const { highlightMode, selection } = visualState;
-
-    if (highlightMode === GraphHighlightMode.NONE || !selection.primaryNodeId) {
-      return { highlightedNodeIds: [], highlightedEdgeIds: [] };
-    }
-
-    switch (highlightMode) {
-      case GraphHighlightMode.NEIGHBORHOOD: {
-        const result = store.getNeighborhood(selection.primaryNodeId, {
-          hops: 1,
-        });
-        return {
-          highlightedNodeIds: result.nodeIds,
-          highlightedEdgeIds: result.edgeIds,
-        };
-      }
-      case GraphHighlightMode.PATH: {
-        if (!selection.secondaryNodeId) {
-          return {
-            highlightedNodeIds: [selection.primaryNodeId],
-            highlightedEdgeIds: [],
-          };
-        }
-        const pathResult = store.queryPaths({
-          schemaVersion: 1,
-          runId: store.getRunId() ?? '',
-          sourceId: selection.primaryNodeId,
-          targetId: selection.secondaryNodeId,
-          maxHops: 8,
-          relationshipTypes: [],
-          directedOnly: false,
-        });
-        const path = pathResult.paths[0] ?? [];
-        const edgeIds: string[] = [];
-        for (let i = 0; i < path.length - 1; i += 1) {
-          const snapshot = store.exportSnapshot();
-          for (const edge of snapshot.edges) {
-            if (
-              (edge.source === path[i] && edge.target === path[i + 1]) ||
-              (edge.source === path[i + 1] && edge.target === path[i])
-            ) {
-              edgeIds.push(edge.id);
-            }
-          }
-        }
-        return { highlightedNodeIds: path, highlightedEdgeIds: edgeIds };
-      }
-      case GraphHighlightMode.INCIDENT: {
-        const result = store.getIncidentSubgraph([selection.primaryNodeId], {
-          hops: 2,
-        });
-        return {
-          highlightedNodeIds: result.nodeIds,
-          highlightedEdgeIds: result.edgeIds,
-        };
-      }
-      case GraphHighlightMode.DEPENDENCIES: {
-        const deps = store.getDependencies(selection.primaryNodeId, 3);
-        return {
-          highlightedNodeIds: [selection.primaryNodeId, ...deps],
-          highlightedEdgeIds: [],
-        };
-      }
-      default: {
-        const _exhaustive: never = highlightMode;
-        throw new Error(`Unhandled highlight mode: ${String(_exhaustive)}`);
-      }
-    }
+    return computeHighlight(store, visualState);
   }
 
   focusNode(nodeId: string): void {
     if (!this.sigma || !this.graph.hasNode(nodeId)) {
       return;
     }
-    const attrs = this.graph.getNodeAttributes(nodeId);
-    void this.sigma
-      .getCamera()
-      .animate(
-        { x: attrs.x as number, y: attrs.y as number, ratio: 0.4 },
-        { duration: this.reducedMotion ? 0 : 300 },
-      );
+    const camera = this.sigma.getCamera();
+    const displayData = this.sigma.getNodeDisplayData(nodeId);
+    if (!displayData) {
+      return;
+    }
+    // Centre the node without yanking the zoom level: keep the operator's
+    // current ratio unless they are zoomed far out, in which case ease in just
+    // enough for the neighborhood to be readable.
+    void camera.animate(
+      { x: displayData.x, y: displayData.y, ratio: Math.min(camera.ratio, 0.55) },
+      { duration: this.reducedMotion ? 0 : 300 },
+    );
   }
 
   fitGraph(): void {
@@ -412,6 +442,14 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
 
   resetCamera(): void {
     this.fitGraph();
+  }
+
+  resize(): void {
+    if (!this.sigma) {
+      return;
+    }
+    this.sigma.resize();
+    this.sigma.refresh();
   }
 
   dispose(): void {

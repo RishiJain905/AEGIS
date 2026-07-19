@@ -69,7 +69,10 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
               />
             </div>
           ) : null}
-          <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 xl:flex-row">
+          <main
+            id="command-centre-content"
+            className="flex min-h-0 flex-1 flex-col gap-5 p-4 md:p-5 xl:flex-row xl:p-6"
+          >
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
               <LiveRunControls />
               {children ??
@@ -77,7 +80,7 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
               <TimelineView />
             </div>
             <InspectorPanel runId={runId} incidentId={incidentId} />
-          </div>
+          </main>
         </div>
       </div>
     </>
@@ -89,9 +92,12 @@ export function CommandCentreShell({ runId, incidentId, children }: CommandCentr
 
   return (
     <div
-      className="flex min-h-screen flex-col bg-[var(--aegis-surface-base)]"
+      className="aegis-command-shell flex min-h-screen flex-col"
       data-testid="command-centre-shell"
     >
+      <a className="skip-link" href="#command-centre-content">
+        Skip to command workspace
+      </a>
       {runId ? (
         <LiveRunProvider runId={runId}>
           <CommandCentreShellInner runId={runId} incidentId={incidentId}>

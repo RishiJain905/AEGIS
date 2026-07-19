@@ -1,0 +1,141 @@
+{
+  "schemaVersion": "aegis.release-evidence/v1",
+  "runId": "release-20260718T160041Z-bdc9fadb",
+  "timestamp": "2026-07-18T16:00:41Z",
+  "environment": "local",
+  "revision": "bdc9fadbd9237e35ede7531257ef68cb398244ea",
+  "status": "failed",
+  "scenario": {
+    "version": "operation-silent-relay@1.0.0",
+    "seed": 42
+  },
+  "commandResults": [
+    {
+      "name": "verify",
+      "command": [
+        "powershell",
+        "-NoProfile",
+        "-File",
+        "scripts/verify.ps1"
+      ],
+      "status": "failed",
+      "exitCode": 127,
+      "startedAt": "2026-07-18T16:00:41Z",
+      "durationSeconds": 24.0,
+      "artifactPath": "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/verify.log",
+      "outputTail": "=== [format] pnpm format:check\n$ prettier --config config/.prettierrc.json --check apps packages scripts tests .github docs/handoffs docs/contracts docs/frontend config README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.json docs/engineering-standards.md docs/architecture.md --ignore-unknown\nChecking formatting...\nAll matched files use Prettier code style!\n--- [format] ok\n=== [eslint] pnpm lint\n$ eslint apps packages && pnpm boundaries\n$ depcruise apps packages --config .dependency-cruiser.cjs\n\n\u001b[32m\u2714\u001b[39m no dependency violations found (622 modules, 1409 dependencies cruised)\nUnable to execute stage: 'charmap' codec can't encode character '\\u2714' in position 5: character maps to <undefined>"
+    },
+    {
+      "name": "docker-services",
+      "command": [
+        "docker",
+        "compose",
+        "up",
+        "-d",
+        "--build",
+        "--wait",
+        "postgres",
+        "redis",
+        "minio",
+        "api",
+        "worker",
+        "simulator"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T16:01:05Z",
+      "durationSeconds": 34.328,
+      "artifactPath": "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/docker-services.log",
+      "outputTail": " Container aegis-simulator-1 Recreate \n Container aegis-simulator-1 Recreated \n Container aegis-worker-1 Recreated \n Container aegis-api-1 Recreated \n Container aegis-postgres-1 Waiting \n Container aegis-postgres-1 Waiting \n Container aegis-redis-1 Waiting \n Container aegis-postgres-1 Waiting \n Container aegis-redis-1 Waiting \n Container aegis-redis-1 Waiting \n Container aegis-minio-1 Waiting \n Container aegis-redis-1 Healthy \n Container aegis-postgres-1 Healthy \n Container aegis-postgres-1 Healthy \n Container aegis-simulator-1 Starting \n Container aegis-minio-1 Healthy \n Container aegis-redis-1 Healthy \n Container aegis-api-1 Starting \n Container aegis-postgres-1 Healthy \n Container aegis-redis-1 Healthy \n Container aegis-worker-1 Starting \n Container aegis-simulator-1 Started \n Container aegis-worker-1 Started \n Container aegis-api-1 Started \n Container aegis-otel-collector-1 Waiting \n Container aegis-simulator-1 Waiting \n Container aegis-worker-1 Waiting \n Container aegis-redis-1 Waiting \n Container aegis-postgres-1 Waiting \n Container aegis-tempo-1 Waiting \n Container aegis-api-1 Waiting \n Container aegis-minio-1 Waiting \n Container aegis-minio-1 Healthy \n Container aegis-redis-1 Healthy \n Container aegis-postgres-1 Healthy \n Container aegis-tempo-1 Healthy \n Container aegis-otel-collector-1 Healthy \n Container aegis-worker-1 Healthy \n Container aegis-api-1 Healthy \n Container aegis-simulator-1 Healthy "
+    },
+    {
+      "name": "integration",
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "tests/integration",
+        "-q"
+      ],
+      "status": "failed",
+      "exitCode": 1,
+      "startedAt": "2026-07-18T16:01:39Z",
+      "durationSeconds": 66.75,
+      "artifactPath": "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/integration.log",
+      "outputTail": "                ),\n                GenerationMessageV1(\n                    role=GenerationMessageRole.USER,\n                    content=user_prompt,\n                ),\n                build_scenario_data_message({\"incidentTitle\": incident_title}),\n            ],\n            structured_output=StructuredOutputSpecV1(\n                schema_version=STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION,\n                json_schema=output_schema,\n                strict=True,\n                max_repair_attempts=1,\n            ),\n            capabilities_required=[ProviderCapability.STRUCTURED_OUTPUT],\n        )\n        response = await self._generation.generate(request)\n        if response.error is not None:\n>           raise AgentRuntimeError(\n                code=AgentRuntimeErrorCode.PROVIDER_FAILURE,\n                message=response.error.message,\n                details={\"providerCode\": response.error.code.value},\n                trace_id=task.trace_id,\n                retryable=response.error.code.value\n                in {\"TIMEOUT\", \"RETRY_EXHAUSTED\", \"PROVIDER_UNAVAILABLE\"},\n            )\nE           aegis_agents.runtime.errors.AgentRuntimeError: Recorded response fixture not found\n\nservices\\agents\\src\\aegis_agents\\runtime\\executor.py:348: AgentRuntimeError\n---------------------------- Captured stderr setup ----------------------------\nINFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Will assume transactional DDL.\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  F:\\Personal\\A.E.G.I.S\\AEGIS\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ===========================\nFAILED tests/integration/agents/test_executor_recorded_provider.py::test_recorded_provider_replay_is_deterministic\n1 failed, 46 passed, 6 skipped, 1 warning in 65.13s (0:01:05)"
+    },
+    {
+      "name": "golden-replays",
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "tests/golden-replays",
+        "-q"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T16:02:46Z",
+      "durationSeconds": 2.407,
+      "artifactPath": "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/golden-replays.log",
+      "outputTail": "..........                                                               [100%]\n10 passed in 1.86s"
+    },
+    {
+      "name": "failure-injection",
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "tests/failure-injection",
+        "-q"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T16:02:48Z",
+      "durationSeconds": 42.89,
+      "artifactPath": "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/failure-injection.log",
+      "outputTail": ".....ss......                                                            [100%]\n11 passed, 2 skipped in 41.42s"
+    },
+    {
+      "name": "security",
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "tests/security",
+        "-q"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "startedAt": "2026-07-18T16:03:31Z",
+      "durationSeconds": 3.766,
+      "artifactPath": "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/security.log",
+      "outputTail": ".......................................................                  [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  F:\\Personal\\A.E.G.I.S\\AEGIS\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n55 passed, 1 warning in 2.93s"
+    },
+    {
+      "name": "deployment-smoke",
+      "command": [
+        "powershell",
+        "-NoProfile",
+        "-File",
+        "scripts/verify.ps1",
+        "-Deployment"
+      ],
+      "status": "failed",
+      "exitCode": 127,
+      "startedAt": "2026-07-18T16:03:35Z",
+      "durationSeconds": 24.234,
+      "artifactPath": "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/deployment-smoke.log",
+      "outputTail": "=== [format] pnpm format:check\n$ prettier --config config/.prettierrc.json --check apps packages scripts tests .github docs/handoffs docs/contracts docs/frontend config README.md docker-compose.yml package.json pnpm-workspace.yaml turbo.json tsconfig.json docs/engineering-standards.md docs/architecture.md --ignore-unknown\nChecking formatting...\nAll matched files use Prettier code style!\n--- [format] ok\n=== [eslint] pnpm lint\n$ eslint apps packages && pnpm boundaries\n$ depcruise apps packages --config .dependency-cruiser.cjs\n\n\u001b[32m\u2714\u001b[39m no dependency violations found (622 modules, 1409 dependencies cruised)\nUnable to execute stage: 'charmap' codec can't encode character '\\u2714' in position 5: character maps to <undefined>"
+    }
+  ],
+  "artifactPaths": [
+    "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/verify.log",
+    "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/docker-services.log",
+    "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/integration.log",
+    "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/golden-replays.log",
+    "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/failure-injection.log",
+    "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/security.log",
+    "docs/release/evidence/release-20260718T160041Z-bdc9fadb/logs/deployment-smoke.log"
+  ]
+}

@@ -66,6 +66,12 @@ class RunRow(Base):
     revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Owner of the run (creating actor's userId). Nullable for legacy/seeded rows,
+    # backfilled to a demo/admin owner by migration 014. No FK: auth users are seeded
+    # at app startup, not by migration, so an owner may not exist at migrate time.
+    owner_user_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+
+    __table_args__ = (Index("ix_runs_owner_user_id", "owner_user_id"),)
 
 
 class AssetInstanceRow(Base):
@@ -361,6 +367,7 @@ class ProposalRevisionRow(Base):
             "revision_number",
             name="uq_proposal_revision_number",
         ),
+        Index("ix_proposal_revisions_incident_created", "incident_id", "created_at"),
     )
 
 
@@ -383,6 +390,11 @@ class PolicyDecisionRow(Base):
     task_id: Mapped[str] = mapped_column(String(64), nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_policy_decisions_incident_evaluated", "incident_id", "evaluated_at"),
+        Index("ix_policy_decisions_proposal_revision", "proposal_id", "proposal_revision_id"),
+    )
 
 
 class ExecutedActionRow(Base):
@@ -990,7 +1002,34 @@ class AuthUserRow(Base):
 
     user_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     display_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    # Unique login handle for password authentication. Nullable so OIDC/dev-seed
+    # identities (which authenticate without a local username) remain valid.
+    # Postgres treats multiple NULLs as distinct, so the unique constraint holds.
+    username: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("username", name="uq_auth_users_username"),)
+
+
+class AuthUserCredentialRow(Base):
+    """Dedicated password-credential store, one row per credentialed user.
+
+    Kept separate from ``auth_users`` so password material has its own table and
+    lifecycle. The hash is an opaque Argon2id encoded string (algorithm + params +
+    per-password salt); plaintext is never stored.
+    """
+
+    __tablename__ = "auth_user_credentials"
+
+    user_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("auth_users.user_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
+    algorithm: Mapped[str] = mapped_column(String(32), nullable=False, default="argon2id")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

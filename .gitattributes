@@ -1,0 +1,5 @@
+# The repository is LF-only. Several subsystems hash working-tree bytes against
+# recorded checksums (scenario package manifests, contract compatibility
+# fixtures) and prettier enforces LF, so text files must check out with the
+# exact committed LF bytes on every platform (overriding core.autocrlf).
+* text=auto eol=lf

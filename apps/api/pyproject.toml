@@ -1,6 +1,6 @@
 [project]
 name = "aegis-api"
-version = "0.0.0"
+version = "1.0.0"
 description = "AEGIS FastAPI application"
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -16,8 +16,10 @@ dependencies = [
     "aegis-replay",
     "aegis-scoring",
     "aegis-observability",
+    "alembic>=1.15",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
+    "argon2-cffi>=23.1.0",
 ]
 
 [tool.uv.sources]

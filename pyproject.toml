@@ -1,6 +1,6 @@
 [project]
 name = "aegis"
-version = "0.0.0"
+version = "1.0.0"
 description = "AEGIS Command — cyber-defence simulation platform"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -93,10 +93,14 @@ module = ["sklearn.*", "joblib.*", "jsonschema.*", "openai.*", "boto3.*", "botoc
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
 testpaths = ["tests"]
-pythonpath = ["apps", "packages", "services", "tests"]
+pythonpath = [".", "apps", "packages", "services", "tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "failure_injection: destructive local Docker recovery test; enabled by AEGIS_RUN_FAILURE_INJECTION=1",
+]
 
 [tool.importlinter]
 root_packages = [

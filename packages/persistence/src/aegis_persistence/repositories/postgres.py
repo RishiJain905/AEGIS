@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+
 from aegis_contracts import (
     ActionProposalV1,
     AgentArtifactV1,
@@ -27,7 +29,7 @@ from aegis_contracts import (
     SimulationCheckpointV1,
     ToolInvocationV1,
 )
-from sqlalchemy import CursorResult, select, update
+from sqlalchemy import CursorResult, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -86,6 +88,16 @@ from aegis_persistence.orm.tables import (
     StoredObjectRow,
     ToolInvocationRow,
 )
+
+
+def _advisory_lock_key(run_id: str) -> int:
+    """Stable signed 64-bit key for a per-run Postgres transaction advisory lock.
+
+    Uses a hash (not Python ``hash()``, which is process-salted) so the key is
+    deterministic across processes. Signed to fit Postgres ``bigint``.
+    """
+    digest = hashlib.blake2b(run_id.encode("utf-8"), digest_size=8).digest()
+    return int.from_bytes(digest, "big", signed=True)
 
 
 class PostgresScenarioRepository:
@@ -151,6 +163,14 @@ class PostgresRunRepository:
         result = await self._session.execute(select(RunRow).order_by(RunRow.started_at.desc()))
         return [run_to_domain(row) for row in result.scalars().all()]
 
+    async def list_for_owner(self, owner_user_id: str) -> list[RunV1]:
+        result = await self._session.execute(
+            select(RunRow)
+            .where(RunRow.owner_user_id == owner_user_id)
+            .order_by(RunRow.started_at.desc())
+        )
+        return [run_to_domain(row) for row in result.scalars().all()]
+
     async def get_by_id(self, run_id: str) -> RunV1 | None:
         row = await self._session.get(RunRow, run_id)
         return run_to_domain(row) if row else None
@@ -166,6 +186,7 @@ class PostgresRunRepository:
             revision=run.revision,
             payload=payload,
             started_at=run.started_at,
+            owner_user_id=run.owner_user_id,
         )
         self._session.add(row)
         await self._session.flush()
@@ -268,6 +289,20 @@ class PostgresEventRepository:
         return envelope
 
     async def next_sequence(self, run_id: str) -> int:
+        # Serialize sequence assignment per run so concurrent appending
+        # transactions cannot read the same max and collide on the unique
+        # (run_id, sequence) constraint. pg_advisory_xact_lock is held for the
+        # remainder of the current transaction (through the event+outbox
+        # commit), so the max read below and the subsequent append are atomic
+        # with respect to any other writer on the same run. Reentrant within a
+        # transaction, so multiple next_sequence calls in one command are safe.
+        bind = self._session.bind
+        dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
+        if dialect_name == "postgresql":
+            await self._session.execute(
+                text("SELECT pg_advisory_xact_lock(:lock_key)"),
+                {"lock_key": _advisory_lock_key(run_id)},
+            )
         result = await self._session.execute(
             select(DomainEventRow.sequence)
             .where(DomainEventRow.run_id == run_id)
@@ -755,6 +790,35 @@ class PostgresAgentTaskRepository:
         row.updated_at = task.updated_at
         await self._session.flush()
         return task
+
+    async def claim_transition(
+        self,
+        task: AgentTaskV1,
+        *,
+        from_statuses: tuple[str, ...],
+    ) -> bool:
+        """Atomically transition a task out of ``from_statuses`` into ``task.status``.
+
+        The status guard is applied in a single ``UPDATE ... WHERE id=? AND
+        status IN (...)`` so exactly one concurrent caller can win the claim.
+        Returns True if this caller performed the transition, False if the task
+        was already claimed/advanced by another writer (zero rows updated).
+        """
+        cursor_result = await self._session.execute(
+            update(AgentTaskRow)
+            .where(
+                AgentTaskRow.id == task.id,
+                AgentTaskRow.status.in_(from_statuses),
+            )
+            .values(
+                status=task.status.value,
+                attempt=task.attempt,
+                payload=domain_to_payload(task),
+                updated_at=task.updated_at,
+            )
+        )
+        assert isinstance(cursor_result, CursorResult)
+        return cursor_result.rowcount == 1
 
 
 class PostgresAgentStateTransitionRepository:

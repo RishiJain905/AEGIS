@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import dataclasses
+from collections.abc import Iterable
 from datetime import UTC, datetime
+from typing import Any
 
 from aegis_contracts.scoring import (
     GRADING_ENGINE_VERSION,
@@ -17,7 +20,7 @@ from aegis_contracts.versioning import (
 )
 
 from aegis_scoring.alternatives import build_valid_alternatives
-from aegis_scoring.checksums import hash_payload
+from aegis_scoring.checksums import canonical_json, hash_payload
 from aegis_scoring.criteria import (
     CRITERION_HANDLERS,
     PASSING_SCORE_THRESHOLD,
@@ -32,50 +35,48 @@ from aegis_scoring.ids import new_runtime_id
 COMPLETED_STATUSES = frozenset({"completed", "complete", "finished", "ended"})
 
 
+def _canonical_items(items: Iterable[Any]) -> list[Any]:
+    # ``asdict`` fully expands nested frozen dataclasses (including fields such as
+    # ``evidence.summary`` and ``executed_actions.target_asset_ids`` that feed
+    # criterion handlers). Sorting by canonical JSON makes the digest independent
+    # of assembly order so identical fact sets always hash identically.
+    return sorted((dataclasses.asdict(item) for item in items), key=canonical_json)
+
+
 def _input_checksum(facts: ScoringFacts) -> str:
+    """Digest of the FULL scoring input surface.
+
+    Any field a criterion handler can read must be covered so that a change in
+    facts that changes the score always changes the fingerprint (AEGIS-BUG-004).
+    ``calculated_at`` is intentionally excluded: it never affects the score and
+    including it would break the "same facts -> same fingerprint" invariant.
+    """
+
     payload = {
         "runId": facts.run_id,
+        "runStatus": facts.run_status,
         "scenarioId": facts.scenario_id,
         "scenarioVersion": facts.scenario_version,
-        "rubricVersion": facts.rubric.rubric_version,
+        "incidentId": facts.incident_id,
         "gradingEngineVersion": GRADING_ENGINE_VERSION,
-        "events": [
-            {
-                "eventId": e.event_id,
-                "sequence": e.sequence,
-                "eventType": e.event_type,
-                "assetId": e.asset_id,
-            }
-            for e in sorted(facts.events, key=lambda x: x.sequence)
-        ],
-        "evidence": [
-            {"evidenceId": e.evidence_id, "sourceEventId": e.source_event_id, "assetId": e.asset_id}
-            for e in facts.evidence
-        ],
-        "hypotheses": [
-            {"hypothesisId": h.hypothesis_id, "statement": h.statement, "confidence": h.confidence}
-            for h in facts.hypotheses
-        ],
-        "approvals": [
-            {
-                "approvalId": a.approval_id,
-                "proposalId": a.proposal_id,
-                "decision": a.decision,
-                "sequence": a.sequence,
-            }
-            for a in facts.approvals
-        ],
-        "executedActions": [
-            {
-                "actionId": a.action_id,
-                "proposalId": a.proposal_id,
-                "outcome": a.outcome,
-                "impactScore": a.impact_score,
-            }
-            for a in facts.executed_actions
-        ],
+        "rubric": facts.rubric.model_dump(by_alias=True, mode="json"),
+        "events": _canonical_items(facts.events),
+        "alerts": _canonical_items(facts.alerts),
+        "evidence": _canonical_items(facts.evidence),
+        "hypotheses": _canonical_items(facts.hypotheses),
+        "proposals": _canonical_items(facts.proposals),
+        "approvals": _canonical_items(facts.approvals),
+        "executedActions": _canonical_items(facts.executed_actions),
+        "expectedEvidence": _canonical_items(facts.expected_evidence),
+        "objectives": _canonical_items(facts.objectives),
+        "responseBranches": _canonical_items(facts.response_branches),
         "trueCauseId": facts.true_cause_id,
+        "trueCauseLabel": facts.true_cause_label,
         "selectedResponseBranch": facts.selected_response_branch,
+        "affectedAssetIds": sorted(facts.affected_asset_ids),
+        "lessons": list(facts.lessons),
+        "scribeReportId": facts.scribe_report_id,
+        "scribeVersionNumber": facts.scribe_version_number,
     }
     return hash_payload(payload)
 

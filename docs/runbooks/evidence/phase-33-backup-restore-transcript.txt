@@ -1,0 +1,25 @@
+Phase 33 local PostgreSQL backup/restore rehearsal
+Date: 2026-07-18 (America/Toronto)
+Project: aegis-phase33
+Scope: local Compose PostgreSQL only; restore target was isolated
+
+> docker compose --project-name aegis-phase33 --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres sh -c 'rm -f /tmp/aegis-phase33.dump && pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --file=/tmp/aegis-phase33.dump && ls -lh /tmp/aegis-phase33.dump'
+-rw-r--r--    1 root     root      118.3K Jul 18 12:20 /tmp/aegis-phase33.dump
+
+> docker compose --project-name aegis-phase33 --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres sh -c 'dropdb -U "$POSTGRES_USER" --if-exists aegis_restore_rehearsal && createdb -U "$POSTGRES_USER" aegis_restore_rehearsal'
+NOTICE: database "aegis_restore_rehearsal" does not exist, skipping
+
+> docker compose --project-name aegis-phase33 --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres sh -c 'pg_restore --exit-on-error --no-owner -U "$POSTGRES_USER" --dbname=aegis_restore_rehearsal /tmp/aegis-phase33.dump'
+[no output; exit 0]
+
+> docker compose --project-name aegis-phase33 --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres psql -U aegis -d aegis_restore_rehearsal -Atc "select version_num from alembic_version"
+013_auth_identity
+
+> docker compose --project-name aegis-phase33 --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres dropdb -U aegis aegis_restore_rehearsal
+[no output; exit 0]
+> docker compose --project-name aegis-phase33 --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres rm -f /tmp/aegis-phase33.dump
+[no output; exit 0]
+
+Result: PASS. The custom-format dump restored cleanly into a separate database,
+the expected migration head was present, and the temporary database/dump were
+removed. Hosted object-storage sync remains a documented expectation only.

@@ -1,0 +1,102 @@
+name: Deployment Readiness
+
+on:
+  push:
+    branches: [main, 'cursor/**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: deployment-readiness-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-validation:
+    name: Build and validate production-shaped artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      COMPOSE_PROJECT_NAME: aegis-phase33-ci
+      AEGIS_PROD_ENV_FILE: .env.production.example
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+        with:
+          python-version-file: .python-version
+
+      - name: Validate Compose definitions
+        run: |
+          docker compose -f docker-compose.yml config --quiet
+          docker compose --env-file .env.production.example \
+            -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+
+      - name: Install Python workspace for smoke checks
+        run: uv sync --frozen --all-packages
+
+      - name: Build all production images locally
+        run: |
+          docker compose --env-file .env.production.example \
+            -f docker-compose.yml -f docker-compose.prod.yml build api web worker simulator
+
+      - name: Capture image metadata and CycloneDX SBOMs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build-artifacts
+          syft_image='anchore/syft:v1.19.0@sha256:bc1ae555a43011d23bb011a4f50e175fc9a5984a008a3f8f2d692b211fcacd2a'
+          for service in api web worker simulator; do
+            case "$service" in
+              api) image='aegis-api:phase33-local' ;;
+              web) image='aegis-web:phase33-local' ;;
+              worker) image='aegis-worker:phase33-local' ;;
+              simulator) image='aegis-simulator:phase33-local' ;;
+            esac
+            docker image inspect "$image" > "build-artifacts/image-${service}.json"
+            docker run --rm \
+              --volume /var/run/docker.sock:/var/run/docker.sock \
+              --volume "$GITHUB_WORKSPACE/build-artifacts:/artifacts" \
+              "$syft_image" "docker:$image" \
+              --output "cyclonedx-json=/artifacts/sbom-${service}.cdx.json"
+          done
+
+      - name: Validate Terraform shape templates offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          terraform_image='hashicorp/terraform:1.9.8@sha256:18f9986038bbaf02cf49db9c09261c778161c51dcc7fb7e355ae8938459428cd'
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE/infra/terraform:/workspace" \
+            --workdir /workspace \
+            "$terraform_image" fmt -check -recursive
+          for environment in dev staging production; do
+            docker run --rm --entrypoint /bin/sh \
+              --volume "$GITHUB_WORKSPACE/infra/terraform:/workspace" \
+              --workdir /workspace \
+              "$terraform_image" -c \
+              "terraform -chdir=environments/$environment init -backend=false -input=false && terraform -chdir=environments/$environment validate"
+          done
+
+      - name: Start and smoke-test the local production-shaped stack
+        run: |
+          docker compose --env-file .env.production.example \
+            -f docker-compose.yml -f docker-compose.prod.yml up -d --wait
+          uv run python scripts/deploy_smoke_test.py \
+            --environment local --env-file .env.production.example
+
+      - name: Upload image metadata and SBOMs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase-33-image-metadata-and-sboms
+          path: build-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Remove local validation stack
+        if: always()
+        run: |
+          docker compose --env-file .env.production.example \
+            -f docker-compose.yml -f docker-compose.prod.yml down --volumes --remove-orphans

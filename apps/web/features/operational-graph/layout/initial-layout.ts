@@ -5,8 +5,10 @@ export interface LayoutPosition {
   y: number;
 }
 
-const CLUSTER_RADIUS = 120;
-const NODE_RADIUS = 40;
+const CLUSTER_RADIUS = 180;
+const NODE_RADIUS = 64;
+const TARGET_LAYOUT_ASPECT = 1;
+const MAX_HORIZONTAL_STRETCH = 2.5;
 
 function hashString(value: string): number {
   let hash = 0;
@@ -43,22 +45,64 @@ export function computeInitialLayout(
     nodesByCluster.set(key, group);
   }
 
+  // Deterministic phyllotaxis placement: nodes fill each cluster disc evenly
+  // instead of stacking on a single ring, which seeds ForceAtlas2 with a
+  // spread-out arrangement and avoids the central clump.
+  const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
   for (const [clusterId, clusterNodes] of nodesByCluster) {
     const center = clusterCenters[clusterId] ?? { x: 0, y: 0 };
+    const phase = (hashString(clusterId) % 360) * (Math.PI / 180);
     clusterNodes.forEach((node, index) => {
       if (positions[node.id]) {
         return;
       }
-      const angle = (2 * Math.PI * index) / Math.max(clusterNodes.length, 1);
+      const angle = phase + index * GOLDEN_ANGLE;
+      const radius = NODE_RADIUS * Math.sqrt(index + 0.5);
       const jitter = (hashString(node.id) % 20) - 10;
       positions[node.id] = {
-        x: center.x + Math.cos(angle) * (NODE_RADIUS + clusterNodes.length * 3) + jitter,
-        y: center.y + Math.sin(angle) * (NODE_RADIUS + clusterNodes.length * 3) + jitter,
+        x: center.x + Math.cos(angle) * radius + jitter,
+        y: center.y + Math.sin(angle) * radius + jitter,
       };
     });
   }
 
   return positions;
+}
+
+export function balanceLayoutAspect(
+  positions: Record<string, LayoutPosition>,
+  targetAspect = TARGET_LAYOUT_ASPECT,
+): Record<string, LayoutPosition> {
+  const entries = Object.entries(positions);
+  if (entries.length < 2) {
+    return { ...positions };
+  }
+
+  const xs = entries.map(([, position]) => position.x);
+  const ys = entries.map(([, position]) => position.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const xSpan = maxX - minX;
+  const ySpan = maxY - minY;
+
+  if (xSpan < 0.001 || ySpan < 0.001 || xSpan / ySpan >= targetAspect) {
+    return { ...positions };
+  }
+
+  const centerX = (minX + maxX) / 2;
+  const horizontalStretch = Math.min(MAX_HORIZONTAL_STRETCH, (ySpan * targetAspect) / xSpan);
+
+  return Object.fromEntries(
+    entries.map(([nodeId, position]) => [
+      nodeId,
+      {
+        x: centerX + (position.x - centerX) * horizontalStretch,
+        y: position.y,
+      },
+    ]),
+  );
 }
 
 export function filterNodesBySearch(

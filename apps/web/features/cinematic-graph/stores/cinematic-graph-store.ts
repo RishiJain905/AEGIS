@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { nudgeCompositorAfterModeSwitch } from '../lib/compositor-nudge';
 import { GraphViewMode, type GraphViewModeValue } from '../contracts/graph-view-mode';
 import { defaultCameraBookmark3D, type CameraBookmark3D } from '../contracts/camera-bookmark-3d';
 import { defaultCapabilityReport, type CapabilityReport } from '../contracts/capability-report';
@@ -30,7 +31,12 @@ const initialState = {
 export const useCinematicGraphStore = create<CinematicGraphUiState>((set) => ({
   ...initialState,
   setViewMode: (mode) => {
-    set({ viewMode: mode });
+    set((state) => {
+      if (state.viewMode !== mode) {
+        nudgeCompositorAfterModeSwitch();
+      }
+      return { viewMode: mode };
+    });
   },
   setCapability: (report) => {
     set((state) => ({

@@ -1,5 +1,10 @@
 # AEGIS Shared Contract Versioning
 
+The v1.0.0 release identifier is `1.0.0` in the root/workspace package metadata and
+the canonical Python and TypeScript `WORKSPACE_VERSION` constants. Integer schema
+versions and the `ProtocolVersion` remain independent compatibility identifiers; a
+release-version bump does not by itself change a wire schema.
+
 > Phase 01 baseline — canonical cross-language contracts for AEGIS v1.0.
 
 ## Ownership

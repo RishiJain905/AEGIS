@@ -49,9 +49,9 @@ export function CommandPalette() {
     },
     {
       id: 'nav-incident',
-      label: 'Go to incident',
+      label: 'Go to incidents',
       action: () => {
-        router.push(`/incidents/${encodeURIComponent('incident:inc_synthetic_001')}`);
+        router.push('/incidents');
       },
     },
     {

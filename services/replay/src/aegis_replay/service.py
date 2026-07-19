@@ -47,10 +47,31 @@ class ReplayService:
         self._engine_version = engine_version
         self._page_size = page_size
 
-    def assert_read_only(self) -> None:
-        """Explicit guard: replay paths must never append live events."""
-        # Call sites that would mutate live state must invoke this first.
-        return None
+    def assert_read_only(self, uow: PostgresUnitOfWork) -> None:
+        """Mechanically prevent replay from appending authoritative events/outbox rows.
+
+        Replaces the unit of work's ``append_event`` — the single choke point through which
+        every domain event and its outbox row is written — with a guard that fails closed.
+        This turns replay isolation from a convention into an enforced boundary: any code
+        path (present or future) that tries to append live state during replay raises
+        ``REPLAY_LIVE_MUTATION_FORBIDDEN`` instead of silently mutating authoritative tables.
+
+        Acceleration-snapshot writes (``replay_snapshots`` + object storage) do not flow
+        through ``append_event`` and remain permitted, matching the architecture rule that
+        snapshots accelerate reconstruction while ``domain_events`` stay authoritative.
+        Idempotent: re-arming an already-guarded unit of work is a no-op.
+        """
+        if getattr(uow, "_aegis_replay_read_only", False):
+            return
+
+        async def _blocked_append(*_args: object, **_kwargs: object) -> object:
+            raise ReplayEngineError(
+                ReplayErrorCode.REPLAY_LIVE_MUTATION_FORBIDDEN,
+                "Replay context is read-only; appending live events is forbidden",
+            )
+
+        uow.append_event = _blocked_append  # type: ignore[method-assign]
+        uow._aegis_replay_read_only = True  # type: ignore[attr-defined]
 
     async def reconstruct(
         self,
@@ -110,7 +131,7 @@ class ReplayService:
         incident_id: str | None = None,
         prefer_snapshot: bool = True,
     ) -> ReplayStateV1:
-        self.assert_read_only()
+        self.assert_read_only(uow)
         events = await self._load_all_events(uow, run_id)
         if not events and sequence is None and sim_time is None:
             provenance = empty_provenance(
@@ -221,7 +242,7 @@ class ReplayService:
         sequence: int | None = None,
         trigger_reason: SnapshotTriggerReasonV1 = SnapshotTriggerReasonV1.EXPLICIT_REQUEST,
     ) -> SnapshotManifestV1:
-        self.assert_read_only()
+        self.assert_read_only(uow)
         state = await self.reconstruct(
             uow,
             run_id=run_id,

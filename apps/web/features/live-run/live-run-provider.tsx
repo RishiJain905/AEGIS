@@ -87,6 +87,15 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
     (initialRunId) => createInitialRunReplicatedState(initialRunId),
   );
 
+  // The graph store is mutated on a code path parallel to the reducer. Track the
+  // reducer's freeze condition so the store cannot advance past
+  // `lastAppliedSequence` while the reducer is frozen in a gap — the two live
+  // projections must stay single-sourced on the applied sequence.
+  const connectionHealthRef = useRef(state.connectionHealth);
+  useEffect(() => {
+    connectionHealthRef.current = state.connectionHealth;
+  }, [state.connectionHealth]);
+
   const applyEventToGraph = useCallback(
     (event: DomainEventEnvelopeV1) => {
       const actions = projectDomainEventToActions(event, {
@@ -96,6 +105,15 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       });
       for (const action of actions) {
         dispatch(action);
+        if (action.type === 'mark_gap') {
+          // Mirror the reducer: once a gap is detected, freeze the graph store
+          // too until a snapshot resync reconciles both projections.
+          connectionHealthRef.current = ConnectionHealthState.GAP;
+          continue;
+        }
+        if (connectionHealthRef.current === ConnectionHealthState.GAP) {
+          continue;
+        }
         if (action.type === 'apply_graph_delta') {
           graphStoreRef.current.applyDelta(action.delta);
           setGraphRevision((value) => value + 1);

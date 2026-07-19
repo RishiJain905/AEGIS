@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegis.local/schemas/release-manifest-v1.json",
+  "title": "AEGIS Release Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseVersion",
+    "tag",
+    "source",
+    "environment",
+    "images",
+    "migration",
+    "scenario",
+    "modelArtifacts",
+    "sbom",
+    "checksums"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "aegis.release-manifest/v1" },
+    "releaseVersion": { "const": "1.0.0" },
+    "tag": { "const": "v1.0.0" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision"],
+      "properties": { "revision": { "type": "string", "minLength": 7 } }
+    },
+    "environment": { "const": "local" },
+    "images": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["service", "reference", "digest", "repoDigests"],
+        "properties": {
+          "service": { "type": "string", "minLength": 1 },
+          "reference": { "type": "string", "minLength": 1 },
+          "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "repoDigests": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "migration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["head"],
+      "properties": { "head": { "type": "string", "minLength": 1 } }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "packagePath", "packageChecksum"],
+      "properties": {
+        "id": { "const": "scenario:operation-silent-relay" },
+        "version": { "type": "string", "minLength": 1 },
+        "packagePath": { "type": "string", "minLength": 1 },
+        "packageChecksum": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "modelArtifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "sbom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["references"],
+      "properties": {
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "source", "status"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "source": { "type": "string", "minLength": 1 },
+              "status": { "const": "ci-generated" }
+            }
+          }
+        }
+      }
+    },
+    "checksums": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+    }
+  }
+}

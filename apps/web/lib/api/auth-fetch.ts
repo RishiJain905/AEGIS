@@ -11,12 +11,34 @@ function getApiBaseUrl(): string {
 
 let memoryCsrfToken: string | null = null;
 
+function getCsrfCookieName(): string {
+  return process.env.NEXT_PUBLIC_AEGIS_CSRF_COOKIE_NAME ?? 'aegis_csrf';
+}
+
+function readCsrfCookie(): string | null {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+  const name = getCsrfCookieName();
+  const prefix = `${name}=`;
+  for (const part of document.cookie.split('; ')) {
+    if (part.startsWith(prefix)) {
+      return decodeURIComponent(part.slice(prefix.length));
+    }
+  }
+  return null;
+}
+
 export function setMemoryCsrfToken(token: string | null): void {
   memoryCsrfToken = token;
 }
 
 export function getCsrfToken(): string | null {
-  return memoryCsrfToken;
+  // Prefer the in-memory token from the current session response; fall back to
+  // the non-httponly CSRF cookie (named by NEXT_PUBLIC_AEGIS_CSRF_COOKIE_NAME)
+  // so requests still carry a token after a full page reload before the session
+  // query rehydrates memory.
+  return memoryCsrfToken ?? readCsrfCookie();
 }
 
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {

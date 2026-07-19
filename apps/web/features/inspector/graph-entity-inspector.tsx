@@ -5,6 +5,15 @@ import { Badge, Panel } from '@aegis/ui';
 
 import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-visual-store';
 
+import {
+  InspectorField,
+  InspectorLabel,
+  InspectorMetric,
+  InspectorMetricGrid,
+  InspectorMonoBlock,
+  InspectorMonoValue,
+} from './inspector-primitives';
+
 export interface GraphEntityInspectorProps {
   snapshot: GraphSnapshotV1;
   selectedEntityId: string | null;
@@ -32,50 +41,54 @@ export function GraphEntityInspector({
 
   return (
     <Panel title="Asset" density="compact" data-testid="graph-entity-inspector">
-      <p className="text-sm font-medium">{node.label}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        <Badge>{node.assetType}</Badge>
-        <Badge>{node.status.replace(/_/g, ' ')}</Badge>
-      </div>
-      <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <div>
-          <dt className="text-[var(--aegis-text-muted)]">Risk score</dt>
-          <dd className="font-mono">{(riskScore?.total ?? node.riskScore).toFixed(2)}</dd>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold leading-5 text-[var(--aegis-text-primary)]">
+            {node.label}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Badge>{node.assetType}</Badge>
+            <Badge variant="outline">{node.status.replace(/_/g, ' ')}</Badge>
+          </div>
         </div>
-        {riskScore ? (
-          <>
-            <div>
-              <dt className="text-[var(--aegis-text-muted)]">Direct</dt>
-              <dd className="font-mono">{riskScore.direct.toFixed(2)}</dd>
-            </div>
-            <div>
-              <dt className="text-[var(--aegis-text-muted)]">Propagated</dt>
-              <dd className="font-mono">{riskScore.propagated.toFixed(2)}</dd>
-            </div>
-          </>
-        ) : null}
-        <div>
-          <dt className="text-[var(--aegis-text-muted)]">Criticality</dt>
-          <dd className="font-mono">{node.criticality.toFixed(2)}</dd>
-        </div>
+
+        <InspectorMetricGrid>
+          <InspectorMetric
+            label="Risk score"
+            value={(riskScore?.total ?? node.riskScore).toFixed(2)}
+          />
+          <InspectorMetric label="Criticality" value={node.criticality.toFixed(2)} />
+          {riskScore ? (
+            <>
+              <InspectorMetric label="Direct" value={riskScore.direct.toFixed(2)} />
+              <InspectorMetric label="Propagated" value={riskScore.propagated.toFixed(2)} />
+            </>
+          ) : null}
+        </InspectorMetricGrid>
+
         {node.clusterId ? (
-          <div className="col-span-2">
-            <dt className="text-[var(--aegis-text-muted)]">Cluster</dt>
-            <dd className="font-mono">{node.clusterId}</dd>
+          <InspectorField label="Cluster">
+            <InspectorMonoValue
+              value={node.clusterId}
+              className="text-[var(--aegis-text-secondary)]"
+            />
+          </InspectorField>
+        ) : null}
+
+        <InspectorField label="Asset ID">
+          <InspectorMonoValue value={node.id} />
+        </InspectorField>
+
+        {showPath ? (
+          <div
+            className="flex flex-col gap-1 border-t border-[var(--aegis-border-subtle)] pt-3"
+            data-testid="path-inspector-section"
+          >
+            <InspectorLabel>Highlighted path</InspectorLabel>
+            <InspectorMonoBlock>{pathNodes.join(' → ')}</InspectorMonoBlock>
           </div>
         ) : null}
-      </dl>
-      <p className="mt-2 font-mono text-xs text-[var(--aegis-text-muted)]">{node.id}</p>
-
-      {showPath ? (
-        <div
-          className="mt-4 border-t border-[var(--aegis-border-subtle)] pt-3"
-          data-testid="path-inspector-section"
-        >
-          <p className="text-xs font-semibold text-[var(--aegis-text-muted)]">Highlighted path</p>
-          <p className="mt-1 font-mono text-xs">{pathNodes.join(' → ')}</p>
-        </div>
-      ) : null}
+      </div>
     </Panel>
   );
 }

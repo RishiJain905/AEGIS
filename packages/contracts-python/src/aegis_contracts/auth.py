@@ -80,6 +80,7 @@ class SecurityAuditOutcomeV1(StrEnum):
 class AuthMethodV1(StrEnum):
     OIDC = "oidc"
     DEV = "dev"
+    PASSWORD = "password"
 
 
 class RoleContractV1(BaseModel):

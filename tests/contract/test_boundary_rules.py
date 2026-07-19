@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -12,8 +13,21 @@ ROOT = Path(__file__).resolve().parents[2]
 def run_command(
     command: list[str], *, env: dict[str, str] | None = None
 ) -> subprocess.CompletedProcess[str]:
+    # Windows CreateProcess only resolves .exe from PATH; tools like pnpm are
+    # installed as .cmd/.ps1 shims (plus extensionless POSIX scripts that Windows
+    # cannot spawn), so resolve to a launchable executable explicitly.
+    executable: str | None = None
+    if os.name == "nt":
+        for ext in (".exe", ".cmd", ".bat"):
+            executable = shutil.which(command[0] + ext)
+            if executable is not None:
+                break
+    if executable is None:
+        executable = shutil.which(command[0])
+    if executable is None:
+        raise FileNotFoundError(f"required tool not found on PATH: {command[0]}")
     return subprocess.run(
-        command,
+        [executable, *command[1:]],
         cwd=ROOT,
         check=False,
         capture_output=True,

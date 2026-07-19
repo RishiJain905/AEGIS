@@ -12,11 +12,11 @@ class OpenAICompatibleProvider(OpenAIHostedProvider):
     provider_id = "openai-compatible"
 
     def __init__(self, settings: ProviderSettings) -> None:
-        super().__init__(settings)
+        super().__init__(settings, base_url=settings.AEGIS_PROVIDER_LOCAL_BASE_URL)
         self._settings = settings
 
     def _client(self) -> Any:
-        if not self._settings.AEGIS_PROVIDER_LOCAL_BASE_URL.strip():
+        if not self._base_url:
             from aegis_contracts.generation import ProviderErrorCode
 
             from aegis_model_provider.errors import ProviderRuntimeError, make_provider_error
@@ -43,5 +43,5 @@ class OpenAICompatibleProvider(OpenAIHostedProvider):
             ) from exc
         return AsyncOpenAI(
             api_key=self._settings.AEGIS_PROVIDER_LOCAL_API_KEY,
-            base_url=self._settings.AEGIS_PROVIDER_LOCAL_BASE_URL,
+            base_url=self._base_url,
         )

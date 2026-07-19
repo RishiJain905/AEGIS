@@ -1,7 +1,7 @@
 {
   "$defs": {
     "AuthMethodV1": {
-      "enum": ["oidc", "dev"],
+      "enum": ["oidc", "dev", "password"],
       "title": "AuthMethodV1",
       "type": "string"
     },

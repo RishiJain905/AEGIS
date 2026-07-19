@@ -30,7 +30,7 @@ export function GraphSearchInput({
       }}
       placeholder={placeholder}
       className={cn(
-        'w-full rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-base)] px-3 py-1.5 text-sm text-[var(--aegis-text-primary)] placeholder:text-[var(--aegis-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]',
+        'min-h-10 w-full rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-canvas)] px-3 py-2 text-sm text-[var(--aegis-text-primary)] shadow-[inset_0_1px_5px_rgb(0_0_0_/_0.24)] placeholder:text-[var(--aegis-text-muted)] focus-visible:border-[var(--aegis-accent-line)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]',
         className,
       )}
     />
@@ -87,6 +87,7 @@ export interface GraphLegendItem {
   label: string;
   color: string;
   description?: string;
+  shape?: 'circle' | 'diamond' | 'square' | 'triangle' | 'hexagon' | 'line' | 'ring';
 }
 
 export interface GraphLegendProps {
@@ -99,26 +100,56 @@ export function GraphLegend({ title = 'Legend', items, className }: GraphLegendP
   return (
     <div
       className={cn(
-        'rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] p-3',
+        'rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[linear-gradient(145deg,var(--aegis-surface-raised),var(--aegis-surface-elevated))] p-3 shadow-[var(--aegis-shadow-control)]',
         className,
       )}
       data-testid="graph-legend"
       aria-label={title}
     >
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--aegis-text-muted)]">
+      <p className="mb-3 font-[family-name:var(--aegis-font-display)] text-[0.6875rem] font-semibold uppercase tracking-[0.09em] text-[var(--aegis-text-muted)]">
         {title}
       </p>
-      <ul className="flex flex-col gap-1.5">
-        {items.map((item) => (
-          <li key={item.label} className="flex items-center gap-2 text-xs">
-            <span
-              className="inline-block h-3 w-3 shrink-0 rounded-full"
-              style={{ backgroundColor: item.color }}
-              aria-hidden="true"
-            />
-            <span className="text-[var(--aegis-text-secondary)]">{item.label}</span>
-          </li>
-        ))}
+      <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+        {items.map((item) => {
+          const shape = item.shape ?? 'circle';
+          const slug = item.label
+            .toLowerCase()
+            .replaceAll(/[^a-z0-9]+/g, '-')
+            .replaceAll(/^-|-$/g, '');
+          return (
+            <li key={item.label} className="flex min-w-0 items-center gap-2.5 text-xs">
+              <span
+                className={cn(
+                  'inline-block h-3.5 w-3.5 shrink-0 shadow-[0_0_10px_currentColor]',
+                  shape === 'circle' && 'rounded-full',
+                  shape === 'diamond' && 'rotate-45 rounded-[2px]',
+                  shape === 'square' && 'rounded-[2px]',
+                  shape === 'triangle' && '[clip-path:polygon(50%_0,100%_100%,0_100%)]',
+                  shape === 'hexagon' &&
+                    '[clip-path:polygon(25%_0,75%_0,100%_50%,75%_100%,25%_100%,0_50%)]',
+                  shape === 'line' && 'h-0.5 w-5 rounded-full',
+                  shape === 'ring' && 'rounded-full border-2 bg-transparent',
+                )}
+                style={
+                  shape === 'ring' ? { borderColor: item.color } : { backgroundColor: item.color }
+                }
+                aria-hidden="true"
+                data-shape={shape}
+                data-testid={`graph-legend-symbol-${slug}`}
+              />
+              <span className="min-w-0">
+                <span className="block font-medium text-[var(--aegis-text-primary)]">
+                  {item.label}
+                </span>
+                {item.description ? (
+                  <span className="block text-[11px] leading-4 text-[var(--aegis-text-muted)]">
+                    {item.description}
+                  </span>
+                ) : null}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -207,13 +238,21 @@ export function GraphIsolationControls({
 }
 
 export interface GraphOverlayToggleProps {
-  toggles: { risk: boolean; status: boolean; evidence: boolean; incident: boolean };
+  toggles: {
+    risk: boolean;
+    status: boolean;
+    evidence: boolean;
+    incident: boolean;
+  };
   onToggle: (key: 'risk' | 'status' | 'evidence' | 'incident') => void;
   className?: string;
 }
 
 export function GraphOverlayToggle({ toggles, onToggle, className }: GraphOverlayToggleProps) {
-  const items: { key: 'risk' | 'status' | 'evidence' | 'incident'; label: string }[] = [
+  const items: {
+    key: 'risk' | 'status' | 'evidence' | 'incident';
+    label: string;
+  }[] = [
     { key: 'risk', label: 'Risk' },
     { key: 'status', label: 'Status' },
     { key: 'evidence', label: 'Evidence' },

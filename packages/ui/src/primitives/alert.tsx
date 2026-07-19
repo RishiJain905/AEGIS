@@ -4,13 +4,13 @@ import { forwardRef, type HTMLAttributes } from 'react';
 import { cn } from '../lib/cn';
 
 const alertVariants = cva(
-  'relative w-full rounded-[var(--aegis-radius-md)] border px-4 py-3 text-sm',
+  'relative w-full overflow-hidden rounded-[var(--aegis-radius-md)] border border-l-[3px] px-4 py-3.5 text-sm shadow-[var(--aegis-shadow-control)]',
   {
     variants: {
       variant: {
         default:
           'border-[var(--aegis-border-default)] bg-[var(--aegis-surface-elevated)] text-[var(--aegis-text-primary)]',
-        info: 'border-[var(--aegis-status-under-investigation)] bg-[var(--aegis-status-under-investigation-bg)] text-[var(--aegis-status-under-investigation)]',
+        info: 'border-[var(--aegis-status-under-investigation)] bg-[var(--aegis-status-under-investigation-bg)]/80 text-[var(--aegis-accent-strong)]',
         warning:
           'border-[var(--aegis-status-suspicious)] bg-[var(--aegis-status-suspicious-bg)] text-[var(--aegis-status-suspicious)]',
         error:
@@ -34,8 +34,8 @@ export interface AlertProps
 export const Alert = forwardRef<HTMLDivElement, AlertProps>(
   ({ className, variant, title, children, role = 'alert', ...props }, ref) => (
     <div ref={ref} role={role} className={cn(alertVariants({ variant }), className)} {...props}>
-      {title ? <div className="mb-1 font-semibold">{title}</div> : null}
-      <div>{children}</div>
+      {title ? <div className="mb-1 font-semibold tracking-[0.01em]">{title}</div> : null}
+      <div className="leading-5 text-[var(--aegis-text-secondary)]">{children}</div>
     </div>
   ),
 );

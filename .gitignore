@@ -22,6 +22,7 @@ htmlcov/
 .env
 .env.local
 .env.*.local
+.env.production
 
 # Build outputs
 .next/
@@ -50,6 +51,7 @@ coverage/
 # Local data
 *.sqlite
 *.db
+.terraform/
 
 # Generated graph-domain performance fixtures (see packages/graph-domain/fixtures/README.md)
 packages/graph-domain/fixtures/medium-graph-snapshot.json
@@ -61,3 +63,10 @@ apps/web/fixtures/generated/
 credentials.json
 
 dump.rdb
+
+# Playwright MCP temp artifacts + stray root screenshots
+.playwright-mcp/
+/after-action.png
+
+# Stray release-e2e artifact (belongs only in dated evidence subdirs)
+/docs/release/evidence/e2e.json

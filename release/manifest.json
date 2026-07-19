@@ -1,0 +1,113 @@
+{
+  "checksums": {
+    ".dockerignore": "sha256:1d7545234fe13d8b02ee3e67afa3fd6a31330b62c88326544e8f569bd93c2e81",
+    "apps/api/Dockerfile": "sha256:aeeefa7df09d89c2a9dc92a5ea03bebb63e9bda008a1ba5babe9d892550e2d54",
+    "docker-compose.prod.yml": "sha256:a5aac19a9ea1a3f6e9e6c311cf5d3b0ccab6d3f2c48b15e7c1ea8c9bc9ebe1c3",
+    "docker-compose.yml": "sha256:708f12d02133c5358a8c03ca5fb3597196a43c667b9d1435d58733af126d5f0e",
+    "docs/release/evidence-manifest.schema.json": "sha256:70f37aed364674475b7369418d5c6e2da59ba279681eeabbc5dc4e1120dd90d1",
+    "docs/release/evidence/release-20260718T193955Z-facf0979.json": "sha256:0da1d8324f4fb3af6e6972ccb3a2ae3126f30f0d46cd96644a138c4130b8beb4",
+    "docs/release/known-issues.md": "sha256:50b4dd86790d6012c205a503a228ae19a37e5ca20fda034227d887621cc436c7",
+    "docs/release/test-plan.md": "sha256:3ba63e522abe4deae7f5632b5f948e2eb7a94db96437185e9b16e80d6f760a50",
+    "fixtures/model-responses/manifest.json": "sha256:4b248666d17b925c63781006ea3650732ee27964a2715f000a862e6c7cf471ee",
+    "models/baselines/v1/manifest.json": "sha256:af90b4a5e3d7aae2a2e0b5567d18b9f45ece450f51cc99d2adbf4a951761db46",
+    "models/manifests/isolation-forest-v1/artifact.joblib": "sha256:8007b09f1d331e9338c24dcd9e02c53b278afc09be5b3f4421665ae91ddbf185",
+    "models/manifests/isolation-forest-v1/manifest.json": "sha256:f8dc1f4b11768348f43de6da975c0a4bcac752b5497a1637d2bfcddcbd8148fc",
+    "release/demo-manifest.json": "sha256:bebf30e5fab3dfa19ad069aca5462c9ad1febd801eafebb85a3d55384f6dfbc1",
+    "release/manifest.schema.json": "sha256:aca3b5983154dbb3041fad2f699030eed38fe5d544c1a1a5475113d9b9851511",
+    "scenarios/operation-silent-relay/package.manifest.yaml": "sha256:359facd200e444b13066e3c087952b3d2c3194d3502fdda511a172d80db94c2c",
+    "scripts/demo_v1.py": "sha256:ad3e8ec3a8e631f340025d0edc25d91a31209f6fc56c10afdc841692beea9e4c"
+  },
+  "environment": "local",
+  "images": [
+    {
+      "digest": "sha256:47022e1c5c8acde54197e6df16c09c237cac88b1bf49f6afb508fea71beb5f5b",
+      "reference": "aegis-api:latest",
+      "repoDigests": [
+        "aegis-api@sha256:47022e1c5c8acde54197e6df16c09c237cac88b1bf49f6afb508fea71beb5f5b"
+      ],
+      "service": "api"
+    },
+    {
+      "digest": "sha256:4871a6ba148b5001da464406e33580ccf8197a1e0a8d138deee0caf29572f696",
+      "reference": "aegis-simulator:latest",
+      "repoDigests": [
+        "aegis-simulator@sha256:4871a6ba148b5001da464406e33580ccf8197a1e0a8d138deee0caf29572f696"
+      ],
+      "service": "simulator"
+    },
+    {
+      "digest": "sha256:1c30f293047d7d3bbde6c46d91ed87cd5467fb495cc155a279d59a237d4638b7",
+      "reference": "aegis-web:latest",
+      "repoDigests": [
+        "aegis-web@sha256:1c30f293047d7d3bbde6c46d91ed87cd5467fb495cc155a279d59a237d4638b7"
+      ],
+      "service": "web"
+    },
+    {
+      "digest": "sha256:45abdbae449703ef5afb5f7c39d46cfe4196105f76b2267c65c0722b1ac43c5d",
+      "reference": "aegis-worker:latest",
+      "repoDigests": [
+        "aegis-worker@sha256:45abdbae449703ef5afb5f7c39d46cfe4196105f76b2267c65c0722b1ac43c5d"
+      ],
+      "service": "worker"
+    }
+  ],
+  "migration": {
+    "head": "013_auth_identity"
+  },
+  "modelArtifacts": [
+    {
+      "path": "fixtures/model-responses/manifest.json",
+      "sha256": "sha256:4b248666d17b925c63781006ea3650732ee27964a2715f000a862e6c7cf471ee"
+    },
+    {
+      "path": "models/baselines/v1/manifest.json",
+      "sha256": "sha256:af90b4a5e3d7aae2a2e0b5567d18b9f45ece450f51cc99d2adbf4a951761db46"
+    },
+    {
+      "path": "models/manifests/isolation-forest-v1/manifest.json",
+      "sha256": "sha256:f8dc1f4b11768348f43de6da975c0a4bcac752b5497a1637d2bfcddcbd8148fc"
+    }
+  ],
+  "releaseVersion": "1.0.0",
+  "sbom": {
+    "references": [
+      {
+        "path": "security-artifacts/dependencies.cdx.json",
+        "source": ".github/workflows/security.yml",
+        "status": "ci-generated"
+      },
+      {
+        "path": "security-artifacts/sbom-api.cdx.json",
+        "source": ".github/workflows/security.yml",
+        "status": "ci-generated"
+      },
+      {
+        "path": "security-artifacts/sbom-simulator.cdx.json",
+        "source": ".github/workflows/security.yml",
+        "status": "ci-generated"
+      },
+      {
+        "path": "security-artifacts/sbom-web.cdx.json",
+        "source": ".github/workflows/security.yml",
+        "status": "ci-generated"
+      },
+      {
+        "path": "security-artifacts/sbom-worker.cdx.json",
+        "source": ".github/workflows/security.yml",
+        "status": "ci-generated"
+      }
+    ]
+  },
+  "scenario": {
+    "id": "scenario:operation-silent-relay",
+    "packageChecksum": "sha256:688877a13f3f2037c7cad0fd6cc46db34c907c96c4c3409911f5bb0f0eeb1ad3",
+    "packagePath": "scenarios/operation-silent-relay",
+    "version": "1.0.0"
+  },
+  "schemaVersion": "aegis.release-manifest/v1",
+  "source": {
+    "revision": "facf0979bf1bb654531c1141cd8ff526b7af6747"
+  },
+  "tag": "v1.0.0"
+}

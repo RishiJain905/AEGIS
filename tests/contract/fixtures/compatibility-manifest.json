@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "workspaceVersion": "0.0.0-phase31",
+  "workspaceVersion": "1.0.0",
   "artifacts": [
     {
       "path": "tests/contract/fixtures/schemas/action_proposal_v1.schema.json",
@@ -85,7 +85,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/authenticated_actor_v1.schema.json",
-      "sha256": "b53d7999ae1524e49e6dbc1e16c713ed5ace2d30ed935fea0d5eaa5a951261f1",
+      "sha256": "b6c388cff53f33865d7d7b8197b81760dbe5f1bac97d5cb46c805f294348ffb7",
       "schemaVersion": 1
     },
     {
@@ -528,7 +528,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_command_response_v1.schema.json",
-      "sha256": "ba999bfc838f87b1190ddf55af5e56cf55ea95df993fe9daf316eaf42489fca9"
+      "sha256": "87771d113d1fb063bb68d1b7f1e34263e5ae938ccc90a18fdbeb9c6a6fdb9000"
     },
     {
       "path": "tests/contract/fixtures/schemas/run_comparison_v1.schema.json",
@@ -550,7 +550,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_v1.schema.json",
-      "sha256": "e5483e0c0649d840a61c7f923fedd10eed6b9a6ae07b1d6ffe50b3dcca49571f"
+      "sha256": "93a791f4041b5ce17f6bb4c0776b127f6266de096b53c6e9dbad25db3893a52e"
     },
     {
       "path": "tests/contract/fixtures/schemas/scenario_v1.schema.json",
@@ -596,7 +596,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/session_info_v1.schema.json",
-      "sha256": "fa6b1d2eb7044c822c20c0d7c35eca025fa6e46700b9611dc8b1e7f0ca2aa0f1",
+      "sha256": "fce4c9befe3c232d5a5f7d34f7bfb71d46ac81091d4054b35a90bbfb3682ab74",
       "schemaVersion": 1
     },
     {
@@ -1214,7 +1214,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/run_command_response_v1.json",
-      "sha256": "95e53f4570808f9eb7032672e42116a0d0d215685954c45d3f4fc6562e1eabd4"
+      "sha256": "ebae21cb58a1ffc14e4cd29157510b0d6baf8784f34f4d39c0a81c21540646a4"
     },
     {
       "path": "tests/contract/fixtures/valid/run_comparison_v1.json",
@@ -1236,7 +1236,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/run_v1.json",
-      "sha256": "eb59e067565bdeff9a8db74ffa0683a2c5992a5479dbeb4b9bb12d884ec6fc17"
+      "sha256": "0511ec4b18763bd798cadc7c087043187564f55daca48ecd2c683c22e365272c"
     },
     {
       "path": "tests/contract/fixtures/valid/scenario_v1.json",
@@ -1406,7 +1406,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/health_response_v1.json",
-      "sha256": "858f264575604e5de74f28d243c00c2cd70cd8e2b10142bb0a63768b7b8c3754",
+      "sha256": "72f1ba90ef2d7db58d4bcd95d7d442643f51a103d0fc2687bb6e6e1768d1d404",
       "kind": "valid_fixture",
       "contract": "health_response_v1"
     },

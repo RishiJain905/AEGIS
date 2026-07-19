@@ -2,8 +2,14 @@ import { createGraphStore } from '@aegis/graph-domain';
 import { graphSnapshotSchema, parseContract } from '@aegis/contracts-ts';
 import { describe, expect, it, vi } from 'vitest';
 
+const captureSigmaSettings = vi.hoisted(() => vi.fn());
+
 vi.mock('sigma', () => ({
   default: class MockSigma {
+    constructor(_graph: unknown, _container: unknown, settings: unknown) {
+      captureSigmaSettings(settings);
+    }
+
     kill = vi.fn();
     refresh = vi.fn();
     on = vi.fn();
@@ -45,6 +51,50 @@ describe('SigmaOperationalGraphAdapter', () => {
     expect(projection.nodeCount).toBeGreaterThan(1);
     expect(projection.edgeCount).toBeGreaterThan(0);
     expect(projection.visibleNodeIds).toContain('asset:svc-api-gateway');
+
+    adapter.dispose();
+    document.body.removeChild(container);
+  });
+
+  it('encodes asset type, risk, and selection as explicit renderer attributes', () => {
+    const snapshot = parseContract(graphSnapshotSchema, shellDataset.graphSnapshots[0]);
+    const store = createGraphStore();
+    store.loadSnapshot(snapshot);
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const adapter = new SigmaOperationalGraphAdapter(container);
+
+    adapter.syncFromStore(
+      store,
+      defaultGraphVisualState.filterSet as import('@aegis/graph-domain').GraphFilterSet,
+      {
+        ...defaultGraphVisualState,
+        selection: {
+          ...defaultGraphVisualState.selection,
+          primaryNodeId: 'asset:svc-api-gateway',
+        },
+      },
+    );
+
+    const graph = adapter.getPresentationGraph();
+    const selected = graph.getNodeAttributes('asset:svc-api-gateway');
+    const device = graph.getNodeAttributes('asset:device-laptop-remote');
+    const database = graph.getNodeAttributes('asset:db-customer-records');
+
+    expect(selected.type).toBe('circle');
+    expect(selected.assetType).toBe('service');
+    expect(selected.shape).toBe('circle');
+    expect(selected.forceLabel).toBe(true);
+    expect(selected.highlighted).toBe(true);
+    expect(selected.selected).toBe(true);
+    expect(device.assetType).toBe('device');
+    expect(device.shape).toBe('diamond');
+    expect(device.riskBand).toBe('critical');
+    expect(device.riskColor).toMatch(/^#/);
+    expect(device.forceLabel).toBe(true);
+    expect(database.assetType).toBe('database');
+    expect(database.shape).toBe('square');
+    expect(database.highlighted).toBe(true);
 
     adapter.dispose();
     document.body.removeChild(container);
@@ -97,6 +147,20 @@ describe('SigmaOperationalGraphAdapter', () => {
     adapter.dispose();
 
     expect(adapter.getPresentationGraph().order).toBe(0);
+    document.body.removeChild(container);
+  });
+
+  it('keeps semantic labels and overlays visible while the fit camera settles', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const adapter = new SigmaOperationalGraphAdapter(container);
+
+    adapter.mount();
+
+    expect(captureSigmaSettings).toHaveBeenLastCalledWith(
+      expect.objectContaining({ hideLabelsOnMove: false }),
+    );
+    adapter.dispose();
     document.body.removeChild(container);
   });
 });

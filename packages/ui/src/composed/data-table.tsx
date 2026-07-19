@@ -26,13 +26,23 @@ export function DataTable<T extends Record<string, unknown>>({
   ...props
 }: DataTableProps<T>) {
   return (
-    <div className={cn('w-full overflow-x-auto md:overflow-x-visible', className)} {...props}>
-      <table className="w-full min-w-[32rem] border-collapse text-sm">
+    <div
+      className={cn(
+        'w-full overflow-x-auto rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] md:overflow-x-visible',
+        className,
+      )}
+      {...props}
+    >
+      <table className="w-full min-w-[32rem] border-separate border-spacing-0 text-sm">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
-          <tr className="border-b border-[var(--aegis-border-default)] text-left text-[var(--aegis-text-secondary)]">
+          <tr className="bg-[var(--aegis-surface-raised)] text-left text-[var(--aegis-text-secondary)]">
             {columns.map((column) => (
-              <th key={column.key} scope="col" className="px-3 py-2 font-medium">
+              <th
+                key={column.key}
+                scope="col"
+                className="border-b border-[var(--aegis-border-default)] px-4 py-3 text-[0.6875rem] font-semibold uppercase tracking-[0.075em]"
+              >
                 {column.header}
               </th>
             ))}
@@ -43,7 +53,7 @@ export function DataTable<T extends Record<string, unknown>>({
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-3 py-6 text-center text-[var(--aegis-text-muted)]"
+                className="px-4 py-10 text-center text-[var(--aegis-text-muted)]"
               >
                 {emptyMessage}
               </td>
@@ -54,12 +64,15 @@ export function DataTable<T extends Record<string, unknown>>({
                 key={rowIndex}
                 tabIndex={0}
                 className={cn(
-                  'border-b border-[var(--aegis-border-subtle)] text-[var(--aegis-text-primary)] hover:bg-[var(--aegis-surface-elevated)]',
+                  'text-[var(--aegis-text-primary)] transition-colors duration-[var(--aegis-motion-duration-fast)] hover:bg-[var(--aegis-surface-hover)]',
                   focusTokens.ring,
                 )}
               >
                 {columns.map((column) => (
-                  <td key={column.key} className="px-3 py-2">
+                  <td
+                    key={column.key}
+                    className="border-b border-[var(--aegis-border-subtle)] px-4 py-3"
+                  >
                     {column.render ? column.render(row) : String(row[column.key] ?? '')}
                   </td>
                 ))}
@@ -79,7 +92,7 @@ export const DataTableContainer = forwardRef<HTMLDivElement, DataTableContainerP
     <div
       ref={ref}
       className={cn(
-        'rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)]',
+        'overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] shadow-[var(--aegis-shadow-panel)]',
         className,
       )}
       {...props}

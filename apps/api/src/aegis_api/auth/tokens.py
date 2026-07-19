@@ -26,5 +26,10 @@ def generate_audit_event_id() -> str:
     return f"sae_{secrets.token_hex(16)}"
 
 
+def generate_account_user_id() -> str:
+    """Stable, namespaced identity for a new credentialed account (owner id)."""
+    return f"user:acct_{secrets.token_hex(12)}"
+
+
 def constant_time_equals(left: str, right: str) -> bool:
     return secrets.compare_digest(left, right)

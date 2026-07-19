@@ -55,7 +55,9 @@ def write_package_manifest(package_dir: Path, package_manifest: ScenarioPackageM
 
     output_path = package_dir / PACKAGE_MANIFEST_FILENAME
     payload = package_manifest.model_dump(by_alias=True, mode="json")
-    output_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    output_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False), encoding="utf-8", newline="\n"
+    )
     return output_path
 
 

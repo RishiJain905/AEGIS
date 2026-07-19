@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { NodeStatus } from '@aegis/contracts-ts';
 import type { NodeStatusValue } from '@aegis/ui';
 import {
@@ -46,6 +48,8 @@ import {
   TooltipTrigger,
 } from '@aegis/ui';
 
+import { ComponentPlayground, PlatformReference, TokenInspector } from './operational-panels';
+
 const tableData = [
   { asset: 'asset:svc-api-gateway', status: 'suspicious', risk: 'High' },
   { asset: 'asset:svc-logistics-api', status: 'normal', risk: 'Low' },
@@ -61,28 +65,77 @@ export function DesignSystemShowcase() {
     <TooltipProvider>
       <div className="flex min-h-screen flex-col lg:flex-row">
         <Rail label="Design system navigation">
-          <Button variant="ghost" size="sm" className="w-full justify-start">
-            Tokens
+          <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+            <a href="#tokens-section">Tokens</a>
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start">
-            Components
+          <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+            <a href="#playground-section">Playground</a>
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start">
-            States
+          <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+            <a href="#reference-section">Reference</a>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+            <a href="#catalogue-section">Catalogue</a>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+            <a href="#states-section">States</a>
           </Button>
         </Rail>
 
         <div className="flex flex-1 flex-col gap-6 p-6">
-          <header>
-            <h1 className="text-2xl font-semibold">Command-Centre Design System</h1>
-            <p className="text-sm text-text-secondary">
-              Accessible primitives, semantic status styling, and composition patterns for AEGIS.
-            </p>
+          <header className="flex flex-col gap-3">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="self-start"
+              data-testid="design-system-back"
+            >
+              <Link href="/">← Back to command centre</Link>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-semibold">Command-Centre Design System</h1>
+              <p className="text-sm text-[var(--aegis-text-secondary)]">
+                Live tokens, an interactive component playground, and platform reference for AEGIS.
+                This page renders outside the operational data context.
+              </p>
+            </div>
           </header>
 
-          <DisconnectedState data-testid="disconnected-state" />
+          <div id="tokens-section">
+            <TokenInspector />
+          </div>
+
+          <div id="playground-section">
+            <ComponentPlayground />
+          </div>
+
+          <div id="reference-section">
+            <PlatformReference />
+          </div>
+
+          <h2
+            id="catalogue-section"
+            className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--aegis-text-muted)]"
+          >
+            Component catalogue
+          </h2>
+
+          <div
+            className="rounded-[var(--aegis-radius-md)] border border-dashed border-[var(--aegis-border-strong)] p-3"
+            data-testid="disconnected-sample"
+          >
+            <p className="mb-2 text-xs uppercase tracking-wide text-[var(--aegis-text-muted)]">
+              Inert sample · not a live status
+            </p>
+            <DisconnectedState
+              data-testid="disconnected-state"
+              message="Realtime connection lost. Attempting to reconnect… (sample only)"
+            />
+          </div>
 
           <section
+            id="states-section"
             aria-labelledby="status-heading"
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
           >

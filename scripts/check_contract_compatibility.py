@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -73,10 +75,26 @@ def verify_python_fixtures() -> None:
         parse_contract(model, payload)
 
 
+def resolve_executable(name: str) -> str:
+    # Windows CreateProcess only resolves .exe from PATH; pnpm ships as a
+    # .cmd/.ps1 shim (plus an extensionless POSIX script Windows cannot spawn),
+    # so resolve to a launchable executable explicitly.
+    if os.name == "nt":
+        for ext in (".exe", ".cmd", ".bat"):
+            found = shutil.which(name + ext)
+            if found is not None:
+                return found
+    found = shutil.which(name)
+    if found is None:
+        print(f"ERROR: required tool not found on PATH: {name}", file=sys.stderr)
+        sys.exit(1)
+    return found
+
+
 def verify_typescript_fixtures() -> None:
     result = subprocess.run(
         [
-            "pnpm",
+            resolve_executable("pnpm"),
             "exec",
             "vitest",
             "run",

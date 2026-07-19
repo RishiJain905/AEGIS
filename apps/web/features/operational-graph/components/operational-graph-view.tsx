@@ -1,10 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { GraphSnapshotV1 } from '@aegis/contracts-ts';
 import { createGraphStore, GraphLayer, type GraphFilterSet } from '@aegis/graph-domain';
 import {
+  Badge,
+  Button,
   GraphCameraControls,
   GraphIsolationControls,
   GraphLayerControls,
@@ -20,7 +22,10 @@ import {
   type GraphVisualState,
 } from '@/features/operational-graph/contracts/graph-visual-state';
 import { useInvestigationDetail } from '@/features/investigation';
-import { filterNodesBySearch } from '@/features/operational-graph/layout/initial-layout';
+import {
+  balanceLayoutAspect,
+  filterNodesBySearch,
+} from '@/features/operational-graph/layout/initial-layout';
 import {
   autoCollapseClusterIds,
   buildLodRenderHints,
@@ -43,12 +48,119 @@ const LAYER_OPTIONS = [
   { id: GraphLayer.PRESENTATION, label: 'Presentation' },
 ];
 
+type AccessibleGraphEntityListProps = {
+  nodeIds: string[];
+  nodeLabels: ReadonlyMap<string, string>;
+  selectedEntityId: string | null;
+  onNodeClick: (nodeId: string) => void;
+};
+
+const AccessibleGraphEntityList = memo(function AccessibleGraphEntityList({
+  nodeIds,
+  nodeLabels,
+  selectedEntityId,
+  onNodeClick,
+}: AccessibleGraphEntityListProps) {
+  const initialRenderCount = nodeIds.length > 1000 ? 50 : nodeIds.length;
+  const [renderCount, setRenderCount] = useState(initialRenderCount);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRenderCount(initialRenderCount);
+    if (initialRenderCount >= nodeIds.length) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    let timer: number | undefined;
+    const appendNextChunk = () => {
+      if (cancelled) {
+        return;
+      }
+      setRenderCount((current) => {
+        const next = Math.min(current + 250, nodeIds.length);
+        if (next < nodeIds.length) {
+          timer = window.requestAnimationFrame(appendNextChunk);
+        }
+        return next;
+      });
+    };
+    timer = window.requestAnimationFrame(appendNextChunk);
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) {
+        window.cancelAnimationFrame(timer);
+      }
+    };
+  }, [initialRenderCount, nodeIds.length]);
+
+  const renderedNodeIds = nodeIds.length > 1000 ? nodeIds.slice(0, renderCount) : nodeIds;
+
+  return (
+    <aside
+      aria-label="Accessible graph entity list"
+      data-testid="graph-entity-list"
+      className="graph-entity-index max-h-44 overflow-auto rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] p-3"
+    >
+      <p className="mb-2 text-xs font-semibold text-[var(--aegis-text-muted)]">
+        Nodes ({nodeIds.length}) · keyboard accessible list
+      </p>
+      <ul className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3">
+        {renderedNodeIds.map((nodeId) => (
+          <li key={nodeId}>
+            <button
+              type="button"
+              className="min-h-10 w-full rounded-[var(--aegis-radius-sm)] px-3 py-2 text-left text-xs text-[var(--aegis-text-secondary)] transition-[background-color,color,box-shadow] hover:bg-[var(--aegis-surface-elevated)] hover:text-[var(--aegis-text-primary)] aria-pressed:bg-[var(--aegis-accent-soft)] aria-pressed:text-[var(--aegis-text-primary)]"
+              aria-pressed={selectedEntityId === nodeId}
+              data-testid={`graph-entity-${nodeId}`}
+              onClick={() => {
+                onNodeClick(nodeId);
+              }}
+            >
+              {nodeLabels.get(nodeId) ?? nodeId}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+});
+
 const LEGEND_ITEMS = [
-  { label: 'Service', color: '#3b82f6' },
-  { label: 'Device', color: '#8b5cf6' },
-  { label: 'Database', color: '#f59e0b' },
-  { label: 'High risk path', color: '#f59e0b' },
-  { label: 'Neighborhood', color: '#3b82f6' },
+  { label: 'Service', color: '#36a9e1', shape: 'circle' as const },
+  { label: 'Device', color: '#8999ff', shape: 'diamond' as const },
+  { label: 'Database', color: '#efb85a', shape: 'square' as const },
+  {
+    label: 'High risk',
+    color: '#ef5b66',
+    shape: 'ring' as const,
+    description: 'Risk-driven halo',
+  },
+  {
+    label: 'High risk path',
+    color: '#f7bd4a',
+    shape: 'line' as const,
+    description: 'Selected trace',
+  },
+  {
+    label: 'Neighborhood',
+    color: '#3ec7e8',
+    shape: 'line' as const,
+    description: 'One-hop focus',
+  },
+  {
+    label: 'Evidence',
+    color: '#fbbf24',
+    shape: 'diamond' as const,
+    description: 'Evidence-linked marker',
+  },
+  {
+    label: 'Incident scope',
+    color: '#fb5b65',
+    shape: 'ring' as const,
+    description: 'Dashed containment rim',
+  },
 ];
 
 export interface OperationalGraphViewProps {
@@ -57,6 +169,11 @@ export interface OperationalGraphViewProps {
   incidentId?: string;
   graphStore?: import('@aegis/graph-domain').GraphStore;
   graphRevision?: number;
+  /** Node ids with linked evidence (replay provides these); live runs have no
+   * evidence projection yet, so the overlay stays empty there. */
+  evidenceNodeIds?: string[];
+  /** Node ids in incident scope; defaults to status-derived membership. */
+  incidentNodeIds?: string[];
 }
 
 function useGraphStoreInstance(
@@ -86,6 +203,8 @@ export function OperationalGraphView({
   incidentId,
   graphStore,
   graphRevision = 0,
+  evidenceNodeIds,
+  incidentNodeIds,
 }: OperationalGraphViewProps) {
   const store = useGraphStoreInstance(snapshot, graphStore);
   const investigationQuery = useInvestigationDetail(incidentId ?? '');
@@ -93,6 +212,7 @@ export function OperationalGraphView({
   const layoutCoordinatorRef = useRef<LayoutCoordinator | null>(null);
   const updateBatcherRef = useRef<UpdateBatcher | null>(null);
   const instrumentationRef = useRef<PerformanceInstrumentation | null>(null);
+  const initialFitCompletedRef = useRef(false);
   const positionsRef = useRef<Record<string, { x: number; y: number }>>({});
   const workerPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
   const [adapterReady, setAdapterReady] = useState(false);
@@ -136,6 +256,29 @@ export function OperationalGraphView({
     return map;
   }, [snapshot.nodes]);
 
+  const evidenceSet = useMemo(() => new Set(evidenceNodeIds ?? []), [evidenceNodeIds]);
+  // Without an explicit incident projection, approximate incident scope from
+  // node security status — the same derivation replay uses.
+  const incidentSet = useMemo(() => {
+    if (incidentNodeIds) {
+      return new Set(incidentNodeIds);
+    }
+    return new Set(
+      snapshot.nodes
+        .filter(
+          (node) =>
+            node.status === 'under_investigation' ||
+            node.status === 'compromised' ||
+            node.status === 'contained',
+        )
+        .map((node) => node.id),
+    );
+  }, [incidentNodeIds, snapshot.nodes]);
+  const evidenceSetRef = useRef(evidenceSet);
+  evidenceSetRef.current = evidenceSet;
+  const incidentSetRef = useRef(incidentSet);
+  incidentSetRef.current = incidentSet;
+
   const runSync = useCallback(() => {
     const adapter = adapterRef.current;
     if (!adapter) {
@@ -172,11 +315,20 @@ export function OperationalGraphView({
       {
         lodHints,
         workerPositions: workerPositionsRef.current,
+        evidenceNodeIds: evidenceSetRef.current,
+        incidentNodeIds: incidentSetRef.current,
       },
     );
     for (const id of projection.visibleNodeIds) {
       const attrs = adapter.getPresentationGraph().getNodeAttributes(id);
       positionsRef.current[id] = { x: attrs.x as number, y: attrs.y as number };
+    }
+
+    if (!initialFitCompletedRef.current) {
+      initialFitCompletedRef.current = true;
+      requestAnimationFrame(() => {
+        adapter.fitGraph();
+      });
     }
 
     const instrumentation = instrumentationRef.current;
@@ -233,6 +385,8 @@ export function OperationalGraphView({
     snapshot.revision,
     snapshot.sequence,
     graphRevision,
+    evidenceSet,
+    incidentSet,
   ]);
 
   useEffect(() => {
@@ -308,8 +462,9 @@ export function OperationalGraphView({
       layoutCoordinatorRef.current = new LayoutCoordinator({
         instrumentation: instrumentationRef.current,
         onPositionsUpdated: (positions) => {
-          workerPositionsRef.current = positions;
-          mergeNodePositions(positions);
+          const balancedPositions = balanceLayoutAspect(positions);
+          workerPositionsRef.current = balancedPositions;
+          mergeNodePositions(balancedPositions);
           scheduleSync();
         },
         onLayoutStatusChanged: (status) => {
@@ -317,10 +472,24 @@ export function OperationalGraphView({
           setLayoutStatusInStore(status);
         },
       });
-      void layoutCoordinatorRef.current.initialize().then(() => {
-        setAdapterReady(true);
-        scheduleLayout();
-      });
+      const coordinator = layoutCoordinatorRef.current;
+      void coordinator
+        .initialize()
+        .then(() => {
+          if (layoutCoordinatorRef.current !== coordinator) {
+            return;
+          }
+          setAdapterReady(true);
+          scheduleLayout();
+        })
+        .catch(() => {
+          if (layoutCoordinatorRef.current !== coordinator) {
+            return;
+          }
+          setLayoutStatus(LayoutStatus.ERROR);
+          setLayoutStatusInStore(LayoutStatus.ERROR);
+          setAdapterReady(true);
+        });
     },
     [mergeNodePositions, scheduleLayout, scheduleSync, setLayoutStatusInStore],
   );
@@ -365,6 +534,7 @@ export function OperationalGraphView({
       updateBatcherRef.current = null;
       instrumentationRef.current = null;
       workerPositionsRef.current = {};
+      initialFitCompletedRef.current = false;
     };
   }, [snapshot.runId]);
 
@@ -429,13 +599,22 @@ export function OperationalGraphView({
 
   return (
     <div
-      className="flex min-h-[20rem] flex-col gap-3"
+      className="flex min-h-[28rem] flex-col gap-3"
       data-testid="operational-graph-view"
       data-layout-status={layoutStatus}
       data-lod-tier={lodTier}
+      data-node-count={filteredNodeIds.length}
     >
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-        <GraphSearchInput value={searchQuery} onChange={setSearchQuery} className="max-w-xs" />
+      <div className="graph-command-bar flex flex-col gap-3 lg:flex-row lg:items-center">
+        <GraphSearchInput value={searchQuery} onChange={setSearchQuery} className="lg:max-w-sm" />
+        <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
+          <Badge variant="outline" className="font-mono uppercase tracking-[0.12em]">
+            {layoutStatus}
+          </Badge>
+          <span className="font-mono text-[11px] text-[var(--aegis-text-muted)]">
+            {String(filteredNodeIds.length)} nodes · LOD {lodTier}
+          </span>
+        </div>
         <GraphCameraControls
           onFit={() => adapterRef.current?.fitGraph()}
           onZoomIn={() => adapterRef.current?.zoomIn()}
@@ -444,97 +623,108 @@ export function OperationalGraphView({
         />
       </div>
 
-      <div className="flex flex-col gap-2 xl:flex-row xl:items-start">
-        <div className="flex flex-1 flex-col gap-2">
-          <GraphLayerControls
-            layers={LAYER_OPTIONS}
-            enabledLayers={filterSet.enabledLayers}
-            onToggle={handleLayerToggle}
-          />
-          <GraphOverlayToggle toggles={overlayToggles} onToggle={toggleOverlay} />
-          <GraphIsolationControls
-            isolationActive={isolationActive}
-            onIsolate={handleIsolate}
-            onRestore={handleRestore}
-            disabled={!selection.primaryNodeId && !selectedEntityId}
-          />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-default)] px-3 py-1 text-xs hover:bg-[var(--aegis-surface-elevated)]"
-              data-testid="graph-path-mode"
-              aria-pressed={pathModeActive}
-              onClick={() => {
-                setPathModeActive(!pathModeActive);
-              }}
-            >
-              {pathModeActive ? 'Path mode (select 2 nodes)' : 'Trace path'}
-            </button>
-            <button
-              type="button"
-              className="rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-default)] px-3 py-1 text-xs hover:bg-[var(--aegis-surface-elevated)]"
-              data-testid="graph-collapse-clusters"
-              onClick={() => {
-                const filtered = store.applyFilters(
-                  useGraphVisualStore.getState().visualState.filterSet as GraphFilterSet,
-                );
-                const autoCollapsed = autoCollapseClusterIds(
-                  store
-                    .exportSnapshot()
-                    .nodes.filter((node) => filtered.visibleNodeIds.includes(node.id)),
-                  3,
-                );
-                setCollapsedClusterIds(autoCollapsed);
-              }}
-            >
-              Collapse dense clusters
-            </button>
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
+        <div className="graph-control-deck grid gap-3 lg:grid-cols-2">
+          <div>
+            <p className="graph-control-label">Data layers</p>
+            <GraphLayerControls
+              layers={LAYER_OPTIONS}
+              enabledLayers={filterSet.enabledLayers}
+              onToggle={handleLayerToggle}
+            />
+          </div>
+          <div>
+            <p className="graph-control-label">Signal overlays</p>
+            <GraphOverlayToggle toggles={overlayToggles} onToggle={toggleOverlay} />
+          </div>
+          <div>
+            <p className="graph-control-label">Investigation focus</p>
+            <GraphIsolationControls
+              isolationActive={isolationActive}
+              onIsolate={handleIsolate}
+              onRestore={handleRestore}
+              disabled={!selection.primaryNodeId && !selectedEntityId}
+            />
+          </div>
+          <div>
+            <p className="graph-control-label">Analysis actions</p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={pathModeActive ? 'default' : 'outline'}
+                size="sm"
+                data-testid="graph-path-mode"
+                aria-pressed={pathModeActive}
+                onClick={() => {
+                  setPathModeActive(!pathModeActive);
+                }}
+                className="text-xs"
+              >
+                {pathModeActive ? 'Path mode (select 2 nodes)' : 'Trace path'}
+              </Button>
+              <Button
+                variant={collapsedClusterIds.length > 0 ? 'default' : 'outline'}
+                size="sm"
+                data-testid="graph-collapse-clusters"
+                aria-pressed={collapsedClusterIds.length > 0}
+                onClick={() => {
+                  if (collapsedClusterIds.length > 0) {
+                    setCollapsedClusterIds([]);
+                    return;
+                  }
+                  const filtered = store.applyFilters(
+                    useGraphVisualStore.getState().visualState.filterSet as GraphFilterSet,
+                  );
+                  const autoCollapsed = autoCollapseClusterIds(
+                    store
+                      .exportSnapshot()
+                      .nodes.filter((node) => filtered.visibleNodeIds.includes(node.id)),
+                    3,
+                  );
+                  setCollapsedClusterIds(autoCollapsed);
+                }}
+                className="text-xs"
+              >
+                {collapsedClusterIds.length > 0
+                  ? 'Expand collapsed clusters'
+                  : 'Collapse dense clusters'}
+              </Button>
+            </div>
           </div>
         </div>
-        <GraphLegend items={LEGEND_ITEMS} className="xl:w-48" />
+        <GraphLegend items={LEGEND_ITEMS} />
       </div>
 
       <div
-        className="relative min-h-[16rem] flex-1 overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-base)]"
+        className="operational-graph-frame relative min-h-[28rem] flex-1 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-base)]"
         data-reduced-motion={reducedMotion ? 'true' : 'false'}
       >
+        <div
+          className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2"
+          aria-hidden="true"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--aegis-accent-cyan)] shadow-[0_0_10px_var(--aegis-accent-cyan)]" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--aegis-text-muted)]">
+            Analysis plane · drag to pan · scroll to zoom
+          </span>
+        </div>
         <SigmaCanvas
           className="absolute inset-0"
           onAdapterReady={handleAdapterReady}
           onNodeClick={handleNodeClick}
           onStageClick={() => {
             setSelectedEntityId(null);
+            useGraphVisualStore.getState().setSelection(null, null);
           }}
           onNodeHover={setHoveredNodeId}
         />
       </div>
 
-      <aside
-        aria-label="Accessible graph entity list"
-        data-testid="graph-entity-list"
-        className="max-h-40 overflow-auto rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] p-2"
-      >
-        <p className="mb-2 text-xs font-semibold text-[var(--aegis-text-muted)]">
-          Nodes ({filteredNodeIds.length}) — keyboard accessible list
-        </p>
-        <ul className="flex flex-col gap-1">
-          {filteredNodeIds.map((nodeId) => (
-            <li key={nodeId}>
-              <button
-                type="button"
-                className="w-full rounded px-2 py-1 text-left text-sm hover:bg-[var(--aegis-surface-elevated)] aria-pressed:bg-[var(--aegis-surface-elevated)]"
-                aria-pressed={selectedEntityId === nodeId}
-                data-testid={`graph-entity-${nodeId}`}
-                onClick={() => {
-                  handleNodeClick(nodeId);
-                }}
-              >
-                {nodeLabels.get(nodeId) ?? nodeId}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
+      <AccessibleGraphEntityList
+        nodeIds={filteredNodeIds}
+        nodeLabels={nodeLabels}
+        selectedEntityId={selectedEntityId}
+        onNodeClick={handleNodeClick}
+      />
     </div>
   );
 }

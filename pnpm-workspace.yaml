@@ -10,6 +10,7 @@ trustLockfile: false
 strictDepBuilds: true
 dangerouslyAllowAllBuilds: false
 engineStrict: true
+useNodeVersion: 22.17.0
 strictPeerDependencies: true
 
 allowBuilds:

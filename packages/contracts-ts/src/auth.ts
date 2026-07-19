@@ -70,7 +70,7 @@ export const securityAuditActionSchema = z.enum([
 
 export const securityAuditOutcomeSchema = z.enum(['success', 'failure']);
 
-export const authMethodSchema = z.enum(['oidc', 'dev']);
+export const authMethodSchema = z.enum(['oidc', 'dev', 'password']);
 
 export const roleContractSchema = z
   .object({

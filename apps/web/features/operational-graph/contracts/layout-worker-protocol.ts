@@ -67,12 +67,15 @@ export const layoutWorkerSettingsSchema = z
 
 export type LayoutWorkerSettings = z.infer<typeof layoutWorkerSettingsSchema>;
 
+// Tuned for readable spread: strong repulsion and near-zero gravity keep
+// clusters from collapsing into a central clump; higher slowDown plus more
+// iterations lets the layout settle instead of oscillating.
 export const defaultLayoutWorkerSettings: LayoutWorkerSettings = {
-  iterations: 50,
-  gravity: 1,
-  scalingRatio: 10,
+  iterations: 180,
+  gravity: 0.8,
+  scalingRatio: 60,
   barnesHutOptimize: true,
-  slowDown: 1,
+  slowDown: 4,
 };
 
 export const layoutWorkerRequestSchema = z

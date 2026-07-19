@@ -24,8 +24,16 @@ from aegis_persistence.repositories.auth import AuthUserRecord
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_policy.authz import AuthorizationEngine, build_actor
 
+from aegis_api.auth.passwords import (
+    PASSWORD_ALGORITHM,
+    hash_password,
+    normalize_username,
+    validate_password_policy,
+    verify_password,
+)
 from aegis_api.auth.tokens import (
     constant_time_equals,
+    generate_account_user_id,
     generate_audit_event_id,
     generate_csrf_token,
     generate_opaque_token,
@@ -94,6 +102,132 @@ class AuthService:
             details={"authMethod": auth_method.value},
         )
         return actor, session, raw_token
+
+    async def setup_required(self, uow: PostgresUnitOfWork) -> bool:
+        """True while no password account exists (first-run admin setup is open)."""
+        return await uow.auth.count_credentialed_users() == 0
+
+    async def register_credentialed_user(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        username: str,
+        password: str,
+        display_name: str,
+        roles: list[PlatformRoleV1],
+        request_id: str | None = None,
+        audit_action: SecurityAuditActionV1 = SecurityAuditActionV1.ROLE_CHANGE,
+    ) -> AuthUserRecord:
+        """Create an active account with a hashed password. Fails closed on conflicts.
+
+        Password policy is enforced server-side; the plaintext is hashed with
+        Argon2id and never persisted or logged. Raises on weak passwords or a
+        duplicate username.
+        """
+        normalized_username = normalize_username(username)
+        validate_password_policy(password)
+        if not display_name or not display_name.strip():
+            display_name = normalized_username
+        if await uow.auth.username_exists(normalized_username):
+            raise AuthServiceError(
+                code=AuthErrorCode.INVALID_CREDENTIALS,
+                message="Username is not available",
+                status_code=409,
+            )
+        password_hash = hash_password(password)
+        user = await uow.auth.create_credentialed_user(
+            user_id=generate_account_user_id(),
+            username=normalized_username,
+            display_name=display_name.strip(),
+            roles=roles,
+            password_hash=password_hash,
+            algorithm=PASSWORD_ALGORITHM,
+            now=datetime.now(tz=UTC),
+        )
+        await self.record_audit(
+            uow,
+            action=audit_action,
+            outcome=SecurityAuditOutcomeV1.SUCCESS,
+            actor_user_id=user.user_id,
+            reason_code="ACCOUNT_CREATED",
+            request_id=request_id,
+            details={"roles": ",".join(role.value for role in roles)},
+        )
+        return user
+
+    async def bootstrap_admin(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        username: str,
+        password: str,
+        display_name: str,
+        request_id: str | None = None,
+    ) -> tuple[AuthenticatedActorV1, SessionInfoV1, str]:
+        """Create the first admin account and log it in. Self-disables after first use.
+
+        Guarded by ``count_credentialed_users() == 0`` so the setup flow closes the
+        moment any password account exists; a second call fails closed.
+        """
+        if not await self.setup_required(uow):
+            raise AuthServiceError(
+                code=AuthErrorCode.FORBIDDEN,
+                message="Initial account setup has already been completed",
+                status_code=409,
+            )
+        user = await self.register_credentialed_user(
+            uow,
+            username=username,
+            password=password,
+            display_name=display_name,
+            roles=[PlatformRoleV1.ADMIN],
+            request_id=request_id,
+        )
+        record = await uow.auth.get_user(user.user_id)
+        assert record is not None  # noqa: S101 — just created above
+        return await self.create_session_for_user(
+            uow,
+            user=record,
+            auth_method=AuthMethodV1.PASSWORD,
+            request_id=request_id,
+        )
+
+    async def authenticate_password(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        username: str,
+        password: str,
+        request_id: str | None = None,
+    ) -> tuple[AuthenticatedActorV1, SessionInfoV1, str]:
+        """Verify a username/password and issue a session.
+
+        Unknown user and wrong password both fail with the same generic
+        ``INVALID_CREDENTIALS`` (no user enumeration), and both run an Argon2id
+        verification so timing does not distinguish them.
+        """
+        normalized_username = (username or "").strip().lower()
+        credential = await uow.auth.get_credential_by_username(normalized_username)
+        stored_hash = credential.password_hash if credential is not None else None
+        if not verify_password(password=password, password_hash=stored_hash) or credential is None:
+            await self.record_audit(
+                uow,
+                action=SecurityAuditActionV1.LOGIN,
+                outcome=SecurityAuditOutcomeV1.FAILURE,
+                reason_code="INVALID_CREDENTIALS",
+                request_id=request_id,
+            )
+            raise AuthServiceError(
+                code=AuthErrorCode.INVALID_CREDENTIALS,
+                message="Invalid username or password",
+                status_code=401,
+            )
+        return await self.create_session_for_user(
+            uow,
+            user=credential.user,
+            auth_method=AuthMethodV1.PASSWORD,
+            request_id=request_id,
+        )
 
     async def resolve_actor_from_token(
         self,
