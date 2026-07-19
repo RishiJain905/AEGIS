@@ -85,7 +85,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/authenticated_actor_v1.schema.json",
-      "sha256": "b53d7999ae1524e49e6dbc1e16c713ed5ace2d30ed935fea0d5eaa5a951261f1",
+      "sha256": "b6c388cff53f33865d7d7b8197b81760dbe5f1bac97d5cb46c805f294348ffb7",
       "schemaVersion": 1
     },
     {
@@ -596,7 +596,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/session_info_v1.schema.json",
-      "sha256": "fa6b1d2eb7044c822c20c0d7c35eca025fa6e46700b9611dc8b1e7f0ca2aa0f1",
+      "sha256": "fce4c9befe3c232d5a5f7d34f7bfb71d46ac81091d4054b35a90bbfb3682ab74",
       "schemaVersion": 1
     },
     {

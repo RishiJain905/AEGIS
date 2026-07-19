@@ -1002,7 +1002,34 @@ class AuthUserRow(Base):
 
     user_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     display_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    # Unique login handle for password authentication. Nullable so OIDC/dev-seed
+    # identities (which authenticate without a local username) remain valid.
+    # Postgres treats multiple NULLs as distinct, so the unique constraint holds.
+    username: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("username", name="uq_auth_users_username"),)
+
+
+class AuthUserCredentialRow(Base):
+    """Dedicated password-credential store, one row per credentialed user.
+
+    Kept separate from ``auth_users`` so password material has its own table and
+    lifecycle. The hash is an opaque Argon2id encoded string (algorithm + params +
+    per-password salt); plaintext is never stored.
+    """
+
+    __tablename__ = "auth_user_credentials"
+
+    user_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("auth_users.user_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
+    algorithm: Mapped[str] = mapped_column(String(32), nullable=False, default="argon2id")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

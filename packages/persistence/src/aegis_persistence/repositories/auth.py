@@ -17,7 +17,7 @@ from aegis_contracts.versioning import (
     SECURITY_AUDIT_EVENT_SCHEMA_VERSION,
     SESSION_INFO_SCHEMA_VERSION,
 )
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aegis_persistence.orm.tables import (
@@ -25,6 +25,7 @@ from aegis_persistence.orm.tables import (
     AuthResourceGrantRow,
     AuthRoleAssignmentRow,
     AuthSessionRow,
+    AuthUserCredentialRow,
     AuthUserRow,
     SecurityAuditEventRow,
 )
@@ -38,11 +39,28 @@ class AuthUserRecord:
         display_name: str,
         status: str,
         roles: list[PlatformRoleV1],
+        username: str | None = None,
     ) -> None:
         self.user_id = user_id
         self.display_name = display_name
         self.status = status
         self.roles = roles
+        self.username = username
+
+
+class AuthCredentialRecord:
+    """A user's login identity plus its stored password hash for verification."""
+
+    def __init__(
+        self,
+        *,
+        user: AuthUserRecord,
+        password_hash: str,
+        algorithm: str,
+    ) -> None:
+        self.user = user
+        self.password_hash = password_hash
+        self.algorithm = algorithm
 
 
 class PostgresAuthRepository:
@@ -56,6 +74,7 @@ class PostgresAuthRepository:
         display_name: str,
         roles: list[PlatformRoleV1],
         status: str = "active",
+        username: str | None = None,
         now: datetime,
     ) -> AuthUserRecord:
         row = await self._session.get(AuthUserRow, user_id)
@@ -63,6 +82,7 @@ class PostgresAuthRepository:
             row = AuthUserRow(
                 user_id=user_id,
                 display_name=display_name,
+                username=username,
                 status=status,
                 created_at=now,
                 updated_at=now,
@@ -72,6 +92,8 @@ class PostgresAuthRepository:
             row.display_name = display_name
             row.status = status
             row.updated_at = now
+            if username is not None:
+                row.username = username
 
         existing = await self._session.execute(
             select(AuthRoleAssignmentRow).where(AuthRoleAssignmentRow.user_id == user_id)
@@ -93,16 +115,14 @@ class PostgresAuthRepository:
             display_name=display_name,
             status=status,
             roles=roles,
+            username=username,
         )
 
     async def get_user(self, user_id: str) -> AuthUserRecord | None:
         row = await self._session.get(AuthUserRow, user_id)
         if row is None or row.status != "active":
             return None
-        roles_result = await self._session.execute(
-            select(AuthRoleAssignmentRow).where(AuthRoleAssignmentRow.user_id == user_id)
-        )
-        roles = [PlatformRoleV1(item.role) for item in roles_result.scalars().all()]
+        roles = await self._roles_for(user_id)
         if not roles:
             return None
         return AuthUserRecord(
@@ -110,6 +130,88 @@ class PostgresAuthRepository:
             display_name=row.display_name,
             status=row.status,
             roles=roles,
+            username=row.username,
+        )
+
+    async def _roles_for(self, user_id: str) -> list[PlatformRoleV1]:
+        roles_result = await self._session.execute(
+            select(AuthRoleAssignmentRow).where(AuthRoleAssignmentRow.user_id == user_id)
+        )
+        return [PlatformRoleV1(item.role) for item in roles_result.scalars().all()]
+
+    async def count_credentialed_users(self) -> int:
+        """Number of accounts that have a password credential.
+
+        The first-run admin bootstrap is available only while this is zero; once any
+        password account exists it self-disables. Independent of dev-seed identities,
+        which have no credential row.
+        """
+        result = await self._session.execute(
+            select(func.count()).select_from(AuthUserCredentialRow)
+        )
+        return int(result.scalar_one())
+
+    async def username_exists(self, username: str) -> bool:
+        result = await self._session.execute(
+            select(AuthUserRow.user_id).where(AuthUserRow.username == username)
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def create_credentialed_user(
+        self,
+        *,
+        user_id: str,
+        username: str,
+        display_name: str,
+        roles: list[PlatformRoleV1],
+        password_hash: str,
+        algorithm: str,
+        now: datetime,
+    ) -> AuthUserRecord:
+        """Create an active user with roles and a password credential in one unit."""
+        record = await self.upsert_user(
+            user_id=user_id,
+            display_name=display_name,
+            roles=roles,
+            username=username,
+            now=now,
+        )
+        self._session.add(
+            AuthUserCredentialRow(
+                user_id=user_id,
+                password_hash=password_hash,
+                algorithm=algorithm,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        await self._session.flush()
+        return record
+
+    async def get_credential_by_username(self, username: str) -> AuthCredentialRecord | None:
+        """Return the credential + identity for an active, credentialed username."""
+        user_result = await self._session.execute(
+            select(AuthUserRow).where(AuthUserRow.username == username)
+        )
+        user_row = user_result.scalar_one_or_none()
+        if user_row is None or user_row.status != "active":
+            return None
+        credential = await self._session.get(AuthUserCredentialRow, user_row.user_id)
+        if credential is None:
+            return None
+        roles = await self._roles_for(user_row.user_id)
+        if not roles:
+            return None
+        return AuthCredentialRecord(
+            user=AuthUserRecord(
+                user_id=user_row.user_id,
+                display_name=user_row.display_name,
+                status=user_row.status,
+                roles=roles,
+                username=user_row.username,
+            ),
+            password_hash=credential.password_hash,
+            algorithm=credential.algorithm,
         )
 
     async def link_external_identity(

@@ -10,7 +10,7 @@ registry, the policy package, and runtime settings.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 ADMIN_SCHEMA_VERSION = 1
@@ -26,6 +26,17 @@ class AdminUserV1(_AdminModel):
     status: str
     roles: list[str]
     permissions: list[str]
+
+
+class AdminCreateUserRequestV1(_AdminModel):
+    """Admin-only request to provision a credentialed account with roles."""
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="forbid")
+
+    username: str = Field(min_length=1, max_length=128)
+    password: str = Field(min_length=1, max_length=256)
+    display_name: str = Field(default="", max_length=256)
+    roles: list[str] = Field(min_length=1)
 
 
 class AdminUsersResponseV1(_AdminModel):

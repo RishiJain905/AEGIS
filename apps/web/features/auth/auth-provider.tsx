@@ -25,6 +25,12 @@ interface AuthContextValue {
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
   devLogin: (userId: string) => Promise<void>;
+  passwordLogin: (username: string, password: string) => Promise<void>;
+  createAdminAccount: (input: {
+    username: string;
+    password: string;
+    displayName: string;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -79,6 +85,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const passwordLoginMutation = useMutation({
+    mutationFn: async (input: { username: string; password: string }) =>
+      apiFetchJson(
+        '/api/v1/auth/login',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ schemaVersion: 1, ...input }),
+        },
+        (data) => parseContract(authSessionResponseSchema, data),
+      ),
+    onSuccess: (session) => {
+      rememberCsrf(session);
+      queryClient.setQueryData(AUTH_SESSION_KEY, session);
+    },
+  });
+
+  const createAdminMutation = useMutation({
+    mutationFn: async (input: { username: string; password: string; displayName: string }) =>
+      apiFetchJson(
+        '/api/v1/auth/setup',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ schemaVersion: 1, ...input }),
+        },
+        (data) => parseContract(authSessionResponseSchema, data),
+      ),
+    onSuccess: (session) => {
+      rememberCsrf(session);
+      queryClient.setQueryData(AUTH_SESSION_KEY, session);
+    },
+  });
+
   const actor = sessionQuery.data?.actor ?? null;
 
   const hasPermission = useCallback(
@@ -118,8 +158,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       devLogin: async (userId: string) => {
         await devLoginMutation.mutateAsync(userId);
       },
+      passwordLogin: async (username: string, password: string) => {
+        await passwordLoginMutation.mutateAsync({ username, password });
+      },
+      createAdminAccount: async (input) => {
+        await createAdminMutation.mutateAsync(input);
+      },
     }),
-    [actor, hasPermission, hasRole, logoutMutation, devLoginMutation, sessionQuery],
+    [
+      actor,
+      hasPermission,
+      hasRole,
+      logoutMutation,
+      devLoginMutation,
+      passwordLoginMutation,
+      createAdminMutation,
+      sessionQuery,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

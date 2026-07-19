@@ -60,6 +60,12 @@ services:
     environment:
       AEGIS_ENV: development
       LOG_LEVEL: info
+      # Fresh-install experience: real username/password auth. The dev-identity
+      # picker (POST /auth/dev/login, GET /auth/dev/users) is OFF by default so a
+      # new user gets the real sign-in + first-run "create admin" flow. Local devs
+      # who want the picker can `export AEGIS_DEV_AUTH_ENABLED=true` before `up`.
+      AEGIS_DEV_AUTH_ENABLED: ${AEGIS_DEV_AUTH_ENABLED:-false}
+      AEGIS_WS_DEV_AUTH_ENABLED: ${AEGIS_WS_DEV_AUTH_ENABLED:-false}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB:-aegis}
