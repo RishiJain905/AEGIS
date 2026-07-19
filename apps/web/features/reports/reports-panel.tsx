@@ -6,6 +6,7 @@ import type { AfterActionReportV1, ReportClaimV1 } from '@aegis/contracts-ts';
 import { Badge, EmptyState, LoadingState, Panel } from '@aegis/ui';
 
 import {
+  CitationRef,
   ClaimTypeBadge,
   MetaRow,
   MonoChip,
@@ -25,19 +26,12 @@ function Citations({ claim }: { claim: ReportClaimV1 }) {
   return (
     <ul className="mt-2 space-y-1">
       {claim.citations.map((citation) => (
-        <li
-          key={`${claim.claimId}-${citation.referenceId}`}
-          className="flex items-center gap-1.5 text-[0.7rem] text-[var(--aegis-text-muted)]"
-        >
-          <span className="flex-none rounded bg-[var(--aegis-surface-raised)] px-1 py-0.5 font-medium uppercase tracking-[0.04em] text-[var(--aegis-text-secondary)]">
-            {citation.kind}
-          </span>
-          <MonoChip value={citation.referenceId} label="citation reference" copyable={false} />
-          {citation.sequence !== null && citation.sequence !== undefined ? (
-            <span className="flex-none font-mono tabular-nums">
-              seq {String(citation.sequence)}
-            </span>
-          ) : null}
+        <li key={`${claim.claimId}-${citation.referenceId}`}>
+          <CitationRef
+            kind={citation.kind}
+            referenceId={citation.referenceId}
+            sequence={citation.sequence}
+          />
         </li>
       ))}
     </ul>

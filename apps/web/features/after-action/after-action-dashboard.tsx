@@ -12,7 +12,7 @@ import type {
   ScoreGradeBand,
   ValidAlternativeV1,
 } from '@aegis/contracts-ts';
-import { Badge, Button, EmptyState, LoadingState, Panel, cn } from '@aegis/ui';
+import { Badge, Button, EmptyState, LoadingState, Panel, cn, typographyTokens } from '@aegis/ui';
 
 import { useAfterActionView } from '@/features/after-action/use-after-action-queries';
 import {
@@ -110,7 +110,7 @@ function IdList({ label, ids }: { label: string; ids: readonly string[] }) {
   }
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-[0.7rem] font-medium uppercase tracking-[0.06em] text-[var(--aegis-text-muted)]">
+      <span className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-text-muted)]')}>
         {label}
       </span>
       {ids.map((id) => (
@@ -130,9 +130,7 @@ function ExplanationPanel({
   return (
     <div data-testid="score-explanation" className="space-y-3">
       <div className="flex items-center gap-2">
-        <span className="text-[0.7rem] font-medium uppercase tracking-[0.06em] text-[var(--aegis-text-muted)]">
-          Rule
-        </span>
+        <span className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-text-muted)]')}>Rule</span>
         <span data-testid="score-rule-id">
           <MonoChip value={explanation.ruleId} label="rule id" />
         </span>
@@ -342,7 +340,7 @@ function DashboardBody({ view }: { view: AfterActionViewModelV1 }) {
 
           {/* Score block */}
           <div
-            className="flex flex-none flex-col justify-center gap-3 rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[linear-gradient(145deg,var(--aegis-surface-raised),var(--aegis-surface-elevated))] px-6 py-4 lg:w-72"
+            className="flex flex-none flex-col justify-center gap-3 rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-raised)] px-6 py-4 lg:w-72"
             data-testid="overall-score-block"
           >
             <div className="flex items-end justify-between gap-4">

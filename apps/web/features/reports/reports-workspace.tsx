@@ -12,6 +12,7 @@ import type {
 import { Badge, Button, EmptyState, LoadingState, Panel, cn } from '@aegis/ui';
 
 import {
+  CitationRef,
   ClaimTypeBadge,
   MetaRow,
   MonoChip,
@@ -108,15 +109,11 @@ function ClaimCard({ claim }: { claim: ReportClaimV1 }) {
       {claim.citations.length > 0 ? (
         <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-[var(--aegis-border-subtle)] pt-2">
           {claim.citations.map((citation) => (
-            <span
+            <CitationRef
               key={`${claim.claimId}-${citation.referenceId}`}
-              className="inline-flex items-center gap-1"
-            >
-              <span className="rounded bg-[var(--aegis-surface-raised)] px-1 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.04em] text-[var(--aegis-text-secondary)]">
-                {citation.kind}
-              </span>
-              <MonoChip value={citation.referenceId} label="citation reference" copyable={false} />
-            </span>
+              kind={citation.kind}
+              referenceId={citation.referenceId}
+            />
           ))}
         </div>
       ) : null}

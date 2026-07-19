@@ -16,7 +16,7 @@
 import { forwardRef, useCallback, useState, type ReactNode } from 'react';
 
 import type { ReportClaimCategoryV1 } from '@aegis/contracts-ts';
-import { cn } from '@aegis/ui';
+import { cn, typographyTokens } from '@aegis/ui';
 
 /* ------------------------------------------------------------------ */
 /* Copy affordance                                                     */
@@ -137,7 +137,7 @@ export function MonoChip({
 }: MonoChipProps) {
   if (!value) {
     return (
-      <span className={cn('font-mono text-[0.7rem] text-[var(--aegis-text-faint)]', className)}>
+      <span className={cn(typographyTokens.monoSm, 'text-[var(--aegis-text-faint)]', className)}>
         —
       </span>
     );
@@ -153,12 +153,54 @@ export function MonoChip({
       )}
     >
       <span
-        className="truncate font-mono text-[0.7rem] leading-4 tracking-[-0.01em] text-[var(--aegis-text-secondary)]"
+        className={cn(typographyTokens.monoSm, 'truncate text-[var(--aegis-text-secondary)]')}
         title={value}
       >
         {display}
       </span>
       {copyable ? <CopyButton value={value} label={label} /> : null}
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Evidence-reference chip (shared)                                    */
+/* ------------------------------------------------------------------ */
+
+export interface CitationRefProps {
+  /** The citation kind tag (e.g. `event`, `evidence`, `hypothesis`). */
+  kind: string;
+  /** The opaque, copy-correlatable reference id (`evt_*`, `evidence:*`, …). */
+  referenceId: string;
+  /** Optional source sequence number, rendered as a trailing mono caption. */
+  sequence?: number | null;
+  className?: string;
+}
+
+/**
+ * The single evidence-reference chip shared by every reporting surface (the
+ * reports workspace claim grid and the SCRIBE inspector panel). Before this,
+ * the same "kind tag + reference id" concept had two ad-hoc treatments that
+ * drifted in size and spacing; this renders them identically — a formal
+ * `eyebrow`-scale kind tag next to a copy-safe `mono-sm` identifier.
+ */
+export function CitationRef({ kind, referenceId, sequence, className }: CitationRefProps) {
+  return (
+    <span className={cn('inline-flex items-center gap-1', className)}>
+      <span
+        className={cn(
+          typographyTokens.eyebrow,
+          'flex-none rounded-[var(--aegis-radius-sm)] bg-[var(--aegis-surface-raised)] px-1 py-0.5 text-[var(--aegis-text-secondary)]',
+        )}
+      >
+        {kind}
+      </span>
+      <MonoChip value={referenceId} label="citation reference" copyable={false} />
+      {sequence !== null && sequence !== undefined ? (
+        <span className={cn(typographyTokens.monoSm, 'flex-none text-[var(--aegis-text-muted)]')}>
+          seq {String(sequence)}
+        </span>
+      ) : null}
     </span>
   );
 }
