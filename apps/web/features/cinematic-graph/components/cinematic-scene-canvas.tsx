@@ -21,6 +21,7 @@ import type { CameraBookmark3D } from '../contracts/camera-bookmark-3d';
 import { RenderQualityTier, type RenderQualityTierValue } from '../contracts/render-quality-tier';
 import { dprForTier } from '../lib/capability';
 import { getGlyphTexture } from '../lib/glyph-textures';
+import { applyInstancedNodeAttributes, nodeRadius } from '../lib/instanced-node-attributes';
 import {
   getSceneFrameloop,
   getSceneQualityProfile,
@@ -28,10 +29,6 @@ import {
 } from '../lib/scene-quality';
 import { resolveThreeColor } from '../lib/three-color';
 import { RISK_HALO_FRAGMENT, RISK_HALO_VERTEX } from '../shaders/risk-halo';
-
-function nodeRadius(node: SceneNode): number {
-  return Math.max(9, node.size * 1.05) * node.sizeTier * (node.selected ? 1.12 : 1);
-}
 
 /**
  * §7.1 per-instance emissive tint: three's standard/physical materials only
@@ -72,70 +69,14 @@ function InstancedNodes({
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const colorCoatRef = useRef<THREE.InstancedMesh>(null);
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-  const scratchColor = useMemo(() => new THREE.Color(), []);
-  const nodeColors = useMemo(
-    () => nodes.map((node) => resolveThreeColor(node.color).color),
-    [nodes],
-  );
 
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) {
       return;
     }
-    const colorCoat = colorCoatRef.current;
-    const emissiveArray = new Float32Array(Math.max(nodes.length, 1) * 3);
-
-    nodes.forEach((node, index) => {
-      const radius = nodeRadius(node);
-      dummy.position.set(node.position.x, node.position.y, node.position.z);
-      dummy.scale.setScalar(node.dimmed ? radius * 0.72 : radius);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(index, dummy.matrix);
-
-      scratchColor.copy(nodeColors[index] ?? resolveThreeColor('#64748b').color);
-      if (node.dimmed) {
-        scratchColor.multiplyScalar(0.28);
-      } else if (node.highlighted || node.selected) {
-        scratchColor.offsetHSL(0, 0.08, 0.08);
-      }
-      mesh.setColorAt(index, scratchColor);
-
-      // §7.1: risk/status accent as an emissive tint (status wins over risk;
-      // quiet neutral otherwise), resolved upstream in the scene adapter.
-      const accent = resolveThreeColor(node.emissiveColor).color;
-      const emissiveScale = node.dimmed ? 0.12 : node.selected || node.highlighted ? 0.85 : 0.62;
-      emissiveArray[index * 3] = accent.r * emissiveScale;
-      emissiveArray[index * 3 + 1] = accent.g * emissiveScale;
-      emissiveArray[index * 3 + 2] = accent.b * emissiveScale;
-
-      if (colorCoat) {
-        dummy.scale.setScalar((node.dimmed ? radius * 0.72 : radius) * 1.012);
-        dummy.updateMatrix();
-        colorCoat.setMatrixAt(index, dummy.matrix);
-        // The additive coat carries the same accent so node + glow read as one
-        // coherent risk/status signal (§7.3).
-        scratchColor.copy(accent).multiplyScalar(node.dimmed ? 0.1 : 1);
-        colorCoat.setColorAt(index, scratchColor);
-      }
-    });
-
-    mesh.geometry.setAttribute(
-      'instanceEmissive',
-      new THREE.InstancedBufferAttribute(emissiveArray, 3),
-    );
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) {
-      mesh.instanceColor.needsUpdate = true;
-    }
-    if (colorCoat) {
-      colorCoat.instanceMatrix.needsUpdate = true;
-      if (colorCoat.instanceColor) {
-        colorCoat.instanceColor.needsUpdate = true;
-      }
-    }
-  }, [dummy, nodeColors, nodes, scratchColor]);
+    applyInstancedNodeAttributes(mesh, colorCoatRef.current, nodes);
+  }, [nodes]);
 
   return (
     <group>
@@ -165,9 +106,13 @@ function InstancedNodes({
         <icosahedronGeometry
           args={[1, profile.nodeSegments >= 20 ? 3 : profile.nodeSegments >= 14 ? 2 : 1]}
         />
+        {/* No `vertexColors` on these materials: per-instance tinting rides on
+            setColorAt()'s instanceColor (USE_INSTANCING_COLOR). `vertexColors`
+            additionally defines USE_COLOR, whose per-vertex `color` attribute
+            this geometry never provides — the unbound attribute reads
+            (0, 0, 0) on ANGLE and multiplies every instance color to black. */}
         {profile.material === 'physical' ? (
           <meshPhysicalMaterial
-            vertexColors
             roughness={0.36}
             metalness={0.18}
             clearcoat={0.68}
@@ -177,7 +122,6 @@ function InstancedNodes({
           />
         ) : (
           <meshStandardMaterial
-            vertexColors
             roughness={0.48}
             metalness={0.12}
             onBeforeCompile={injectInstanceEmissive}
@@ -195,7 +139,6 @@ function InstancedNodes({
             args={[1, profile.nodeSegments >= 20 ? 3 : profile.nodeSegments >= 14 ? 2 : 1]}
           />
           <meshBasicMaterial
-            vertexColors
             transparent
             opacity={0.24}
             blending={THREE.AdditiveBlending}
