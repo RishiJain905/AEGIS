@@ -95,9 +95,9 @@ export const drawAegisNodeLabel: NodeLabelDrawingFunction = (context, rawData, s
   const width = textWidth + 28;
 
   roundedRect(context, left, top, width, height, 5);
-  context.fillStyle = 'rgba(5, 12, 19, 0.88)';
+  context.fillStyle = 'rgba(12, 12, 17, 0.88)';
   context.fill();
-  context.strokeStyle = data.selected ? 'rgba(94, 205, 255, 0.72)' : 'rgba(112, 148, 171, 0.28)';
+  context.strokeStyle = data.selected ? 'rgba(242, 202, 107, 0.75)' : 'rgba(150, 148, 158, 0.28)';
   context.lineWidth = 1;
   context.stroke();
 
@@ -105,7 +105,7 @@ export const drawAegisNodeLabel: NodeLabelDrawingFunction = (context, rawData, s
   context.fillStyle = rawData.color;
   context.fill();
 
-  context.fillStyle = data.selected ? '#f3fbff' : '#d7e5ef';
+  context.fillStyle = data.selected ? '#faf7ef' : '#cdced4';
   context.textBaseline = 'middle';
   context.fillText(rawData.label, left + 19, rawData.y + 0.5);
   context.restore();
@@ -138,7 +138,7 @@ export const drawAegisNodeHover: NodeHoverDrawingFunction = (context, rawData, s
   if (data.selected || data.hovered || data.showHoverLabel) {
     context.beginPath();
     context.arc(rawData.x, rawData.y, radius, 0, Math.PI * 2);
-    context.strokeStyle = data.selected ? '#8ee6ff' : '#f7c85d';
+    context.strokeStyle = data.selected ? '#f2ca6b' : '#d8d5c9';
     context.lineWidth = data.selected ? 3 : 2;
     context.stroke();
   }
@@ -154,7 +154,7 @@ export const drawAegisNodeHover: NodeHoverDrawingFunction = (context, rawData, s
     );
     context.fillStyle = data.statusIndicator;
     context.fill();
-    context.strokeStyle = '#071019';
+    context.strokeStyle = '#0c0c11';
     context.lineWidth = 1.5;
     context.stroke();
   }
@@ -181,7 +181,7 @@ export const drawAegisNodeHover: NodeHoverDrawingFunction = (context, rawData, s
     );
     context.fillStyle = '#fbbf24';
     context.fill();
-    context.strokeStyle = '#071019';
+    context.strokeStyle = '#0c0c11';
     context.lineWidth = 1.25;
     context.stroke();
   }

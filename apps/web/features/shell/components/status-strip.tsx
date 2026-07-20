@@ -2,6 +2,7 @@
 
 import { NodeStatus } from '@aegis/contracts-ts';
 import { Alert, Badge } from '@aegis/ui';
+import type { ReactNode } from 'react';
 
 import { useLiveRun } from '@/features/live-run';
 import { OperatorIdentityBadge } from '@/features/auth';
@@ -13,6 +14,26 @@ import {
 
 interface StatusStripProps {
   runId?: string;
+}
+
+function TelemetryItem({
+  label,
+  value,
+  testId,
+}: {
+  label: string;
+  value: ReactNode;
+  testId?: string;
+}) {
+  return (
+    <span
+      className="flex items-center gap-1.5 border-l border-[var(--aegis-border-subtle)] pl-3 first:border-l-0 first:pl-0 text-[var(--aegis-text-secondary)]"
+      data-testid={testId}
+    >
+      <span className="text-[var(--aegis-text-muted)]">{label}</span>
+      <span className="truncate">{value}</span>
+    </span>
+  );
 }
 
 const LIVE_HEALTH_LABELS: Record<string, string> = {
@@ -51,12 +72,12 @@ export function StatusStrip({ runId }: StatusStripProps) {
 
   return (
     <div
-      className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--aegis-border-default)] bg-[color-mix(in_srgb,var(--aegis-surface-rail)_95%,transparent)] px-4 py-2 shadow-[0_8px_24px_rgb(0_0_0_/_0.2)] backdrop-blur-md"
+      className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_78%,transparent)] px-5 py-2.5 backdrop-blur-xl xl:px-6"
       data-testid="status-strip"
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-center gap-2.5 border-r border-[var(--aegis-border-subtle)] pr-4">
+      <div className="flex items-center gap-2.5">
         <span className="font-[family-name:var(--aegis-font-display)] text-[0.6875rem] font-semibold uppercase tracking-[0.13em] text-[var(--aegis-text-muted)]">
           Control link
         </span>
@@ -76,31 +97,17 @@ export function StatusStrip({ runId }: StatusStripProps) {
           Read-only
         </Badge>
       ) : null}
-      {runId ? (
-        <span className="font-mono text-[0.6875rem] text-[var(--aegis-text-secondary)] tabular-nums">
-          <span className="text-[var(--aegis-text-muted)]">RUN</span> {runId}
-        </span>
-      ) : null}
-      {runStatus ? (
-        <span className="text-xs text-[var(--aegis-text-secondary)]" data-testid="run-status">
-          <span className="text-[var(--aegis-text-muted)]">Status</span> {runStatus}
-        </span>
-      ) : null}
-      {simTime ? (
-        <span
-          className="font-mono text-[0.6875rem] text-[var(--aegis-text-secondary)] tabular-nums"
-          data-testid="sim-time"
-        >
-          <span className="text-[var(--aegis-text-muted)]">SIM</span> {simTime}
-        </span>
-      ) : null}
-      {sequence !== undefined ? (
-        <span
-          className="font-mono text-[0.6875rem] text-[var(--aegis-text-secondary)] tabular-nums"
-          data-testid="applied-sequence"
-        >
-          <span className="text-[var(--aegis-text-muted)]">SEQ</span> {sequence}
-        </span>
+      {runId || runStatus || simTime || sequence !== undefined ? (
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-l border-[var(--aegis-border-subtle)] pl-4 font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] leading-4 tabular-nums">
+          {runId ? <TelemetryItem label="RUN" value={runId} /> : null}
+          {runStatus ? (
+            <TelemetryItem label="STATUS" value={runStatus} testId="run-status" />
+          ) : null}
+          {simTime ? <TelemetryItem label="SIM" value={simTime} testId="sim-time" /> : null}
+          {sequence !== undefined ? (
+            <TelemetryItem label="SEQ" value={sequence} testId="applied-sequence" />
+          ) : null}
+        </div>
       ) : null}
       <div className="ml-auto">
         <OperatorIdentityBadge />

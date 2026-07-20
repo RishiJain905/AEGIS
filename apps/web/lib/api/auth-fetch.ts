@@ -83,7 +83,7 @@ export async function apiFetchJson<T>(
       code: envelope.code,
       message: envelope.message,
       status: response.status,
-      traceId: envelope.traceId,
+      traceId: envelope.traceId ?? undefined,
     });
   }
   if (response.status === 204) {

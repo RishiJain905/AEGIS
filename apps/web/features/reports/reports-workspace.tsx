@@ -64,9 +64,9 @@ function VersionRow({
   return (
     <div
       className={cn(
-        'relative rounded-[var(--aegis-radius-md)] border px-3 py-3 transition-colors',
+        'relative rounded-[var(--aegis-radius-md)] border px-3 py-3 transition-colors duration-[var(--aegis-motion-duration-fast)]',
         selected
-          ? 'border-[var(--aegis-accent-line)] bg-[var(--aegis-surface-elevated)]'
+          ? 'border-[var(--aegis-accent-line)] bg-[var(--aegis-surface-elevated)] shadow-[inset_2px_0_0_var(--aegis-accent-cyan)]'
           : 'border-[var(--aegis-border-subtle)] hover:border-[var(--aegis-border-default)] hover:bg-[var(--aegis-surface-hover)]',
       )}
     >
@@ -372,17 +372,17 @@ export function ReportsWorkspace({ runId }: ReportsWorkspaceProps) {
   const showCurrent = activeVersion === currentVersionNumber;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6" data-testid="reports-workspace">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-[var(--aegis-accent-cyan)]">
-            SCRIBE
+    <div className="mx-auto max-w-6xl space-y-5 p-4 md:p-6" data-testid="reports-workspace">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0 space-y-2">
+          <span className="block font-[family-name:var(--aegis-font-mono)] text-[0.625rem] font-semibold uppercase leading-none tracking-[0.18em] text-[var(--aegis-accent-cyan)]">
+            SCRIBE · After-action
           </span>
-          <h1 className="font-[family-name:var(--aegis-font-display)] text-2xl font-semibold tracking-[0.01em] text-[var(--aegis-text-primary)]">
+          <h1 className="font-[family-name:var(--aegis-font-display)] text-[1.625rem] font-semibold leading-tight tracking-tight text-[var(--aegis-text-primary)]">
             After-action reports
           </h1>
           <div className="flex items-center gap-2">
-            <span className="text-[0.7rem] uppercase tracking-[0.06em] text-[var(--aegis-text-muted)]">
+            <span className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-[var(--aegis-text-faint)]">
               Run
             </span>
             <MonoChip value={runId} label="run id" />

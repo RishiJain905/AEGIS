@@ -113,9 +113,9 @@ export function getRiskHaloColor(riskBand: RiskBand): string {
   return RISK_HALO_COLORS[riskBand];
 }
 
-/** Quiet neutral emissive for no-signal nodes: the previous uniform scene
- * blue, desaturated, so risk/status-colored nodes pop by contrast (§7.1). */
-export const NEUTRAL_NODE_ACCENT = '#2b5b70';
+/** Quiet neutral emissive for no-signal nodes: a warm desaturated graphite so
+ * risk/status-colored nodes pop by contrast (§7.1). */
+export const NEUTRAL_NODE_ACCENT = '#56524a';
 
 export interface NodeSemanticAccent {
   /** Emissive tint driven by status (wins) or risk band, else neutral. */

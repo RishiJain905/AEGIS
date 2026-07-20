@@ -41,23 +41,25 @@ export function IncidentWorkspace({
         <OperationsRail />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header
-            className="sticky top-0 z-30 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-[var(--aegis-border-default)] bg-[color-mix(in_srgb,var(--aegis-surface-rail)_95%,transparent)] px-4 py-4 shadow-[0_8px_24px_rgb(0_0_0_/_0.2)] backdrop-blur-md md:px-6"
+            className="sticky top-0 z-30 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-rail)_82%,transparent)] px-4 py-5 shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl md:px-6"
             data-testid="incident-workspace-header"
           >
             <div className="min-w-0">
-              <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-[var(--aegis-accent-strong)]">
+              <p className="font-[family-name:var(--aegis-font-mono)] text-[0.625rem] uppercase leading-none tracking-[0.18em] text-[var(--aegis-accent-cyan)]">
                 {eyebrow}
               </p>
-              <h1 className="mt-1 truncate font-[family-name:var(--aegis-font-display)] text-lg font-semibold tracking-[0.02em] text-[var(--aegis-text-primary)]">
+              <h1 className="mt-2 truncate font-[family-name:var(--aegis-font-display)] text-[1.375rem] font-semibold leading-tight tracking-tight text-[var(--aegis-text-primary)]">
                 {title}
               </h1>
               {description ? (
-                <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--aegis-text-secondary)]">
+                <p className="mt-1.5 max-w-2xl text-sm leading-5 text-[var(--aegis-text-secondary)]">
                   {description}
                 </p>
               ) : null}
             </div>
-            {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+            {actions ? (
+              <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+            ) : null}
           </header>
           <main id="incident-content" className="flex min-h-0 flex-1 flex-col gap-5 p-4 md:p-6">
             {children}

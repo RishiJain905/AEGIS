@@ -1,7 +1,16 @@
 'use client';
 
-import { Badge, ErrorState, LoadingState, MetricTile, Panel } from '@aegis/ui';
+import {
+  Badge,
+  ErrorState,
+  LoadingState,
+  MetricTile,
+  Panel,
+  cn,
+  typographyTokens,
+} from '@aegis/ui';
 
+import { SectionHeading } from './admin-ui';
 import { useAdminSettings } from './use-admin-queries';
 import type { AdminSettingsResponse } from './types';
 
@@ -34,16 +43,20 @@ function formatValue(value: unknown): string {
 function ConfigSection({ title, values }: { title: string; values: Record<string, unknown> }) {
   const entries = Object.entries(values);
   return (
-    <section className="space-y-2">
-      <h3 className="text-sm font-semibold text-[var(--aegis-text-primary)]">{title}</h3>
-      <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+    <section className="space-y-3">
+      <SectionHeading count={entries.length}>{title}</SectionHeading>
+      <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
         {entries.map(([key, value]) => (
           <div
             key={key}
             className="flex items-baseline justify-between gap-3 border-b border-[var(--aegis-border-subtle)] pb-1.5"
           >
-            <dt className="text-xs text-[var(--aegis-text-secondary)]">{key}</dt>
-            <dd className="font-mono text-xs text-[var(--aegis-text-primary)]">
+            <dt className={cn(typographyTokens.monoSm, 'uppercase text-[var(--aegis-text-muted)]')}>
+              {key}
+            </dt>
+            <dd
+              className={cn(typographyTokens.monoSm, 'text-right text-[var(--aegis-text-primary)]')}
+            >
               {formatValue(value)}
             </dd>
           </div>
@@ -66,7 +79,7 @@ function PlatformContent({ data }: { data: AdminSettingsResponse }) {
   ).length;
 
   return (
-    <div className="space-y-6" data-testid="admin-platform">
+    <div className="space-y-8" data-testid="admin-platform">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricTile label="Environment" value={data.environment} />
         <MetricTile label="Version" value={data.version} />
@@ -86,15 +99,13 @@ function PlatformContent({ data }: { data: AdminSettingsResponse }) {
       </div>
 
       {dependencies.length > 0 ? (
-        <section className="space-y-2">
-          <h3 className="text-sm font-semibold text-[var(--aegis-text-primary)]">
-            Dependency health
-          </h3>
+        <section className="space-y-3">
+          <SectionHeading count={dependencies.length}>Dependency health</SectionHeading>
           <ul className="flex flex-wrap gap-2">
             {dependencies.map((dependency) => (
               <li
                 key={dependency.name}
-                className="flex items-center gap-2 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] px-3 py-2"
+                className="flex items-center gap-2 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-elevated)_70%,transparent)] px-3 py-2"
               >
                 <span className="text-xs font-medium text-[var(--aegis-text-primary)]">
                   {dependency.name}
@@ -106,13 +117,15 @@ function PlatformContent({ data }: { data: AdminSettingsResponse }) {
         </section>
       ) : null}
 
-      <ConfigSection title="Model provider" values={data.provider} />
-      <ConfigSection title="Authentication" values={data.auth} />
-      <ConfigSection title="WebSocket" values={data.websocket} />
-      <ConfigSection title="Security" values={data.security} />
-      <ConfigSection title="Observability" values={data.observability} />
+      <div className="space-y-8">
+        <ConfigSection title="Model provider" values={data.provider} />
+        <ConfigSection title="Authentication" values={data.auth} />
+        <ConfigSection title="WebSocket" values={data.websocket} />
+        <ConfigSection title="Security" values={data.security} />
+        <ConfigSection title="Observability" values={data.observability} />
+      </div>
 
-      <p className="text-xs text-[var(--aegis-text-muted)]">
+      <p className="text-xs leading-5 text-[var(--aegis-text-muted)]">
         Secrets (API keys, passwords, client secrets) are never included in this view.
       </p>
     </div>

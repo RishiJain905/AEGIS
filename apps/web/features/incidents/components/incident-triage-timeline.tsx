@@ -37,12 +37,15 @@ export function IncidentTriageTimeline({ events }: { events: readonly TriageEven
             <li key={event.id} className="relative flex gap-3 pb-4 last:pb-0">
               <div className="flex flex-col items-center">
                 <span
-                  className={cn('mt-1 h-2.5 w-2.5 shrink-0 rounded-full', TONE_DOT[event.tone])}
+                  className={cn(
+                    'mt-1 h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-[var(--aegis-surface-panel)]',
+                    TONE_DOT[event.tone],
+                  )}
                   aria-hidden="true"
                 />
                 {index < events.length - 1 ? (
                   <span
-                    className="mt-1 w-px flex-1 bg-[var(--aegis-border-default)]"
+                    className="mt-1.5 w-px flex-1 bg-[var(--aegis-border-subtle)]"
                     aria-hidden="true"
                   />
                 ) : null}

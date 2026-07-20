@@ -35,7 +35,8 @@ export const apiErrorEnvelopeSchema = z
     code: z.string().min(1),
     message: z.string().min(1),
     details: z.record(z.unknown()).default({}),
-    traceId: z.string().optional(),
+    // Python serializes missing trace ids as `null`; accept null | string | absent.
+    traceId: z.string().nullable().optional(),
   })
   .strict();
 

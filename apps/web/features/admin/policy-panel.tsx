@@ -1,8 +1,9 @@
 'use client';
 
-import { Badge, DataTable, ErrorState, LoadingState, Panel } from '@aegis/ui';
+import { Badge, DataTable, ErrorState, LoadingState, Panel, cn, typographyTokens } from '@aegis/ui';
 import type { DataTableColumn } from '@aegis/ui';
 
+import { SectionHeading } from './admin-ui';
 import { useAdminPolicy } from './use-admin-queries';
 import type { AdminCommand, AdminRolePermissions } from './types';
 
@@ -72,15 +73,15 @@ export function PolicyPanel() {
           onRetry={() => void query.refetch()}
         />
       ) : (
-        <div className="space-y-6" data-testid="admin-policy">
+        <div className="space-y-8" data-testid="admin-policy">
           <Badge operationalStatus="empty" aria-label="Read only, enforced server-side">
             enforced server-side · read-only
           </Badge>
 
-          <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-[var(--aegis-text-primary)]">
+          <section className="space-y-3">
+            <SectionHeading count={query.data.roles.length}>
               Role → permission matrix
-            </h3>
+            </SectionHeading>
             <DataTable
               columns={roleColumns}
               data={query.data.roles as (AdminRolePermissions & Record<string, unknown>)[]}
@@ -89,18 +90,18 @@ export function PolicyPanel() {
             />
           </section>
 
-          <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-[var(--aegis-text-primary)]">
+          <section className="space-y-3">
+            <SectionHeading count={query.data.actionClasses.length}>
               Action classes (0–3)
-            </h3>
-            <ul className="grid gap-2 sm:grid-cols-2">
+            </SectionHeading>
+            <ul className="grid gap-2.5 sm:grid-cols-2">
               {query.data.actionClasses.map((entry) => (
                 <li
                   key={entry.actionClass}
-                  className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] p-3"
+                  className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-elevated)_70%,transparent)] p-4 shadow-[var(--aegis-shadow-control)]"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-[var(--aegis-text-primary)]">
+                    <span className="font-[family-name:var(--aegis-font-display)] text-sm font-semibold text-[var(--aegis-text-primary)]">
                       {entry.label}
                     </span>
                     {entry.approvalRequired ? (
@@ -109,21 +110,26 @@ export function PolicyPanel() {
                       <Badge variant="outline">auto-allowed</Badge>
                     )}
                   </div>
-                  <p className="mt-1 text-xs leading-5 text-[var(--aegis-text-secondary)]">
+                  <p className="mt-2 text-xs leading-5 text-[var(--aegis-text-secondary)]">
                     {entry.description}
                   </p>
                 </li>
               ))}
             </ul>
-            <p className="text-xs text-[var(--aegis-text-muted)]">
-              Approver roles for gated actions: {query.data.approverRoles.join(', ')}
+            <p className="flex flex-wrap items-center gap-1.5 text-xs text-[var(--aegis-text-muted)]">
+              <span className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-text-faint)]')}>
+                Approver roles
+              </span>
+              <span className="text-[var(--aegis-text-secondary)]">
+                {query.data.approverRoles.join(', ')}
+              </span>
             </p>
           </section>
 
-          <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-[var(--aegis-text-primary)]">
+          <section className="space-y-3">
+            <SectionHeading count={query.data.commands.length}>
               Allowlisted scenario commands
-            </h3>
+            </SectionHeading>
             <DataTable
               columns={commandColumns}
               data={query.data.commands as (AdminCommand & Record<string, unknown>)[]}

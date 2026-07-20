@@ -148,7 +148,7 @@ function RailIdentity({ collapsed }: { collapsed: boolean }) {
           : 'mb-2 flex items-center gap-3 border-b border-[var(--aegis-border-subtle)] px-1 pb-4 pt-1'
       }
     >
-      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-accent-line)] bg-[var(--aegis-accent-soft)] font-[family-name:var(--aegis-font-display)] text-sm font-bold tracking-[0.08em] text-[var(--aegis-accent-strong)] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.07),0_0_18px_rgb(89_201_234_/_0.1)]">
+      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--aegis-radius-md)] border border-[var(--aegis-accent-line)] bg-[var(--aegis-accent-soft)] font-[family-name:var(--aegis-font-display)] text-sm font-bold tracking-[0.08em] text-[var(--aegis-accent-strong)] shadow-[inset_0_1px_0_var(--aegis-border-highlight),0_0_20px_color-mix(in_srgb,var(--aegis-accent-cyan)_22%,transparent)]">
         A
       </span>
       {!collapsed ? (
@@ -165,6 +165,9 @@ function RailIdentity({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+const ACTIVE_PILL =
+  'border-[var(--aegis-accent-line)] bg-[var(--aegis-accent-soft)] text-[var(--aegis-accent-strong)] hover:border-[var(--aegis-accent-line)] hover:bg-[var(--aegis-accent-soft)] hover:text-[var(--aegis-accent-strong)]';
+
 function NavLinks({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
 
@@ -180,11 +183,9 @@ function NavLinks({ collapsed }: { collapsed: boolean }) {
             size="sm"
             className={
               collapsed
-                ? 'relative w-10 justify-center px-0'
+                ? `relative w-10 justify-center px-0 ${active ? ACTIVE_PILL : ''}`
                 : `relative w-full justify-start px-3 ${
-                    active
-                      ? 'border-[var(--aegis-accent-line)] text-[var(--aegis-accent-strong)] before:absolute before:-left-[0.8rem] before:h-5 before:w-0.5 before:rounded-r before:bg-[var(--aegis-accent-cyan)]'
-                      : ''
+                    active ? `${ACTIVE_PILL} shadow-[inset_2px_0_0_var(--aegis-accent-cyan)]` : ''
                   }`
             }
           >
@@ -214,7 +215,7 @@ export function OperationsRail() {
 
   return (
     <>
-      <div className="flex items-center justify-between gap-2 border-b border-[var(--aegis-border-default)] bg-[var(--aegis-surface-rail)] p-3 lg:hidden">
+      <div className="flex items-center justify-between gap-2 border-b border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-rail)_85%,transparent)] p-3 backdrop-blur-md lg:hidden">
         <RailIdentity collapsed={false} />
         <Button
           variant="outline"
@@ -245,7 +246,7 @@ export function OperationsRail() {
         collapsed={collapsed}
         responsive={false}
         data-testid="operations-rail"
-        className="operations-rail-desktop shrink-0"
+        className="operations-rail-desktop shrink-0 lg:sticky lg:top-5 lg:ml-5 lg:h-[calc(100vh-2.5rem)] lg:self-start xl:top-6 xl:ml-6 xl:h-[calc(100vh-3rem)]"
       >
         <RailIdentity collapsed={collapsed} />
         <ThemeToggle collapsed={collapsed} />

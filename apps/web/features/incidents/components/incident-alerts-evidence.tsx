@@ -30,20 +30,20 @@ export function IncidentAlertsEvidence({
               description="No alerts are linked to this incident."
             />
           ) : (
-            <ul className="flex flex-col gap-2" role="list">
+            <ul className="flex flex-col" role="list">
               {alerts.map((alert) => (
                 <li
                   key={alert.id}
-                  className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-raised)] p-3"
+                  className="border-b border-[var(--aegis-border-subtle)] py-3 first:pt-0 last:border-b-0 last:pb-0"
                   data-testid={`alert-${alert.id}`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-[var(--aegis-text-primary)]">
+                    <span className="min-w-0 flex-1 text-sm font-medium text-[var(--aegis-text-primary)]">
                       {alert.title}
                     </span>
                     <SeverityChip severity={normalizeSeverity(alert.severity)} />
                   </div>
-                  <p className="mt-1 font-mono text-[0.625rem] text-[var(--aegis-text-muted)]">
+                  <p className="mt-1 font-[family-name:var(--aegis-font-mono)] text-[0.625rem] text-[var(--aegis-text-muted)]">
                     {alert.assetId}
                     {alert.detectorId ? ` · ${alert.detectorId}` : ''}
                     {typeof alert.confidence === 'number'
@@ -66,24 +66,24 @@ export function IncidentAlertsEvidence({
               description="Investigation has not attached evidence to this incident."
             />
           ) : (
-            <ul className="flex flex-col gap-2" role="list">
+            <ul className="flex flex-col" role="list">
               {evidence.map((item) => (
                 <li
                   key={item.id}
-                  className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-raised)] p-3"
+                  className="border-b border-[var(--aegis-border-subtle)] py-3 first:pt-0 last:border-b-0 last:pb-0"
                   data-testid={`evidence-${item.id}`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-sm text-[var(--aegis-text-primary)]">
+                    <span className="min-w-0 flex-1 text-sm text-[var(--aegis-text-primary)]">
                       {item.provenance.summary}
                     </span>
                     {item.isContradiction ? (
-                      <span className="font-mono text-[0.625rem] uppercase tracking-[0.08em] text-[var(--aegis-status-suspicious)]">
+                      <span className="font-[family-name:var(--aegis-font-mono)] text-[0.625rem] uppercase tracking-[0.08em] text-[var(--aegis-status-suspicious)]">
                         Contradiction
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-1 font-mono text-[0.625rem] text-[var(--aegis-text-muted)]">
+                  <p className="mt-1 font-[family-name:var(--aegis-font-mono)] text-[0.625rem] text-[var(--aegis-text-muted)]">
                     {item.provenance.sourceType} · {item.provenance.sourceId}
                     {item.provenance.collectedByTool
                       ? ` · via ${item.provenance.collectedByTool}`

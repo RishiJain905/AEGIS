@@ -32,7 +32,7 @@ export const TOKEN_GROUPS: readonly TokenGroup[] = [
   {
     id: 'surfaces',
     title: 'Surfaces',
-    description: 'Blue-black layers, base to raised, for dense operational work.',
+    description: 'Obsidian charcoal layers, base to raised, for dense operational work.',
     tokens: [
       color('--aegis-surface-base', 'Base'),
       color('--aegis-surface-canvas', 'Canvas'),
@@ -59,7 +59,7 @@ export const TOKEN_GROUPS: readonly TokenGroup[] = [
   {
     id: 'accent',
     title: 'Operator accent',
-    description: 'Cyan operator accents. State colours stay semantically reserved.',
+    description: 'Signal-gold operator accents. State colours stay semantically reserved.',
     tokens: [
       color('--aegis-accent-cyan', 'Cyan'),
       color('--aegis-accent-strong', 'Strong'),

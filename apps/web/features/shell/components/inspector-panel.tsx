@@ -51,7 +51,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
   if (collapsed) {
     return (
-      <div className="flex w-14 shrink-0 flex-col items-center rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-rail)] p-2 shadow-[var(--aegis-shadow-panel)]">
+      <div className="flex w-14 shrink-0 flex-col items-center rounded-[var(--aegis-radius-xl)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_80%,transparent)] p-2 shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl">
         <Button
           variant="ghost"
           size="sm"
@@ -89,11 +89,11 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
 
   return (
     <aside
-      className="flex w-full shrink-0 flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-panel)] lg:w-80 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:w-96"
+      className="flex w-full shrink-0 flex-col overflow-hidden rounded-[var(--aegis-radius-xl)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_80%,transparent)] shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl lg:w-80 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:w-96"
       data-testid="inspector-panel"
       aria-label="Inspector"
     >
-      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-raised)_55%,transparent)] px-5 py-4">
         <div>
           <p className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-text-muted)]')}>
             Context channel
@@ -115,7 +115,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
         </Button>
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-5">
         {isLoading ? <LoadingState message="Loading inspector data…" /> : null}
         {isError ? (
           <ErrorState

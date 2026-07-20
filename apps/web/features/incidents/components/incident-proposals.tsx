@@ -68,27 +68,31 @@ export function IncidentProposals({
           description="No response actions have been proposed for this incident."
         />
       ) : (
-        <ul className="flex flex-col gap-3" role="list">
+        <ul className="-m-5 divide-y divide-[var(--aegis-border-subtle)]" role="list">
           {views.map((view) => (
             <li
               key={view.proposal.id}
               className={cn(
-                'rounded-[var(--aegis-radius-md)] border p-3',
-                view.proposal.status === 'pending'
-                  ? 'border-[var(--aegis-status-suspicious)] bg-[var(--aegis-surface-raised)]'
-                  : 'border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)]',
+                'relative px-5 py-4',
+                view.proposal.status === 'pending' ? 'bg-[var(--aegis-surface-raised)]/40' : '',
               )}
               data-testid={`proposal-${view.proposal.id}`}
             >
+              {view.proposal.status === 'pending' ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 left-0 w-[3px] bg-[var(--aegis-status-suspicious)]"
+                />
+              ) : null}
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-[family-name:var(--aegis-font-display)] text-sm font-semibold text-[var(--aegis-text-primary)]">
+                <span className="font-[family-name:var(--aegis-font-display)] text-sm font-semibold tracking-[0.01em] text-[var(--aegis-text-primary)]">
                   {view.proposal.command}
                 </span>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{view.proposal.actionClass.replace('_', ' ')}</Badge>
                   <span
                     className={cn(
-                      'font-mono text-[0.625rem] uppercase tracking-[0.08em]',
+                      'font-[family-name:var(--aegis-font-mono)] text-[0.625rem] uppercase tracking-[0.08em]',
                       statusTone(view.proposal.status),
                     )}
                   >
@@ -96,15 +100,15 @@ export function IncidentProposals({
                   </span>
                 </div>
               </div>
-              <p className="mt-1 font-mono text-[0.625rem] text-[var(--aegis-text-muted)]">
+              <p className="mt-1 font-[family-name:var(--aegis-font-mono)] text-[0.625rem] text-[var(--aegis-text-muted)]">
                 {view.proposal.targetAssetId}
               </p>
               {view.proposal.rationale ? (
-                <p className="mt-1 text-xs leading-5 text-[var(--aegis-text-secondary)]">
+                <p className="mt-1.5 text-xs leading-5 text-[var(--aegis-text-secondary)]">
                   {view.proposal.rationale}
                 </p>
               ) : null}
-              <p className="mt-2 border-t border-[var(--aegis-border-subtle)] pt-2 text-xs">
+              <p className="mt-2.5 border-t border-[var(--aegis-border-subtle)] pt-2.5 text-xs">
                 <ApprovalState view={view} />
               </p>
               {/*

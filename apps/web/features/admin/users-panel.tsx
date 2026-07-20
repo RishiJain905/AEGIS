@@ -3,6 +3,7 @@
 import { Badge, DataTable, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 import type { DataTableColumn } from '@aegis/ui';
 
+import { SectionHeading } from './admin-ui';
 import { useAdminUsers } from './use-admin-queries';
 import type { AdminUser } from './types';
 
@@ -71,9 +72,9 @@ export function UsersPanel() {
         />
       ) : (
         <div className="space-y-3" data-testid="admin-users">
-          <p className="text-xs text-[var(--aegis-text-muted)]">
-            {query.data.total} identit{query.data.total === 1 ? 'y' : 'ies'}
-          </p>
+          <SectionHeading count={query.data.total}>
+            Registered identit{query.data.total === 1 ? 'y' : 'ies'}
+          </SectionHeading>
           <DataTable
             columns={columns}
             data={query.data.users as (AdminUser & Record<string, unknown>)[]}

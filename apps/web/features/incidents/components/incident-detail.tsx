@@ -123,19 +123,25 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
       actions={actions}
     >
       <Panel data-testid="incident-detail-summary">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <IncidentStateBadge state={incident.state} />
           <SeverityChip severity={severity} />
-          <span className="font-mono text-[0.625rem] uppercase tracking-[0.1em] text-[var(--aegis-text-muted)]">
-            {presentation.phase}
+          <span className="ml-auto inline-flex items-center gap-1.5 font-[family-name:var(--aegis-font-mono)] text-[0.625rem] uppercase tracking-[0.14em] text-[var(--aegis-text-muted)]">
+            <span
+              aria-hidden="true"
+              className="size-1.5 rounded-full bg-[var(--aegis-accent-cyan)]"
+            />
+            {presentation.phase} phase
           </span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+        <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-[var(--aegis-border-subtle)] pt-4 md:grid-cols-4 lg:grid-cols-6">
           <MetaItem label="Incident">
-            <span className="font-mono text-xs">{incident.id}</span>
+            <span className="font-[family-name:var(--aegis-font-mono)] text-xs">{incident.id}</span>
           </MetaItem>
           <MetaItem label="Run">
-            <span className="font-mono text-xs">{incident.runId}</span>
+            <span className="font-[family-name:var(--aegis-font-mono)] text-xs">
+              {incident.runId}
+            </span>
           </MetaItem>
           <MetaItem label="Opened">{formatRelativeAge(incident.createdAt)} ago</MetaItem>
           <MetaItem label="Updated">{formatRelativeAge(incident.updatedAt)} ago</MetaItem>
@@ -162,16 +168,18 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
                 No candidate assets identified yet.
               </p>
             ) : (
-              <ul className="flex flex-col gap-2" role="list">
+              <ul className="-m-4 divide-y divide-[var(--aegis-border-subtle)]" role="list">
                 {candidateAssets.map((asset) => (
-                  <li key={asset.id} className="text-xs">
-                    <span className="font-mono text-[var(--aegis-text-primary)]">
-                      {asset.assetId}
-                    </span>
-                    <span className="ml-2 text-[var(--aegis-text-muted)] tabular-nums">
-                      {(asset.confidence * 100).toFixed(0)}%
-                    </span>
-                    <p className="mt-0.5 leading-5 text-[var(--aegis-text-secondary)]">
+                  <li key={asset.id} className="px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 flex-1 truncate font-[family-name:var(--aegis-font-mono)] text-xs text-[var(--aegis-text-primary)]">
+                        {asset.assetId}
+                      </span>
+                      <span className="shrink-0 font-[family-name:var(--aegis-font-mono)] text-[0.625rem] tabular-nums text-[var(--aegis-accent-cyan)]">
+                        {(asset.confidence * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-[var(--aegis-text-secondary)]">
                       {asset.rationale}
                     </p>
                   </li>

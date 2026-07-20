@@ -33,16 +33,11 @@ export function IncidentAgentRoster({ roster }: { roster: readonly AgentActivity
       density="compact"
       data-testid="incident-agent-roster"
     >
-      <ul className="flex flex-col gap-2" role="list">
+      <ul className="-m-4 divide-y divide-[var(--aegis-border-subtle)]" role="list">
         {roster.map((agent) => (
           <li
             key={agent.role}
-            className={cn(
-              'rounded-[var(--aegis-radius-md)] border p-3',
-              agent.present
-                ? 'border-[var(--aegis-border-default)] bg-[var(--aegis-surface-raised)]'
-                : 'border-[var(--aegis-border-subtle)] bg-transparent opacity-60',
-            )}
+            className={cn('px-4 py-3', agent.present ? '' : 'opacity-60')}
             data-testid={`agent-role-${agent.role}`}
           >
             <div className="flex items-center justify-between gap-2">

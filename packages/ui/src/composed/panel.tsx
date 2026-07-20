@@ -5,7 +5,7 @@ import { cn } from '../lib/cn';
 import { typographyTokens, type DensityToken } from '../tokens/tokens';
 
 const panelVariants = cva(
-  'relative flex flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-panel)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)]',
+  'relative flex flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-panel)] shadow-[var(--aegis-shadow-panel)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)]',
   {
     variants: {
       density: {
@@ -56,7 +56,7 @@ export const Panel = forwardRef<HTMLElement, PanelProps>(
           <header
             data-slot="panel-header"
             className={cn(
-              'border-b border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)]',
+              'border-b border-[var(--aegis-border-subtle)]',
               panelDensityClasses[resolvedDensity].header,
             )}
           >

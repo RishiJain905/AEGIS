@@ -139,12 +139,12 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       // remount); mounting must never throw — a ResizeObserver in SigmaCanvas
       // resizes the renderer as soon as real dimensions arrive.
       allowInvalidContainer: true,
-      defaultNodeColor: '#718397',
-      defaultEdgeColor: '#61788c',
-      labelFont: '"Cascadia Mono", "Segoe UI", sans-serif',
+      defaultNodeColor: '#8b8e96',
+      defaultEdgeColor: '#55555f',
+      labelFont: '"JetBrains Mono", "Cascadia Mono", "Segoe UI", sans-serif',
       labelSize: 11,
       labelWeight: '600',
-      labelColor: { color: '#d7e5ef' },
+      labelColor: { color: '#cdced4' },
       labelRenderedSizeThreshold: 9,
       labelDensity: 0.72,
       labelGridCellSize: 140,

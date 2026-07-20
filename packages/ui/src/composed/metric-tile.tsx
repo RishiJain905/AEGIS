@@ -23,7 +23,7 @@ export const MetricTile = forwardRef<HTMLDivElement, MetricTileProps>(
       <div
         ref={ref}
         className={cn(
-          'relative flex min-h-32 flex-col justify-between gap-3 overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-panel)] p-4 shadow-[var(--aegis-shadow-panel)] before:pointer-events-none before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-r before:bg-[var(--aegis-accent-line)]',
+          'relative flex min-h-32 flex-col justify-between gap-3 overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-panel)] p-4 shadow-[var(--aegis-shadow-panel)] before:pointer-events-none before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-r before:bg-[var(--aegis-accent-line)]',
           className,
         )}
         aria-label={`${label}: ${String(value)}`}

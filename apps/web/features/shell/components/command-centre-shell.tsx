@@ -54,7 +54,7 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
           <StatusStrip runId={runId} />
           <ConnectionHealthBanner />
           {showDisconnectedBanner ? (
-            <div className="px-4 pt-3">
+            <div className="px-5 pt-4 xl:px-6">
               <DisconnectedState
                 data-testid="connection-banner"
                 message={
@@ -71,7 +71,7 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
           ) : null}
           <main
             id="command-centre-content"
-            className="flex min-h-0 flex-1 flex-col gap-5 p-4 md:p-5 xl:flex-row xl:p-6"
+            className="flex min-h-0 flex-1 flex-col gap-5 p-5 xl:flex-row xl:gap-6 xl:p-6"
           >
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
               <LiveRunControls />

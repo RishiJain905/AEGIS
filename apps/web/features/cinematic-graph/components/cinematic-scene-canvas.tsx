@@ -397,7 +397,7 @@ function RiskAndSelectionAccents({
               <meshBasicMaterial
                 color={
                   node.selected
-                    ? resolveThreeColor('#9ce7ff').color
+                    ? resolveThreeColor('#f2ca6b').color
                     : resolveThreeColor('#fbbf24').color
                 }
                 transparent
@@ -651,8 +651,8 @@ function SceneAtmosphere({ nodes, profile }: { nodes: SceneNode[]; profile: Scen
         args={[
           dimensions.size,
           profile.nodeSegments >= 20 ? 42 : 28,
-          resolveThreeColor('#113442').color,
-          resolveThreeColor('#081b24').color,
+          resolveThreeColor('#2c2c36').color,
+          resolveThreeColor('#15151b').color,
         ]}
         position={[0, dimensions.floor, 0]}
       />
@@ -663,7 +663,7 @@ function SceneAtmosphere({ nodes, profile }: { nodes: SceneNode[]; profile: Scen
       >
         <planeGeometry args={[dimensions.size, dimensions.size]} />
         <meshStandardMaterial
-          color={resolveThreeColor('#061018').color}
+          color={resolveThreeColor('#0c0c11').color}
           roughness={0.9}
           metalness={0.05}
           transparent
@@ -750,21 +750,21 @@ export function CinematicSceneCanvas({
           gl.toneMappingExposure = qualityTier === RenderQualityTier.HIGH ? 1.18 : 1.05;
           gl.shadowMap.enabled = profile.shadows;
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
-          gl.setClearColor(0x050a10, 1);
+          gl.setClearColor(0x08080b, 1);
           onReady();
         }}
       >
-        <color attach="background" args={[resolveThreeColor('#050a10').color]} />
+        <color attach="background" args={[resolveThreeColor('#08080b').color]} />
         <fog
           attach="fog"
-          args={[resolveThreeColor('#07111a').color, profile.fogNear, profile.fogFar]}
+          args={[resolveThreeColor('#0d0d12').color, profile.fogNear, profile.fogFar]}
         />
         <ambientLight intensity={0.46} />
-        <hemisphereLight args={[0x9bdcff, 0x061018, 1.08]} />
+        <hemisphereLight args={[0xd8d2c2, 0x0c0c11, 1.08]} />
         <directionalLight
           position={[620, 880, 540]}
           intensity={2.15}
-          color={resolveThreeColor('#b9eaff').color}
+          color={resolveThreeColor('#f3ead4').color}
           castShadow={profile.shadows}
         />
         <pointLight
@@ -772,7 +772,7 @@ export function CinematicSceneCanvas({
           intensity={48_000}
           distance={1_300}
           decay={2}
-          color={resolveThreeColor('#1cb8e6').color}
+          color={resolveThreeColor('#e8b542').color}
         />
         <pointLight
           position={[420, -260, -360]}

@@ -1,32 +1,37 @@
 :root {
-  /* Surfaces — blue-black layers tuned for dense operational work */
-  --aegis-surface-base: #05090e;
-  --aegis-surface-canvas: #04080d;
-  --aegis-surface-elevated: #09121b;
-  --aegis-surface-panel: #0d1722;
-  --aegis-surface-rail: #071019;
-  --aegis-surface-overlay: #122230;
-  --aegis-surface-raised: #111d29;
-  --aegis-surface-hover: #142535;
+  /* Surfaces — deep-space neutral charcoal; depth comes from atmosphere and
+   * translucency, not blue-tinted slabs. */
+  --aegis-surface-base: #0a0a0e;
+  --aegis-surface-canvas: #08080b;
+  --aegis-surface-elevated: #101016;
+  --aegis-surface-panel: #13131a;
+  --aegis-surface-rail: #0c0c11;
+  --aegis-surface-overlay: #1a1a23;
+  --aegis-surface-raised: #17171f;
+  --aegis-surface-hover: #1e1e28;
 
-  /* Typography */
-  --aegis-font-sans: 'Aptos', 'Segoe UI Variable', 'Segoe UI', 'Inter', system-ui, sans-serif;
+  /* Typography — loaded via next/font in the app; stacks below are fallbacks
+   * for Storybook and tests. */
+  --aegis-font-sans:
+    var(--font-archivo, 'Archivo'), 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
   --aegis-font-display:
-    'Bahnschrift', 'DIN Alternate', 'Aptos Display', 'Segoe UI', 'Inter', sans-serif;
+    var(--font-chakra, 'Chakra Petch'), 'Bahnschrift', 'Segoe UI', system-ui, sans-serif;
   --aegis-font-mono:
-    'Cascadia Code', 'Cascadia Mono', 'SFMono-Regular', 'JetBrains Mono', Consolas, 'Menlo',
+    var(--font-jetbrains, 'JetBrains Mono'), 'Cascadia Code', 'SFMono-Regular', Consolas, 'Menlo',
     monospace;
-  --aegis-text-primary: #f0f6fa;
-  --aegis-text-secondary: #b3c2cd;
-  --aegis-text-muted: #8297a8;
-  --aegis-text-faint: #617788;
-  --aegis-text-inverse: #041016;
+  --aegis-text-primary: #f2f2f4;
+  --aegis-text-secondary: #b7b9c0;
+  --aegis-text-muted: #8b8e96;
+  --aegis-text-faint: #6a6d75;
+  --aegis-text-inverse: #15120a;
 
-  /* Operator accent — state colors remain semantically reserved */
-  --aegis-accent-cyan: #4fb8de;
-  --aegis-accent-strong: #7fd3ee;
-  --aegis-accent-soft: #0d3040;
-  --aegis-accent-line: #2b7188;
+  /* Operator accent — signal gold. Token names keep the historical `cyan`
+   * identifier to avoid churn across call sites; values are the accent ramp.
+   * State colors remain semantically reserved. */
+  --aegis-accent-cyan: #e8b542;
+  --aegis-accent-strong: #f2ca6b;
+  --aegis-accent-soft: #2a2110;
+  --aegis-accent-line: #9c7c33;
 
   /* Spacing (4px grid) */
   --aegis-space-1: 0.25rem;
@@ -41,60 +46,57 @@
   --aegis-space-16: 4rem;
 
   /* Borders */
-  --aegis-border-default: #263a49;
-  --aegis-border-subtle: #182834;
-  --aegis-border-strong: #3b586c;
-  --aegis-border-highlight: rgb(185 226 244 / 0.1);
-  --aegis-radius-sm: 0.25rem;
-  --aegis-radius-md: 0.375rem;
-  --aegis-radius-lg: 0.5rem;
-  --aegis-radius-xl: 0.625rem;
+  --aegis-border-default: #26262f;
+  --aegis-border-subtle: #1c1c24;
+  --aegis-border-strong: #3a3a46;
+  --aegis-border-highlight: rgb(244 232 200 / 0.07);
+  --aegis-radius-sm: 0.375rem;
+  --aegis-radius-md: 0.625rem;
+  --aegis-radius-lg: 0.875rem;
+  --aegis-radius-xl: 1.25rem;
 
-  /* Depth — flat panels with hairline edges; real shadow reserved for overlays */
-  --aegis-shadow-panel:
-    inset 0 1px 0 rgb(255 255 255 / 0.03), 0 0 0 1px rgb(38 58 73 / 0.6),
-    0 2px 6px rgb(0 0 0 / 0.24);
-  --aegis-shadow-panel-hover:
-    inset 0 1px 0 rgb(255 255 255 / 0.04), 0 0 0 1px var(--aegis-accent-line),
-    0 2px 8px rgb(0 0 0 / 0.28);
-  --aegis-shadow-control: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 0 0 1px rgb(38 58 73 / 0.5);
-  --aegis-shadow-dialog: 0 0 0 1px var(--aegis-border-strong), 0 20px 48px rgb(0 0 0 / 0.5);
-  --aegis-shadow-rail: 1px 0 0 var(--aegis-border-default);
+  /* Depth — soft ambient elevation; panels float instead of sitting behind
+   * hairline cages. Real shadow reserved for overlays. */
+  --aegis-shadow-panel: 0 0 0 1px rgb(255 255 255 / 0.04), 0 8px 24px -12px rgb(0 0 0 / 0.5);
+  --aegis-shadow-panel-hover: 0 0 0 1px rgb(232 181 66 / 0.25), 0 10px 28px -12px rgb(0 0 0 / 0.55);
+  --aegis-shadow-control: 0 0 0 1px rgb(255 255 255 / 0.05);
+  --aegis-shadow-dialog: 0 0 0 1px var(--aegis-border-strong), 0 24px 64px rgb(0 0 0 / 0.6);
+  --aegis-shadow-rail: 1px 0 0 var(--aegis-border-subtle);
 
   /* Focus */
-  --aegis-focus-ring: #5fc3e6;
-  --aegis-focus-ring-offset: #05090e;
+  --aegis-focus-ring: #f2ca6b;
+  --aegis-focus-ring-offset: #0a0a0e;
   --aegis-focus-width: 2px;
 
   /* Risk */
   --aegis-risk-low: #63d6a2;
-  --aegis-risk-low-bg: #0b291f;
+  --aegis-risk-low-bg: #0d2a1e;
   --aegis-risk-medium: #f1c257;
-  --aegis-risk-medium-bg: #30240c;
+  --aegis-risk-medium-bg: #2e230d;
   --aegis-risk-high: #ff9b55;
-  --aegis-risk-high-bg: #321a0d;
+  --aegis-risk-high-bg: #31190d;
   --aegis-risk-critical: #ff7078;
-  --aegis-risk-critical-bg: #351116;
+  --aegis-risk-critical-bg: #331115;
 
   /* Status — NodeStatus + UI states */
   --aegis-status-normal: #63d6a2;
-  --aegis-status-normal-bg: #0b291f;
+  --aegis-status-normal-bg: #0d2a1e;
   --aegis-status-suspicious: #f1c257;
-  --aegis-status-suspicious-bg: #30240c;
+  --aegis-status-suspicious-bg: #2e230d;
   --aegis-status-under-investigation: #68d0ee;
-  --aegis-status-under-investigation-bg: #0d2d3b;
+  --aegis-status-under-investigation-bg: #0d2733;
   --aegis-status-contained: #9aa8ff;
-  --aegis-status-contained-bg: #1c2140;
+  --aegis-status-contained-bg: #1b1f3c;
   --aegis-status-compromised: #ff7078;
-  --aegis-status-compromised-bg: #351116;
-  --aegis-status-loading: #9db1c0;
-  --aegis-status-loading-bg: #142331;
+  --aegis-status-compromised-bg: #331115;
+  --aegis-status-loading: #a3a6ae;
+  --aegis-status-loading-bg: #1a1a22;
   --aegis-status-error: #ff7078;
-  --aegis-status-error-bg: #351116;
-  --aegis-status-disconnected: #bac5cd;
-  --aegis-status-disconnected-bg: #18232d;
-  --aegis-status-empty: #9db1c0;
-  --aegis-status-empty-bg: #111d27;
+  --aegis-status-error-bg: #331115;
+  --aegis-status-disconnected: #bfc2c9;
+  --aegis-status-disconnected-bg: #20202a;
+  --aegis-status-empty: #a3a6ae;
+  --aegis-status-empty-bg: #17171e;
 
   /* Density */
   --aegis-density-compact-gap: var(--aegis-space-2);
@@ -106,54 +108,55 @@
 }
 
 /*
- * Light theme — Foundry/Maven-style. Overrides the same token names as the dark
- * defaults above; only values change. Radius, spacing, density, and font stacks
- * are theme-independent and inherit from :root. Applied via a `data-theme`
+ * Light theme — warm paper neutrals with the same gold accent, darkened for
+ * AA contrast. Overrides the same token names as the dark defaults above;
+ * only values change. Radius, spacing, density, and font stacks are
+ * theme-independent and inherit from :root. Applied via a `data-theme`
  * attribute on the root element (see the shell theme preference).
  */
 :root[data-theme='light'] {
   /* Surfaces */
-  --aegis-surface-base: #f3f5f7;
-  --aegis-surface-canvas: #eef1f3;
+  --aegis-surface-base: #f4f2ec;
+  --aegis-surface-canvas: #efede6;
   --aegis-surface-elevated: #ffffff;
   --aegis-surface-panel: #ffffff;
-  --aegis-surface-rail: #eceff2;
+  --aegis-surface-rail: #edeae2;
   --aegis-surface-overlay: #ffffff;
-  --aegis-surface-raised: #f7f9fa;
-  --aegis-surface-hover: #e7ebee;
+  --aegis-surface-raised: #f8f6f1;
+  --aegis-surface-hover: #e9e6dd;
 
   /* Text */
-  --aegis-text-primary: #10161c;
-  --aegis-text-secondary: #3d4954;
-  /* muted/faint tuned darker than the §2.2 starting points so muted clears
-   * AA (4.5:1) on surface-hover and the neutral status chips, and faint clears
-   * the 3:1 UI/large tier on every surface (verified in tests/a11y). */
-  --aegis-text-muted: #5d6a75;
-  --aegis-text-faint: #7e8c99;
-  --aegis-text-inverse: #f3f5f7;
+  --aegis-text-primary: #1a1814;
+  --aegis-text-secondary: #46423a;
+  /* muted/faint tuned so muted clears AA (4.5:1) on surface-hover and the
+   * neutral status chips, and faint clears the 3:1 UI/large tier on every
+   * content surface (verified in tests/a11y). */
+  --aegis-text-muted: #5f5b52;
+  --aegis-text-faint: #837e72;
+  --aegis-text-inverse: #faf7f0;
 
-  /* Operator accent */
-  --aegis-accent-cyan: #0d6e90;
-  --aegis-accent-strong: #0a5875;
-  --aegis-accent-soft: #e3f1f6;
-  --aegis-accent-line: #4a94ac;
+  /* Operator accent — deep amber for AA text contrast on paper */
+  --aegis-accent-cyan: #7a5a10;
+  --aegis-accent-strong: #614708;
+  --aegis-accent-soft: #f6ecd4;
+  --aegis-accent-line: #b08a2e;
 
   /* Borders */
-  --aegis-border-default: #d7dde2;
-  --aegis-border-subtle: #e6eaed;
-  --aegis-border-strong: #b7c1c8;
-  --aegis-border-highlight: rgb(16 22 28 / 0.06);
+  --aegis-border-default: #dcd8cd;
+  --aegis-border-subtle: #e8e5db;
+  --aegis-border-strong: #c2bcae;
+  --aegis-border-highlight: rgb(26 24 20 / 0.05);
 
   /* Depth */
-  --aegis-shadow-panel: 0 0 0 1px var(--aegis-border-default), 0 1px 3px rgb(16 22 28 / 0.06);
-  --aegis-shadow-panel-hover: 0 0 0 1px var(--aegis-accent-line), 0 2px 6px rgb(16 22 28 / 0.08);
+  --aegis-shadow-panel: 0 0 0 1px var(--aegis-border-default), 0 2px 8px rgb(26 24 20 / 0.05);
+  --aegis-shadow-panel-hover: 0 0 0 1px var(--aegis-accent-line), 0 4px 12px rgb(26 24 20 / 0.08);
   --aegis-shadow-control: 0 0 0 1px var(--aegis-border-default);
-  --aegis-shadow-dialog: 0 0 0 1px var(--aegis-border-strong), 0 16px 40px rgb(16 22 28 / 0.16);
+  --aegis-shadow-dialog: 0 0 0 1px var(--aegis-border-strong), 0 16px 40px rgb(26 24 20 / 0.16);
   --aegis-shadow-rail: 1px 0 0 var(--aegis-border-default);
 
   /* Focus */
-  --aegis-focus-ring: #0a5875;
-  --aegis-focus-ring-offset: #f3f5f7;
+  --aegis-focus-ring: #7a5a10;
+  --aegis-focus-ring-offset: #f4f2ec;
 
   /* Risk */
   --aegis-risk-low: #16794f;
@@ -176,12 +179,12 @@
   --aegis-status-contained-bg: #e9e9fb;
   --aegis-status-compromised: #c0242f;
   --aegis-status-compromised-bg: #fce4e5;
-  --aegis-status-loading: #5d6a75;
-  --aegis-status-loading-bg: #eef1f3;
+  --aegis-status-loading: #5f5b52;
+  --aegis-status-loading-bg: #efede6;
   --aegis-status-error: #c0242f;
   --aegis-status-error-bg: #fce4e5;
-  --aegis-status-disconnected: #5d6a75;
-  --aegis-status-disconnected-bg: #e6eaed;
-  --aegis-status-empty: #5d6a75;
-  --aegis-status-empty-bg: #eef1f3;
+  --aegis-status-disconnected: #5f5b52;
+  --aegis-status-disconnected-bg: #e8e5db;
+  --aegis-status-empty: #5f5b52;
+  --aegis-status-empty-bg: #efede6;
 }

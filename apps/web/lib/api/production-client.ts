@@ -70,7 +70,7 @@ async function fetchJson<T>(
       code: envelope.code,
       message: envelope.message,
       status: response.status,
-      traceId: envelope.traceId,
+      traceId: envelope.traceId ?? undefined,
     });
   }
 

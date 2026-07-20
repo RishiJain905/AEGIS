@@ -235,15 +235,18 @@ export function SectionLabel({
 }) {
   return (
     <div className={cn('flex items-center gap-2', className)}>
-      <h3 className="font-[family-name:var(--aegis-font-display)] text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-[var(--aegis-text-secondary)]">
+      <h3 className="font-[family-name:var(--aegis-font-display)] text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-[var(--aegis-text-secondary)]">
         {children}
       </h3>
       {typeof count === 'number' ? (
-        <span className="rounded-full bg-[var(--aegis-surface-raised)] px-1.5 py-0.5 font-mono text-[0.65rem] leading-none text-[var(--aegis-text-muted)] tabular-nums">
+        <span className="rounded-full bg-[var(--aegis-surface-raised)] px-1.5 py-0.5 font-[family-name:var(--aegis-font-mono)] text-[0.65rem] leading-none text-[var(--aegis-text-muted)] tabular-nums">
           {count}
         </span>
       ) : null}
-      <span className="h-px flex-1 bg-[var(--aegis-border-subtle)]" />
+      <span
+        aria-hidden="true"
+        className="h-px flex-1 bg-gradient-to-r from-[var(--aegis-border-default)] to-transparent"
+      />
     </div>
   );
 }
@@ -319,7 +322,7 @@ export function ScoreMeter({ value, label, hideValue = false, className }: Score
       >
         <div
           className={cn(
-            'absolute inset-y-0 left-0 rounded-full motion-safe:transition-[width] motion-safe:duration-500',
+            'absolute inset-y-0 left-0 rounded-full motion-safe:transition-[width] motion-safe:duration-[var(--aegis-motion-duration-slow)] motion-safe:ease-[var(--aegis-motion-ease-decelerate)]',
             band.fill,
           )}
           style={{ width: `${String(Math.max(pct, pct > 0 ? 3 : 0))}%` }}

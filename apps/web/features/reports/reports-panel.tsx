@@ -53,9 +53,9 @@ function ClaimCard({
       onClick={onSelect}
       data-testid={`report-claim-${claim.claimId}`}
       aria-pressed={selected}
-      className={`w-full rounded-[var(--aegis-radius-md)] border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-[length:var(--aegis-focus-width)] focus-visible:ring-[var(--aegis-focus-ring)] ${
+      className={`w-full rounded-[var(--aegis-radius-md)] border px-3 py-2.5 text-left transition-colors duration-[var(--aegis-motion-duration-fast)] focus-visible:outline-none focus-visible:ring-[length:var(--aegis-focus-width)] focus-visible:ring-[var(--aegis-focus-ring)] ${
         selected
-          ? 'border-[var(--aegis-accent-line)] bg-[var(--aegis-surface-elevated)]'
+          ? 'border-[var(--aegis-accent-line)] bg-[var(--aegis-surface-elevated)] shadow-[inset_2px_0_0_var(--aegis-accent-cyan)]'
           : 'border-[var(--aegis-border-subtle)] hover:border-[var(--aegis-border-default)] hover:bg-[var(--aegis-surface-hover)]'
       }`}
     >
