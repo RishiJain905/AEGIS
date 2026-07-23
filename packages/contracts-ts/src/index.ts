@@ -259,6 +259,7 @@ import {
   telemetryContextSchema,
 } from './observability';
 import {
+  consoleAssetDetailSchema,
   consoleEventSearchRequestSchema,
   consoleEventSearchResultSchema,
   createDirectiveRequestSchema,
@@ -440,6 +441,7 @@ export const FIXTURE_SCHEMA_MAP = {
   create_directive_request_v1: createDirectiveRequestSchema,
   console_event_search_request_v1: consoleEventSearchRequestSchema,
   console_event_search_result_v1: consoleEventSearchResultSchema,
+  console_asset_detail_v1: consoleAssetDetailSchema,
   operator_hypothesis_request_v1: operatorHypothesisRequestSchema,
   run_feed_entry_v1: runFeedEntrySchema,
   run_feed_page_v1: runFeedPageSchema,

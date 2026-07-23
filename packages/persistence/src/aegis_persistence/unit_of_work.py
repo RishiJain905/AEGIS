@@ -12,6 +12,7 @@ from aegis_persistence.repositories.approvals import (
     PostgresExecutedActionRepository,
 )
 from aegis_persistence.repositories.auth import PostgresAuthRepository
+from aegis_persistence.repositories.directives import PostgresDirectiveRepository
 from aegis_persistence.repositories.hypothesis import PostgresOracleHypothesisRepository
 from aegis_persistence.repositories.investigation import PostgresInvestigationRepository
 from aegis_persistence.repositories.postgres import (
@@ -85,6 +86,7 @@ class PostgresUnitOfWork:
         self._run_scores = PostgresRunScoreRepository(self._session)
         self._replay_snapshots = PostgresReplaySnapshotRepository(self._session)
         self._auth = PostgresAuthRepository(self._session)
+        self._directives = PostgresDirectiveRepository(self._session)
         self._investigation = PostgresInvestigationRepository(
             self._session,
             oracle_repository=self._oracle_hypotheses,
@@ -223,6 +225,10 @@ class PostgresUnitOfWork:
     @property
     def oracle_hypotheses(self) -> PostgresOracleHypothesisRepository:
         return self._oracle_hypotheses
+
+    @property
+    def directives(self) -> PostgresDirectiveRepository:
+        return self._directives
 
     @property
     def session(self) -> AsyncSession:

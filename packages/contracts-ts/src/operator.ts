@@ -4,6 +4,7 @@ import { rulesOfEngagementSchema } from './entities';
 import { policyOutcomeSchema, scenarioCommandTemplateSchema } from './proposals';
 import { assetIdSchema, runIdSchema, utcTimestampSchema } from './primitives';
 import {
+  CONSOLE_ASSET_DETAIL_SCHEMA_VERSION,
   CONSOLE_EVENT_SEARCH_REQUEST_SCHEMA_VERSION,
   CONSOLE_EVENT_SEARCH_RESULT_SCHEMA_VERSION,
   CREATE_DIRECTIVE_REQUEST_SCHEMA_VERSION,
@@ -158,6 +159,38 @@ export const consoleEventSearchResultSchema = z
   .strict();
 
 export type ConsoleEventSearchResultV1 = z.infer<typeof consoleEventSearchResultSchema>;
+
+// A single graph relationship touching the asset in the console deep-dive.
+export const consoleAssetRelationshipSchema = z
+  .object({
+    edgeId: z.string().min(1),
+    relationshipType: z.string().min(1),
+    sourceAssetId: assetIdSchema,
+    targetAssetId: assetIdSchema,
+    direction: z.string(),
+  })
+  .strict();
+
+export type ConsoleAssetRelationshipV1 = z.infer<typeof consoleAssetRelationshipSchema>;
+
+// Operator asset deep-dive: current graph node, its relationships and recent events.
+export const consoleAssetDetailSchema = z
+  .object({
+    schemaVersion: schemaVersionCheck(CONSOLE_ASSET_DETAIL_SCHEMA_VERSION),
+    assetId: assetIdSchema,
+    entityType: z.string().min(1),
+    assetType: z.string().nullable().optional(),
+    label: z.string(),
+    status: z.string(),
+    riskScore: z.number().nullable().optional(),
+    criticality: z.number().nullable().optional(),
+    clusterId: z.string().nullable().optional(),
+    relationships: z.array(consoleAssetRelationshipSchema).default([]),
+    recentEvents: z.array(consoleEventSchema).default([]),
+  })
+  .strict();
+
+export type ConsoleAssetDetailV1 = z.infer<typeof consoleAssetDetailSchema>;
 
 // Create an operator-pinned hypothesis, stored alongside agent hypotheses.
 export const operatorHypothesisRequestSchema = z

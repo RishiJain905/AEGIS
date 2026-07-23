@@ -138,6 +138,7 @@ from aegis_contracts.observability import (
     TelemetryContextV1,
 )
 from aegis_contracts.operator import (
+    ConsoleAssetDetailV1,
     ConsoleEventSearchRequestV1,
     ConsoleEventSearchResultV1,
     CreateDirectiveRequestV1,
@@ -411,6 +412,7 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "create_directive_request_v1": CreateDirectiveRequestV1,
     "console_event_search_request_v1": ConsoleEventSearchRequestV1,
     "console_event_search_result_v1": ConsoleEventSearchResultV1,
+    "console_asset_detail_v1": ConsoleAssetDetailV1,
     "operator_hypothesis_request_v1": OperatorHypothesisRequestV1,
     "run_feed_entry_v1": RunFeedEntryV1,
     "run_feed_page_v1": RunFeedPageV1,

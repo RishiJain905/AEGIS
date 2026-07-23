@@ -21,14 +21,30 @@ import contextlib
 import logging
 
 from aegis_agents.autonomy import AutonomyBudget, AutonomyTriageService
-from aegis_contracts import AegisSettings, RulesOfEngagementV1, RunV1
+from aegis_agents.runtime.ids import new_runtime_id
+from aegis_contracts import AegisSettings, AlertV1, RulesOfEngagementV1, RunV1, StandingDirectiveV1
 from aegis_contracts.simulation import SimulationRunStatus
+from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from aegis_api.directives.events import build_directive_triggered_event
 
 logger = logging.getLogger(__name__)
 
 _RUNNING = SimulationRunStatus.RUNNING.value
+
+
+def _directive_matches(
+    directive: StandingDirectiveV1, asset_id: str, zone_id: str | None
+) -> bool:
+    """A directive matches an alert when it is unscoped, or the alert's asset (or the
+    asset's zone/cluster) intersects the directive's scope."""
+    if not directive.scope_asset_ids and not directive.scope_zone_ids:
+        return True
+    if asset_id in directive.scope_asset_ids:
+        return True
+    return zone_id is not None and zone_id in directive.scope_zone_ids
 
 
 class AutonomyPoller:
@@ -114,9 +130,18 @@ class AutonomyPoller:
                 return
             alerts = await uow.alerts.list_by_run(run_id)
             seen = self._seen_alerts.setdefault(run_id, set())
-            for alert in alerts:
-                if alert.id in seen:
-                    continue
+            new_alerts = [alert for alert in alerts if alert.id not in seen]
+            if not new_alerts:
+                return
+
+            bias_guard_on = run.loadout.bias_guard if run.loadout is not None else True
+            directives = await uow.directives.list_active_for_run(run_id)
+            # Lazily materialised once per cycle: asset->zone map (only when a directive
+            # scopes by zone) and the hypothesis-asset set (only when bias guard is on).
+            cluster_map: dict[str, str] | None = None
+            hypothesis_assets: set[str] | None = None
+
+            for alert in new_alerts:
                 seen.add(alert.id)
                 await self._service.on_new_alert(
                     uow,
@@ -126,3 +151,85 @@ class AutonomyPoller:
                     alert_title=alert.title,
                     roe=roe,
                 )
+                if directives:
+                    if cluster_map is None and any(d.scope_zone_ids for d in directives):
+                        cluster_map = await self._cluster_map(uow, run_id)
+                    await self._match_directives(
+                        uow, run_id=run_id, alert=alert, directives=directives,
+                        cluster_map=cluster_map or {},
+                    )
+                if bias_guard_on:
+                    if hypothesis_assets is None:
+                        hypothesis_assets = await self._hypothesis_assets(uow, run_id)
+                    if alert.asset_id in hypothesis_assets:
+                        await self._service.on_bias_guard(
+                            uow,
+                            run_id=run_id,
+                            alert_id=alert.id,
+                            asset_id=alert.asset_id,
+                            alert_title=alert.title,
+                        )
+
+    async def _match_directives(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        alert: AlertV1,
+        directives: list[StandingDirectiveV1],
+        cluster_map: dict[str, str],
+    ) -> None:
+        zone = cluster_map.get(alert.asset_id)
+        for directive in directives:
+            if not _directive_matches(directive, alert.asset_id, zone):
+                continue
+            task_id = await self._service.on_directive_match(
+                uow,
+                run_id=run_id,
+                directive_id=directive.id,
+                directive_text=directive.text,
+                alert_id=alert.id,
+                asset_id=alert.asset_id,
+                alert_title=alert.title,
+            )
+            if task_id is None:  # budget denied — nothing was enqueued, so do not signal.
+                continue
+            next_sequence = await uow.events.next_sequence(run_id)
+            await uow.append_event(
+                build_directive_triggered_event(
+                    event_id=new_runtime_id("evt"),
+                    run_id=run_id,
+                    sequence=next_sequence,
+                    trace_id=new_runtime_id("trc"),
+                    directive_id=directive.id,
+                    alert_id=alert.id,
+                    asset_id=alert.asset_id,
+                    task_id=task_id,
+                )
+            )
+
+    async def _cluster_map(
+        self, uow: PostgresUnitOfWork, run_id: str
+    ) -> dict[str, str]:
+        snapshot = await PostgresGraphSnapshotRepository(uow.session).get_latest_for_run(
+            run_id
+        )
+        if snapshot is None:
+            return {}
+        return {n.id: n.cluster_id for n in snapshot.nodes if n.cluster_id is not None}
+
+    async def _hypothesis_assets(
+        self, uow: PostgresUnitOfWork, run_id: str
+    ) -> set[str]:
+        incidents = await uow.incidents.list_by_run(run_id)
+        evidence_ids: set[str] = set()
+        for incident in incidents:
+            hypotheses = await uow.oracle_hypotheses.list_hypotheses_for_incident(
+                incident.id
+            )
+            for hypothesis in hypotheses:
+                evidence_ids.update(hypothesis.evidence_ids)
+        if not evidence_ids:
+            return set()
+        evidence = await uow.evidence.get_by_ids(list(evidence_ids))
+        return {item.asset_id for item in evidence if item.asset_id is not None}

@@ -215,6 +215,8 @@ from aegis_contracts.observability import (
     TelemetryContextV1,
 )
 from aegis_contracts.operator import (
+    ConsoleAssetDetailV1,
+    ConsoleAssetRelationshipV1,
     ConsoleEventSearchRequestV1,
     ConsoleEventSearchResultV1,
     ConsoleEventV1,
@@ -499,6 +501,8 @@ __all__ = [
     "SnapshotBootstrapPayloadV1",
     "TimelineEntryV1",
     "AutonomyInitiatorV1",
+    "ConsoleAssetDetailV1",
+    "ConsoleAssetRelationshipV1",
     "ConsoleEventSearchRequestV1",
     "ConsoleEventSearchResultV1",
     "ConsoleEventV1",

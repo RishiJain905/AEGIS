@@ -392,6 +392,14 @@ class PostgresIncidentRepository:
         row = await self._session.get(IncidentRow, incident_id)
         return incident_to_domain(row) if row else None
 
+    async def list_by_run(self, run_id: str) -> list[IncidentV1]:
+        result = await self._session.execute(
+            select(IncidentRow)
+            .where(IncidentRow.run_id == run_id)
+            .order_by(IncidentRow.created_at)
+        )
+        return [incident_to_domain(row) for row in result.scalars().all()]
+
     async def add(self, incident: IncidentV1) -> IncidentV1:
         payload = domain_to_payload(incident)
         row = IncidentRow(

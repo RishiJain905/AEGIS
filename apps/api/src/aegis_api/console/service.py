@@ -11,6 +11,8 @@ from __future__ import annotations
 from typing import Any
 
 from aegis_contracts import (
+    ConsoleAssetDetailV1,
+    ConsoleAssetRelationshipV1,
     ConsoleEventSearchRequestV1,
     ConsoleEventSearchResultV1,
     ConsoleEventV1,
@@ -19,12 +21,18 @@ from aegis_contracts import (
 )
 from aegis_contracts.events import DomainEventEnvelopeV1
 from aegis_contracts.versioning import (
+    CONSOLE_ASSET_DETAIL_SCHEMA_VERSION,
+    CONSOLE_EVENT_SEARCH_REQUEST_SCHEMA_VERSION,
     CONSOLE_EVENT_SEARCH_RESULT_SCHEMA_VERSION,
     RUN_FEED_ENTRY_SCHEMA_VERSION,
     RUN_FEED_PAGE_SCHEMA_VERSION,
 )
+from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
+
+# Recent-event window included in an asset deep-dive.
+_ASSET_RECENT_EVENTS = 25
 
 _ASSET_PAYLOAD_KEYS = ("assetId", "targetAssetId", "sourceAssetId")
 
@@ -114,6 +122,68 @@ class ConsoleService:
             events=matched,
             count=len(matched),
             next_cursor=next_cursor,
+        )
+
+    async def asset_detail(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        asset_id: str,
+    ) -> ConsoleAssetDetailV1 | None:
+        """Asset deep-dive from the latest operator-facing graph snapshot + recent events.
+
+        Returns None when the run has no snapshot or the asset is absent, so the router can
+        404. Reads the same fog-of-war-filtered snapshot the graph API serves — no new leak.
+        """
+        snapshot = await PostgresGraphSnapshotRepository(uow.session).get_latest_for_run(
+            run_id
+        )
+        if snapshot is None:
+            return None
+        node = next((n for n in snapshot.nodes if n.id == asset_id), None)
+        if node is None:
+            return None
+
+        relationships: list[ConsoleAssetRelationshipV1] = []
+        for edge in snapshot.edges:
+            if edge.source == asset_id:
+                direction = "outbound"
+            elif edge.target == asset_id:
+                direction = "inbound"
+            else:
+                continue
+            relationships.append(
+                ConsoleAssetRelationshipV1(
+                    edge_id=edge.id,
+                    relationship_type=edge.relationship_type.value,
+                    source_asset_id=edge.source,
+                    target_asset_id=edge.target,
+                    direction=direction,
+                )
+            )
+
+        recent = await self.search_events(
+            uow,
+            run_id=run_id,
+            request=ConsoleEventSearchRequestV1(
+                schema_version=CONSOLE_EVENT_SEARCH_REQUEST_SCHEMA_VERSION,
+                asset_id=asset_id,
+                limit=_ASSET_RECENT_EVENTS,
+            ),
+        )
+        return ConsoleAssetDetailV1(
+            schema_version=CONSOLE_ASSET_DETAIL_SCHEMA_VERSION,
+            asset_id=node.id,
+            entity_type=node.entity_type.value,
+            asset_type=node.asset_type.value,
+            label=node.label,
+            status=node.status.value,
+            risk_score=node.risk_score,
+            criticality=node.criticality,
+            cluster_id=node.cluster_id,
+            relationships=relationships,
+            recent_events=recent.events,
         )
 
     def _matches(

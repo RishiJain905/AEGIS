@@ -26,11 +26,13 @@ from aegis_contracts import (
     ApprovalDecision,
     ApprovalV1,
     AuthenticatedActorV1,
+    HypothesisV1,
     IncidentState,
     IncidentV1,
     OperatorActionRequestV1,
     OperatorActionResponseV1,
     OperatorActionStatusV1,
+    OperatorHypothesisRequestV1,
     PermissionV1,
 )
 from aegis_contracts.entities import ActionProposalV1, ProposalStatus
@@ -195,6 +197,53 @@ class OperatorActionService:
             executed_action_id=execution[0],
             approval_id=execution[1],
         )
+
+    async def create_hypothesis(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        request: OperatorHypothesisRequestV1,
+        actor_id: str,
+    ) -> HypothesisV1:
+        """Pin an operator hypothesis into the shared (agent) hypothesis storage.
+
+        Anchored to the deterministic operator incident (same anchor pattern operator
+        actions use) so it lives in the same evidence pool the agents work. Note: asset_ids
+        on the request are advisory scope for the operator; HypothesisV1 carries evidence
+        grounding, not asset ids, so they are not persisted on the row.
+        """
+        incident = await self._resolve_incident(uow, run_id, request.incident_id)
+        hypothesis = HypothesisV1(
+            schema_version=1,
+            id=new_runtime_id("hyp"),
+            incident_id=incident.id,
+            status="active",
+            statement=request.statement,
+            confidence=request.confidence,
+            evidence_ids=[],
+            created_at=datetime.now(UTC),
+        )
+        _ = actor_id  # attribution is via the operator incident anchor
+        await uow.hypotheses.add(hypothesis)
+        return hypothesis
+
+    async def list_hypotheses(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        incident_id: str | None = None,
+    ) -> list[HypothesisV1]:
+        if incident_id is not None:
+            incident = await self._resolve_incident(uow, run_id, incident_id)
+            return await uow.oracle_hypotheses.list_hypotheses_for_incident(incident.id)
+        # No explicit incident: read the operator anchor if it exists, without creating one
+        # (this is a read path).
+        operator_incident = await uow.incidents.get_by_id(_operator_incident_id(run_id))
+        if operator_incident is None:
+            return []
+        return await uow.oracle_hypotheses.list_hypotheses_for_incident(operator_incident.id)
 
     async def _approve_and_execute(
         self,

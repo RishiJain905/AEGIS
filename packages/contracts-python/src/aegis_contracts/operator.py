@@ -27,6 +27,7 @@ from aegis_contracts.primitives import (
 )
 from aegis_contracts.proposals import PolicyOutcomeV1, ScenarioCommandTemplateV1
 from aegis_contracts.versioning import (
+    CONSOLE_ASSET_DETAIL_SCHEMA_VERSION,
     CONSOLE_EVENT_SEARCH_REQUEST_SCHEMA_VERSION,
     CONSOLE_EVENT_SEARCH_RESULT_SCHEMA_VERSION,
     CREATE_DIRECTIVE_REQUEST_SCHEMA_VERSION,
@@ -42,6 +43,8 @@ from aegis_contracts.versioning import (
 
 __all__ = [
     "AutonomyInitiatorV1",
+    "ConsoleAssetDetailV1",
+    "ConsoleAssetRelationshipV1",
     "ConsoleEventSearchRequestV1",
     "ConsoleEventSearchResultV1",
     "ConsoleEventV1",
@@ -243,6 +246,53 @@ class ConsoleEventSearchResultV1(BaseModel):
             raise ContractValidationError(
                 code=ContractErrorCode.SCHEMA_VERSION_UNSUPPORTED,
                 message=f"Unsupported console event search result schema: {self.schema_version}",
+                details={"schemaVersion": self.schema_version},
+            )
+        return self
+
+
+class ConsoleAssetRelationshipV1(BaseModel):
+    """A single graph relationship touching the asset in the console deep-dive."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    edge_id: str = Field(alias="edgeId")
+    relationship_type: str = Field(alias="relationshipType")
+    source_asset_id: AssetId = Field(alias="sourceAssetId")
+    target_asset_id: AssetId = Field(alias="targetAssetId")
+    # "outbound" when the deep-dived asset is the edge source, else "inbound".
+    direction: str
+
+
+class ConsoleAssetDetailV1(BaseModel):
+    """Operator asset deep-dive: current graph node, its relationships and recent events.
+
+    A thin projection over the latest graph snapshot plus the event stream — the operator's
+    peer to the agents' asset-inspection tool. Fog-of-war filtering is unchanged: it reads
+    the same operator-facing snapshot the graph API serves.
+    """
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    schema_version: int = Field(alias="schemaVersion", ge=1)
+    asset_id: AssetId = Field(alias="assetId")
+    entity_type: str = Field(alias="entityType")
+    asset_type: str | None = Field(default=None, alias="assetType")
+    label: str
+    status: str
+    risk_score: float | None = Field(default=None, alias="riskScore")
+    criticality: float | None = None
+    cluster_id: str | None = Field(default=None, alias="clusterId")
+    relationships: list[ConsoleAssetRelationshipV1] = Field(default_factory=list)
+    recent_events: list[ConsoleEventV1] = Field(default_factory=list, alias="recentEvents")
+
+    @model_validator(mode="after")
+    def validate_schema_version(self) -> ConsoleAssetDetailV1:
+        assert_supported_schema_version("console_asset_detail", self.schema_version)
+        if self.schema_version != CONSOLE_ASSET_DETAIL_SCHEMA_VERSION:
+            raise ContractValidationError(
+                code=ContractErrorCode.SCHEMA_VERSION_UNSUPPORTED,
+                message=f"Unsupported console asset detail schema: {self.schema_version}",
                 details={"schemaVersion": self.schema_version},
             )
         return self

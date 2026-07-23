@@ -30,8 +30,8 @@ def _session_maker():
     return get_session_maker(settings, engine=create_engine(settings))
 
 
-async def _tasks_in_autonomy_session(uow, service, run_id):
-    session_id = service._session_ids[run_id]
+async def _tasks_in_autonomy_session(uow, service, run_id, role="WATCHTOWER"):
+    session_id = service._session_ids[(run_id, role)]
     return await uow.agent_tasks.list_for_session(session_id)
 
 

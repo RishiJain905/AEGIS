@@ -1152,3 +1152,24 @@ class SecurityAuditEventRow(Base):
         Index("ix_security_audit_events_occurred_at", "occurred_at"),
         Index("ix_security_audit_events_actor", "actor_user_id"),
     )
+
+
+class AgentDirectiveRow(Base):
+    """Phase 7 standing directives: persistent operator taskings re-evaluated when new
+    matching evidence lands. The JSONB payload is the StandingDirectiveV1 identity; the
+    columns exist for run-scoped active-directive queries by the autonomy poller."""
+
+    __tablename__ = "agent_directives"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("ix_agent_directives_run_active", "run_id", "active"),)

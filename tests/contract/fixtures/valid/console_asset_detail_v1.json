@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "assetId": "asset:svc-api-gateway",
+  "entityType": "asset",
+  "assetType": "service",
+  "label": "API Gateway",
+  "status": "under_investigation",
+  "riskScore": 0.78,
+  "criticality": 0.91,
+  "clusterId": "business-unit:bu-platform",
+  "relationships": [
+    {
+      "edgeId": "edge:svc-api-gateway__depends_on__db-primary",
+      "relationshipType": "depends_on",
+      "sourceAssetId": "asset:svc-api-gateway",
+      "targetAssetId": "asset:db-primary",
+      "direction": "outbound"
+    }
+  ],
+  "recentEvents": [
+    {
+      "eventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "sequence": 42,
+      "type": "auth.login.failed",
+      "simTime": "2026-06-30T02:00:00.000Z",
+      "assetId": "asset:svc-api-gateway",
+      "payload": {
+        "source": "device-workstation-01"
+      }
+    }
+  ]
+}

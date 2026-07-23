@@ -75,16 +75,37 @@ def _watchtower_instructions(roe: RulesOfEngagementV1, alert_title: str, asset_i
     )
 
 
+def _directive_instructions(directive_text: str, alert_title: str, asset_id: str) -> str:
+    return (
+        f"Standing directive: {directive_text}\n"
+        f"A new alert '{alert_title}' fired on {asset_id} within this directive's scope. "
+        "Evaluate it against the directive and report anything that warrants the operator's "
+        "attention. Ground every claim in evidence. If nothing does, reply NO_CHANGE."
+    )
+
+
+def _bias_guard_instructions(alert_title: str, asset_id: str) -> str:
+    return (
+        f"Bias guard: a new alert '{alert_title}' fired on {asset_id}, which overlaps assets "
+        "already referenced by the leading hypotheses. Re-examine those leading hypotheses "
+        "against this new evidence. Where the new evidence undermines a leading hypothesis, "
+        "emit an explicit `contradicts` marker in your structured output naming the "
+        "hypothesis. Ground every claim in evidence. If nothing changes, reply NO_CHANGE."
+    )
+
+
 @dataclass
 class AutonomyTriageService:
     budget: AutonomyBudget = field(default_factory=AutonomyBudget)
     sessions: AgentSessionService = field(default_factory=AgentSessionService)
     tasks: AgentTaskService = field(default_factory=AgentTaskService)
-    # In-memory, per long-lived process: dedicated autonomy session per run, and the last
-    # wall-clock enqueue time per (run, asset) for cooldown. Mirrors the tick engine's
-    # in-memory cursor: after a restart a fresh session is created and the cap resets.
-    _session_ids: dict[str, str] = field(default_factory=dict)
-    _asset_cooldowns: dict[tuple[str, str], float] = field(default_factory=dict)
+    # In-memory, per long-lived process: a dedicated autonomy session per (run, role) so
+    # different autonomous concerns land on the correct agent (WATCHTOWER triage/directives,
+    # ORACLE bias-guard), and the last wall-clock enqueue time per (run, asset, role) for
+    # cooldown so those concerns throttle independently. Mirrors the tick engine's in-memory
+    # cursor: after a restart a fresh session is created and the cap resets.
+    _session_ids: dict[tuple[str, str], str] = field(default_factory=dict)
+    _asset_cooldowns: dict[tuple[str, str, str], float] = field(default_factory=dict)
 
     async def on_new_alert(
         self,
@@ -115,6 +136,64 @@ class AutonomyTriageService:
             now=now,
         )
 
+    async def on_directive_match(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        directive_id: str,
+        directive_text: str,
+        alert_id: str,
+        asset_id: str,
+        alert_title: str,
+        now: float | None = None,
+    ) -> str | None:
+        """Enqueue a WATCHTOWER task carrying a matched directive's text as instructions.
+
+        Shares the run's WATCHTOWER autonomy lane (and its budget) with alert triage — so
+        directives and triage draw from the same pool. ``asset_id`` is deliberately not
+        passed to the cooldown gate: triage always fires first for the same alert and would
+        otherwise suppress the directive on that asset. The shared WATCHTOWER concurrency cap
+        still bounds directive load. Returns the task id, or None when a budget denied it.
+        """
+        return await self.enqueue_auto_task(
+            uow,
+            run_id=run_id,
+            role=AgentRole.WATCHTOWER,
+            instructions=_directive_instructions(directive_text, alert_title, asset_id),
+            reason=f"directive:{directive_id}",
+            alert_id=alert_id,
+            asset_id=None,
+            now=now,
+        )
+
+    async def on_bias_guard(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        alert_id: str,
+        asset_id: str,
+        alert_title: str,
+        now: float | None = None,
+    ) -> str | None:
+        """Enqueue an ORACLE re-examination when a new alert overlaps hypothesis assets.
+
+        Runs on the run's dedicated ORACLE autonomy lane (separate budget from triage), so a
+        burst of overlapping alerts cannot starve WATCHTOWER triage. Returns the task id or
+        None on a budget denial.
+        """
+        return await self.enqueue_auto_task(
+            uow,
+            run_id=run_id,
+            role=AgentRole.ORACLE,
+            instructions=_bias_guard_instructions(alert_title, asset_id),
+            reason=f"bias-guard:{alert_id}",
+            alert_id=alert_id,
+            asset_id=asset_id,
+            now=now,
+        )
+
     async def enqueue_auto_task(
         self,
         uow: PostgresUnitOfWork,
@@ -128,7 +207,7 @@ class AutonomyTriageService:
         now: float | None = None,
     ) -> str | None:
         wall = now if now is not None else time.monotonic()
-        if asset_id is not None and self._asset_on_cooldown(run_id, asset_id, wall):
+        if asset_id is not None and self._asset_on_cooldown(run_id, asset_id, role, wall):
             return None
 
         session_id = await self._ensure_autonomy_session(uow, run_id, role)
@@ -141,7 +220,7 @@ class AutonomyTriageService:
 
         session = await uow.agent_sessions.get_by_id(session_id)
         if session is None:  # session evicted between ensure and now; recreate next call
-            self._session_ids.pop(run_id, None)
+            self._session_ids.pop((run_id, role.value), None)
             return None
         task = await self.tasks.create_task(
             uow,
@@ -169,11 +248,13 @@ class AutonomyTriageService:
             )
         )
         if asset_id is not None:
-            self._asset_cooldowns[(run_id, asset_id)] = wall
+            self._asset_cooldowns[(run_id, asset_id, role.value)] = wall
         return task.id
 
-    def _asset_on_cooldown(self, run_id: str, asset_id: str, wall: float) -> bool:
-        last = self._asset_cooldowns.get((run_id, asset_id))
+    def _asset_on_cooldown(
+        self, run_id: str, asset_id: str, role: AgentRole, wall: float
+    ) -> bool:
+        last = self._asset_cooldowns.get((run_id, asset_id, role.value))
         if last is None:
             return False
         return (wall - last) < self.budget.per_asset_cooldown_seconds
@@ -181,7 +262,8 @@ class AutonomyTriageService:
     async def _ensure_autonomy_session(
         self, uow: PostgresUnitOfWork, run_id: str, role: AgentRole
     ) -> str:
-        cached = self._session_ids.get(run_id)
+        key = (run_id, role.value)
+        cached = self._session_ids.get(key)
         if cached is not None and await uow.agent_sessions.get_by_id(cached) is not None:
             return cached
         session = await self.sessions.create_run_session(
@@ -194,5 +276,5 @@ class AutonomyTriageService:
                 enqueue_initial_task=False,
             ),
         )
-        self._session_ids[run_id] = session.id
+        self._session_ids[key] = session.id
         return session.id
