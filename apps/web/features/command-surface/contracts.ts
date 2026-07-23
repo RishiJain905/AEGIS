@@ -1,27 +1,58 @@
 /**
- * Interim Phase 7 command-surface contracts (operator console, direct actions, ops feed,
- * loadout, rules of engagement).
+ * Command-surface contract surface (operator console, direct actions, ops feed, loadout,
+ * rules of engagement).
  *
- * These mirror the Pydantic contracts in `packages/contracts-python/src/aegis_contracts/`
- * (`operator.py`, `entities.py`) by their camelCase JSON aliases. They live here as a local
- * scaffold until the backend agent lands the authoritative Zod mirrors in
- * `@aegis/contracts-ts`; at that point these can be replaced with the generated types
- * without touching call sites (the field shapes are kept identical on purpose). Nothing
- * here redefines an *event* or *API envelope* shape that already exists in the shared
- * contracts — only the Phase 7 additions that have no TS mirror yet.
+ * The wire types now live in `@aegis/contracts-ts` (backend slice 1). This module re-exports
+ * them under the short names the command-surface UI uses, and adds the UI-only helpers that
+ * have no place in the shared contracts: the command catalogue (labels, reversibility,
+ * consequence copy), the RoE doctrine descriptions, action-class labels, and the local
+ * operator-hypothesis scratch type used until the hypotheses endpoint lands.
  */
 
-// --- Rules of engagement + loadout ---------------------------------------------------
+import type {
+  AutonomyInitiatorV1,
+  ConsoleEventV1,
+  ConsoleEventSearchRequestV1,
+  ConsoleEventSearchResultV1,
+  OperatorActionRequestV1,
+  OperatorActionResponseV1,
+  OperatorActionStatusV1,
+  PolicyOutcomeV1,
+  RulesOfEngagementV1,
+  RunFeedEntryV1,
+  RunFeedPageV1,
+  RunLoadoutV1,
+  ScenarioCommandTemplateV1,
+} from '@aegis/contracts-ts';
 
+// --- Wire types (re-exported from the shared contracts under the UI's short names) ---------
+
+export type RulesOfEngagement = RulesOfEngagementV1;
+export type RunLoadout = RunLoadoutV1;
+export type ScenarioCommandTemplate = ScenarioCommandTemplateV1;
+export type PolicyOutcome = PolicyOutcomeV1;
+export type OperatorActionStatus = OperatorActionStatusV1;
+export type OperatorActionRequest = OperatorActionRequestV1;
+export type OperatorActionResponse = OperatorActionResponseV1;
+export type RunFeedEntry = RunFeedEntryV1;
+export type RunFeedPage = RunFeedPageV1;
+export type ConsoleEvent = ConsoleEventV1;
+export type ConsoleEventSearchRequest = ConsoleEventSearchRequestV1;
+export type ConsoleEventSearchResult = ConsoleEventSearchResultV1;
+/** Who originated an agent task (feed initiator badge). */
+export type FeedInitiator = AutonomyInitiatorV1;
+
+/**
+ * Action class is not exported as a named type from the shared contracts (it is inlined in
+ * the response schema). Re-declare the union here — the values are asserted against the
+ * command catalogue below, so a drift in the contract surfaces as a type error.
+ */
+export type ActionClass = 'class_0' | 'class_1' | 'class_2' | 'class_3';
+
+// --- Rules of engagement + loadout (UI helpers) -------------------------------------------
+
+/** Iteration order for the RoE dial: least to most proactive. */
 export const RULES_OF_ENGAGEMENT = ['observe', 'investigate', 'forward_deployed'] as const;
-export type RulesOfEngagement = (typeof RULES_OF_ENGAGEMENT)[number];
-
-export interface RunLoadout {
-  schemaVersion: number;
-  biasGuard: boolean;
-  threatTempo: boolean;
-  roe: RulesOfEngagement;
-}
 
 export const DEFAULT_LOADOUT: RunLoadout = {
   schemaVersion: 1,
@@ -31,10 +62,7 @@ export const DEFAULT_LOADOUT: RunLoadout = {
 };
 
 /** One-line doctrine descriptions for the RoE dial, ordered from least to most proactive. */
-export const ROE_DOCTRINE: Record<
-  RulesOfEngagement,
-  { label: string; doctrine: string }
-> = {
+export const ROE_DOCTRINE: Record<RulesOfEngagement, { label: string; doctrine: string }> = {
   observe: {
     label: 'Observe',
     doctrine: 'Agents watch and report. No investigation is opened without your word.',
@@ -49,7 +77,7 @@ export const ROE_DOCTRINE: Record<
   },
 };
 
-// --- Operator direct actions ---------------------------------------------------------
+// --- Operator direct actions (UI helpers) -------------------------------------------------
 
 export const SCENARIO_COMMANDS = [
   'observe',
@@ -60,41 +88,10 @@ export const SCENARIO_COMMANDS = [
   'restart_service',
   'rollback_deployment',
 ] as const;
-export type ScenarioCommandTemplate = (typeof SCENARIO_COMMANDS)[number];
-
-export type ActionClass = 'class_0' | 'class_1' | 'class_2' | 'class_3';
-
-export type OperatorActionStatus = 'executed' | 'confirmation_required' | 'blocked';
-export type PolicyOutcome = 'allow' | 'block' | 'approval_required';
-
-export interface OperatorActionRequest {
-  schemaVersion: 1;
-  scenarioCommand: ScenarioCommandTemplate;
-  targetAssetId: string;
-  reason: string;
-  /** true = operator has acknowledged consequences of a Class 2/3 action (approve+execute). */
-  confirm?: boolean;
-  incidentId?: string | null;
-  idempotencyKey: string;
-}
-
-export interface OperatorActionResponse {
-  schemaVersion: number;
-  proposalId: string;
-  incidentId: string;
-  actionClass: ActionClass;
-  status: OperatorActionStatus;
-  policyOutcome: PolicyOutcome;
-  reasonCodes: string[];
-  executed: boolean;
-  executedActionId?: string | null;
-  approvalId?: string | null;
-}
 
 export interface CommandMeta {
   command: ScenarioCommandTemplate;
   label: string;
-  /** Verb for menu + toasts. */
   actionClass: ActionClass;
   /** Whether the effect can be walked back without a fresh deployment/rebuild. */
   reversible: boolean;
@@ -191,7 +188,7 @@ export const ACTION_CLASS_LABEL: Record<ActionClass, string> = {
   class_3: 'Class 3 · Critical',
 };
 
-// --- Ops feed ------------------------------------------------------------------------
+// --- Ops feed (UI convenience) ------------------------------------------------------------
 
 /** Coarse feed category emitted server-side (`console/service.py::_FEED_CATEGORIES`). */
 export type FeedCategory =
@@ -206,56 +203,6 @@ export type FeedCategory =
   | 'alert'
   | 'reveal'
   | 'directive';
-
-/** Who originated an agent task (`AutonomyInitiatorV1`). */
-export type FeedInitiator = 'operator' | 'autonomy';
-
-export interface RunFeedEntry {
-  schemaVersion: number;
-  sequence: number;
-  eventId: string;
-  type: string;
-  category: string;
-  simTime: string;
-  initiator: string | null;
-  summary: string;
-  payload: Record<string, unknown>;
-}
-
-export interface RunFeedPage {
-  schemaVersion: number;
-  entries: RunFeedEntry[];
-  nextCursor: number | null;
-}
-
-// --- Operator console (event search) -------------------------------------------------
-
-export interface ConsoleEventSearchRequest {
-  schemaVersion: 1;
-  assetId?: string | null;
-  eventTypePrefix?: string | null;
-  text?: string | null;
-  fromSimTime?: string | null;
-  toSimTime?: string | null;
-  cursor?: number | null;
-  limit?: number;
-}
-
-export interface ConsoleEvent {
-  eventId: string;
-  sequence: number;
-  type: string;
-  simTime: string;
-  assetId: string | null;
-  payload: Record<string, unknown>;
-}
-
-export interface ConsoleEventSearchResult {
-  schemaVersion: number;
-  events: ConsoleEvent[];
-  count: number;
-  nextCursor: number | null;
-}
 
 // --- Operator hypotheses (interim; endpoint may not exist yet) ------------------------
 

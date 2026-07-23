@@ -77,7 +77,7 @@ export function useConsoleSearch(runId: string) {
       }),
     onSuccess: (result, variables) => {
       setEvents((prev) => (variables.append ? [...prev, ...result.events] : result.events));
-      setNextCursor(result.nextCursor);
+      setNextCursor(result.nextCursor ?? null);
     },
   });
 

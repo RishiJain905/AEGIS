@@ -33,7 +33,7 @@ function simTimeShort(simTime: string): string {
   return match?.[1] ?? simTime;
 }
 
-function InitiatorBadge({ initiator }: { initiator: string | null }) {
+function InitiatorBadge({ initiator }: { initiator: string | null | undefined }) {
   if (initiator === 'operator') {
     return (
       <span className="rounded-full border border-[var(--aegis-accent-line)] bg-[var(--aegis-accent-soft)] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-[var(--aegis-accent-strong)]">

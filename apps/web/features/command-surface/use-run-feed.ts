@@ -52,10 +52,11 @@ async function fetchAllFeedEntries(
   for (let page = 0; page < MAX_FEED_PAGES; page += 1) {
     const result: RunFeedPage = await fetchFeedPage(runId, cursor, signal);
     entries.push(...result.entries);
-    if (result.nextCursor === null) {
+    const next = result.nextCursor ?? null;
+    if (next === null) {
       break;
     }
-    cursor = result.nextCursor;
+    cursor = next;
   }
   return entries;
 }
