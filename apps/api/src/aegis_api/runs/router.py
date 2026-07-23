@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Annotated
 
@@ -42,6 +43,8 @@ from aegis_api.auth.run_authz import actor_is_admin, has_run_access
 from aegis_api.db.session import db_session, get_db_session_maker
 from aegis_api.runs.lifecycle import finalize_stopped_run
 from aegis_api.runs.service import get_run_command_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["runs"])
 
@@ -102,24 +105,35 @@ def _authorize_run(
     return _forbidden_run_response(run_id)
 
 
+# Packages surfaced in the catalogue even before their first run persists a DB row.
+_FALLBACK_SCENARIO_PACKAGES = ("synthetic-training", "operation-silent-relay")
+
+
 async def _discover_scenarios(session: AsyncSession) -> list[ScenarioV1]:
     repo = PostgresScenarioRepository(session)
     existing = {scenario.id: scenario for scenario in await repo.list_all()}
-    silent_relay_manifest = (
-        WORKSPACE_ROOT / "scenarios" / "operation-silent-relay" / "manifest.yaml"
-    )
-    if silent_relay_manifest.exists() and "scenario:operation-silent-relay" not in existing:
-        from datetime import UTC, datetime
+    from datetime import UTC, datetime
 
-        import yaml
+    import yaml
 
-        manifest_data = yaml.safe_load(silent_relay_manifest.read_text(encoding="utf-8"))
-        metadata = manifest_data["metadata"]
+    for package in _FALLBACK_SCENARIO_PACKAGES:
+        manifest_path = WORKSPACE_ROOT / "scenarios" / package / "manifest.yaml"
+        if not manifest_path.exists():
+            continue
+        try:
+            manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+            metadata = manifest_data["metadata"]
+            scenario_id = metadata.get("scenarioId") or metadata["scenario_id"]
+        except (KeyError, TypeError, yaml.YAMLError) as exc:
+            logger.warning("Skipping catalogue fallback for %s: %s", package, exc)
+            continue
+        if scenario_id in existing:
+            continue
         scenario = ScenarioV1(
             schema_version=1,
-            id=metadata["scenario_id"],
-            name=metadata["name"],
-            description=metadata["description"],
+            id=scenario_id,
+            name=metadata.get("name", scenario_id),
+            description=metadata.get("description", ""),
             created_at=datetime(2026, 1, 1, tzinfo=UTC),
         )
         existing[scenario.id] = scenario
