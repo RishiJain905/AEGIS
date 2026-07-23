@@ -4,7 +4,6 @@ import { NodeStatus } from '@aegis/contracts-ts';
 import { Button, Panel, TimelineMark } from '@aegis/ui';
 
 import { useLiveRun } from '@/features/live-run/live-run-provider';
-import { getTimelineMarks } from '@/lib/api';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 const STATUS_MAP: Record<string, (typeof NodeStatus)[keyof typeof NodeStatus]> = {
@@ -29,21 +28,19 @@ export function TimelineView() {
   );
   const setTimelineCursorSequence = useWorkspaceUiStore((state) => state.setTimelineCursorSequence);
 
-  const fixtureMarks = getTimelineMarks();
-  const marks =
-    liveRun !== null && liveRun.isLiveMode && liveRun.state.timelineEntries.length > 0
-      ? liveRun.state.timelineEntries.map((entry) => ({
-          sequence: entry.sequence,
-          label: entry.label,
-          timestamp: entry.timestamp,
-          status: entry.status,
-        }))
-      : fixtureMarks;
+  const isLive = liveRun !== null && liveRun.isLiveMode;
+  const marks = isLive
+    ? liveRun.state.timelineEntries.map((entry) => ({
+        sequence: entry.sequence,
+        label: entry.label,
+        timestamp: entry.timestamp,
+        status: entry.status,
+      }))
+    : [];
 
-  const description =
-    liveRun !== null && liveRun.isLiveMode
-      ? `Live event stream · sequence ${String(liveRun.state.lastAppliedSequence)}`
-      : 'Event sequence cursor (fixture-backed)';
+  const description = isLive
+    ? `Live event stream · sequence ${String(liveRun.state.lastAppliedSequence)}`
+    : 'No active run — launch an operation to stream events';
 
   if (collapsed) {
     return (
@@ -86,25 +83,31 @@ export function TimelineView() {
           Collapse
         </Button>
       </div>
-      <ol className="max-h-72 overflow-y-auto pr-2">
-        {marks.map((mark) => {
-          const nodeStatus = STATUS_MAP[mark.status] ?? NodeStatus.NORMAL;
-          const active = timelineCursorSequence === mark.sequence;
-          return (
-            <TimelineMark
-              key={mark.sequence}
-              label={mark.label}
-              timestamp={mark.timestamp}
-              nodeStatus={nodeStatus}
-              active={active}
-              data-testid={`timeline-mark-${String(mark.sequence)}`}
-              onClick={() => {
-                setTimelineCursorSequence(mark.sequence);
-              }}
-            />
-          );
-        })}
-      </ol>
+      {marks.length === 0 ? (
+        <p className="px-1 py-6 text-center text-xs text-[var(--aegis-text-secondary)]">
+          Events will appear here once a run is streaming.
+        </p>
+      ) : (
+        <ol className="max-h-72 overflow-y-auto pr-2">
+          {marks.map((mark) => {
+            const nodeStatus = STATUS_MAP[mark.status] ?? NodeStatus.NORMAL;
+            const active = timelineCursorSequence === mark.sequence;
+            return (
+              <TimelineMark
+                key={mark.sequence}
+                label={mark.label}
+                timestamp={mark.timestamp}
+                nodeStatus={nodeStatus}
+                active={active}
+                data-testid={`timeline-mark-${String(mark.sequence)}`}
+                onClick={() => {
+                  setTimelineCursorSequence(mark.sequence);
+                }}
+              />
+            );
+          })}
+        </ol>
+      )}
     </Panel>
   );
 }
