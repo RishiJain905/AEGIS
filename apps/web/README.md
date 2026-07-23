@@ -26,7 +26,7 @@ Open `http://localhost:3000/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FAV` for the default
 
 | Variable                        | Default                 | Purpose                    |
 | ------------------------------- | ----------------------- | -------------------------- |
-| `NEXT_PUBLIC_AEGIS_DATA_SOURCE` | `fixture`               | `fixture` or `api` adapter |
+| `NEXT_PUBLIC_AEGIS_DATA_SOURCE` | `api`                   | `api` (default) or `fixture`; fixture is refused in production builds |
 | `NEXT_PUBLIC_API_BASE_URL`      | `http://localhost:8000` | Production API base URL    |
 
 ## Tests

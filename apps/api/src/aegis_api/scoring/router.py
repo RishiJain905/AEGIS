@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
-from aegis_contracts import PermissionV1
+from aegis_contracts import AuthenticatedActorV1, PermissionV1
 from aegis_contracts.scoring import (
     AfterActionViewModelV1,
     RunComparisonV1,
@@ -17,7 +18,8 @@ from aegis_scoring.errors import ScoringError
 from aegis_scoring.service import ScoringService
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from aegis_api.auth.deps import require_permission
+from aegis_api.auth.deps import require_actor, require_permission
+from aegis_api.auth.run_authz import require_run_access
 from aegis_api.db.session import get_db_session_maker
 
 router = APIRouter(prefix="/api/v1", tags=["scoring"])
@@ -47,8 +49,12 @@ def _http_status(code: ScoreErrorCode) -> int:
     "/runs/{run_id}/score", response_model=RunScoreV1,
     dependencies=[Depends(require_permission(PermissionV1.SCORING_COMPUTE))],
 )
-async def score_run(run_id: str) -> RunScoreV1:
+async def score_run(
+    run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
+) -> RunScoreV1:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             return await _scoring_service.score_run(
                 uow,
@@ -63,8 +69,12 @@ async def score_run(run_id: str) -> RunScoreV1:
 
 
 @router.get("/runs/{run_id}/score", response_model=RunScoreV1)
-async def get_run_score(run_id: str) -> RunScoreV1:
+async def get_run_score(
+    run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
+) -> RunScoreV1:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             return await _scoring_service.get_score(uow, run_id=run_id)
         except ScoringError as exc:
@@ -75,8 +85,12 @@ async def get_run_score(run_id: str) -> RunScoreV1:
 
 
 @router.get("/runs/{run_id}/after-action", response_model=AfterActionViewModelV1)
-async def get_after_action(run_id: str) -> AfterActionViewModelV1:
+async def get_after_action(
+    run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
+) -> AfterActionViewModelV1:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             return await _scoring_service.get_after_action(
                 uow,
@@ -94,8 +108,13 @@ async def get_after_action(run_id: str) -> AfterActionViewModelV1:
     "/runs/{run_id}/score/export/{export_format}",
     dependencies=[Depends(require_permission(PermissionV1.SCORING_EXPORT))],
 )
-async def export_run_score(run_id: str, export_format: ScoreExportFormatV1) -> Response:
+async def export_run_score(
+    run_id: str,
+    export_format: ScoreExportFormatV1,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
+) -> Response:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             artifact, content = await _scoring_service.export_score(
                 uow,
@@ -124,10 +143,13 @@ async def export_run_score(run_id: str, export_format: ScoreExportFormatV1) -> R
 
 @router.get("/runs/score-comparison", response_model=RunComparisonV1)
 async def compare_run_scores(
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
     left: str = Query(..., min_length=1),
     right: str = Query(..., min_length=1),
 ) -> RunComparisonV1:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, left, actor)
+        await require_run_access(uow, right, actor)
         try:
             return await _scoring_service.compare_runs(
                 uow,

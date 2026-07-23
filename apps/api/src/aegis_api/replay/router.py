@@ -12,6 +12,7 @@ from functools import lru_cache
 from typing import Annotated
 
 from aegis_contracts import (
+    AuthenticatedActorV1,
     PermissionV1,
     ReplayCursorV1,
     ReplayEquivalenceResultV1,
@@ -28,7 +29,8 @@ from aegis_replay.service import ReplayService
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
-from aegis_api.auth.deps import require_permission
+from aegis_api.auth.deps import require_actor, require_permission
+from aegis_api.auth.run_authz import require_run_access
 from aegis_api.db.session import get_db_session_maker
 
 router = APIRouter(prefix="/api/v1/replay", tags=["replay"])
@@ -100,6 +102,7 @@ def _http_error(exc: ReplayEngineError) -> HTTPException:
 @router.get("/runs/{run_id}/state", response_model=ReplayStateV1)
 async def get_replay_state(
     run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
     sequence: SequenceQuery = None,
     sim_time: SimTimeQuery = None,
     incident_id: IncidentIdQuery = None,
@@ -107,6 +110,7 @@ async def get_replay_state(
 ) -> ReplayStateV1:
     service = _replay_service()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             return await service.reconstruct(
                 uow,
@@ -123,12 +127,14 @@ async def get_replay_state(
 @router.get("/runs/{run_id}/cursor", response_model=ReplayCursorV1)
 async def get_replay_cursor(
     run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
     sequence: SequenceQuery = None,
     sim_time: SimTimeQuery = None,
     incident_id: IncidentIdQuery = None,
 ) -> ReplayCursorV1:
     service = _replay_service()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             return await service.cursor_at(
                 uow,
@@ -144,11 +150,13 @@ async def get_replay_cursor(
 @router.get("/runs/{run_id}/diff", response_model=StateDiffV1)
 async def get_replay_diff(
     run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
     from_sequence: FromSequenceQuery,
     to_sequence: ToSequenceQuery,
 ) -> StateDiffV1:
     service = _replay_service()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             return await service.diff(
                 uow,
@@ -161,9 +169,13 @@ async def get_replay_diff(
 
 
 @router.get("/runs/{run_id}/snapshots", response_model=list[SnapshotManifestV1])
-async def list_replay_snapshots(run_id: str) -> list[SnapshotManifestV1]:
+async def list_replay_snapshots(
+    run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
+) -> list[SnapshotManifestV1]:
     service = _replay_service()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         return await service.list_snapshots(uow, run_id=run_id)
 
 
@@ -173,11 +185,13 @@ async def list_replay_snapshots(run_id: str) -> list[SnapshotManifestV1]:
 )
 async def create_replay_snapshot(
     run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
     request: CreateSnapshotRequestV1 | None = None,
 ) -> SnapshotManifestV1:
     body = request or CreateSnapshotRequestV1()
     service = _replay_service()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             return await service.create_snapshot(
                 uow,
@@ -192,10 +206,12 @@ async def create_replay_snapshot(
 @router.get("/runs/{run_id}/equivalence", response_model=ReplayEquivalenceResultV1)
 async def check_replay_equivalence(
     run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
     sequence: SequenceQuery = None,
 ) -> ReplayEquivalenceResultV1:
     service = _replay_service()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             return await service.check_equivalence(uow, run_id=run_id, sequence=sequence)
         except ReplayEngineError as exc:
@@ -205,12 +221,14 @@ async def check_replay_equivalence(
 @router.get("/runs/{run_id}/diagnostic", response_model=DiagnosticHarnessResponseV1)
 async def replay_diagnostic_harness(
     run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
     sequence: SequenceQuery = None,
     include_equivalence: IncludeEquivalenceQuery = True,
 ) -> DiagnosticHarnessResponseV1:
     """Development harness payload for Phase 25 visual verification."""
     service = _replay_service()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             state = await service.reconstruct(uow, run_id=run_id, sequence=sequence)
             snapshots = await service.list_snapshots(uow, run_id=run_id)

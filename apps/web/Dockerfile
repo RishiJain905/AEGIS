@@ -17,8 +17,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 ARG NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws/v1/realtime
+# NEXT_PUBLIC_* vars are inlined at build time, so the data source must be baked
+# here (compose runtime env cannot change it). Default to the API-backed client
+# so images never ship the fixture dataset.
+ARG NEXT_PUBLIC_AEGIS_DATA_SOURCE=api
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL \
-    NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
+    NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL \
+    NEXT_PUBLIC_AEGIS_DATA_SOURCE=$NEXT_PUBLIC_AEGIS_DATA_SOURCE
 RUN pnpm --filter @aegis/web build
 
 FROM node:22.15.1-alpine AS runner

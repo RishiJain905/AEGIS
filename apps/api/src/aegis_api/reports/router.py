@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from aegis_agents.roles.scribe.coordinator import ScribeCoordinator
 from aegis_agents.runtime.executor import TaskExecutor
 from aegis_agents.runtime.factory import create_task_executor
-from aegis_api.auth.deps import require_permission
+from aegis_api.auth.deps import require_actor, require_permission
+from aegis_api.auth.run_authz import require_run_access
 from aegis_api.db.session import get_db_session_maker
-from aegis_contracts import PermissionV1
+from aegis_contracts import AuthenticatedActorV1, PermissionV1
 from aegis_contracts.reports import (
     AfterActionReportV1,
     ReportExportFormatV1,
@@ -27,9 +30,11 @@ _report_service = ReportService()
 @router.get("/runs/{run_id}/after-action-report", response_model=AfterActionReportV1)
 async def get_after_action_report(
     run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
     version: int | None = None,
 ) -> AfterActionReportV1:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             return await _report_service.get_report(uow, run_id=run_id, version_number=version)
         except ReportError as exc:
@@ -37,8 +42,12 @@ async def get_after_action_report(
 
 
 @router.get("/runs/{run_id}/after-action-report/versions", response_model=list[ReportVersionV1])
-async def list_after_action_report_versions(run_id: str) -> list[ReportVersionV1]:
+async def list_after_action_report_versions(
+    run_id: str,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
+) -> list[ReportVersionV1]:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         return await _report_service.list_versions(uow, run_id=run_id)
 
 
@@ -49,9 +58,11 @@ async def list_after_action_report_versions(run_id: str) -> list[ReportVersionV1
 async def download_after_action_report_export(
     run_id: str,
     export_format: ReportExportFormatV1,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
     version: int | None = None,
 ) -> Response:
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         try:
             artifact, content = await _report_service.get_export(
                 uow,
@@ -73,12 +84,17 @@ async def download_after_action_report_export(
     "/runs/{run_id}/investigation/trigger-scribe",
     dependencies=[Depends(require_permission(PermissionV1.REPORTS_TRIGGER))],
 )
-async def trigger_scribe(run_id: str, request: TriggerScribeRequestV1) -> dict[str, object]:
+async def trigger_scribe(
+    run_id: str,
+    request: TriggerScribeRequestV1,
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
+) -> dict[str, object]:
     if request.run_id != run_id:
         raise HTTPException(status_code=400, detail="runId mismatch")
     coordinator = ScribeCoordinator()
     executor: TaskExecutor = create_task_executor()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        await require_run_access(uow, run_id, actor)
         result = await coordinator.trigger_for_run(uow, request)
         task = await uow.agent_tasks.get_by_id(result.scribe_task_id)
         if task is not None and task.status.value == "queued":
