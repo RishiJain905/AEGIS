@@ -6,18 +6,13 @@ import {
   snapshotBootstrapPayloadSchema,
 } from '@aegis/contracts-ts';
 
-function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
-}
+import { apiFetch } from '@/lib/api/auth-fetch';
 
 export async function fetchSnapshotBootstrap(
   runId: string,
   signal?: AbortSignal,
 ): Promise<SnapshotBootstrapPayloadV1> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/runs/${runId}/bootstrap`, {
-    signal,
-    headers: { Accept: 'application/json' },
-  });
+  const response = await apiFetch(`/api/v1/runs/${runId}/bootstrap`, { signal });
   if (!response.ok) {
     throw new Error(`Failed to fetch bootstrap payload: ${String(response.status)}`);
   }
@@ -26,10 +21,7 @@ export async function fetchSnapshotBootstrap(
 }
 
 export async function fetchRunGraphSnapshot(runId: string, signal?: AbortSignal) {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/runs/${runId}/graph`, {
-    signal,
-    headers: { Accept: 'application/json' },
-  });
+  const response = await apiFetch(`/api/v1/runs/${runId}/graph`, { signal });
   if (!response.ok) {
     throw new Error(`Failed to fetch graph snapshot: ${String(response.status)}`);
   }
@@ -38,10 +30,7 @@ export async function fetchRunGraphSnapshot(runId: string, signal?: AbortSignal)
 }
 
 export async function fetchRunRecord(runId: string, signal?: AbortSignal) {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/runs/${runId}`, {
-    signal,
-    headers: { Accept: 'application/json' },
-  });
+  const response = await apiFetch(`/api/v1/runs/${runId}`, { signal });
   if (!response.ok) {
     throw new Error(`Failed to fetch run record: ${String(response.status)}`);
   }
