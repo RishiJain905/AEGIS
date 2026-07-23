@@ -2,12 +2,9 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { apiFetch } from '@/lib/api/auth-fetch';
 import { queryKeys } from '@/lib/api/query-keys';
 import { ApiClientError } from '@/lib/api/types';
-
-function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
-}
 
 function newIdempotencyKey(prefix: string): string {
   return `${prefix}-${String(Date.now())}-${Math.random().toString(36).slice(2, 10)}`;
@@ -22,10 +19,9 @@ async function postRunCommand(
   path: string,
   idempotencyKey: string,
 ): Promise<RunCommandJsonResponse> {
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+  const response = await apiFetch(path, {
     method: 'POST',
     headers: {
-      Accept: 'application/json',
       'Content-Type': 'application/json',
       'Idempotency-Key': idempotencyKey,
     },
@@ -120,10 +116,9 @@ export function useCreateRun() {
       seed?: number;
       loadout?: CreateRunLoadout;
     }) => {
-      const response = await fetch(`${getApiBaseUrl()}/api/v1/runs`, {
+      const response = await apiFetch('/api/v1/runs', {
         method: 'POST',
         headers: {
-          Accept: 'application/json',
           'Content-Type': 'application/json',
           'Idempotency-Key': newIdempotencyKey('create'),
         },
