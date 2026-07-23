@@ -187,6 +187,10 @@ export const runCreateRequestSchema = z
     // Phase 7 capability loadout chosen at launch. Additive optional field
     // (schemaVersion stays 1): when omitted the server persists the default loadout.
     loadout: runLoadoutSchema.nullable().optional(),
+    // Optional one-line commander's intent (untrusted, non-authoritative operator free
+    // text). Bounded to a single directive line. Additive optional field (schemaVersion
+    // stays 1); persisted on the run.
+    commanderIntent: z.string().max(280).nullable().optional(),
   })
   .strict()
   .superRefine((value, ctx) => {

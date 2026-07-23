@@ -1116,6 +1116,19 @@
     "RunV1": {
       "additionalProperties": false,
       "properties": {
+        "commanderIntent": {
+          "anyOf": [
+            {
+              "maxLength": 280,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Commanderintent"
+        },
         "id": {
           "title": "Id",
           "type": "string"

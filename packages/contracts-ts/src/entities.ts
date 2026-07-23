@@ -179,6 +179,10 @@ export const runSchema = z
     // Additive optional field (schemaVersion stays 1): legacy/seeded rows are null and
     // treated as the default loadout.
     loadout: runLoadoutSchema.nullable().optional(),
+    // Operator's one-line commander's intent captured at launch (untrusted, non-authoritative
+    // free text). Additive optional field (schemaVersion stays 1); null when skipped or on
+    // legacy/seeded rows.
+    commanderIntent: z.string().max(280).nullable().optional(),
   })
   .strict();
 

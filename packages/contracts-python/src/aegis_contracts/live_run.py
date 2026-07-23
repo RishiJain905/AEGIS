@@ -180,6 +180,12 @@ class RunCreateRequestV1(BaseModel):
     # Phase 7 capability loadout chosen at launch. Additive optional field (schemaVersion
     # stays 1): when omitted the server persists the default loadout on the run.
     loadout: RunLoadoutV1 | None = None
+    # Optional one-line commander's intent written by the operator at launch (untrusted,
+    # non-authoritative free text). Bounded to keep it a single directive line and to bound
+    # prompt/UI cost. Additive optional field (schemaVersion stays 1); persisted on the run.
+    commander_intent: str | None = Field(
+        default=None, alias="commanderIntent", max_length=280
+    )
 
     @field_validator("schema_version")
     @classmethod

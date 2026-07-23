@@ -203,6 +203,10 @@ class RunV1(BaseModel):
     # Additive optional field (schemaVersion stays 1): legacy/seeded rows are null and
     # treated as the default loadout. Persisted in the run payload; round-trips here.
     loadout: RunLoadoutV1 | None = None
+    # Operator's one-line commander's intent captured at launch (untrusted, non-authoritative
+    # free text). Additive optional field (schemaVersion stays 1); null when the operator
+    # skipped it or on legacy/seeded rows. Persisted in the run payload; round-trips here.
+    commander_intent: str | None = Field(default=None, alias="commanderIntent", max_length=280)
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> RunV1:
