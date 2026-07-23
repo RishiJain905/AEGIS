@@ -102,9 +102,9 @@ services:
       # code default stays `mock` so CI/tests never need a model. (Alternative:
       # start the optional `llama` profile and override the URLs to http://llama:8086/v1.)
       AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
-      AEGIS_PROVIDER_LOCAL_BASE_URL: ${AEGIS_PROVIDER_LOCAL_BASE_URL:-http://host.docker.internal:8086/v1}
+      AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
       AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwen3.5-9B.Q8_0.gguf}
-      AEGIS_PROVIDER_EGRESS_ALLOWLIST: ${AEGIS_PROVIDER_EGRESS_ALLOWLIST:-https://api.openai.com/v1,http://host.docker.internal:8086/v1}
+      AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
       # A local reasoning model can take tens of seconds per turn; give agent tasks
       # generous headroom (they still fail soft past this, shown in the chat).
       AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-180}
@@ -180,9 +180,9 @@ services:
       # Local LLM wiring — matches the api service so worker-run agent tasks use
       # the same provider (see the api service note above).
       AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
-      AEGIS_PROVIDER_LOCAL_BASE_URL: ${AEGIS_PROVIDER_LOCAL_BASE_URL:-http://host.docker.internal:8086/v1}
+      AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
       AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwen3.5-9B.Q8_0.gguf}
-      AEGIS_PROVIDER_EGRESS_ALLOWLIST: ${AEGIS_PROVIDER_EGRESS_ALLOWLIST:-https://api.openai.com/v1,http://host.docker.internal:8086/v1}
+      AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
       AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-180}
     depends_on:
       postgres:

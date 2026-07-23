@@ -415,11 +415,3 @@ async def get_alert(alert_id: str) -> AlertV1:
         return alert
 
 
-@router.get("/incidents/{incident_id}", include_in_schema=False)
-async def get_incident_deprecated(incident_id: str) -> JSONResponse:
-    envelope = ApiErrorEnvelopeV1(
-        schema_version=1,
-        code=ContractErrorCode.VALIDATION_FAILED.value,
-        message=f"Use GET /api/v1/incidents/{{id}} via investigation router: {incident_id}",
-    )
-    return JSONResponse(status_code=404, content=envelope.model_dump(by_alias=True))

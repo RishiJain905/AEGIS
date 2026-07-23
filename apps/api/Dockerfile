@@ -38,10 +38,6 @@ COPY services/incidents/src services/incidents/src
 COPY services/simulation/src services/simulation/src
 COPY apps/api/src apps/api/src
 RUN uv sync --frozen --no-dev --package aegis-api
-# The copilot's local/openai-compatible provider adapter needs the OpenAI SDK
-# (an optional extra of aegis-model-provider not pulled by the frozen sync).
-# Installed explicitly so the deployed api can call the local llama-serve model.
-RUN uv pip install "openai>=1.68"
 
 FROM python:3.12.10-slim-bookworm AS runner
 WORKDIR /app

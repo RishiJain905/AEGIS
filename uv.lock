@@ -83,7 +83,7 @@ version = "1.0.0"
 source = { editable = "services/agents" }
 dependencies = [
     { name = "aegis-contracts" },
-    { name = "aegis-model-provider" },
+    { name = "aegis-model-provider", extra = ["openai"] },
     { name = "aegis-persistence" },
     { name = "aegis-policy" },
     { name = "aegis-reports" },
@@ -93,7 +93,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
-    { name = "aegis-model-provider", editable = "packages/model-provider" },
+    { name = "aegis-model-provider", extras = ["openai"], editable = "packages/model-provider" },
     { name = "aegis-persistence", editable = "packages/persistence" },
     { name = "aegis-policy", editable = "packages/policy" },
     { name = "aegis-reports", editable = "services/reports" },
