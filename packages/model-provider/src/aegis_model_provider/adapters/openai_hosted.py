@@ -79,9 +79,12 @@ class OpenAIHostedProvider:
             base_url=self._base_url,
         )
 
+    def _resolve_model_id(self, request: GenerationRequestV1) -> str:
+        return request.model_config_ref.model_id or self._settings.AEGIS_PROVIDER_OPENAI_MODEL
+
     async def generate(self, request: GenerationRequestV1) -> GenerationResponseV1:
         client = self._client()
-        model_id = request.model_config_ref.model_id or self._settings.AEGIS_PROVIDER_OPENAI_MODEL
+        model_id = self._resolve_model_id(request)
         messages = [
             {"role": message.role.value, "content": message.content} for message in request.messages
         ]

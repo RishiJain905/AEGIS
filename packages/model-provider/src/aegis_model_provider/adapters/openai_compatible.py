@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from aegis_contracts.generation import GenerationRequestV1
+
 from aegis_model_provider.adapters.openai_hosted import OpenAIHostedProvider
 from aegis_model_provider.config import ProviderSettings
 
@@ -14,6 +16,16 @@ class OpenAICompatibleProvider(OpenAIHostedProvider):
     def __init__(self, settings: ProviderSettings) -> None:
         super().__init__(settings, base_url=settings.AEGIS_PROVIDER_LOCAL_BASE_URL)
         self._settings = settings
+
+    def _resolve_model_id(self, request: GenerationRequestV1) -> str:
+        # The local endpoint serves whatever model llama-serve has loaded; agent
+        # definitions carry synthetic ids like "openai-compatible-v1", so the env var
+        # is the single source of truth for which local model is requested. A request
+        # that explicitly names a real model (not the synthetic default) still wins.
+        requested = request.model_config_ref.model_id
+        if requested and requested != f"{self.provider_id}-v1":
+            return requested
+        return self._settings.AEGIS_PROVIDER_LOCAL_MODEL
 
     def _client(self) -> Any:
         if not self._base_url:
