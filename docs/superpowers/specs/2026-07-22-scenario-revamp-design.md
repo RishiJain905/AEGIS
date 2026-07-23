@@ -63,12 +63,19 @@ Product owner direction: the player is an active operator working *alongside* th
 
 Deferred by owner decision: LLM-driven attacker ("adversarial mode") and multi-attacker scenarios — future scenario types, not retrofits.
 
-## Backlog — proprietary AI-leveraged capabilities (owner-approved direction)
+## Capability loadout (owner decision 2026-07-23)
 
-- **Threat tempo** (attempt in Phase 7): ambient pressure indicator derived from undisclosed-vs-disclosed attacker progress; conveys "the room feels wrong" without leaking position.
-- **Counterfactual replay ("ghost branch")**: the deterministic engine + checkpoints allow literally re-simulating from a past checkpoint with a different decision — after-action answers "what if you'd isolated 5 minutes earlier?" with a real simulated outcome, not speculation. Unique to simulation; no real SOC can do this.
-- **Containment blast-radius preview**: before a Class 2/3 approval, traverse the dependency graph and show simulated service impact ("isolating file-server severs 3 services") — AI-assisted change-impact analysis at decision time.
-- **Hypothesis ledger / bias guard**: hypotheses (player's and agent's) are living objects continuously re-scored as evidence lands; the agent flags when new evidence contradicts the operator's leading hypothesis.
+AI capabilities are per-run **loadout toggles** chosen at launch ("play your cards differently") and persisted on the run — a second variety axis alongside the RNG seed. Committed capabilities and their tiers:
+
+- **Counterfactual replay ("ghost branch")** — FOR SURE build (post-run, in after-action): deterministic engine + checkpoints re-simulate from a past decision point with a different call; after-action shows the real alternate timeline, not speculation.
+- **Containment blast-radius preview** — FOR SURE build (pre-approval decision support): dependency-graph traversal shows projected collateral of a Class 2/3 action before the operator commits.
+- **Hypothesis ledger / bias guard** — build as a TOGGLE (default on for training, operator's choice on live ops): agent flags evidence contradicting the operator's leading hypothesis.
+- **Threat tempo** (attempt in Phase 7) — toggleable ambient pressure indicator derived from undisclosed-vs-disclosed attacker progress; no position leakage.
+- Loadout choices may feed scoring later (harder loadout → score multiplier) — backlog, not now.
+
+Sequencing note (owner priority): the E2E flow — every tab accurate and smooth, mid-run and post-run — lands BEFORE the new capabilities; ghost branch and blast radius build on that spine.
+
+## Backlog — further proprietary AI-leveraged capabilities
 - **Commander's intent**: optional one-line intent at run start; agent triages/proposes against it; after-action scores the operator against their own stated intent.
 - **SCRIBE live comms desk**: at any mid-run moment, generate the "what do I tell leadership right now" brief from grounded evidence.
 - **Operator skill telemetry**: cross-run profile of speed/bias/over-containment patterns; agent coaches between runs.
