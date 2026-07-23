@@ -8,10 +8,14 @@ import {
   evidenceIdSchema,
   generationRequestIdSchema,
   incidentIdSchema,
+  runIdSchema,
   toolInvocationIdSchema,
   traceIdSchema,
   utcTimestampSchema,
 } from './primitives';
+
+// Upper bound on the operator free-text directive threaded into a task prompt.
+export const MAX_OPERATOR_INSTRUCTIONS_LENGTH = 4000;
 import {
   AGENT_ARTIFACT_SCHEMA_VERSION,
   AGENT_BUDGET_SCHEMA_VERSION,
@@ -122,12 +126,14 @@ export const agentTaskSchema = z
     schemaVersion: schemaVersionCheck(AGENT_TASK_SCHEMA_VERSION),
     id: agentTaskIdSchema,
     sessionId: agentSessionIdSchema,
-    incidentId: incidentIdSchema,
+    runId: runIdSchema,
+    incidentId: incidentIdSchema.nullable().default(null),
     status: z.enum(['queued', 'running', 'completed', 'failed', 'cancelled', 'timed_out']),
     attempt: z.number().int().min(1).default(1),
     idempotencyKey: z.string().min(1).max(256),
     traceId: traceIdSchema,
     providerId: z.string().min(1).max(64),
+    instructions: z.string().max(MAX_OPERATOR_INSTRUCTIONS_LENGTH).nullable().optional(),
     errorCode: z.string().nullable().optional(),
     errorMessage: z.string().nullable().optional(),
     createdAt: utcTimestampSchema,
@@ -221,6 +227,7 @@ export const createAgentSessionRequestSchema = z
     traceId: traceIdSchema,
     enqueueInitialTask: z.boolean().default(true),
     providerId: z.string().nullable().optional(),
+    instructions: z.string().max(MAX_OPERATOR_INSTRUCTIONS_LENGTH).nullable().optional(),
   })
   .strict();
 
@@ -229,6 +236,7 @@ export const createAgentTaskRequestSchema = z
     schemaVersion: schemaVersionCheck(CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION),
     idempotencyKey: z.string().min(1).max(256),
     providerId: z.string().nullable().optional(),
+    instructions: z.string().max(MAX_OPERATOR_INSTRUCTIONS_LENGTH).nullable().optional(),
   })
   .strict();
 

@@ -13,6 +13,19 @@
       "title": "Enqueueinitialtask",
       "type": "boolean"
     },
+    "instructions": {
+      "anyOf": [
+        {
+          "maxLength": 4000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Instructions"
+    },
     "providerId": {
       "anyOf": [
         {

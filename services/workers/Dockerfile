@@ -26,6 +26,10 @@ COPY services/agents/src services/agents/src
 COPY services/replay/src services/replay/src
 COPY services/workers/src services/workers/src
 RUN uv sync --frozen --no-dev --package aegis-workers
+# The copilot's local/openai-compatible provider adapter needs the OpenAI SDK
+# (an optional extra of aegis-model-provider not pulled by the frozen sync).
+# The agent-runtime worker executes agent tasks, so it needs the model client too.
+RUN uv pip install "openai>=1.68"
 
 FROM python:3.12.10-slim-bookworm AS runner
 WORKDIR /app

@@ -23,6 +23,7 @@ export const queryKeys = {
   },
   agentSessions: {
     detail: (sessionId: string) => ['agent-sessions', sessionId] as const,
+    listForRun: (runId: string) => ['runs', runId, 'agent-sessions'] as const,
   },
   connection: {
     status: ['connection', 'status'] as const,

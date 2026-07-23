@@ -52,6 +52,10 @@ _EXPECTED_ROUTE_PERMISSIONS: dict[tuple[str, str], PermissionV1] = {
         "POST",
         "/api/v1/incidents/{incident_id}/agent-sessions",
     ): PermissionV1.INVESTIGATION_TRIGGER,
+    (
+        "POST",
+        "/api/v1/runs/{run_id}/agent-sessions",
+    ): PermissionV1.INVESTIGATION_TRIGGER,
     ("POST", "/api/v1/agent-sessions/{session_id}/tasks"): PermissionV1.INVESTIGATION_TRIGGER,
     ("POST", "/api/v1/agent-sessions/{session_id}/cancel"): PermissionV1.INVESTIGATION_TRIGGER,
     ("POST", "/api/v1/agent-tasks/{task_id}/retry"): PermissionV1.INVESTIGATION_TRIGGER,

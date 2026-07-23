@@ -16,6 +16,7 @@ from aegis_contracts.primitives import (
     EvidenceId,
     GenerationRequestId,
     IncidentId,
+    RunId,
     ToolInvocationId,
     TraceId,
     UtcTimestamp,
@@ -35,6 +36,10 @@ from aegis_contracts.versioning import (
     TOOL_RESULT_SCHEMA_VERSION,
     assert_supported_schema_version,
 )
+
+# Upper bound on the operator free-text directive threaded into a task prompt.
+# Bounded so an untrusted instruction cannot blow the prompt/token budget.
+MAX_OPERATOR_INSTRUCTIONS_LENGTH = 4000
 
 
 class AgentTaskStatus(StrEnum):
@@ -168,12 +173,18 @@ class AgentTaskV1(BaseModel):
     schema_version: int = Field(alias="schemaVersion", ge=1)
     id: AgentTaskId
     session_id: AgentSessionId = Field(alias="sessionId")
-    incident_id: IncidentId = Field(alias="incidentId")
+    run_id: RunId = Field(alias="runId")
+    incident_id: IncidentId | None = Field(default=None, alias="incidentId")
     status: AgentTaskStatus
     attempt: int = Field(ge=1, default=1)
     idempotency_key: str = Field(alias="idempotencyKey", min_length=1, max_length=256)
     trace_id: TraceId = Field(alias="traceId")
     provider_id: str = Field(alias="providerId", min_length=1, max_length=64)
+    # Operator free-text directive that steered this task, retained so the chat
+    # thread can be restored from task history. Untrusted; never authoritative.
+    instructions: str | None = Field(
+        default=None, max_length=MAX_OPERATOR_INSTRUCTIONS_LENGTH
+    )
     error_code: str | None = Field(default=None, alias="errorCode")
     error_message: str | None = Field(default=None, alias="errorMessage")
     created_at: UtcTimestamp = Field(alias="createdAt")
@@ -302,6 +313,11 @@ class CreateAgentSessionRequestV1(BaseModel):
     trace_id: TraceId = Field(alias="traceId")
     enqueue_initial_task: bool = Field(alias="enqueueInitialTask", default=True)
     provider_id: str | None = Field(default=None, alias="providerId")
+    # Optional operator directive applied to the auto-enqueued initial task, so a
+    # run-scoped session can open with the player's first message in one call.
+    instructions: str | None = Field(
+        default=None, max_length=MAX_OPERATOR_INSTRUCTIONS_LENGTH
+    )
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> CreateAgentSessionRequestV1:
@@ -324,6 +340,10 @@ class CreateAgentTaskRequestV1(BaseModel):
     schema_version: int = Field(alias="schemaVersion", ge=1)
     idempotency_key: str = Field(alias="idempotencyKey", min_length=1, max_length=256)
     provider_id: str | None = Field(default=None, alias="providerId")
+    # Operator free-text directive for this task (the chat composer message).
+    instructions: str | None = Field(
+        default=None, max_length=MAX_OPERATOR_INSTRUCTIONS_LENGTH
+    )
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> CreateAgentTaskRequestV1:

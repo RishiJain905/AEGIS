@@ -95,13 +95,19 @@ services:
       AEGIS_HEALTH_PROBE_TIMEOUT_MS: ${AEGIS_HEALTH_PROBE_TIMEOUT_MS:-2000}
       AEGIS_READY_REQUIRE_REDIS: ${AEGIS_READY_REQUIRE_REDIS:-true}
       AEGIS_READY_REQUIRE_OBJECT_STORAGE: ${AEGIS_READY_REQUIRE_OBJECT_STORAGE:-true}
-      # Local LLM wiring. Default provider stays offline (mock); set
-      # AEGIS_PROVIDER_DEFAULT=local to use a local model. The supported default
-      # is a host-run llama-server on :8086, reached from containers via
-      # host.docker.internal. (Alternative: start the optional `llama` profile and
-      # override these to http://llama:8086/v1.)
+      # Local LLM wiring. The AI copilot (Phase 3) is backed by a host-run
+      # llama-server on :8086, reached from containers via host.docker.internal.
+      # Default the app to the openai-compatible local provider so the copilot is
+      # live; override AEGIS_PROVIDER_DEFAULT=mock to run fully offline. The Python
+      # code default stays `mock` so CI/tests never need a model. (Alternative:
+      # start the optional `llama` profile and override the URLs to http://llama:8086/v1.)
+      AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
       AEGIS_PROVIDER_LOCAL_BASE_URL: ${AEGIS_PROVIDER_LOCAL_BASE_URL:-http://host.docker.internal:8086/v1}
+      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwen3.5-9B.Q8_0.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: ${AEGIS_PROVIDER_EGRESS_ALLOWLIST:-https://api.openai.com/v1,http://host.docker.internal:8086/v1}
+      # A local reasoning model can take tens of seconds per turn; give agent tasks
+      # generous headroom (they still fail soft past this, shown in the chat).
+      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-180}
     ports:
       - '${API_PORT:-8000}:8000'
     depends_on:
@@ -171,9 +177,13 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
       OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
       AEGIS_LOG_JSON: ${AEGIS_LOG_JSON:-true}
-      # Local LLM wiring (offline by default; see the api service note above).
+      # Local LLM wiring — matches the api service so worker-run agent tasks use
+      # the same provider (see the api service note above).
+      AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
       AEGIS_PROVIDER_LOCAL_BASE_URL: ${AEGIS_PROVIDER_LOCAL_BASE_URL:-http://host.docker.internal:8086/v1}
+      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwen3.5-9B.Q8_0.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: ${AEGIS_PROVIDER_EGRESS_ALLOWLIST:-https://api.openai.com/v1,http://host.docker.internal:8086/v1}
+      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-180}
     depends_on:
       postgres:
         condition: service_healthy

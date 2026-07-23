@@ -37,11 +37,11 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_session_detail_v1.schema.json",
-      "sha256": "d23106880b2758073a3afb909bd91fa1866e021b8a359f27d8056e91081dca4f"
+      "sha256": "a473b7e67eff87857a573a24e4610f1d4bf706b4039a3bfac0449940e2a8b506"
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_session_v1.schema.json",
-      "sha256": "0eeddb6e6fa5541742b8106654447e494b92b000c363dea654733cc3bfe10b04"
+      "sha256": "c45bac8fd1daf97eabbc4cb133e916e17cca3f01fb2b90f81c0cc95d75e8f265"
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_state_transition_v1.schema.json",
@@ -49,7 +49,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_task_v1.schema.json",
-      "sha256": "43f2c573aad9ef5d78b7a5c35ace652787b0e63cb32ffe97ac15922d63f0f17c"
+      "sha256": "7e07a050897f9c7e86a1349c2d9020664709e3e64e097baca731588d60c6bb15"
     },
     {
       "path": "tests/contract/fixtures/schemas/alert_v1.schema.json",
@@ -151,11 +151,11 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/create_agent_session_request_v1.schema.json",
-      "sha256": "5e5a143da5de47a245d294b6baef7f30ab99a26f35b65c662fdb712c24ba287f"
+      "sha256": "b72fd8432b1227039bae7784649fa893aa50a4f480b62a24637f44200bf2cb2a"
     },
     {
       "path": "tests/contract/fixtures/schemas/create_agent_task_request_v1.schema.json",
-      "sha256": "f5ce22198332b310f353cd2c29bcc5a9ee6c4610279bdead304855a48432c66d"
+      "sha256": "a3d4aefe8c1bf38e9df172cb61abed795f885c4b8e65c0c28f645421a878fb2a"
     },
     {
       "path": "tests/contract/fixtures/schemas/cursor_page_v1.schema.json",
@@ -723,11 +723,11 @@
     },
     {
       "path": "tests/contract/fixtures/valid/agent_session_detail_v1.json",
-      "sha256": "2347c3b65d66b4c911b9a9358c37ba1a803a7752fe3fe7be752ef8bb8a78233c"
+      "sha256": "421a9713df0e6ae57f9f4506741c7cf5b6ecbf7922f0f2fafeaeb02c49501c88"
     },
     {
       "path": "tests/contract/fixtures/valid/agent_session_v1.json",
-      "sha256": "d47c220612b99c2d1b9f6c93a114c068792dfc355692a5c4eee6fd6186d47f5e"
+      "sha256": "4aaca472909b4d70a7820f47aa02bc6842858b6772a37217a00aeea9b67d5646"
     },
     {
       "path": "tests/contract/fixtures/valid/agent_state_transition_v1.json",
@@ -735,7 +735,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/agent_task_v1.json",
-      "sha256": "20964fc898759132eb786ce0e1a2ebef2b8e2094f2d27aad87739314fd260616"
+      "sha256": "da1537f5422d92e65799fe6d262f7c6963d2267175756d757936678ce635e7d5"
     },
     {
       "path": "tests/contract/fixtures/valid/alert_v1.json",

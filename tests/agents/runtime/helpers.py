@@ -44,6 +44,45 @@ async def _seed_scenario_version(uow: PostgresUnitOfWork) -> str:
     return _SCENARIO_VERSION_ID
 
 
+async def seed_run_with_evidence(uow: PostgresUnitOfWork) -> tuple[str, str]:
+    """Seed a run + visible evidence but NO incident (run-scoped agent tasking).
+
+    Returns ``(run_id, evidence_id)``. Mirrors :func:`seed_incident_with_evidence`
+    minus the incident, for exercising the run-scoped agent session flow (ADR 0035).
+    """
+    scenario_version_id = await _seed_scenario_version(uow)
+    now = datetime.now(UTC)
+    run = RunV1(
+        schema_version=RUN_SCHEMA_VERSION,
+        id=new_runtime_id("run"),
+        scenario_version_id=scenario_version_id,
+        seed=42,
+        status="running",
+        started_at=now,
+        sim_time=now,
+        revision=1,
+    )
+    await uow.runs.add(run)
+    evidence = EvidenceV1(
+        schema_version=EVIDENCE_SCHEMA_VERSION,
+        id="evidence:evd_run_scoped_001",
+        run_id=run.id,
+        source_event_id=new_runtime_id("evt"),
+        summary="Anomalous identity-provider authentication",
+        asset_id="asset:idp-primary",
+        created_at=now,
+    )
+    row = EvidenceRow(
+        id=evidence.id,
+        run_id=evidence.run_id,
+        payload=domain_to_payload(evidence),
+        created_at=evidence.created_at,
+    )
+    uow.session.add(row)
+    await uow.session.flush()
+    return run.id, evidence.id
+
+
 async def seed_incident_with_evidence(uow: PostgresUnitOfWork) -> tuple[str, str, str]:
     scenario_version_id = await _seed_scenario_version(uow)
     now = datetime.now(UTC)

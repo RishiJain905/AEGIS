@@ -290,16 +290,23 @@ class AgentSessionRow(Base):
     __tablename__ = "agent_sessions"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    incident_id: Mapped[str] = mapped_column(
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    incident_id: Mapped[str | None] = mapped_column(
         String(64),
         ForeignKey("incidents.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
     )
     trace_id: Mapped[str] = mapped_column(String(64), nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     budget: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("ix_agent_sessions_run_created", "run_id", "created_at"),)
 
 
 class ToolRow(Base):
@@ -573,10 +580,15 @@ class AgentTaskRow(Base):
         ForeignKey("agent_sessions.id", ondelete="CASCADE"),
         nullable=False,
     )
-    incident_id: Mapped[str] = mapped_column(
+    run_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    incident_id: Mapped[str | None] = mapped_column(
         String(64),
         ForeignKey("incidents.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
     )
     idempotency_key: Mapped[str] = mapped_column(String(256), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)

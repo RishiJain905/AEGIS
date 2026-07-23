@@ -26,7 +26,11 @@ from aegis_agents.runtime.registry import (
     build_definition,
 )
 from aegis_agents.runtime.session_service import AgentSessionService
-from aegis_agents.security.scenario_content import build_scenario_data_message
+from aegis_agents.security.scenario_content import (
+    build_operator_directive_message,
+    build_scenario_data_message,
+    build_session_history_message,
+)
 from aegis_agents.tools.executor import ToolExecutor
 from aegis_agents.tools.handlers import ToolExecutionContext
 from aegis_agents.tools.registry import ToolRegistry
@@ -36,6 +40,7 @@ from aegis_contracts.agent_runtime import (
     AgentArtifactV1,
     AgentTaskStatus,
     EvidenceCitationV1,
+    ToolInvocationStatus,
 )
 from aegis_contracts.generation import (
     GenerationMessageRole,
@@ -173,13 +178,20 @@ class TaskExecutor:
         task: Any,
         session: Any,
     ) -> None:
-        incident = await uow.incidents.get_by_id(task.incident_id)
-        if incident is None:
-            raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.INCIDENT_NOT_FOUND,
-                message=f"Incident not found: {task.incident_id}",
-                trace_id=task.trace_id,
-            )
+        # Run-scoped tasks (operator tasking before the first incident) carry no
+        # incident; run_id is anchored on the session. Incident-scoped tasks must
+        # still resolve their incident (a dangling incident_id is a data error).
+        run_id = session.run_id
+        incident = None
+        if task.incident_id is not None:
+            incident = await uow.incidents.get_by_id(task.incident_id)
+            if incident is None:
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.INCIDENT_NOT_FOUND,
+                    message=f"Incident not found: {task.incident_id}",
+                    trace_id=task.trace_id,
+                )
+        incident_title = incident.title if incident is not None else None
         definition = build_definition(session.role, provider_id=task.provider_id)
         budget = await uow.agent_sessions.get_budget(session.id)
         if budget is None:
@@ -205,13 +217,13 @@ class TaskExecutor:
             to_state=AgentSessionState.GATHERING,
             reason="task_started",
             task_id=task.id,
-            run_id=incident.run_id,
+            run_id=run_id,
         )
-        next_sequence = await uow.events.next_sequence(incident.run_id)
+        next_sequence = await uow.events.next_sequence(run_id)
         await uow.append_event(
             build_task_started_event(
                 event_id=new_runtime_id("evt"),
-                run_id=incident.run_id,
+                run_id=run_id,
                 sequence=next_sequence,
                 session_id=session.id,
                 task_id=task.id,
@@ -225,8 +237,8 @@ class TaskExecutor:
                     uow=uow,
                     task=running,
                     session=session,
-                    incident_run_id=incident.run_id,
-                    incident_title=incident.title,
+                    run_id=run_id,
+                    incident_title=incident_title,
                     definition=definition,
                     budget=budget,
                 ),
@@ -237,7 +249,7 @@ class TaskExecutor:
                 uow,
                 task=running,
                 session=session,
-                run_id=incident.run_id,
+                run_id=run_id,
                 code=AgentRuntimeErrorCode.TASK_TIMEOUT,
                 message="Agent task timed out",
             )
@@ -251,7 +263,7 @@ class TaskExecutor:
                 uow,
                 task=running,
                 session=session,
-                run_id=incident.run_id,
+                run_id=run_id,
                 code=exc.code,
                 message=exc.message,
             )
@@ -261,7 +273,7 @@ class TaskExecutor:
                 uow,
                 task=running,
                 session=session,
-                run_id=incident.run_id,
+                run_id=run_id,
                 code=AgentRuntimeErrorCode.INTERNAL,
                 message=str(exc),
             )
@@ -277,8 +289,8 @@ class TaskExecutor:
         uow: PostgresUnitOfWork,
         task: Any,
         session: Any,
-        incident_run_id: str,
-        incident_title: str,
+        run_id: str,
+        incident_title: str | None,
         definition: Any,
         budget: Any,
     ) -> None:
@@ -289,13 +301,22 @@ class TaskExecutor:
                 trace_id=task.trace_id,
             )
 
-        evidence = await uow.evidence.list_for_run(incident_run_id)
+        run_scoped = task.incident_id is None
+        evidence = await uow.evidence.list_for_run(run_id)
         visible_ids = {item.id for item in evidence}
         check_budget(budget, trace_id=task.trace_id)
 
         role_handler = get_role_handler(session.role)
+        # Run-scoped (chat) turns use the compact generic step schema, not the
+        # role-specific investigation schema. The role schema only exists to feed
+        # incident-keyed post-processing (skipped for run-scoped), and its size/
+        # nesting hurts schema adherence for a local model. The generic schema
+        # (rationale, confidence, evidence citations, tool requests) is exactly
+        # what the chat renders, and small enough for reliable structured output.
         output_schema = (
-            role_handler.output_schema() if role_handler is not None else AGENT_STEP_OUTPUT_SCHEMA
+            AGENT_STEP_OUTPUT_SCHEMA
+            if run_scoped or role_handler is None
+            else role_handler.output_schema()
         )
         system_prompt = (
             role_handler.system_prompt()
@@ -317,6 +338,55 @@ class TaskExecutor:
             if role_handler is not None and session.role.value == "SCRIBE"
             else "Perform one investigation step for the incident."
         )
+        if run_scoped:
+            # No incident yet: frame the turn around the live run and the operator's
+            # directive, and pin the compact output shape for the chat.
+            user_prompt = (
+                f"Act as {session.role.value} for the current live run. Address the "
+                "operator's directive using the run's alerts, telemetry, and evidence. "
+                "Return grounded structured output: a concise rationale, a confidence "
+                "in [0,1], evidence citations for any factual claim, and any tool "
+                "requests you need."
+            )
+
+        # Scenario-data grounding: an incident title when incident-scoped, or a
+        # run-scoped note (no incident opened yet) so the agent knows to sweep
+        # run-level telemetry rather than assume an incident context exists.
+        if run_scoped:
+            scenario_data = build_scenario_data_message(
+                {
+                    "scope": "run",
+                    "runId": run_id,
+                    "note": (
+                        "No incident has been opened yet. Work from run-level "
+                        "alerts, telemetry, and evidence."
+                    ),
+                }
+            )
+        else:
+            scenario_data = build_scenario_data_message(
+                {"incidentTitle": incident_title or ""}
+            )
+
+        messages = [
+            GenerationMessageV1(
+                role=GenerationMessageRole.SYSTEM,
+                content=system_prompt,
+            ),
+            GenerationMessageV1(
+                role=GenerationMessageRole.USER,
+                content=user_prompt,
+            ),
+            scenario_data,
+        ]
+        # Multi-turn continuity: a bounded digest of prior turns in this session
+        # so a run-scoped session feels like a conversation.
+        history = await self._build_session_history(uow, session_id=session.id, before_task_id=task.id)
+        if history is not None:
+            messages.append(history)
+        # Operator directive (untrusted free text) steers WHAT to investigate.
+        if task.instructions:
+            messages.append(build_operator_directive_message(task.instructions))
 
         request = GenerationRequestV1(
             schema_version=GENERATION_REQUEST_SCHEMA_VERSION,
@@ -329,17 +399,7 @@ class TaskExecutor:
                 model_id=definition.model_id,
                 prompt_version=definition.prompt_version,
             ),
-            messages=[
-                GenerationMessageV1(
-                    role=GenerationMessageRole.SYSTEM,
-                    content=system_prompt,
-                ),
-                GenerationMessageV1(
-                    role=GenerationMessageRole.USER,
-                    content=user_prompt,
-                ),
-                build_scenario_data_message({"incidentTitle": incident_title}),
-            ],
+            messages=messages,
             structured_output=StructuredOutputSpecV1(
                 schema_version=STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION,
                 json_schema=output_schema,
@@ -378,16 +438,46 @@ class TaskExecutor:
         )
         await uow.agent_sessions.update(session, budget=budget)
 
-        citations = [
-            EvidenceCitationV1(
-                schema_version=EVIDENCE_CITATION_SCHEMA_VERSION,
-                evidence_id=item["evidenceId"],
-                rationale=item.get("rationale", ""),
-            )
-            for item in structured.get("evidenceCitations", [])
-        ]
-        if citations:
-            validate_citations(citations, visible_evidence_ids=visible_ids, trace_id=task.trace_id)
+        raw_citations = structured.get("evidenceCitations", [])
+        if run_scoped:
+            # A local model frequently invents citation ids (e.g. "CIT_001") that
+            # aren't well-formed namespaced evidence ids, or cites evidence that
+            # isn't visible in the run. For the interactive chat we DROP those
+            # rather than hard-failing the whole turn — the grounded rationale
+            # still lands, and only well-formed, visible citations survive, so no
+            # hallucinated evidence is ever presented as grounded. The strict
+            # audit path (incident-scoped) below is unchanged.
+            citations = []
+            kept: list[dict[str, Any]] = []
+            for item in raw_citations:
+                evidence_id = item.get("evidenceId")
+                if not evidence_id or evidence_id not in visible_ids:
+                    continue
+                try:
+                    citations.append(
+                        EvidenceCitationV1(
+                            schema_version=EVIDENCE_CITATION_SCHEMA_VERSION,
+                            evidence_id=evidence_id,
+                            rationale=item.get("rationale", ""),
+                        )
+                    )
+                except Exception:  # noqa: BLE001 - malformed id, treat as ungrounded
+                    continue
+                kept.append(item)
+            structured["evidenceCitations"] = kept
+        else:
+            citations = [
+                EvidenceCitationV1(
+                    schema_version=EVIDENCE_CITATION_SCHEMA_VERSION,
+                    evidence_id=item["evidenceId"],
+                    rationale=item.get("rationale", ""),
+                )
+                for item in raw_citations
+            ]
+            if citations:
+                validate_citations(
+                    citations, visible_evidence_ids=visible_ids, trace_id=task.trace_id
+                )
 
         session = await self._sessions.transition(
             uow,
@@ -395,7 +485,7 @@ class TaskExecutor:
             to_state=AgentSessionState.HYPOTHESIZING,
             reason="model_step_received",
             task_id=task.id,
-            run_id=incident_run_id,
+            run_id=run_id,
         )
         session = await self._sessions.transition(
             uow,
@@ -403,15 +493,18 @@ class TaskExecutor:
             to_state=AgentSessionState.VERIFYING,
             reason="grounding_validated",
             task_id=task.id,
-            run_id=incident_run_id,
+            run_id=run_id,
         )
 
+        # Run-scoped tasks have no incident; pass "" so incident-keyed tools
+        # resolve to "not found" and fail soft (caught below) while run-keyed
+        # read tools (alerts/events/risk/evidence) work off ctx.run_id.
         ctx = ToolExecutionContext(
             uow=uow,
             session_id=session.id,
             task_id=task.id,
-            incident_id=task.incident_id,
-            run_id=incident_run_id,
+            incident_id=task.incident_id or "",
+            run_id=run_id,
             trace_id=task.trace_id,
             visible_evidence_ids=visible_ids,
         )
@@ -451,35 +544,56 @@ class TaskExecutor:
                     message="Agent task cancelled",
                     trace_id=task.trace_id,
                 )
-            invocation = await self._tool_executor.invoke(
-                uow=uow,
-                definition=definition,
-                ctx=ctx,
-                tool_name=tool_request["name"],
-                payload=tool_request.get("arguments", {}),
-            )
-            next_sequence = await uow.events.next_sequence(incident_run_id)
+            tool_name = tool_request["name"]
+            try:
+                invocation = await self._tool_executor.invoke(
+                    uow=uow,
+                    definition=definition,
+                    ctx=ctx,
+                    tool_name=tool_name,
+                    payload=tool_request.get("arguments", {}),
+                )
+                tool_status = invocation.status.value
+            except AgentRuntimeError as exc:
+                # Incident-scoped tasks keep the strict contract: a tool failure
+                # fails the task. Run-scoped tasks (operator chat) fail soft — a
+                # tool the model tried that needs an incident (e.g. BASTION's
+                # proposal tool with no incident open) is recorded and streamed as
+                # a failed/rejected chip, and the agent's grounded artifact still
+                # lands so the operator gets a useful reply.
+                if not run_scoped:
+                    raise
+                tool_status = (
+                    ToolInvocationStatus.REJECTED.value
+                    if exc.code == AgentRuntimeErrorCode.TOOL_UNAUTHORIZED
+                    else ToolInvocationStatus.FAILED.value
+                )
+            next_sequence = await uow.events.next_sequence(run_id)
             await uow.append_event(
                 build_tool_invoked_event(
                     event_id=new_runtime_id("evt"),
-                    run_id=incident_run_id,
+                    run_id=run_id,
                     sequence=next_sequence,
                     session_id=session.id,
                     task_id=task.id,
                     trace_id=task.trace_id,
-                    tool_name=invocation.tool_name,
-                    status=invocation.status.value,
+                    tool_name=tool_name,
+                    status=tool_status,
                 )
             )
 
-        if role_handler is not None:
+        # Role post-processing writes incident-keyed investigation artifacts
+        # (triage/hypotheses/proposals), so it only applies to incident-scoped
+        # tasks. Run-scoped tasks still produce the STEP_RESULT artifact below,
+        # which is what the chat renders.
+        if role_handler is not None and not run_scoped:
             await role_handler.post_process(
                 ctx=PostProcessContext(
                     uow=uow,
                     session_id=session.id,
                     task_id=task.id,
-                    incident_id=task.incident_id,
-                    run_id=incident_run_id,
+                    incident_id=task.incident_id or "",
+                    run_id=run_id,
                     trace_id=task.trace_id,
                     idempotency_key=task.idempotency_key,
                     visible_evidence_ids=visible_ids,
@@ -499,14 +613,22 @@ class TaskExecutor:
         )
         await uow.agent_artifacts.add(artifact)
 
-        session = await self._sessions.transition(
-            uow,
-            session=session,
-            to_state=AgentSessionState.COMPLETED,
-            reason="report_only_complete",
-            task_id=task.id,
-            run_id=incident_run_id,
-        )
+        # Incident-scoped sessions model one investigation and complete (terminal).
+        # A run-scoped session is a conversation that hosts many turns, so it must
+        # NOT go terminal after a turn — it rests at VERIFYING (a non-terminal state
+        # that re-enters GATHERING when the next task starts, per the existing state
+        # machine). This keeps the whole chat as one session (matching the prior-turn
+        # digest) without weakening the terminal guarantees the state machine gives
+        # incident-scoped sessions.
+        if not run_scoped:
+            session = await self._sessions.transition(
+                uow,
+                session=session,
+                to_state=AgentSessionState.COMPLETED,
+                reason="report_only_complete",
+                task_id=task.id,
+                run_id=run_id,
+            )
         completed = task.model_copy(
             update={
                 "status": AgentTaskStatus.COMPLETED,
@@ -515,11 +637,11 @@ class TaskExecutor:
             }
         )
         await uow.agent_tasks.update(completed)
-        next_sequence = await uow.events.next_sequence(incident_run_id)
+        next_sequence = await uow.events.next_sequence(run_id)
         await uow.append_event(
             build_task_completed_event(
                 event_id=new_runtime_id("evt"),
-                run_id=incident_run_id,
+                run_id=run_id,
                 sequence=next_sequence,
                 session_id=session.id,
                 task_id=task.id,
@@ -527,6 +649,54 @@ class TaskExecutor:
                 status="completed",
             )
         )
+
+    async def _build_session_history(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        session_id: str,
+        before_task_id: str,
+        max_turns: int = 6,
+    ) -> GenerationMessageV1 | None:
+        """Bounded digest of prior completed turns in this session (chat memory).
+
+        Returns the most recent ``max_turns`` prior tasks as a compact record of
+        {instruction, status, rationale, tools}, wrapped as untrusted data so the
+        model gets continuity without treating history as instructions. Returns
+        ``None`` when there is no prior turn.
+        """
+        prior_tasks = [
+            t
+            for t in await uow.agent_tasks.list_for_session(session_id)
+            if t.id != before_task_id and t.status == AgentTaskStatus.COMPLETED
+        ]
+        if not prior_tasks:
+            return None
+        recent = prior_tasks[-max_turns:]
+        artifacts = await uow.agent_artifacts.list_for_session(session_id)
+        step_by_task: dict[str, dict[str, Any]] = {}
+        for artifact in artifacts:
+            if artifact.artifact_type == AgentArtifactType.STEP_RESULT:
+                step_by_task[artifact.task_id] = artifact.payload
+        invocations = await uow.tool_invocations.list_for_session(session_id)
+        tools_by_task: dict[str, list[str]] = {}
+        for inv in invocations:
+            tools_by_task.setdefault(inv.task_id, []).append(inv.tool_name)
+
+        turns: list[dict[str, Any]] = []
+        for t in recent:
+            payload = step_by_task.get(t.id, {})
+            rationale = str(payload.get("rationale", ""))[:500]
+            turns.append(
+                {
+                    "instruction": (t.instructions or "")[:500],
+                    "status": t.status.value,
+                    "rationale": rationale,
+                    "tools": tools_by_task.get(t.id, [])[:12],
+                }
+            )
+        digest = json.dumps(turns, ensure_ascii=False, separators=(",", ":"))
+        return build_session_history_message(digest)
 
     async def _fail_task(
         self,

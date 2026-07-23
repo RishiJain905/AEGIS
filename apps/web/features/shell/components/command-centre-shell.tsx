@@ -3,6 +3,7 @@
 import { DisconnectedState } from '@aegis/ui';
 import { useEffect } from 'react';
 
+import { AgentChatPanel } from '@/features/agent-chat';
 import {
   ConnectionHealthBanner,
   LiveRunControls,
@@ -75,6 +76,7 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
           >
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
               <LiveRunControls />
+              {runId ? <AgentChatPanel runId={runId} /> : null}
               {children ??
                 (runId ? <VisualizationSlot runId={runId} incidentId={incidentId} /> : null)}
               <TimelineView />

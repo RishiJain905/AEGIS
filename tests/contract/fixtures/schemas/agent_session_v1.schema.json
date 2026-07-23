@@ -33,11 +33,23 @@
       "type": "string"
     },
     "incidentId": {
-      "title": "Incidentid",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
     },
     "role": {
       "$ref": "#/$defs/AgentRole"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
     },
     "schemaVersion": {
       "minimum": 1,
@@ -59,7 +71,7 @@
   "required": [
     "schemaVersion",
     "id",
-    "incidentId",
+    "runId",
     "role",
     "state",
     "traceId",

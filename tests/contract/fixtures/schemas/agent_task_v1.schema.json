@@ -65,13 +65,38 @@
       "type": "string"
     },
     "incidentId": {
-      "title": "Incidentid",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "instructions": {
+      "anyOf": [
+        {
+          "maxLength": 4000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Instructions"
     },
     "providerId": {
       "maxLength": 64,
       "minLength": 1,
       "title": "Providerid",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
       "type": "string"
     },
     "schemaVersion": {
@@ -111,7 +136,7 @@
     "schemaVersion",
     "id",
     "sessionId",
-    "incidentId",
+    "runId",
     "status",
     "idempotencyKey",
     "traceId",

@@ -243,7 +243,10 @@ export const agentSessionSchema = z
   .object({
     schemaVersion: schemaVersionCheck(AGENT_SESSION_SCHEMA_VERSION),
     id: agentSessionIdSchema,
-    incidentId: incidentIdSchema,
+    // Every session belongs to a run; incidentId is null for run-scoped
+    // operator tasking before the first incident exists (ADR 0035).
+    runId: runIdSchema,
+    incidentId: incidentIdSchema.nullable().default(null),
     role: z.enum(['WATCHTOWER', 'TRACE', 'ORACLE', 'BASTION', 'WARDEN', 'SCRIBE']),
     state: z.enum([
       'queued',

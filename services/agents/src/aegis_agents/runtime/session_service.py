@@ -38,6 +38,7 @@ class AgentSessionService:
         incident_id: str,
         request: CreateAgentSessionRequestV1,
     ) -> AgentSessionV1:
+        """Create an incident-scoped session (run_id derived from the incident)."""
         incident = await uow.incidents.get_by_id(incident_id)
         if incident is None:
             raise AgentRuntimeError(
@@ -45,6 +46,38 @@ class AgentSessionService:
                 message=f"Incident not found: {incident_id}",
                 trace_id=request.trace_id,
             )
+        return await self._create(
+            uow,
+            run_id=incident.run_id,
+            incident_id=incident_id,
+            request=request,
+        )
+
+    async def create_run_session(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        request: CreateAgentSessionRequestV1,
+    ) -> AgentSessionV1:
+        """Create a run-scoped session (no incident yet). See ADR 0035.
+
+        The caller is responsible for authorizing access to ``run_id`` and for
+        confirming the run exists; this mirrors the other run-scoped routers,
+        which resolve+authorize the run before invoking service logic.
+        """
+        return await self._create(
+            uow, run_id=run_id, incident_id=None, request=request
+        )
+
+    async def _create(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        incident_id: str | None,
+        request: CreateAgentSessionRequestV1,
+    ) -> AgentSessionV1:
         definition = self._registry.get(request.role)
         if request.provider_id:
             definition = definition.model_copy(update={"provider_id": request.provider_id})
@@ -52,6 +85,7 @@ class AgentSessionService:
         session = AgentSessionV1(
             schema_version=AGENT_SESSION_SCHEMA_VERSION,
             id=new_agent_session_id(),
+            run_id=run_id,
             incident_id=incident_id,
             role=request.role,
             state=AgentSessionState.QUEUED,
@@ -60,11 +94,11 @@ class AgentSessionService:
             updated_at=now,
         )
         await uow.agent_sessions.add(session, budget=definition.default_budget)
-        next_sequence = await uow.events.next_sequence(incident.run_id)
+        next_sequence = await uow.events.next_sequence(run_id)
         await uow.append_event(
             build_session_started_event(
                 event_id=new_runtime_id("evt"),
-                run_id=incident.run_id,
+                run_id=run_id,
                 sequence=next_sequence,
                 session_id=session.id,
                 trace_id=session.trace_id,
@@ -89,6 +123,13 @@ class AgentSessionService:
             artifacts=await uow.agent_artifacts.list_for_session(session_id),
             budget=await uow.agent_sessions.get_budget(session_id),
         )
+
+    async def list_details_for_run(
+        self, uow: PostgresUnitOfWork, run_id: str
+    ) -> list[AgentSessionDetailV1]:
+        """Full detail for every session anchored to ``run_id`` (chat restore)."""
+        sessions = await uow.agent_sessions.list_for_run(run_id)
+        return [await self.get_detail(uow, session.id) for session in sessions]
 
     async def transition(
         self,
@@ -141,13 +182,6 @@ class AgentSessionService:
             AgentSessionState.CANCELLED,
         }:
             return session
-        incident = await uow.incidents.get_by_id(session.incident_id)
-        if incident is None:
-            raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.INCIDENT_NOT_FOUND,
-                message=f"Incident not found: {session.incident_id}",
-                trace_id=session.trace_id,
-            )
         for task in detail.tasks:
             if task.status in {AgentTaskStatus.QUEUED, AgentTaskStatus.RUNNING}:
                 cancelled = task.model_copy(
@@ -165,5 +199,5 @@ class AgentSessionService:
             to_state=AgentSessionState.CANCELLED,
             reason="session_cancelled",
             task_id=None,
-            run_id=incident.run_id,
+            run_id=session.run_id,
         )

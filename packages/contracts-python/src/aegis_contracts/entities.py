@@ -304,7 +304,11 @@ class AgentSessionV1(BaseModel):
 
     schema_version: int = Field(alias="schemaVersion", ge=1)
     id: AgentSessionId
-    incident_id: IncidentId = Field(alias="incidentId")
+    # Every session belongs to a run; ``incident_id`` is present only for the
+    # incident-scoped flow. A run-scoped session (operator tasking before the
+    # first incident exists) carries ``incident_id = None``. See ADR 0035.
+    run_id: RunId = Field(alias="runId")
+    incident_id: IncidentId | None = Field(default=None, alias="incidentId")
     role: AgentRole
     state: AgentSessionState
     trace_id: TraceId = Field(alias="traceId")

@@ -94,7 +94,26 @@ class MockProvider:
         content = None
         prompt_version = request.model_config_ref.prompt_version
         if request.structured_output is not None:
-            if prompt_version == "phase20-watchtower-v1":
+            _schema_required = set(request.structured_output.json_schema.get("required") or [])
+            _is_generic_step_schema = _schema_required == {
+                "rationale",
+                "confidence",
+                "evidenceCitations",
+                "toolRequests",
+            }
+            if _is_generic_step_schema:
+                # Run-scoped (chat) turns request the compact generic step schema
+                # regardless of role, so honor that shape instead of a role-shaped
+                # payload (whose extra fields would fail the strict schema).
+                payload = {
+                    "rationale": f"Mock agent step for request {fingerprint}",
+                    "confidence": 0.8,
+                    "evidenceCitations": [],
+                    "toolRequests": [],
+                }
+                structured_data = validate_structured_output(payload, request.structured_output)
+                content = json.dumps(structured_data)
+            elif prompt_version == "phase20-watchtower-v1":
                 payload = {
                     "alertSummaries": [],
                     "groupedAlertIds": [],

@@ -692,6 +692,7 @@ class PostgresAgentSessionRepository:
         payload = domain_to_payload(session)
         row = AgentSessionRow(
             id=session.id,
+            run_id=session.run_id,
             incident_id=session.incident_id,
             trace_id=session.trace_id,
             payload=payload,
@@ -702,6 +703,14 @@ class PostgresAgentSessionRepository:
         self._session.add(row)
         await self._session.flush()
         return session
+
+    async def list_for_run(self, run_id: str) -> list[AgentSessionV1]:
+        result = await self._session.execute(
+            select(AgentSessionRow)
+            .where(AgentSessionRow.run_id == run_id)
+            .order_by(AgentSessionRow.created_at.asc())
+        )
+        return [agent_session_to_domain(row) for row in result.scalars().all()]
 
     async def update(
         self,
@@ -772,6 +781,7 @@ class PostgresAgentTaskRepository:
         row = AgentTaskRow(
             id=task.id,
             session_id=task.session_id,
+            run_id=task.run_id,
             incident_id=task.incident_id,
             idempotency_key=task.idempotency_key,
             status=task.status.value,
