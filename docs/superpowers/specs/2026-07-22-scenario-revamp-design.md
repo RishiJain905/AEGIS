@@ -42,10 +42,13 @@ A scenario is a live blue-team engagement. The player, working with AI agents ba
 - Real manifest at `scenarios/synthetic-training/` (small asset set, one clear attack path, fixed seed, short horizon) registered like Silent Relay.
 - Guided walkthrough overlay in the web app: coach-mark steps bound to real run milestones (launch → watch telemetry → first alert → open incident → task an agent → approve containment → run ends → read after-action). Steps advance on real events; fully deterministic.
 
-## Phase 6 — Replay & cohesion polish
+## Phase 6 — Cohesion, adversary dossier, command-surface revamp (owner: every tab accurate mid-run AND post-run)
 
-- Replay timeline distinguishes defender actions (chat instructions, agent tasks, approvals, executions) from attacker/simulation events; post-run ground-truth overlay.
-- Verify gate green (`scripts/verify.ps1`), golden replays intact, visual verification in Chrome on the rebuilt container.
+- **All-tabs guarantee**: catalogue, active run, incidents, replay, after-action, reports must be accurate and usable at any moment of a live run, not just after it. Mid-run replay is a core loop ("check what I tried earlier"), reconstructing past state as the operator *knew it then* (fog-respecting until run end; full truth after).
+- **Adversary dossier** (owner-ordered, in scope NOW): the after-action assembles the attacker's full campaign — root-cause branch, every attack beat with sim timestamps, what stayed undetected and for how long — as a narrative timeline rendered side-by-side with the defender lane (player actions, agent tasks, approvals). "What they did while you were doing X."
+- Run-page revamp into a command surface (graph centerpiece, agent surface + operator console flanking, ops feed heartbeat) once Phases 3/4/7 land.
+- Replay timeline distinguishes defender lane from attacker/simulation lane.
+- Verify gate green (`scripts/verify.ps1`), golden replays intact, full-app Chrome walkthrough during a live run.
 
 ## Phase 7 — The 2v1: operator console + agent autonomy (owner direction, 2026-07-23)
 
@@ -59,6 +62,16 @@ Product owner direction: the player is an active operator working *alongside* th
 - **Ops feed**: unified live stream of agent findings, player actions, detections, and reveals; chat remains the steering channel and becomes one tab of the agent surface.
 
 Deferred by owner decision: LLM-driven attacker ("adversarial mode") and multi-attacker scenarios — future scenario types, not retrofits.
+
+## Backlog — proprietary AI-leveraged capabilities (owner-approved direction)
+
+- **Threat tempo** (attempt in Phase 7): ambient pressure indicator derived from undisclosed-vs-disclosed attacker progress; conveys "the room feels wrong" without leaking position.
+- **Counterfactual replay ("ghost branch")**: the deterministic engine + checkpoints allow literally re-simulating from a past checkpoint with a different decision — after-action answers "what if you'd isolated 5 minutes earlier?" with a real simulated outcome, not speculation. Unique to simulation; no real SOC can do this.
+- **Containment blast-radius preview**: before a Class 2/3 approval, traverse the dependency graph and show simulated service impact ("isolating file-server severs 3 services") — AI-assisted change-impact analysis at decision time.
+- **Hypothesis ledger / bias guard**: hypotheses (player's and agent's) are living objects continuously re-scored as evidence lands; the agent flags when new evidence contradicts the operator's leading hypothesis.
+- **Commander's intent**: optional one-line intent at run start; agent triages/proposes against it; after-action scores the operator against their own stated intent.
+- **SCRIBE live comms desk**: at any mid-run moment, generate the "what do I tell leadership right now" brief from grounded evidence.
+- **Operator skill telemetry**: cross-run profile of speed/bias/over-containment patterns; agent coaches between runs.
 
 ## Non-goals (this iteration)
 
