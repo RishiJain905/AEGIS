@@ -199,6 +199,20 @@ export const READY_RESPONSE_SCHEMA_VERSION = 1;
 export const DEPENDENCY_STATUS_SCHEMA_VERSION = 1;
 export const METRIC_LABEL_POLICY_SCHEMA_VERSION = 1;
 
+// Phase 7 — operator console, direct actions, rules-of-engagement, autonomy, directives, feed.
+export const RUN_LOADOUT_SCHEMA_VERSION = 1;
+export const OPERATOR_ACTION_REQUEST_SCHEMA_VERSION = 1;
+export const OPERATOR_ACTION_RESPONSE_SCHEMA_VERSION = 1;
+export const ROE_CHANGE_REQUEST_SCHEMA_VERSION = 1;
+export const STANDING_DIRECTIVE_SCHEMA_VERSION = 1;
+export const CREATE_DIRECTIVE_REQUEST_SCHEMA_VERSION = 1;
+export const CONSOLE_EVENT_SEARCH_REQUEST_SCHEMA_VERSION = 1;
+export const CONSOLE_EVENT_SEARCH_RESULT_SCHEMA_VERSION = 1;
+export const CONSOLE_ASSET_DETAIL_SCHEMA_VERSION = 1;
+export const OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION = 1;
+export const RUN_FEED_ENTRY_SCHEMA_VERSION = 1;
+export const RUN_FEED_PAGE_SCHEMA_VERSION = 1;
+
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
   graph_node: [GRAPH_NODE_SCHEMA_VERSION],
@@ -390,4 +404,16 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   ready_response: [READY_RESPONSE_SCHEMA_VERSION],
   dependency_status: [DEPENDENCY_STATUS_SCHEMA_VERSION],
   metric_label_policy: [METRIC_LABEL_POLICY_SCHEMA_VERSION],
+  run_loadout: [RUN_LOADOUT_SCHEMA_VERSION],
+  operator_action_request: [OPERATOR_ACTION_REQUEST_SCHEMA_VERSION],
+  operator_action_response: [OPERATOR_ACTION_RESPONSE_SCHEMA_VERSION],
+  roe_change_request: [ROE_CHANGE_REQUEST_SCHEMA_VERSION],
+  standing_directive: [STANDING_DIRECTIVE_SCHEMA_VERSION],
+  create_directive_request: [CREATE_DIRECTIVE_REQUEST_SCHEMA_VERSION],
+  console_event_search_request: [CONSOLE_EVENT_SEARCH_REQUEST_SCHEMA_VERSION],
+  console_event_search_result: [CONSOLE_EVENT_SEARCH_RESULT_SCHEMA_VERSION],
+  console_asset_detail: [CONSOLE_ASSET_DETAIL_SCHEMA_VERSION],
+  operator_hypothesis_request: [OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION],
+  run_feed_entry: [RUN_FEED_ENTRY_SCHEMA_VERSION],
+  run_feed_page: [RUN_FEED_PAGE_SCHEMA_VERSION],
 };

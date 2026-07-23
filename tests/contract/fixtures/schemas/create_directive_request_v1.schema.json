@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "scopeAssetIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Scopeassetids",
+      "type": "array"
+    },
+    "scopeZoneIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Scopezoneids",
+      "type": "array"
+    },
+    "text": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "text"],
+  "title": "CreateDirectiveRequestV1",
+  "type": "object"
+}

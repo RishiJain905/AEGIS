@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "text": "Monitor the logistics zone network for lateral movement",
+  "scopeAssetIds": ["asset:svc-api-gateway"],
+  "scopeZoneIds": ["zone:logistics"]
+}

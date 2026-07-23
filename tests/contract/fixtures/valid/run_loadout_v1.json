@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "biasGuard": true,
+  "threatTempo": true,
+  "roe": "investigate"
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "sequence": 42,
+  "eventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "type": "autonomy.task.enqueued",
+  "category": "agent",
+  "simTime": "2026-06-30T02:00:00.000Z",
+  "initiator": "autonomy",
+  "summary": "WATCHTOWER auto-tasked on new alert",
+  "payload": {
+    "role": "WATCHTOWER"
+  }
+}

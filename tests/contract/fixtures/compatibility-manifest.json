@@ -146,6 +146,16 @@
       "sha256": "4189b3623708b32324c31bbab640de5aeb94e1968a2419f8ab7ddd12648ad7b1"
     },
     {
+      "path": "tests/contract/fixtures/schemas/console_event_search_request_v1.schema.json",
+      "sha256": "167927e3c4b960e319698e6d90d2ae39f52e31cd2229fa79e14f2282fb2a2a9d",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/console_event_search_result_v1.schema.json",
+      "sha256": "f779ddb5045f245da2620be82303eb725d302446a0f96a93ecc499662c904c82",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/consumer_cursor_v1.schema.json",
       "sha256": "73f65b1467ebd0fd491efadd0d747890b516cbf4413d220ecc27d82c418a5226"
     },
@@ -156,6 +166,11 @@
     {
       "path": "tests/contract/fixtures/schemas/create_agent_task_request_v1.schema.json",
       "sha256": "e491d26998c2d3a6e605d662dacb34c1bb2269fff38e5d21571ce2ffd49340ee"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/create_directive_request_v1.schema.json",
+      "sha256": "230bc53203153ba8391d24dbd7a42dfc6d731d4881b2586b33921631837af4ef",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/cursor_page_v1.schema.json",
@@ -173,6 +188,12 @@
       "path": "tests/contract/fixtures/schemas/decision_review_v1.schema.json",
       "sha256": "7e144a134455be446a282441e1b3a9cf30dda131d747860248ca7b0f1e105e87",
       "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/dependency_status_v1.schema.json",
+      "sha256": "8fbb41291174065b2156c665569590fe262cad2353e0a36fc71b887ec5753fe3",
+      "kind": "schema",
+      "contract": "dependency_status_v1"
     },
     {
       "path": "tests/contract/fixtures/schemas/event_envelope_v1.schema.json",
@@ -267,6 +288,12 @@
       "sha256": "909843a95d187336a6dc0a5256ee1870023b78f0bcfb3f709708e9b1c5b2def5"
     },
     {
+      "path": "tests/contract/fixtures/schemas/health_response_v1.schema.json",
+      "sha256": "87a04c5cee6979a479ac29fa1fa08daffcb82b97b98c065cf1ccbeb122f82689",
+      "kind": "schema",
+      "contract": "health_response_v1"
+    },
+    {
       "path": "tests/contract/fixtures/schemas/historical_graph_adapter_v1.schema.json",
       "sha256": "a320554e8e39a4ac9c6b830571ee6d082bdecfe7014a6e0500d0c56d87b55b8c"
     },
@@ -297,6 +324,12 @@
     {
       "path": "tests/contract/fixtures/schemas/live_run_v1.schema.json",
       "sha256": "ed4f27ffb83fb01705de93093a3489fb1769e5f10d528c73437e0d738572ef81"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/metric_label_policy_v1.schema.json",
+      "sha256": "e193088751cfd939181e0695a249864f7ed4b0ec586208111e7930745a6a76e3",
+      "kind": "schema",
+      "contract": "metric_label_policy_v1"
     },
     {
       "path": "tests/contract/fixtures/schemas/missed_evidence_item_v1.schema.json",
@@ -360,6 +393,21 @@
       "sha256": "bb9b3e106534f045f6d3e1926376d220b21462a58a0a68895026e83edba36e35"
     },
     {
+      "path": "tests/contract/fixtures/schemas/operator_action_request_v1.schema.json",
+      "sha256": "125e77fd5abc163fe340f2356c4989bb7a452951a5a39152c929534888c6a5fd",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/operator_action_response_v1.schema.json",
+      "sha256": "77d9d0bba1bdee44f50d0fafa7e48a0e3c1435823aa52afd03359114773d685b",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/operator_hypothesis_request_v1.schema.json",
+      "sha256": "34cea3f543aa7a112d16a51ae229c4e658948eb7186bb0828f1564f65dbae96e",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/permission_v1.schema.json",
       "sha256": "8ddcc4cc6d0d938664c6134cf304c4e2f3a460de37d52ba85a6cb4f0fc02cc0d",
       "schemaVersion": 1
@@ -403,6 +451,12 @@
     {
       "path": "tests/contract/fixtures/schemas/provider_usage_v1.schema.json",
       "sha256": "1c6e2236f1e913d92a529248c968b6076df4535241f140f80e576fe57625c1cf"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/ready_response_v1.schema.json",
+      "sha256": "0faef32cb107e564168791c6a1e1664f180021660951bfba877782fe5eb9a989",
+      "kind": "schema",
+      "contract": "ready_response_v1"
     },
     {
       "path": "tests/contract/fixtures/schemas/realtime_message_envelope_v1.schema.json",
@@ -522,6 +576,11 @@
       "sha256": "bb44965b54e4ec92a1d1a68f41fd78f09db9e18076389bcac525476dd3edc326"
     },
     {
+      "path": "tests/contract/fixtures/schemas/roe_change_request_v1.schema.json",
+      "sha256": "41c37651b5d8beff2dfef34112727f2c84bc724d4f3092fb6971ba6b075d84c1",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/role_v1.schema.json",
       "sha256": "d931f3c313ced49d17438448b4d533e62b3aaff32b6002670d9cc978cbe74199",
       "schemaVersion": 1
@@ -542,6 +601,21 @@
     {
       "path": "tests/contract/fixtures/schemas/run_create_request_v1.schema.json",
       "sha256": "a510e472d818c421c0731e4698a98560ddb5f97b09fbe2235f18f0c16d41b465"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/run_feed_entry_v1.schema.json",
+      "sha256": "08c73c5065c7d66bc4f6c8af5306ab288e47e18cbfda804c701c1a63469bdb9b",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/run_feed_page_v1.schema.json",
+      "sha256": "b137c5eb4c3a71795b9ca9f50cf1d66d564e8d8d3e289a23fbdbf9ab14f788ca",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/run_loadout_v1.schema.json",
+      "sha256": "448b94a59c48759094523e5327a56fdb106659538909e9d67d0b976088207803",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/run_score_v1.schema.json",
@@ -620,12 +694,29 @@
       "sha256": "6980ae81b53b94eac8c5c8e2bdec38c024d2a99589560b7589c125a159cdf4ef"
     },
     {
+      "path": "tests/contract/fixtures/schemas/standing_directive_v1.schema.json",
+      "sha256": "7390173407bdb37a5ee5acc3b8c47ad6c9da6519827ec89a996cbb7f3a592477",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/state_diff_v1.schema.json",
       "sha256": "b96cb7b31af925a783a31b6d81be8176e6ff067bb97a7b9288f77e7213583a25"
     },
     {
+      "path": "tests/contract/fixtures/schemas/structured_log_record_v1.schema.json",
+      "sha256": "39ba2b1f09311b70e87b472607f6fa3eae6f65030f3336f8fea928962eb9f318",
+      "kind": "schema",
+      "contract": "structured_log_record_v1"
+    },
+    {
       "path": "tests/contract/fixtures/schemas/structured_output_spec_v1.schema.json",
       "sha256": "ae9c0a27cfd8ae39c30a66057ab27f0a35de01e16595249c87d258baf2020c0b"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/telemetry_context_v1.schema.json",
+      "sha256": "9d8f843deae94b107e92f865b5f9df0a67a707c4ad50d91935854087285db320",
+      "kind": "schema",
+      "contract": "telemetry_context_v1"
     },
     {
       "path": "tests/contract/fixtures/schemas/timeline_entry_v1.schema.json",
@@ -832,6 +923,16 @@
       "sha256": "22b6dd693b66f5fed39924d3b720882d7f4377f367fa62a6aa1e2f4b5f5fa290"
     },
     {
+      "path": "tests/contract/fixtures/valid/console_event_search_request_v1.json",
+      "sha256": "c0e58b443e5f93d3e525a0ab93e79a870e5d173d790aa7c152932e993b7f6242",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/console_event_search_result_v1.json",
+      "sha256": "99e158629f4e8b19938c007669be81d27eb2acd8479909d95d5e6319859d972e",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/consumer_cursor_v1.json",
       "sha256": "a928893ca295ce605a6c243201b1f702d0ba9ad0ba3f75b74dae013635af7960"
     },
@@ -842,6 +943,11 @@
     {
       "path": "tests/contract/fixtures/valid/create_agent_task_request_v1.json",
       "sha256": "b30f4b6cf7a2c9c4cb831e7ca44ed7f70d499c330d7b666555331ff73e22b1ac"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/create_directive_request_v1.json",
+      "sha256": "649fa8025eb7cace0dcb6c9781ea5b65c29f50526248584ce3496946510a587b",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/cursor_page_v1.json",
@@ -859,6 +965,12 @@
       "path": "tests/contract/fixtures/valid/decision_review_v1.json",
       "sha256": "cb22770d03d63c420e75d1b3721d4b1e628f04b6fef51b39f42f30b579d22116",
       "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/dependency_status_v1.json",
+      "sha256": "bd0aceb47c7b2fe8adfaeb6bba7d7d43120274dd37d686a56d8c4e23e66a1020",
+      "kind": "valid_fixture",
+      "contract": "dependency_status_v1"
     },
     {
       "path": "tests/contract/fixtures/valid/event_envelope_v1.json",
@@ -953,6 +1065,12 @@
       "sha256": "564cfb0984ad25c6edd3afa2e98319c07b9f490346ee7629bfcf1d0ce6229d7d"
     },
     {
+      "path": "tests/contract/fixtures/valid/health_response_v1.json",
+      "sha256": "72f1ba90ef2d7db58d4bcd95d7d442643f51a103d0fc2687bb6e6e1768d1d404",
+      "kind": "valid_fixture",
+      "contract": "health_response_v1"
+    },
+    {
       "path": "tests/contract/fixtures/valid/historical_graph_adapter_v1.json",
       "sha256": "e2043dc64807df81f2a259b53865dcd641e8121f076d6a952489d8d84edef159"
     },
@@ -983,6 +1101,12 @@
     {
       "path": "tests/contract/fixtures/valid/live_run_v1.json",
       "sha256": "d0ae521e37bf8a75c2a2c1eafe2b20f0fbbfcb3a154b25274f192518e05b43b2"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/metric_label_policy_v1.json",
+      "sha256": "78da8dc5aeb462c14b3e9214c6bd247c544e2bb49c6d889a05aada0516b93b97",
+      "kind": "valid_fixture",
+      "contract": "metric_label_policy_v1"
     },
     {
       "path": "tests/contract/fixtures/valid/missed_evidence_item_v1.json",
@@ -1046,6 +1170,21 @@
       "sha256": "8c29a93f38e9dcb579d6fe488380a51cf4ea67421461a51d8b9369212ff10a71"
     },
     {
+      "path": "tests/contract/fixtures/valid/operator_action_request_v1.json",
+      "sha256": "140dba740a41dc742ccf9fc607f906787527ae22030a5a87785402e1cfe11009",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/operator_action_response_v1.json",
+      "sha256": "e69ed663c07c230de5f0cfa38110165998bfd9c7e73aaae2e5c7c614acfc35d0",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/operator_hypothesis_request_v1.json",
+      "sha256": "7e5cc4a8d393ea1927ef06dd7729483c14a65f3ec9cf649e1c5aad57ea4d3bd9",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/permission_v1.json",
       "sha256": "16eb486ef3c294cbe8f01abdc10fb4cc637fbe07877a3800188665c22ba0fbda",
       "schemaVersion": 1
@@ -1089,6 +1228,12 @@
     {
       "path": "tests/contract/fixtures/valid/provider_usage_v1.json",
       "sha256": "706c2e86c00bbd4907c18bf0197f3598697a4c68c4b804a0f77ce21e7c213e55"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/ready_response_v1.json",
+      "sha256": "5c1787c143a9b6cccf3f86ed8a2df212ac54c5cbaf2b08139f6ff642343b7a60",
+      "kind": "valid_fixture",
+      "contract": "ready_response_v1"
     },
     {
       "path": "tests/contract/fixtures/valid/realtime_message_envelope_v1.json",
@@ -1136,7 +1281,7 @@
     },
     {
       "path": "tests/contract/fixtures/valid/replay_state_v1.json",
-      "sha256": "8b2a8864b526dc81d811255dba19492c725c2a0d8316ab463c646a85bb04fdfa"
+      "sha256": "a066c85e3ae4f28afda6c67a45d07627c64598904908fd7154741ad612882646"
     },
     {
       "path": "tests/contract/fixtures/valid/replay_view_state_v1.json",
@@ -1208,6 +1353,11 @@
       "sha256": "7dc844f22b4663772c412c97742f4cab485473bbf25ce01420bbe8f000220731"
     },
     {
+      "path": "tests/contract/fixtures/valid/roe_change_request_v1.json",
+      "sha256": "712ba8775265ed1bf5559cdd08aff27d2c28a75a971c46547e1178b7ce2ef37c",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/role_v1.json",
       "sha256": "b773a138db12d92a859257653db06f568e9282564f640158be5fe153c154e385",
       "schemaVersion": 1
@@ -1228,6 +1378,21 @@
     {
       "path": "tests/contract/fixtures/valid/run_create_request_v1.json",
       "sha256": "e3fbec748380ff46dedc480bf9eabf66a0f3620f5143374a10e7e087350cd0b4"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/run_feed_entry_v1.json",
+      "sha256": "f00a05c437f29c883758a7866c16bcd46e56b00c8bccca6c0cdf663109442f26",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/run_feed_page_v1.json",
+      "sha256": "b112bc88fb9b1820f588874af10053beef075a1fa30bd2bc100bacc6720c9fef",
+      "schemaVersion": 1
+    },
+    {
+      "path": "tests/contract/fixtures/valid/run_loadout_v1.json",
+      "sha256": "9572a1843b67dd795cbf0eb7309f13e7ea57def8617f36dfbba3d2dab41a2df5",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/run_score_v1.json",
@@ -1306,12 +1471,29 @@
       "sha256": "58dc4c22dc9754e124d68be7b4a26b57cb5a12819bcf2c26679d578f6085bfd5"
     },
     {
+      "path": "tests/contract/fixtures/valid/standing_directive_v1.json",
+      "sha256": "4ea05b67ab2aa54cfa4cc16972761c5018d60343720e301d476d1bed4067a573",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/state_diff_v1.json",
       "sha256": "71d74567f1e5d561bbbba33f9148366ac16868010582b8827ad7bdf8e04ed759"
     },
     {
+      "path": "tests/contract/fixtures/valid/structured_log_record_v1.json",
+      "sha256": "6b073f42e4d169fd569df594855924f3b678c45d262d486ff2556d3ce2e5e482",
+      "kind": "valid_fixture",
+      "contract": "structured_log_record_v1"
+    },
+    {
       "path": "tests/contract/fixtures/valid/structured_output_spec_v1.json",
       "sha256": "cbeafb1496fbe55fc546467d981a375922915c6eded4aa7a382c2e42ab231618"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/telemetry_context_v1.json",
+      "sha256": "4070e1aa717bbe5bcadeda7e1ca31cb631038641a52d4b8a783896a476a4c0ec",
+      "kind": "valid_fixture",
+      "contract": "telemetry_context_v1"
     },
     {
       "path": "tests/contract/fixtures/valid/timeline_entry_v1.json",
@@ -1373,78 +1555,6 @@
     {
       "path": "tests/contract/fixtures/valid/world_state_snapshot_v1.json",
       "sha256": "e39f1433a647563663fc974cedf92de7ed097294866173df1e9de7c40fe95d91"
-    },
-    {
-      "path": "tests/contract/fixtures/schemas/telemetry_context_v1.schema.json",
-      "sha256": "9d8f843deae94b107e92f865b5f9df0a67a707c4ad50d91935854087285db320",
-      "kind": "schema",
-      "contract": "telemetry_context_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/valid/telemetry_context_v1.json",
-      "sha256": "4070e1aa717bbe5bcadeda7e1ca31cb631038641a52d4b8a783896a476a4c0ec",
-      "kind": "valid_fixture",
-      "contract": "telemetry_context_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/schemas/structured_log_record_v1.schema.json",
-      "sha256": "39ba2b1f09311b70e87b472607f6fa3eae6f65030f3336f8fea928962eb9f318",
-      "kind": "schema",
-      "contract": "structured_log_record_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/valid/structured_log_record_v1.json",
-      "sha256": "6b073f42e4d169fd569df594855924f3b678c45d262d486ff2556d3ce2e5e482",
-      "kind": "valid_fixture",
-      "contract": "structured_log_record_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/schemas/health_response_v1.schema.json",
-      "sha256": "87a04c5cee6979a479ac29fa1fa08daffcb82b97b98c065cf1ccbeb122f82689",
-      "kind": "schema",
-      "contract": "health_response_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/valid/health_response_v1.json",
-      "sha256": "72f1ba90ef2d7db58d4bcd95d7d442643f51a103d0fc2687bb6e6e1768d1d404",
-      "kind": "valid_fixture",
-      "contract": "health_response_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/schemas/ready_response_v1.schema.json",
-      "sha256": "0faef32cb107e564168791c6a1e1664f180021660951bfba877782fe5eb9a989",
-      "kind": "schema",
-      "contract": "ready_response_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/valid/ready_response_v1.json",
-      "sha256": "5c1787c143a9b6cccf3f86ed8a2df212ac54c5cbaf2b08139f6ff642343b7a60",
-      "kind": "valid_fixture",
-      "contract": "ready_response_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/schemas/dependency_status_v1.schema.json",
-      "sha256": "8fbb41291174065b2156c665569590fe262cad2353e0a36fc71b887ec5753fe3",
-      "kind": "schema",
-      "contract": "dependency_status_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/valid/dependency_status_v1.json",
-      "sha256": "bd0aceb47c7b2fe8adfaeb6bba7d7d43120274dd37d686a56d8c4e23e66a1020",
-      "kind": "valid_fixture",
-      "contract": "dependency_status_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/schemas/metric_label_policy_v1.schema.json",
-      "sha256": "e193088751cfd939181e0695a249864f7ed4b0ec586208111e7930745a6a76e3",
-      "kind": "schema",
-      "contract": "metric_label_policy_v1"
-    },
-    {
-      "path": "tests/contract/fixtures/valid/metric_label_policy_v1.json",
-      "sha256": "78da8dc5aeb462c14b3e9214c6bd247c544e2bb49c6d889a05aada0516b93b97",
-      "kind": "valid_fixture",
-      "contract": "metric_label_policy_v1"
     }
   ]
 }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { idempotencyMetadataSchema } from './api';
-import { runSchema } from './entities';
+import { runLoadoutSchema, runSchema } from './entities';
 import { graphDeltaSchema, graphSnapshotSchema } from './graph';
 import { runIdSchema, sequenceSchema, simTimestampSchema } from './primitives';
 import {
@@ -184,6 +184,9 @@ export const runCreateRequestSchema = z
     // persist it (server-side RNG). A supplied seed pins the run deterministically.
     seed: z.number().int().optional(),
     runId: runIdSchema.optional(),
+    // Phase 7 capability loadout chosen at launch. Additive optional field
+    // (schemaVersion stays 1): when omitted the server persists the default loadout.
+    loadout: runLoadoutSchema.nullable().optional(),
   })
   .strict()
   .superRefine((value, ctx) => {

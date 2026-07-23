@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "events": [
+    {
+      "eventId": "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "sequence": 42,
+      "type": "auth.login.failed",
+      "simTime": "2026-06-30T02:00:00.000Z",
+      "assetId": "asset:svc-api-gateway",
+      "payload": {
+        "source": "device-workstation-01"
+      }
+    }
+  ],
+  "count": 1,
+  "nextCursor": 43
+}

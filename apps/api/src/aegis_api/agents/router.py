@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import Annotated
 
 from aegis_agents.runtime.errors import AgentRuntimeError
@@ -51,10 +52,8 @@ async def _execute_committing_failure(task_id: str) -> None:
     """
     executor = create_task_executor(force_in_memory=False)
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
-        try:
+        with contextlib.suppress(AgentRuntimeError):
             await executor.execute(uow, task_id)
-        except AgentRuntimeError:
-            pass
 
 
 @router.get("/agents/registry")

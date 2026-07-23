@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { agentSessionSchema } from './entities';
+import { agentSessionSchema, autonomyInitiatorSchema } from './entities';
 import {
   agentArtifactIdSchema,
   agentSessionIdSchema,
@@ -134,6 +134,9 @@ export const agentTaskSchema = z
     traceId: traceIdSchema,
     providerId: z.string().min(1).max(64),
     instructions: z.string().max(MAX_OPERATOR_INSTRUCTIONS_LENGTH).nullable().optional(),
+    // Phase 7: who originated the task ("operator" default, "autonomy" for the
+    // event-driven triage loop). Additive optional field.
+    initiator: autonomyInitiatorSchema.default('operator'),
     errorCode: z.string().nullable().optional(),
     errorMessage: z.string().nullable().optional(),
     createdAt: utcTimestampSchema,
@@ -237,6 +240,8 @@ export const createAgentTaskRequestSchema = z
     idempotencyKey: z.string().min(1).max(256),
     providerId: z.string().nullable().optional(),
     instructions: z.string().max(MAX_OPERATOR_INSTRUCTIONS_LENGTH).nullable().optional(),
+    // Phase 7: task origin. Defaults to "operator"; the autonomy loop passes "autonomy".
+    initiator: autonomyInitiatorSchema.default('operator'),
   })
   .strict();
 

@@ -50,6 +50,41 @@ def test_create_run_start_and_step(api_client: TestClient) -> None:
     assert bootstrap["lastAppliedSequence"] >= 1
 
 
+def test_create_run_persists_requested_loadout(api_client: TestClient) -> None:
+    """A run's requested loadout round-trips instead of falling back to the default."""
+    csrf = login_as(api_client)
+    # Every field differs from the RunLoadoutV1 defaults (biasGuard/threatTempo True,
+    # roe "investigate"), so a persisted default would fail these assertions.
+    create_response = api_client.post(
+        "/api/v1/runs",
+        json={
+            "schemaVersion": 1,
+            "scenarioPackagePath": "scenarios/operation-silent-relay",
+            "seed": 1007,
+            "loadout": {
+                "schemaVersion": 1,
+                "biasGuard": False,
+                "threatTempo": False,
+                "roe": "forward_deployed",
+            },
+        },
+        headers={"Idempotency-Key": "integration-create-loadout", **auth_headers(csrf)},
+    )
+    assert create_response.status_code == 200, create_response.text
+    created_loadout = create_response.json()["run"]["loadout"]
+    assert created_loadout == {
+        "schemaVersion": 1,
+        "biasGuard": False,
+        "threatTempo": False,
+        "roe": "forward_deployed",
+    }
+
+    run_id = create_response.json()["run"]["id"]
+    get_response = api_client.get(f"/api/v1/runs/{run_id}")
+    assert get_response.status_code == 200, get_response.text
+    assert get_response.json()["loadout"] == created_loadout
+
+
 def test_run_command_idempotency(api_client: TestClient) -> None:
     csrf = login_as(api_client)
     create_response = api_client.post(

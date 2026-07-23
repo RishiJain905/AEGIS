@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "proposalId": "prp_01ARZ3NDEKTSV4RRFFQ69G5FAY",
+  "incidentId": "incident:inc_operator_001",
+  "actionClass": "class_2",
+  "status": "executed",
+  "policyOutcome": "approval_required",
+  "reasonCodes": ["approval_required_operational"],
+  "executed": true,
+  "executedActionId": "act_01ARZ3NDEKTSV4RRFFQ69G5FB0",
+  "approvalId": "apr_01ARZ3NDEKTSV4RRFFQ69G5FAZ"
+}

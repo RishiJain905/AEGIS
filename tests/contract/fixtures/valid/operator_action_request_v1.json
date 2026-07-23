@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "scenarioCommand": "isolate",
+  "targetAssetId": "asset:device-workstation-01",
+  "reason": "Contain suspected compromised workstation",
+  "confirm": true,
+  "incidentId": "incident:inc_operator_001",
+  "idempotencyKey": "op-action-0001"
+}

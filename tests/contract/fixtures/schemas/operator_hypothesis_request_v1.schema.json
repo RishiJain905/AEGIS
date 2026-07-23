@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "description": "Create an operator-pinned hypothesis, stored alongside agent hypotheses.",
+  "properties": {
+    "assetIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Assetids",
+      "type": "array"
+    },
+    "confidence": {
+      "default": 0.5,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "incidentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "statement": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Statement",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "statement"],
+  "title": "OperatorHypothesisRequestV1",
+  "type": "object"
+}

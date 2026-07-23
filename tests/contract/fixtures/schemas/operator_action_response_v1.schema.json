@@ -1,0 +1,90 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "enum": ["class_0", "class_1", "class_2", "class_3"],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "OperatorActionStatusV1": {
+      "enum": ["executed", "confirmation_required", "blocked"],
+      "title": "OperatorActionStatusV1",
+      "type": "string"
+    },
+    "PolicyOutcomeV1": {
+      "enum": ["allow", "block", "approval_required"],
+      "title": "PolicyOutcomeV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actionClass": {
+      "$ref": "#/$defs/ActionClass"
+    },
+    "approvalId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approvalid"
+    },
+    "executed": {
+      "default": false,
+      "title": "Executed",
+      "type": "boolean"
+    },
+    "executedActionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Executedactionid"
+    },
+    "incidentId": {
+      "title": "Incidentid",
+      "type": "string"
+    },
+    "policyOutcome": {
+      "$ref": "#/$defs/PolicyOutcomeV1"
+    },
+    "proposalId": {
+      "title": "Proposalid",
+      "type": "string"
+    },
+    "reasonCodes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reasoncodes",
+      "type": "array"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/OperatorActionStatusV1"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "proposalId",
+    "incidentId",
+    "actionClass",
+    "status",
+    "policyOutcome"
+  ],
+  "title": "OperatorActionResponseV1",
+  "type": "object"
+}

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "statement": "The API gateway is the initial access point for the intrusion",
+  "assetIds": ["asset:svc-api-gateway"],
+  "confidence": 0.7,
+  "incidentId": "incident:inc_operator_001"
+}

@@ -63,6 +63,7 @@ from aegis_contracts.entities import (
     IncidentV1,
     ModelManifestV1,
     ModelScoreV1,
+    RunLoadoutV1,
     RunV1,
     ScenarioV1,
     ScenarioVersionV1,
@@ -135,6 +136,18 @@ from aegis_contracts.observability import (
     ReadyResponseV1,
     StructuredLogRecordV1,
     TelemetryContextV1,
+)
+from aegis_contracts.operator import (
+    ConsoleEventSearchRequestV1,
+    ConsoleEventSearchResultV1,
+    CreateDirectiveRequestV1,
+    OperatorActionRequestV1,
+    OperatorActionResponseV1,
+    OperatorHypothesisRequestV1,
+    RoeChangeRequestV1,
+    RunFeedEntryV1,
+    RunFeedPageV1,
+    StandingDirectiveV1,
 )
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
 from aegis_contracts.proposals import (
@@ -390,4 +403,15 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "ready_response_v1": ReadyResponseV1,
     "dependency_status_v1": DependencyStatusV1,
     "metric_label_policy_v1": MetricLabelPolicyV1,
+    "run_loadout_v1": RunLoadoutV1,
+    "operator_action_request_v1": OperatorActionRequestV1,
+    "operator_action_response_v1": OperatorActionResponseV1,
+    "roe_change_request_v1": RoeChangeRequestV1,
+    "standing_directive_v1": StandingDirectiveV1,
+    "create_directive_request_v1": CreateDirectiveRequestV1,
+    "console_event_search_request_v1": ConsoleEventSearchRequestV1,
+    "console_event_search_result_v1": ConsoleEventSearchResultV1,
+    "operator_hypothesis_request_v1": OperatorHypothesisRequestV1,
+    "run_feed_entry_v1": RunFeedEntryV1,
+    "run_feed_page_v1": RunFeedPageV1,
 }

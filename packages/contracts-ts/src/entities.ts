@@ -32,6 +32,7 @@ import {
   INCIDENT_SCHEMA_VERSION,
   MODEL_MANIFEST_SCHEMA_VERSION,
   MODEL_SCORE_SCHEMA_VERSION,
+  RUN_LOADOUT_SCHEMA_VERSION,
   RUN_SCHEMA_VERSION,
   SCENARIO_SCHEMA_VERSION,
   SCENARIO_VERSION_SCHEMA_VERSION,
@@ -86,6 +87,29 @@ export const ProposalStatus = {
   CANCELLED: 'cancelled',
 } as const;
 
+// Phase 7 — per-run autonomy dial. Higher tiers let agents act more proactively;
+// every state change still passes policy + human approval (Class 2/3 never auto-execute).
+export const RulesOfEngagement = {
+  OBSERVE: 'observe',
+  INVESTIGATE: 'investigate',
+  FORWARD_DEPLOYED: 'forward_deployed',
+} as const;
+
+export const rulesOfEngagementSchema = z.enum(['observe', 'investigate', 'forward_deployed']);
+
+export type RulesOfEngagementV1 = z.infer<typeof rulesOfEngagementSchema>;
+
+// Phase 7 — who originated an agent task, so the UI can distinguish autonomous
+// initiative from operator tasking.
+export const AutonomyInitiator = {
+  OPERATOR: 'operator',
+  AUTONOMY: 'autonomy',
+} as const;
+
+export const autonomyInitiatorSchema = z.enum(['operator', 'autonomy']);
+
+export type AutonomyInitiatorV1 = z.infer<typeof autonomyInitiatorSchema>;
+
 export const ApprovalDecision = {
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -104,6 +128,18 @@ const schemaVersionCheck = (expected: number) =>
         });
       }
     });
+
+// Phase 7 — per-run capability loadout chosen at launch; a variety axis alongside the seed.
+export const runLoadoutSchema = z
+  .object({
+    schemaVersion: schemaVersionCheck(RUN_LOADOUT_SCHEMA_VERSION),
+    biasGuard: z.boolean().default(true),
+    threatTempo: z.boolean().default(true),
+    roe: rulesOfEngagementSchema.default('investigate'),
+  })
+  .strict();
+
+export type RunLoadoutV1 = z.infer<typeof runLoadoutSchema>;
 
 export const scenarioSchema = z
   .object({
@@ -139,6 +175,10 @@ export const runSchema = z
     // Owner of the run (the authenticated actor that created it). Additive optional
     // field (schemaVersion stays 1); legacy/seeded rows may be null. See ADR 0034.
     ownerUserId: authoredIdSchema.nullable().optional(),
+    // Phase 7 capability loadout chosen at launch (bias guard, threat tempo, RoE).
+    // Additive optional field (schemaVersion stays 1): legacy/seeded rows are null and
+    // treated as the default loadout.
+    loadout: runLoadoutSchema.nullable().optional(),
   })
   .strict();
 

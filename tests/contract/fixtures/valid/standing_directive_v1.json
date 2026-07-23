@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "directive_01ARZ3NDEKTSV4RRFFQ69G5FC1",
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "text": "Monitor the logistics zone network for lateral movement",
+  "scopeAssetIds": ["asset:svc-api-gateway"],
+  "scopeZoneIds": ["zone:logistics"],
+  "active": true,
+  "createdBy": "operator:synthetic-001",
+  "createdAt": "2026-06-30T02:00:00.000Z"
+}

@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "ConsoleEventV1": {
+      "additionalProperties": false,
+      "properties": {
+        "assetId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assetid"
+        },
+        "eventId": {
+          "title": "Eventid",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        },
+        "sequence": {
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "simTime": {
+          "title": "Simtime",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": ["eventId", "sequence", "type", "simTime"],
+      "title": "ConsoleEventV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "count": {
+      "default": 0,
+      "title": "Count",
+      "type": "integer"
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/ConsoleEventV1"
+      },
+      "title": "Events",
+      "type": "array"
+    },
+    "nextCursor": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Nextcursor"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion"],
+  "title": "ConsoleEventSearchResultV1",
+  "type": "object"
+}

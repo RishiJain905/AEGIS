@@ -76,6 +76,7 @@
     {
       "schemaVersion": 1,
       "id": "agent-session:ags_synthetic_001",
+      "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
       "incidentId": "incident:inc_synthetic_001",
       "role": "TRACE",
       "state": "gathering",

@@ -1,0 +1,57 @@
+{
+  "additionalProperties": false,
+  "description": "A persistent operator tasking re-evaluated when new matching evidence lands.",
+  "properties": {
+    "active": {
+      "default": true,
+      "title": "Active",
+      "type": "boolean"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "createdBy": {
+      "title": "Createdby",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "scopeAssetIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Scopeassetids",
+      "type": "array"
+    },
+    "scopeZoneIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Scopezoneids",
+      "type": "array"
+    },
+    "text": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "id", "runId", "text", "createdBy", "createdAt"],
+  "title": "StandingDirectiveV1",
+  "type": "object"
+}

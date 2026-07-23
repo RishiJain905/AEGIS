@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "ScenarioCommandTemplateV1": {
+      "enum": [
+        "observe",
+        "increase_monitoring",
+        "isolate",
+        "revoke_credentials",
+        "restrict_access",
+        "restart_service",
+        "rollback_deployment"
+      ],
+      "title": "ScenarioCommandTemplateV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Player-initiated containment. Flows through the policy engine exactly like an\nagent proposal; Class 2/3 require ``confirm`` (operator is the incident commander).",
+  "properties": {
+    "confirm": {
+      "default": false,
+      "title": "Confirm",
+      "type": "boolean"
+    },
+    "idempotencyKey": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Idempotencykey",
+      "type": "string"
+    },
+    "incidentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incidentid"
+    },
+    "reason": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "scenarioCommand": {
+      "$ref": "#/$defs/ScenarioCommandTemplateV1"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "targetAssetId": {
+      "title": "Targetassetid",
+      "type": "string"
+    }
+  },
+  "required": ["schemaVersion", "scenarioCommand", "targetAssetId", "reason", "idempotencyKey"],
+  "title": "OperatorActionRequestV1",
+  "type": "object"
+}

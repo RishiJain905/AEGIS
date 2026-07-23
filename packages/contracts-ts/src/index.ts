@@ -171,6 +171,7 @@ export function safeParseAegisEnvironment(env: Record<string, string | undefined
 }
 
 export * from './agent-runtime';
+export * from './operator';
 export * from './investigation';
 export * from './hypothesis';
 export * from './proposals';
@@ -257,6 +258,19 @@ import {
   structuredLogRecordSchema,
   telemetryContextSchema,
 } from './observability';
+import {
+  consoleEventSearchRequestSchema,
+  consoleEventSearchResultSchema,
+  createDirectiveRequestSchema,
+  operatorActionRequestSchema,
+  operatorActionResponseSchema,
+  operatorHypothesisRequestSchema,
+  roeChangeRequestSchema,
+  runFeedEntrySchema,
+  runFeedPageSchema,
+  standingDirectiveSchema,
+} from './operator';
+import { runLoadoutSchema } from './entities';
 
 export const FIXTURE_SCHEMA_MAP = {
   event_envelope_v1: domainEventEnvelopeSchema,
@@ -418,4 +432,15 @@ export const FIXTURE_SCHEMA_MAP = {
   ready_response_v1: readyResponseSchema,
   dependency_status_v1: dependencyStatusSchema,
   metric_label_policy_v1: metricLabelPolicySchema,
+  run_loadout_v1: runLoadoutSchema,
+  operator_action_request_v1: operatorActionRequestSchema,
+  operator_action_response_v1: operatorActionResponseSchema,
+  roe_change_request_v1: roeChangeRequestSchema,
+  standing_directive_v1: standingDirectiveSchema,
+  create_directive_request_v1: createDirectiveRequestSchema,
+  console_event_search_request_v1: consoleEventSearchRequestSchema,
+  console_event_search_result_v1: consoleEventSearchResultSchema,
+  operator_hypothesis_request_v1: operatorHypothesisRequestSchema,
+  run_feed_entry_v1: runFeedEntrySchema,
+  run_feed_page_v1: runFeedPageSchema,
 } as const;

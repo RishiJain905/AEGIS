@@ -1,0 +1,24 @@
+{
+  "$defs": {
+    "RulesOfEngagementV1": {
+      "description": "Per-run autonomy dial (Phase 7). Higher tiers let agents act more proactively;\nevery state change still passes policy + human approval (Class 2/3 never auto-execute).",
+      "enum": ["observe", "investigate", "forward_deployed"],
+      "title": "RulesOfEngagementV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "roe": {
+      "$ref": "#/$defs/RulesOfEngagementV1"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "roe"],
+  "title": "RoeChangeRequestV1",
+  "type": "object"
+}
