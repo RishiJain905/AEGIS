@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "scenario:synthetic-training",
+  "description": "Safe presentation hints for cinematic replay of the tutorial scenario. Never reveal hidden causes.",
+  "hints": [
+    {
+      "schemaVersion": 1,
+      "id": "hint_baseline_overview",
+      "scenarioId": "scenario:synthetic-training",
+      "kind": "chapter_anchor",
+      "sequence": 0,
+      "entityIds": [],
+      "caption": "Establish the operational graph under baseline conditions.",
+      "chapterId": "chapter-baseline",
+      "requiresEvidenceIds": [],
+      "revealsHiddenCause": false,
+      "hiddenCauseId": null
+    },
+    {
+      "schemaVersion": 1,
+      "id": "hint_first_signal",
+      "scenarioId": "scenario:synthetic-training",
+      "kind": "emphasis",
+      "sequence": 20,
+      "entityIds": ["asset:device-workstation-alpha"],
+      "caption": "The first suspicious activity appears on the instructor workstation.",
+      "chapterId": "chapter-first-signal",
+      "requiresEvidenceIds": [],
+      "revealsHiddenCause": false,
+      "hiddenCauseId": null
+    },
+    {
+      "schemaVersion": 1,
+      "id": "hint_identity_pressure",
+      "scenarioId": "scenario:synthetic-training",
+      "kind": "emphasis",
+      "sequence": 40,
+      "entityIds": ["asset:svc-identity-provider"],
+      "caption": "Authentication pressure builds against the identity provider.",
+      "chapterId": "chapter-escalation",
+      "requiresEvidenceIds": [],
+      "revealsHiddenCause": false,
+      "hiddenCauseId": null
+    },
+    {
+      "schemaVersion": 1,
+      "id": "hint_lateral_fileserver",
+      "scenarioId": "scenario:synthetic-training",
+      "kind": "emphasis",
+      "sequence": 70,
+      "entityIds": ["asset:svc-file-server"],
+      "caption": "Activity concentrates on the file server as the intrusion spreads.",
+      "chapterId": "chapter-escalation",
+      "requiresEvidenceIds": [],
+      "revealsHiddenCause": false,
+      "hiddenCauseId": null
+    },
+    {
+      "schemaVersion": 1,
+      "id": "hint_records_at_risk",
+      "scenarioId": "scenario:synthetic-training",
+      "kind": "caption",
+      "sequence": 100,
+      "entityIds": ["asset:database-student-records"],
+      "caption": "The student records database is the objective — contain before it is reached.",
+      "chapterId": "chapter-consequences",
+      "requiresEvidenceIds": [],
+      "revealsHiddenCause": false,
+      "hiddenCauseId": null
+    }
+  ]
+}

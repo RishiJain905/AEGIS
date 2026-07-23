@@ -1,0 +1,35 @@
+schemaVersion: 1
+causes:
+  hidden-cause-phishing-compromise:
+    label: Phishing-compromised instructor workstation and credential misuse
+    supportingEvidence:
+      - eventType: telemetry.process.activity
+        assetId: asset:device-workstation-alpha
+        description: Suspicious process burst on the instructor workstation after phishing delivery
+      - eventType: telemetry.authentication.failed
+        assetId: asset:svc-identity-provider
+        description: Elevated authentication failures against the identity provider
+      - eventType: telemetry.authentication.succeeded
+        assetId: asset:svc-file-server
+        description: Lateral authentication success onto the file server
+    contradictsFalseHypotheses:
+      - falseHypothesis: Routine SSO patch window
+        contradictingSignal:
+          eventType: telemetry.authentication.failed
+          assetId: asset:svc-sso-gateway
+          note: Distractor patch auth on the SSO gateway lacks the paired workstation process burst and file-server lateral success
+  hidden-cause-data-exfiltration:
+    label: Staged exfiltration of student records via the file server
+    supportingEvidence:
+      - eventType: telemetry.database.query
+        assetId: asset:database-student-records
+        description: Anomalous query volume against the student records database
+      - eventType: telemetry.network.connection
+        assetId: asset:svc-file-server
+        description: Large outbound network flow from the file server
+    contradictsFalseHypotheses:
+      - falseHypothesis: Legitimate portal reporting batch
+        contradictingSignal:
+          eventType: telemetry.api.request
+          assetId: asset:svc-learning-portal
+          note: Baseline portal API traffic stays nominal and is not paired with the file-server exfil flow

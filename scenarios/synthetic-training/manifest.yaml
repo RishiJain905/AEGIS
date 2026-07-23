@@ -1,0 +1,438 @@
+schemaVersion: 1
+metadata:
+  scenarioId: scenario:synthetic-training
+  name: Synthetic Training Scenario
+  description: 'Deterministic tutorial scenario: a single phishing-driven intrusion
+    at a small learning organization, taught end to end with a pinned seed.'
+  version: 1.0.0-synthetic-training
+  requiredPlatformVersion: 0.0.0-phase10
+zones:
+- id: business-unit:workforce
+  label: Workforce Endpoints
+  securityLevel: standard
+- id: business-unit:identity
+  label: Identity and Access
+  securityLevel: elevated
+- id: business-unit:data-services
+  label: Data Services
+  securityLevel: elevated
+assets:
+- id: asset:device-workstation-alpha
+  assetType: device
+  label: Instructor Workstation Alpha
+  zoneId: business-unit:workforce
+  criticality: 0.5
+  initialRiskScore: 0.03
+  initialStatus: normal
+- id: asset:device-workstation-beta
+  assetType: device
+  label: Student Lab Workstation Beta
+  zoneId: business-unit:workforce
+  criticality: 0.4
+  initialRiskScore: 0.02
+  initialStatus: normal
+- id: asset:svc-email-relay
+  assetType: service
+  label: Email Relay
+  zoneId: business-unit:workforce
+  criticality: 0.6
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:svc-edr-console
+  assetType: service
+  label: EDR Console
+  zoneId: business-unit:workforce
+  criticality: 0.7
+  initialRiskScore: 0.02
+  initialStatus: normal
+- id: asset:svc-identity-provider
+  assetType: service
+  label: Identity Provider
+  zoneId: business-unit:identity
+  criticality: 0.95
+  initialRiskScore: 0.06
+  initialStatus: normal
+- id: asset:svc-sso-gateway
+  assetType: service
+  label: SSO Gateway
+  zoneId: business-unit:identity
+  criticality: 0.85
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:svc-learning-portal
+  assetType: service
+  label: Learning Portal
+  zoneId: business-unit:data-services
+  criticality: 0.8
+  initialRiskScore: 0.07
+  initialStatus: normal
+- id: asset:svc-file-server
+  assetType: service
+  label: File Server
+  zoneId: business-unit:data-services
+  criticality: 0.88
+  initialRiskScore: 0.05
+  initialStatus: normal
+- id: asset:database-student-records
+  assetType: database
+  label: Student Records Database
+  zoneId: business-unit:data-services
+  criticality: 0.92
+  initialRiskScore: 0.06
+  initialStatus: normal
+relationships:
+- id: edge:alpha-to-idp
+  source: asset:device-workstation-alpha
+  target: asset:svc-identity-provider
+  relationshipType: AUTHENTICATED_TO
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.2
+- id: edge:beta-to-idp
+  source: asset:device-workstation-beta
+  target: asset:svc-identity-provider
+  relationshipType: AUTHENTICATED_TO
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.12
+- id: edge:email-to-alpha
+  source: asset:svc-email-relay
+  target: asset:device-workstation-alpha
+  relationshipType: COMMUNICATED_WITH
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.15
+- id: edge:edr-to-alpha
+  source: asset:svc-edr-console
+  target: asset:device-workstation-alpha
+  relationshipType: ADMINISTERS
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.08
+- id: edge:edr-to-beta
+  source: asset:svc-edr-console
+  target: asset:device-workstation-beta
+  relationshipType: ADMINISTERS
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.08
+- id: edge:idp-to-sso
+  source: asset:svc-identity-provider
+  target: asset:svc-sso-gateway
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.18
+- id: edge:portal-to-idp
+  source: asset:svc-learning-portal
+  target: asset:svc-identity-provider
+  relationshipType: AUTHENTICATED_TO
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.15
+- id: edge:portal-to-records
+  source: asset:svc-learning-portal
+  target: asset:database-student-records
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.2
+- id: edge:fileserver-to-idp
+  source: asset:svc-file-server
+  target: asset:svc-identity-provider
+  relationshipType: AUTHENTICATED_TO
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.16
+- id: edge:alpha-to-fileserver
+  source: asset:device-workstation-alpha
+  target: asset:svc-file-server
+  relationshipType: COMMUNICATED_WITH
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.22
+- id: edge:fileserver-to-records
+  source: asset:svc-file-server
+  target: asset:database-student-records
+  relationshipType: DEPENDS_ON
+  directed: true
+  confidence: 1.0
+  riskContribution: 0.25
+generators:
+- id: gen-baseline-auth-idp
+  targetAssetId: asset:svc-identity-provider
+  plugin:
+    pluginId: telemetry.auth_attempt
+    config:
+      failureRate: 0.03
+      successRate: 0.97
+  schedule:
+    intervalSimSeconds: 25
+    jitterSimSeconds: 2
+- id: gen-baseline-api-portal
+  targetAssetId: asset:svc-learning-portal
+  plugin:
+    pluginId: telemetry.api_request
+    config:
+      requestsPerInterval: 20
+      errorRate: 0.02
+  schedule:
+    intervalSimSeconds: 25
+    jitterSimSeconds: 1
+- id: gen-baseline-db-records
+  targetAssetId: asset:database-student-records
+  plugin:
+    pluginId: telemetry.database_query
+    config:
+      queriesPerInterval: 6
+      anomalyRate: 0.01
+  schedule:
+    intervalSimSeconds: 30
+    jitterSimSeconds: 2
+- id: gen-baseline-process-alpha
+  targetAssetId: asset:device-workstation-alpha
+  plugin:
+    pluginId: telemetry.process_activity
+    config:
+      eventsPerInterval: 10
+      suspiciousRate: 0.02
+  schedule:
+    intervalSimSeconds: 25
+    jitterSimSeconds: 2
+- id: gen-baseline-health-fileserver
+  targetAssetId: asset:svc-file-server
+  plugin:
+    pluginId: telemetry.health_check
+    config:
+      healthyProbability: 0.97
+  schedule:
+    intervalSimSeconds: 25
+    jitterSimSeconds: 1
+- id: gen-distractor-patch-auth
+  targetAssetId: asset:svc-sso-gateway
+  plugin:
+    pluginId: telemetry.auth_attempt
+    config:
+      failureRate: 0.08
+      successRate: 0.92
+  schedule:
+    intervalSimSeconds: 45
+    jitterSimSeconds: 3
+hiddenConditions:
+- id: hidden-cause-phishing-compromise
+  causeLabel: Phishing-compromised instructor workstation and credential misuse
+  triggerRefs:
+  - evt-phish-process
+  - evt-cred-auth
+  effectRefs:
+  - evt-effect-workstation-compromised
+  - evt-effect-fileserver-suspicious
+  visibility:
+    mode: hidden_until_triggered
+    revealAfterSimSeconds: 300
+  triggerThreshold: 1
+- id: hidden-cause-data-exfiltration
+  causeLabel: Staged exfiltration of student records via the file server
+  triggerRefs:
+  - evt-exfil-db
+  - evt-exfil-network
+  effectRefs:
+  - evt-effect-records-investigation
+  visibility:
+    mode: hidden_until_triggered
+    revealAfterSimSeconds: 420
+  triggerThreshold: 1
+scheduledEvents:
+- id: evt-select-attack
+  simTime: '2026-01-01T00:00:00.000Z'
+  priority: 0
+  tieBreaker: 0
+  action:
+    pluginId: branch.seed_selector
+    config:
+      branchGroup: attack
+- id: evt-phish-process
+  simTime: '2026-01-01T00:01:30.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:device-workstation-alpha
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: telemetry.process_activity
+    config:
+      eventsPerInterval: 15
+      suspiciousRate: 0.85
+- id: evt-cred-auth
+  simTime: '2026-01-01T00:02:30.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-identity-provider
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: telemetry.auth_attempt
+    config:
+      failureRate: 0.7
+      successRate: 0.3
+- id: evt-cred-success
+  simTime: '2026-01-01T00:03:00.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-identity-provider
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: telemetry.auth_attempt
+    config:
+      failureRate: 0.05
+      successRate: 0.95
+- id: evt-effect-workstation-compromised
+  simTime: '2026-01-01T00:03:30.000Z'
+  priority: 3
+  tieBreaker: 0
+  targetAssetId: asset:device-workstation-alpha
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: compromised
+- id: evt-lateral-auth
+  simTime: '2026-01-01T00:04:00.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-file-server
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: telemetry.auth_attempt
+    config:
+      failureRate: 0.1
+      successRate: 0.9
+- id: evt-lateral-network
+  simTime: '2026-01-01T00:04:30.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-file-server
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: telemetry.network_flow
+    config:
+      bytesPerInterval: 16384
+      protocol: tcp
+- id: evt-effect-fileserver-suspicious
+  simTime: '2026-01-01T00:05:00.000Z'
+  priority: 3
+  tieBreaker: 0
+  targetAssetId: asset:svc-file-server
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: suspicious
+- id: evt-exfil-db
+  simTime: '2026-01-01T00:06:00.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:database-student-records
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: telemetry.database_query
+    config:
+      queriesPerInterval: 40
+      anomalyRate: 0.85
+- id: evt-exfil-network
+  simTime: '2026-01-01T00:06:30.000Z'
+  priority: 2
+  tieBreaker: 0
+  targetAssetId: asset:svc-file-server
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: telemetry.network_flow
+    config:
+      bytesPerInterval: 65536
+      protocol: tcp
+- id: evt-effect-records-investigation
+  simTime: '2026-01-01T00:07:00.000Z'
+  priority: 3
+  tieBreaker: 0
+  targetAssetId: asset:database-student-records
+  branchGate:
+    branchGroup: attack
+    branchId: branch-attack-primary
+  action:
+    pluginId: effect.set_asset_status
+    config:
+      status: under_investigation
+branches:
+- id: branch-attack-primary
+  label: Phishing intrusion path
+  weight: 1.0
+  branchGroup: attack
+  triggerCondition: phishing_foothold_and_credential_misuse
+  outcomes:
+  - targetRef: hidden-cause-phishing-compromise
+    description: Phishing foothold escalates to credential misuse and staged data exfiltration
+objectives:
+- id: objective-detect-compromise
+  label: Detect the compromised workstation
+  successCriteria: Compromised instructor workstation identified from corroborating
+    endpoint and identity telemetry
+  failureCriteria: Compromise missed or misattributed to routine activity
+- id: objective-contain-before-exfil
+  label: Contain before exfiltration completes
+  successCriteria: Intrusion contained before student records exfiltration finishes
+  failureCriteria: Exfiltration completes without containment
+- id: objective-preserve-evidence
+  label: Preserve investigation evidence
+  successCriteria: Endpoint, identity, and file-server evidence retained for replay
+  failureCriteria: Evidence lost to premature or destructive action
+scoring:
+  maxScore: 100
+  criteria:
+  - id: criterion-detection-speed
+    label: Detection speed
+    weight: 0.3
+    description: Time to first credible alert on the compromised workstation
+  - id: criterion-evidence-coverage
+    label: Evidence coverage
+    weight: 0.25
+    description: Fraction of the expected evidence chain reviewed
+  - id: criterion-response-proportionality
+    label: Response proportionality
+    weight: 0.25
+    description: Containment executed before exfiltration without excessive service impact
+  - id: criterion-objectives
+    label: Objectives completion
+    weight: 0.2
+    description: Success against declared scenario objectives
+  rubric: The Synthetic Training Scenario rewards timely detection of the phishing
+    foothold, review of the corroborating endpoint, identity, and file-server evidence
+    chain, and containment before student records are exfiltrated.
+media:
+- id: media-briefing
+  path: briefing.md
+  contentType: text/markdown
+  description: Operator tutorial briefing
+- id: media-overview
+  path: presentation/overview.md
+  contentType: text/markdown
+  description: Narrative overview for cinematic phases
+- id: media-cinematic-hints
+  path: presentation/cinematic-hints.json
+  contentType: application/json
+  description: Safe cinematic presentation hints (no hidden-cause reveals)

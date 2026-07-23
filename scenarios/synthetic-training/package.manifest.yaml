@@ -1,0 +1,20 @@
+schemaVersion: 1
+scenarioId: scenario:synthetic-training
+version: 1.0.0-synthetic-training
+requiredPlatformVersion: 0.0.0-phase10
+files:
+- path: README.md
+  checksum: sha256:c4c8ea054a215fd6485a7973466798e533eb556f09ae7f446701945bacf6f22f
+- path: briefing.md
+  checksum: sha256:fda1d41072dce63c58cd5112dcef1ac2415781b5995bb6f541df0c3c342151bc
+- path: expected-evidence.yaml
+  checksum: sha256:b08024f8c2c79468fc00c8362cd5ddcfb596611bd263cfebf4aed30e30cef557
+- path: golden-seeds.yaml
+  checksum: sha256:00bacd365f693a58d2e1fc6122d38661b4e69c2b8ecf31b242be9a6a05bd81be
+- path: manifest.yaml
+  checksum: sha256:448ca5594c56f43f0070d64badcc15bd3fda66046c7fe2748008de34664c8812
+- path: presentation/cinematic-hints.json
+  checksum: sha256:d40422874abb643834788b807a7dda5fd84f7a6681b98c96870699de1f56a32e
+- path: presentation/overview.md
+  checksum: sha256:b24e540bbc9f8dc14072f12691c993dc9c294976a308f29b1400156c2a7996dc
+packageChecksum: sha256:93efe59948ad9e05f9804db222d3f937f1c6822ef7082781ae431871d427e3db

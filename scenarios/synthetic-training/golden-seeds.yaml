@@ -1,0 +1,7 @@
+schemaVersion: 1
+simulationSteps: 120
+engineVersion: 0.0.0-phase10
+seeds:
+  - seed: 1000
+    attackBranch: branch-attack-primary
+    description: Pinned tutorial seed — deterministic phishing intrusion path
