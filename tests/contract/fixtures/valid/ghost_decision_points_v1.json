@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "decisionPoints": [
+    {
+      "schemaVersion": 1,
+      "decisionRef": "execact:42",
+      "kind": "executed_action",
+      "sequence": 42,
+      "simTime": "2026-01-01T00:12:00Z",
+      "scenarioCommand": "isolate",
+      "targetAssetId": "asset:svc-logistics-api",
+      "actionClass": "class_2",
+      "label": "isolate on asset:svc-logistics-api @ 2026-01-01T00:12:00Z"
+    },
+    {
+      "schemaVersion": 1,
+      "decisionRef": "inaction:18",
+      "kind": "inaction_window",
+      "sequence": 18,
+      "simTime": "2026-01-01T00:06:00Z",
+      "scenarioCommand": null,
+      "targetAssetId": null,
+      "actionClass": null,
+      "label": "Inaction window — first attacker foothold @ 2026-01-01T00:06:00Z"
+    }
+  ]
+}

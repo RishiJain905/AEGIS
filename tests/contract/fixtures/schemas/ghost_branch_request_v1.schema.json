@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "GhostBranchModeV1": {
+      "description": "How the operator's real decision is altered in the counterfactual.",
+      "enum": ["substitute", "do_nothing", "shift"],
+      "title": "GhostBranchModeV1",
+      "type": "string"
+    },
+    "ScenarioCommandTemplateV1": {
+      "enum": [
+        "observe",
+        "increase_monitoring",
+        "isolate",
+        "revoke_credentials",
+        "restrict_access",
+        "restart_service",
+        "rollback_deployment"
+      ],
+      "title": "ScenarioCommandTemplateV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Ask the engine to re-simulate one decision differently (POST body).",
+  "properties": {
+    "alternateCommand": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ScenarioCommandTemplateV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "alternateTargetAssetId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Alternatetargetassetid"
+    },
+    "decisionRef": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Decisionref",
+      "type": "string"
+    },
+    "mode": {
+      "$ref": "#/$defs/GhostBranchModeV1"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "shiftSimSeconds": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Shiftsimseconds"
+    }
+  },
+  "required": ["schemaVersion", "decisionRef", "mode"],
+  "title": "GhostBranchRequestV1",
+  "type": "object"
+}

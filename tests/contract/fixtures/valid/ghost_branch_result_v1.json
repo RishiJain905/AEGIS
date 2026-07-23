@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "runId": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "decisionRef": "execact:42",
+  "mode": "substitute",
+  "requestFingerprint": "9f2c1e0b8a7d6c5b4a3928170f6e5d4c3b2a1908f7e6d5c4b3a29180706f5e4d",
+  "resultHash": "1a2b3c4d5e6f70819283a4b5c6d7e8f90112233445566778899aabbccddeeff0",
+  "divergenceSequence": 42,
+  "divergenceSimTime": "2026-01-01T00:12:00Z",
+  "stepsSimulated": 120,
+  "realOutcome": {
+    "label": "real",
+    "finalStatuses": [{ "assetId": "asset:svc-logistics-api", "status": "compromised" }],
+    "compromisedCount": 1,
+    "containedCount": 0,
+    "breachOccurred": true,
+    "breachAssetIds": ["asset:svc-logistics-api"]
+  },
+  "ghostOutcome": {
+    "label": "ghost",
+    "finalStatuses": [{ "assetId": "asset:svc-logistics-api", "status": "credentials_revoked" }],
+    "compromisedCount": 0,
+    "containedCount": 1,
+    "breachOccurred": false,
+    "breachAssetIds": []
+  },
+  "assetDiffs": [
+    {
+      "assetId": "asset:svc-logistics-api",
+      "realStatus": "compromised",
+      "ghostStatus": "credentials_revoked"
+    }
+  ],
+  "ghostTimeline": [
+    {
+      "sequence": 55,
+      "simTime": "2026-01-01T00:14:00Z",
+      "kind": "condition_revealed",
+      "label": "hidden-cause-internal-misuse",
+      "assetId": null,
+      "status": null
+    }
+  ],
+  "realOverallScore": 62.5,
+  "verdict": "Choosing revoke_credentials on asset:svc-logistics-api instead prevents the breach on asset:svc-logistics-api."
+}

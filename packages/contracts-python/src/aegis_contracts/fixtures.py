@@ -94,6 +94,12 @@ from aegis_contracts.generation import (
     StructuredOutputSpecV1,
     ToolSchemaV1,
 )
+from aegis_contracts.ghost import (
+    GhostBranchRequestV1,
+    GhostBranchResultV1,
+    GhostDecisionPointsV1,
+    GhostDecisionPointV1,
+)
 from aegis_contracts.graph import (
     GraphDeltaV1,
     GraphEdgeV1,
@@ -416,4 +422,8 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "operator_hypothesis_request_v1": OperatorHypothesisRequestV1,
     "run_feed_entry_v1": RunFeedEntryV1,
     "run_feed_page_v1": RunFeedPageV1,
+    "ghost_decision_point_v1": GhostDecisionPointV1,
+    "ghost_decision_points_v1": GhostDecisionPointsV1,
+    "ghost_branch_request_v1": GhostBranchRequestV1,
+    "ghost_branch_result_v1": GhostBranchResultV1,
 }

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "decisionRef": "execact:42",
+  "kind": "executed_action",
+  "sequence": 42,
+  "simTime": "2026-01-01T00:12:00Z",
+  "scenarioCommand": "isolate",
+  "targetAssetId": "asset:svc-logistics-api",
+  "actionClass": "class_2",
+  "label": "isolate on asset:svc-logistics-api @ 2026-01-01T00:12:00Z"
+}

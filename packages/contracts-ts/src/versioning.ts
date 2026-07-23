@@ -185,6 +185,7 @@ export const RUN_SCORE_SCHEMA_VERSION = 1;
 export const AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION = 1;
 export const RUN_COMPARISON_SCORE_SCHEMA_VERSION = 1;
 export const SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION = 1;
+export const OPERATOR_PROFILE_SCHEMA_VERSION = 1;
 export const AUTHENTICATED_ACTOR_SCHEMA_VERSION = 1;
 export const ROLE_SCHEMA_VERSION = 1;
 export const PERMISSION_SCHEMA_VERSION = 1;
@@ -212,6 +213,14 @@ export const CONSOLE_ASSET_DETAIL_SCHEMA_VERSION = 1;
 export const OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION = 1;
 export const RUN_FEED_ENTRY_SCHEMA_VERSION = 1;
 export const RUN_FEED_PAGE_SCHEMA_VERSION = 1;
+// Containment blast-radius preview (pre-approval decision support; deterministic).
+export const BLAST_RADIUS_PREVIEW_SCHEMA_VERSION = 1;
+
+// Ghost branch — post-run counterfactual replay (after-action).
+export const GHOST_DECISION_POINT_SCHEMA_VERSION = 1;
+export const GHOST_DECISION_POINTS_SCHEMA_VERSION = 1;
+export const GHOST_BRANCH_REQUEST_SCHEMA_VERSION = 1;
+export const GHOST_BRANCH_RESULT_SCHEMA_VERSION = 1;
 
 export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[]>> = {
   domain_event: [DOMAIN_EVENT_SCHEMA_VERSION],
@@ -391,6 +400,7 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   after_action_view_model: [AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION],
   run_comparison: [RUN_COMPARISON_SCORE_SCHEMA_VERSION],
   score_export_artifact: [SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION],
+  operator_profile: [OPERATOR_PROFILE_SCHEMA_VERSION],
   authenticated_actor: [AUTHENTICATED_ACTOR_SCHEMA_VERSION],
   role: [ROLE_SCHEMA_VERSION],
   permission: [PERMISSION_SCHEMA_VERSION],
@@ -416,4 +426,9 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   operator_hypothesis_request: [OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION],
   run_feed_entry: [RUN_FEED_ENTRY_SCHEMA_VERSION],
   run_feed_page: [RUN_FEED_PAGE_SCHEMA_VERSION],
+  blast_radius_preview: [BLAST_RADIUS_PREVIEW_SCHEMA_VERSION],
+  ghost_decision_point: [GHOST_DECISION_POINT_SCHEMA_VERSION],
+  ghost_decision_points: [GHOST_DECISION_POINTS_SCHEMA_VERSION],
+  ghost_branch_request: [GHOST_BRANCH_REQUEST_SCHEMA_VERSION],
+  ghost_branch_result: [GHOST_BRANCH_RESULT_SCHEMA_VERSION],
 };

@@ -193,6 +193,7 @@ RUN_SCORE_SCHEMA_VERSION: Final[int] = 1
 AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION: Final[int] = 1
 RUN_COMPARISON_SCORE_SCHEMA_VERSION: Final[int] = 1
 SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION: Final[int] = 1
+OPERATOR_PROFILE_SCHEMA_VERSION: Final[int] = 1
 AUTHENTICATED_ACTOR_SCHEMA_VERSION: Final[int] = 1
 ROLE_SCHEMA_VERSION: Final[int] = 1
 PERMISSION_SCHEMA_VERSION: Final[int] = 1
@@ -220,6 +221,15 @@ CONSOLE_ASSET_DETAIL_SCHEMA_VERSION: Final[int] = 1
 OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION: Final[int] = 1
 RUN_FEED_ENTRY_SCHEMA_VERSION: Final[int] = 1
 RUN_FEED_PAGE_SCHEMA_VERSION: Final[int] = 1
+
+# Containment blast-radius preview (pre-approval decision support; deterministic graph traversal).
+BLAST_RADIUS_PREVIEW_SCHEMA_VERSION: Final[int] = 1
+
+# Ghost branch — post-run counterfactual replay (after-action).
+GHOST_DECISION_POINT_SCHEMA_VERSION: Final[int] = 1
+GHOST_DECISION_POINTS_SCHEMA_VERSION: Final[int] = 1
+GHOST_BRANCH_REQUEST_SCHEMA_VERSION: Final[int] = 1
+GHOST_BRANCH_RESULT_SCHEMA_VERSION: Final[int] = 1
 
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
@@ -398,6 +408,7 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "after_action_view_model": frozenset({AFTER_ACTION_VIEW_MODEL_SCHEMA_VERSION}),
     "run_comparison": frozenset({RUN_COMPARISON_SCORE_SCHEMA_VERSION}),
     "score_export_artifact": frozenset({SCORE_EXPORT_ARTIFACT_SCHEMA_VERSION}),
+    "operator_profile": frozenset({OPERATOR_PROFILE_SCHEMA_VERSION}),
     "authenticated_actor": frozenset({AUTHENTICATED_ACTOR_SCHEMA_VERSION}),
     "role": frozenset({ROLE_SCHEMA_VERSION}),
     "permission": frozenset({PERMISSION_SCHEMA_VERSION}),
@@ -423,6 +434,11 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "operator_hypothesis_request": frozenset({OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION}),
     "run_feed_entry": frozenset({RUN_FEED_ENTRY_SCHEMA_VERSION}),
     "run_feed_page": frozenset({RUN_FEED_PAGE_SCHEMA_VERSION}),
+    "blast_radius_preview": frozenset({BLAST_RADIUS_PREVIEW_SCHEMA_VERSION}),
+    "ghost_decision_point": frozenset({GHOST_DECISION_POINT_SCHEMA_VERSION}),
+    "ghost_decision_points": frozenset({GHOST_DECISION_POINTS_SCHEMA_VERSION}),
+    "ghost_branch_request": frozenset({GHOST_BRANCH_REQUEST_SCHEMA_VERSION}),
+    "ghost_branch_result": frozenset({GHOST_BRANCH_RESULT_SCHEMA_VERSION}),
 }
 
 

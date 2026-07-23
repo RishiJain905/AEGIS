@@ -58,6 +58,12 @@ from aegis_contracts.auth import (
     SecurityAuditOutcomeV1,
     SessionInfoV1,
 )
+from aegis_contracts.blast_radius import (
+    BlastRadiusDownstreamV1,
+    BlastRadiusImpactKindV1,
+    BlastRadiusImpactV1,
+    BlastRadiusPreviewV1,
+)
 from aegis_contracts.cinematic import (
     CameraDirectiveKindV1,
     CameraDirectiveV1,
@@ -148,6 +154,17 @@ from aegis_contracts.generation import (
     StructuredOutputSpecV1,
     ToolSchemaV1,
 )
+from aegis_contracts.ghost import (
+    GhostAssetDiffV1,
+    GhostBranchModeV1,
+    GhostBranchRequestV1,
+    GhostBranchResultV1,
+    GhostDecisionKindV1,
+    GhostDecisionPointsV1,
+    GhostDecisionPointV1,
+    GhostOutcomeV1,
+    GhostTimelineBeatV1,
+)
 from aegis_contracts.graph import (
     AssetType,
     EntityType,
@@ -229,6 +246,12 @@ from aegis_contracts.operator import (
     RunFeedEntryV1,
     RunFeedPageV1,
     StandingDirectiveV1,
+)
+from aegis_contracts.operator_profile import (
+    CoachingLineV1,
+    OperatorProfileMetricsV1,
+    OperatorProfileV1,
+    OperatorRunSummaryV1,
 )
 from aegis_contracts.parsing import parse_contract
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
@@ -371,6 +394,10 @@ __all__ = [
     "AgentStateTransitionV1",
     "AgentTaskStatus",
     "AgentTaskV1",
+    "BlastRadiusDownstreamV1",
+    "BlastRadiusImpactKindV1",
+    "BlastRadiusImpactV1",
+    "BlastRadiusPreviewV1",
     "AgentToolClass",
     "CreateAgentSessionRequestV1",
     "CreateAgentTaskRequestV1",
@@ -444,6 +471,15 @@ __all__ = [
     "TriggerScribeRequestV1",
     "TriageEscalationLevel",
     "EvidenceSourceType",
+    "GhostAssetDiffV1",
+    "GhostBranchModeV1",
+    "GhostBranchRequestV1",
+    "GhostBranchResultV1",
+    "GhostDecisionKindV1",
+    "GhostDecisionPointV1",
+    "GhostDecisionPointsV1",
+    "GhostOutcomeV1",
+    "GhostTimelineBeatV1",
     "GraphClusterV1",
     "GraphDeltaOperation",
     "GraphDeltaV1",
@@ -631,6 +667,10 @@ __all__ = [
     "DecisionReviewOutcomeV1",
     "DecisionReviewV1",
     "MissedEvidenceItemV1",
+    "CoachingLineV1",
+    "OperatorProfileMetricsV1",
+    "OperatorProfileV1",
+    "OperatorRunSummaryV1",
     "RunComparisonComponentDeltaV1",
     "RunComparisonV1",
     "RunScoreV1",

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "decisionRef": "execact:42",
+  "mode": "substitute",
+  "alternateCommand": "revoke_credentials",
+  "alternateTargetAssetId": "asset:svc-logistics-api",
+  "shiftSimSeconds": null
+}

@@ -1,0 +1,92 @@
+{
+  "$defs": {
+    "GhostDecisionKindV1": {
+      "description": "What a decision point represents in the real run.",
+      "enum": ["executed_action", "inaction_window"],
+      "title": "GhostDecisionKindV1",
+      "type": "string"
+    },
+    "ScenarioCommandTemplateV1": {
+      "enum": [
+        "observe",
+        "increase_monitoring",
+        "isolate",
+        "revoke_credentials",
+        "restrict_access",
+        "restart_service",
+        "rollback_deployment"
+      ],
+      "title": "ScenarioCommandTemplateV1",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One real decision the operator can fork from in the after-action ghost panel.",
+  "properties": {
+    "actionClass": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actionclass"
+    },
+    "decisionRef": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Decisionref",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/GhostDecisionKindV1"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "scenarioCommand": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ScenarioCommandTemplateV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "simTime": {
+      "title": "Simtime",
+      "type": "string"
+    },
+    "targetAssetId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Targetassetid"
+    }
+  },
+  "required": ["schemaVersion", "decisionRef", "kind", "sequence", "simTime", "label"],
+  "title": "GhostDecisionPointV1",
+  "type": "object"
+}

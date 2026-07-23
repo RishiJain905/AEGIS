@@ -181,6 +181,9 @@ export * from './replay';
 export * from './replay-frontend';
 export * from './cinematic';
 export * from './scoring';
+export * from './operator-profile';
+export * from './ghost';
+export * from './blast-radius';
 export * from './auth';
 export * from './observability';
 
@@ -271,6 +274,12 @@ import {
   runFeedPageSchema,
   standingDirectiveSchema,
 } from './operator';
+import {
+  ghostBranchRequestSchema,
+  ghostBranchResultSchema,
+  ghostDecisionPointSchema,
+  ghostDecisionPointsSchema,
+} from './ghost';
 import { runLoadoutSchema } from './entities';
 
 export const FIXTURE_SCHEMA_MAP = {
@@ -445,4 +454,8 @@ export const FIXTURE_SCHEMA_MAP = {
   operator_hypothesis_request_v1: operatorHypothesisRequestSchema,
   run_feed_entry_v1: runFeedEntrySchema,
   run_feed_page_v1: runFeedPageSchema,
+  ghost_decision_point_v1: ghostDecisionPointSchema,
+  ghost_decision_points_v1: ghostDecisionPointsSchema,
+  ghost_branch_request_v1: ghostBranchRequestSchema,
+  ghost_branch_result_v1: ghostBranchResultSchema,
 } as const;

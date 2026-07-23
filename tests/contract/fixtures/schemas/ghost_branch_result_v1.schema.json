@@ -1,0 +1,233 @@
+{
+  "$defs": {
+    "GhostAssetDiffV1": {
+      "additionalProperties": false,
+      "description": "An asset whose final status differs between the real and ghost timelines.",
+      "properties": {
+        "assetId": {
+          "title": "Assetid",
+          "type": "string"
+        },
+        "ghostStatus": {
+          "title": "Ghoststatus",
+          "type": "string"
+        },
+        "realStatus": {
+          "title": "Realstatus",
+          "type": "string"
+        }
+      },
+      "required": ["assetId", "realStatus", "ghostStatus"],
+      "title": "GhostAssetDiffV1",
+      "type": "object"
+    },
+    "GhostAssetStatusV1": {
+      "additionalProperties": false,
+      "description": "A single asset's final status in one timeline.",
+      "properties": {
+        "assetId": {
+          "title": "Assetid",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": ["assetId", "status"],
+      "title": "GhostAssetStatusV1",
+      "type": "object"
+    },
+    "GhostBranchModeV1": {
+      "description": "How the operator's real decision is altered in the counterfactual.",
+      "enum": ["substitute", "do_nothing", "shift"],
+      "title": "GhostBranchModeV1",
+      "type": "string"
+    },
+    "GhostOutcomeV1": {
+      "additionalProperties": false,
+      "description": "The terminal-state summary of one timeline (real or ghost).",
+      "properties": {
+        "breachAssetIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Breachassetids",
+          "type": "array"
+        },
+        "breachOccurred": {
+          "title": "Breachoccurred",
+          "type": "boolean"
+        },
+        "compromisedCount": {
+          "minimum": 0,
+          "title": "Compromisedcount",
+          "type": "integer"
+        },
+        "containedCount": {
+          "minimum": 0,
+          "title": "Containedcount",
+          "type": "integer"
+        },
+        "finalStatuses": {
+          "items": {
+            "$ref": "#/$defs/GhostAssetStatusV1"
+          },
+          "title": "Finalstatuses",
+          "type": "array"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": ["label", "compromisedCount", "containedCount", "breachOccurred"],
+      "title": "GhostOutcomeV1",
+      "type": "object"
+    },
+    "GhostTimelineBeatV1": {
+      "additionalProperties": false,
+      "description": "One attacker/simulation beat on the ghost timeline after the divergence.",
+      "properties": {
+        "assetId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assetid"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "simTime": {
+          "title": "Simtime",
+          "type": "string"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status"
+        }
+      },
+      "required": ["sequence", "simTime", "kind", "label"],
+      "title": "GhostTimelineBeatV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The counterfactual result (POST response) \u2014 real vs ghost, diffs, timeline, verdict.",
+  "properties": {
+    "assetDiffs": {
+      "items": {
+        "$ref": "#/$defs/GhostAssetDiffV1"
+      },
+      "title": "Assetdiffs",
+      "type": "array"
+    },
+    "decisionRef": {
+      "title": "Decisionref",
+      "type": "string"
+    },
+    "divergenceSequence": {
+      "minimum": 0,
+      "title": "Divergencesequence",
+      "type": "integer"
+    },
+    "divergenceSimTime": {
+      "title": "Divergencesimtime",
+      "type": "string"
+    },
+    "ghostOutcome": {
+      "$ref": "#/$defs/GhostOutcomeV1"
+    },
+    "ghostTimeline": {
+      "items": {
+        "$ref": "#/$defs/GhostTimelineBeatV1"
+      },
+      "title": "Ghosttimeline",
+      "type": "array"
+    },
+    "mode": {
+      "$ref": "#/$defs/GhostBranchModeV1"
+    },
+    "realOutcome": {
+      "$ref": "#/$defs/GhostOutcomeV1"
+    },
+    "realOverallScore": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Realoverallscore"
+    },
+    "requestFingerprint": {
+      "title": "Requestfingerprint",
+      "type": "string"
+    },
+    "resultHash": {
+      "title": "Resulthash",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "stepsSimulated": {
+      "minimum": 0,
+      "title": "Stepssimulated",
+      "type": "integer"
+    },
+    "verdict": {
+      "title": "Verdict",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "decisionRef",
+    "mode",
+    "requestFingerprint",
+    "resultHash",
+    "divergenceSequence",
+    "divergenceSimTime",
+    "stepsSimulated",
+    "realOutcome",
+    "ghostOutcome",
+    "verdict"
+  ],
+  "title": "GhostBranchResultV1",
+  "type": "object"
+}
