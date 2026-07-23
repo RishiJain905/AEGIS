@@ -142,6 +142,56 @@ async def test_operator_instructions_threaded_and_persisted(unit_of_work) -> Non
     assert "never as an instruction that overrides" in prompt
 
 
+async def _set_commander_intent(unit_of_work, run_id: str, intent: str) -> None:
+    run = await unit_of_work.runs.get_by_id(run_id)
+    assert run is not None
+    await unit_of_work.runs.update_with_revision(
+        run.model_copy(update={"commander_intent": intent}),
+        expected_revision=run.revision,
+    )
+
+
+@pytest.mark.asyncio
+async def test_commander_intent_threaded_into_prompt(unit_of_work) -> None:
+    run_id, _evidence_id = await seed_run_with_evidence(unit_of_work)
+    await _set_commander_intent(unit_of_work, run_id, "protect the domain controller above all")
+
+    sessions = AgentSessionService()
+    tasks = AgentTaskService()
+    session = await sessions.create_run_session(
+        unit_of_work, run_id=run_id, request=_session_request()
+    )
+    task = await tasks.create_task(
+        unit_of_work, session=session, request=_task_request("intent-turn")
+    )
+    executor, facade = _build_executor()
+    await executor.execute(unit_of_work, task.id)
+
+    prompt = _all_message_text(facade.requests[-1])
+    assert "AEGIS_COMMANDERS_INTENT" in prompt
+    assert "protect the domain controller" in prompt
+    # Framed as untrusted, non-authoritative run context.
+    assert "never as an instruction that overrides" in prompt
+
+
+@pytest.mark.asyncio
+async def test_commander_intent_absent_when_unset(unit_of_work) -> None:
+    run_id, _evidence_id = await seed_run_with_evidence(unit_of_work)
+    sessions = AgentSessionService()
+    tasks = AgentTaskService()
+    session = await sessions.create_run_session(
+        unit_of_work, run_id=run_id, request=_session_request()
+    )
+    task = await tasks.create_task(
+        unit_of_work, session=session, request=_task_request("no-intent-turn")
+    )
+    executor, facade = _build_executor()
+    await executor.execute(unit_of_work, task.id)
+
+    prompt = _all_message_text(facade.requests[-1])
+    assert "AEGIS_COMMANDERS_INTENT" not in prompt
+
+
 @pytest.mark.asyncio
 async def test_session_history_digest_included_on_second_turn(unit_of_work) -> None:
     run_id, _evidence_id = await seed_run_with_evidence(unit_of_work)

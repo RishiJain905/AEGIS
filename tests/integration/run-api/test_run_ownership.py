@@ -232,6 +232,39 @@ def test_scoring_router_enforces_run_ownership(api_client: TestClient) -> None:
     assert api_client.get(path).status_code == 404
 
 
+def test_blast_radius_router_enforces_run_ownership(api_client: TestClient) -> None:
+    run_id = _create_run(api_client, seed=2106, key="own-create-2106")["run"]["id"]
+    path = (
+        f"/api/v1/runs/{run_id}/blast-radius"
+        "?assetId=asset:svc-logistics-api&command=isolate"
+    )
+
+    # Non-owner, non-admin -> 403.
+    login_as(api_client, user_id=OTHER)
+    assert api_client.get(path).status_code == 403
+
+    # Owner/admin pass the gate; the run's initial graph snapshot yields a preview.
+    login_as(api_client, user_id=OWNER)
+    owner_response = api_client.get(path)
+    assert owner_response.status_code == 200, owner_response.text
+    body = owner_response.json()
+    assert body["command"] == "isolate"
+    assert body["actionClass"] == "class_2"
+    assert body["targetAssetId"] == "asset:svc-logistics-api"
+
+    login_as(api_client, user_id=ADMIN)
+    assert api_client.get(path).status_code == 200
+
+
+def test_blast_radius_rejects_unknown_command(api_client: TestClient) -> None:
+    run_id = _create_run(api_client, seed=2107, key="own-create-2107")["run"]["id"]
+    login_as(api_client, user_id=OWNER)
+    response = api_client.get(
+        f"/api/v1/runs/{run_id}/blast-radius?assetId=asset:svc-logistics-api&command=nope"
+    )
+    assert response.status_code == 400, response.text
+
+
 def test_investigation_router_enforces_run_ownership(api_client: TestClient) -> None:
     run_id = _create_run(api_client, seed=2104, key="own-create-2104")["run"]["id"]
     incident_id = "incident:inc_ownershipprobe01"

@@ -41,6 +41,10 @@ _INTENTIONAL_VIEWER_READABLE: frozenset[tuple[str, str]] = frozenset(
         # POST only to carry the search-filter body; console/service.py search_events is a
         # pure cursor-paged projection over the events table (no UoW writes, no events).
         ("POST", "/api/v1/runs/{run_id}/console/events/search"),
+        # POST only to carry the counterfactual request body; ghost_engine runs an isolated
+        # in-memory re-simulation and never appends events, writes snapshots, raises alerts,
+        # or touches the outbox — it only reads persisted run history.
+        ("POST", "/api/v1/runs/{run_id}/ghost"),
     }
 )
 
@@ -218,7 +222,11 @@ def test_features_compute_routes_are_side_effect_free_read_only() -> None:
             continue
         seen.add(key)
         required = _route_permissions(route, mount_perms)
-        read_gates = {PermissionV1.INVESTIGATION_READ, PermissionV1.RUNS_READ}
+        read_gates = {
+            PermissionV1.INVESTIGATION_READ,
+            PermissionV1.RUNS_READ,
+            PermissionV1.SCORING_READ,
+        }
         assert required & read_gates, f"{key} must still enforce a read permission"
         assert required.issubset(viewer), f"{key} unexpectedly demands a permission VIEWER lacks"
     assert seen == set(_INTENTIONAL_VIEWER_READABLE), "features allowlist drifted from live routes"
