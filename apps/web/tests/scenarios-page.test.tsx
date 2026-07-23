@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { push, mutateAsync, resumeRun, useScenarios, useRuns } = vi.hoisted(() => ({
   push: vi.fn(),
@@ -50,6 +50,14 @@ function runsResult(data: unknown[]) {
 }
 
 describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
+  beforeAll(() => {
+    // The live-scenario launch now opens a Radix dialog (the loadout step); jsdom omits these.
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
   beforeEach(() => {
     push.mockReset();
     mutateAsync.mockReset();
@@ -62,7 +70,7 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
     cleanup();
   });
 
-  it('starts a new run and navigates to it when the account owns no run', async () => {
+  it('starts a new run through the loadout step and navigates to it', async () => {
     useRuns.mockReturnValue(runsResult([]));
     mutateAsync.mockResolvedValue({ run: { id: 'run_newly_created' } });
 
@@ -73,13 +81,17 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
       screen.queryByTestId('resume-run-scenario:operation-silent-relay'),
     ).not.toBeInTheDocument();
 
+    // A live operation opens the loadout step before launching (the second variety axis).
     fireEvent.click(screen.getByTestId('start-run-scenario:operation-silent-relay'));
+    const launch = await screen.findByTestId('loadout-launch-confirm');
+    fireEvent.click(launch);
 
     await waitFor(() => {
-      // Seedless launch: no seed is sent, so the server draws a random one.
+      // Seedless launch (server draws the seed) with the default loadout persisted on the run.
       expect(mutateAsync).toHaveBeenCalledWith({
         scenarioPackagePath: 'scenarios/operation-silent-relay',
         seed: undefined,
+        loadout: { schemaVersion: 1, biasGuard: true, threatTempo: true, roe: 'investigate' },
       });
     });
     await waitFor(() => {

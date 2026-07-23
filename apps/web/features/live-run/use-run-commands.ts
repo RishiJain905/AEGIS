@@ -98,11 +98,28 @@ export async function resumeRun(runId: string): Promise<void> {
   await postRunCommand(`/api/v1/runs/${runId}/resume`, newIdempotencyKey('resume'));
 }
 
+/**
+ * Per-run capability loadout chosen at launch. Additive optional field on POST /runs
+ * (schemaVersion stays 1): when omitted the server persists the default loadout. Typed
+ * loosely here to avoid depending on the interim command-surface contract from the live-run
+ * feature; the launch flow passes a fully-formed loadout object.
+ */
+export interface CreateRunLoadout {
+  schemaVersion: number;
+  biasGuard: boolean;
+  threatTempo: boolean;
+  roe: string;
+}
+
 export function useCreateRun() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { scenarioPackagePath: string; seed?: number }) => {
+    mutationFn: async (input: {
+      scenarioPackagePath: string;
+      seed?: number;
+      loadout?: CreateRunLoadout;
+    }) => {
       const response = await fetch(`${getApiBaseUrl()}/api/v1/runs`, {
         method: 'POST',
         headers: {
@@ -115,6 +132,8 @@ export function useCreateRun() {
           scenarioPackagePath: input.scenarioPackagePath,
           // Omit seed entirely to let the server draw a cryptographically random one.
           ...(input.seed !== undefined ? { seed: input.seed } : {}),
+          // Omit loadout entirely to let the server persist the default loadout.
+          ...(input.loadout !== undefined ? { loadout: input.loadout } : {}),
         }),
       });
       if (!response.ok) {

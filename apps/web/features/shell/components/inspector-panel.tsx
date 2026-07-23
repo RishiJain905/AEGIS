@@ -18,6 +18,7 @@ import {
   InspectorMonoValue,
 } from '@/features/inspector';
 import { InvestigationPanel } from '@/features/investigation';
+import { AssetCommandSection } from '@/features/operator-actions';
 import { ProposalsPanel } from '@/features/proposals/proposals-panel';
 import { ReportsPanel } from '@/features/reports/reports-panel';
 import { RiskExplanationPanel } from '@/features/risk';
@@ -139,6 +140,10 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                 riskScore={selectedRiskScore}
               />
             ) : null}
+
+            {/* Operator direct actions on the selected asset (renders nothing when no asset
+                is selected). Class 2/3 open a confirm-with-consequences dialog. */}
+            {runId ? <AssetCommandSection runId={runId} /> : null}
 
             <RiskExplanationPanel
               riskScore={selectedRiskScore}

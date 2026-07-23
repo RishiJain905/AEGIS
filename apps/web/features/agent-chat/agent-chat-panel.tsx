@@ -225,6 +225,7 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
   const turns = useMemo(() => (roleSession ? buildTurns(roleSession) : []), [roleSession]);
 
   const pending = sendMessage.isPending;
+  const retrying = sendMessage.isRetrying;
 
   const submit = () => {
     const instructions = draft.trim();
@@ -242,11 +243,13 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
     );
   };
 
-  const liveStatus = pending
-    ? `${role} is investigating…`
-    : sendMessage.isError
-      ? 'The last request failed.'
-      : '';
+  const liveStatus = retrying
+    ? `${role} task failed — retrying once…`
+    : pending
+      ? `${role} is investigating…`
+      : sendMessage.isError
+        ? 'The last request failed.'
+        : '';
 
   return (
     <Panel
@@ -316,11 +319,12 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
                   ) : null}
                   <div className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-3 py-2">
                     <p
-                      className={`text-sm text-[var(--aegis-text-muted)] ${
-                        reducedMotion ? '' : 'animate-pulse'
-                      }`}
+                      className={`text-sm ${
+                        retrying ? 'text-[var(--aegis-risk-medium)]' : 'text-[var(--aegis-text-muted)]'
+                      } ${reducedMotion ? '' : 'animate-pulse'}`}
+                      data-testid={retrying ? 'agent-chat-retrying' : 'agent-chat-working'}
                     >
-                      {role} is investigating…
+                      {retrying ? `${role} task failed — retrying once…` : `${role} is investigating…`}
                     </p>
                   </div>
                 </li>

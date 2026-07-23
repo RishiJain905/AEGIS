@@ -4,6 +4,8 @@ import { NodeStatus } from '@aegis/contracts-ts';
 import { Alert, Badge } from '@aegis/ui';
 import type { ReactNode } from 'react';
 
+import { readRunLoadout } from '@/features/command-surface';
+import { LoadoutChips, RoeDial } from '@/features/loadout';
 import { ThreatTempoIndicator, useLiveRun } from '@/features/live-run';
 import { OperatorIdentityBadge } from '@/features/auth';
 import {
@@ -72,6 +74,9 @@ export function StatusStrip({ runId }: StatusStripProps) {
   // The run's actual seed (server-drawn when launched seedless). Surfaced so operators can
   // see and cite the seed for a given run — determinism is anchored to it.
   const seed = runQuery.data?.seed;
+  // The run's persisted capability loadout (bias guard, threat tempo, RoE). Absent on legacy
+  // runs → chips/dial hidden. The RoE dial edits it mid-run; disabled when the run is read-only.
+  const loadout = readRunLoadout(runQuery.data);
 
   return (
     <div
@@ -116,6 +121,12 @@ export function StatusStrip({ runId }: StatusStripProps) {
         </div>
       ) : null}
       {runId && liveRun?.isLiveMode ? <ThreatTempoIndicator runId={runId} /> : null}
+      {runId && loadout ? (
+        <div className="flex items-center gap-2 border-l border-[var(--aegis-border-subtle)] pl-4">
+          <LoadoutChips loadout={loadout} />
+          <RoeDial runId={runId} current={loadout.roe} disabled={readOnly} />
+        </div>
+      ) : null}
       <div className="ml-auto">
         <OperatorIdentityBadge />
       </div>

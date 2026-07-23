@@ -10,32 +10,39 @@ import type { ResolvedTheme } from '@/features/shell/contracts/panel-preferences
 import { useTheme } from '@/features/shell/hooks/use-theme';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
-const INCIDENT_PATH = '/incidents';
-
+// Nav items keyed by their base path. Run-scoped destinations (active run, replay,
+// after-action) resolve to the run the operator is currently in, so the rail never points
+// at a stale placeholder run mid-engagement; with no active run they fall back to the
+// catalogue rather than a dead link.
 const NAV_ITEMS = [
-  { href: '/scenarios', label: 'Scenarios', icon: 'grid' },
-  {
-    href: '/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
-    label: 'Active run',
-    icon: 'pulse',
-  },
-  { href: INCIDENT_PATH, label: 'Incidents', icon: 'alert' },
-  {
-    href: '/replay/run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
-    label: 'Replay',
-    icon: 'history',
-  },
-  {
-    href: '/after-action/run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
-    label: 'After-action',
-    icon: 'review',
-  },
-  { href: '/reports', label: 'Reports', icon: 'report' },
-  { href: '/admin', label: 'Admin', icon: 'settings' },
-  { href: '/design-system', label: 'Design system', icon: 'design' },
+  { base: '/scenarios', label: 'Scenarios', icon: 'grid', runScoped: false },
+  { base: '/runs', label: 'Active run', icon: 'pulse', runScoped: true },
+  { base: '/incidents', label: 'Incidents', icon: 'alert', runScoped: false },
+  { base: '/replay', label: 'Replay', icon: 'history', runScoped: true },
+  { base: '/after-action', label: 'After-action', icon: 'review', runScoped: true },
+  { base: '/reports', label: 'Reports', icon: 'report', runScoped: false },
+  { base: '/admin', label: 'Admin', icon: 'settings', runScoped: false },
+  { base: '/design-system', label: 'Design system', icon: 'design', runScoped: false },
 ] as const;
 
 type NavIconName = (typeof NAV_ITEMS)[number]['icon'];
+
+/** Pull the run id out of a run-scoped route so the rail can keep run links in-context. */
+function activeRunIdFromPath(pathname: string): string | null {
+  const match = /^\/(?:runs|replay|after-action)\/([^/]+)/.exec(pathname);
+  return match?.[1] ?? null;
+}
+
+/** Resolve a nav item's href: run-scoped items follow the active run, else fall back to it. */
+function navHref(
+  item: (typeof NAV_ITEMS)[number],
+  activeRunId: string | null,
+): string {
+  if (!item.runScoped) {
+    return item.base;
+  }
+  return activeRunId ? `${item.base}/${activeRunId}` : '/scenarios';
+}
 
 function NavIcon({ name }: { name: NavIconName }) {
   const paths: Record<NavIconName, ReactNode> = {
@@ -170,14 +177,16 @@ const ACTIVE_PILL =
 
 function NavLinks({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
+  const activeRunId = activeRunIdFromPath(pathname);
 
   return (
     <>
       {NAV_ITEMS.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const href = navHref(item, activeRunId);
+        const active = pathname === item.base || pathname.startsWith(`${item.base}/`);
         return (
           <Button
-            key={item.href}
+            key={item.base}
             asChild
             variant={active ? 'secondary' : 'ghost'}
             size="sm"
@@ -190,7 +199,7 @@ function NavLinks({ collapsed }: { collapsed: boolean }) {
             }
           >
             <Link
-              href={item.href}
+              href={href}
               aria-current={active ? 'page' : undefined}
               aria-label={collapsed ? item.label : undefined}
               title={collapsed ? item.label : undefined}

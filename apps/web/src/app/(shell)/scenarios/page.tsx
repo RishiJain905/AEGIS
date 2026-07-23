@@ -2,9 +2,12 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { Button, EmptyState, ErrorState, LoadingState, cn, typographyTokens } from '@aegis/ui';
 
+import type { RunLoadout } from '@/features/command-surface';
+import { LoadoutLaunchDialog } from '@/features/loadout';
 import { CommandCentreShell } from '@/features/shell/components/command-centre-shell';
 import { resumeRun, useCreateRun } from '@/features/live-run';
 import { useRuns, useScenarios } from '@/features/shell/hooks/use-shell-queries';
@@ -148,14 +151,17 @@ export default function ScenariosPage() {
   const scenariosQuery = useScenarios();
   const runsQuery = useRuns();
   const createRun = useCreateRun();
+  // Which live scenario is mid-launch in the loadout step, if any.
+  const [loadoutScenarioId, setLoadoutScenarioId] = useState<string | null>(null);
 
-  const startRun = (scenarioId: string) => {
+  const launch = (scenarioId: string, loadout?: RunLoadout) => {
     const isTutorial = presentationFor(scenarioId).kind === 'tutorial';
     void createRun
       .mutateAsync({
         scenarioPackagePath: scenarioPackagePath(scenarioId),
         // undefined for seedless scenarios → server draws a random seed.
         seed: scenarioSeed(scenarioId),
+        loadout,
       })
       .then((result) => {
         // Arm the guided walkthrough immediately so the coach mark is live the moment the
@@ -163,9 +169,24 @@ export default function ScenariosPage() {
         if (isTutorial) {
           armTutorial(result.run.id);
         }
+        setLoadoutScenarioId(null);
         router.push(`/runs/${result.run.id}`);
       });
   };
+
+  const startRun = (scenarioId: string) => {
+    // The tutorial launches straight into its deterministic guided walkthrough with default
+    // capabilities; live operations get the pre-launch loadout step (the second variety axis).
+    if (presentationFor(scenarioId).kind === 'tutorial') {
+      launch(scenarioId);
+      return;
+    }
+    setLoadoutScenarioId(scenarioId);
+  };
+
+  const loadoutScenarioName =
+    scenariosQuery.data?.find((s: { id: string; name: string }) => s.id === loadoutScenarioId)?.name ??
+    'this operation';
 
   // Resume the caller's latest owned run. A paused run is resumed server-side before we
   // navigate, so the tick engine starts advancing it again the moment the operator opens it.
@@ -361,6 +382,22 @@ export default function ScenariosPage() {
           </ul>
         ) : null}
       </section>
+
+      <LoadoutLaunchDialog
+        open={loadoutScenarioId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLoadoutScenarioId(null);
+          }
+        }}
+        scenarioName={loadoutScenarioName}
+        launching={createRun.isPending}
+        onLaunch={(loadout) => {
+          if (loadoutScenarioId) {
+            launch(loadoutScenarioId, loadout);
+          }
+        }}
+      />
     </CommandCentreShell>
   );
 }

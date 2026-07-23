@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef, useState } from 'react';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -81,6 +83,36 @@ export interface SendMessageInput {
   sessionId?: string;
 }
 
+const TERMINAL_FAILURE_STATUSES = new Set(['failed', 'timed_out']);
+
+/**
+ * Read the terminal task status out of an interactive agent response so the caller can decide
+ * whether to auto-retry. The task-create route returns the completed `AgentTaskV1` (has
+ * `status`); the session-create route returns the session detail, whose newest task carries
+ * the status. Returns null when no status can be read (treated as non-failure).
+ */
+export function terminalTaskStatus(data: unknown): string | null {
+  if (typeof data !== 'object' || data === null) {
+    return null;
+  }
+  const record = data as Record<string, unknown>;
+  // Task-create response shape: the task itself.
+  if (typeof record.status === 'string') {
+    return record.status;
+  }
+  // Session-create response shape: AgentSessionDetailV1 with a tasks array.
+  const tasks = record.tasks;
+  if (Array.isArray(tasks) && tasks.length > 0) {
+    const newest = tasks[tasks.length - 1] as { status?: unknown };
+    return typeof newest.status === 'string' ? newest.status : null;
+  }
+  return null;
+}
+
+function isTaskFailure(status: string | null): boolean {
+  return status !== null && TERMINAL_FAILURE_STATUSES.has(status);
+}
+
 /**
  * Send an operator message: create a new run-scoped session for the role on the
  * first turn, or enqueue a follow-up task on the existing session. Both calls run
@@ -89,42 +121,66 @@ export interface SendMessageInput {
  */
 export function useSendAgentMessage(runId: string) {
   const queryClient = useQueryClient();
+  // Surfaced so the thread can show a single, honest "retrying…" state during the one
+  // automatic re-attempt. A ref backs the state so the mutationFn reads a stable setter.
+  const [isRetrying, setIsRetrying] = useState(false);
+  const retryingRef = useRef(setIsRetrying);
+  retryingRef.current = setIsRetrying;
 
-  return useMutation({
-    mutationFn: async ({ role, instructions, sessionId }: SendMessageInput): Promise<void> => {
-      if (sessionId) {
-        await requestJson(
-          `/api/v1/agent-sessions/${sessionId}/tasks`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              schemaVersion: 1,
-              idempotencyKey: newIdempotencyKey('chat'),
-              providerId: null,
-              instructions,
-            }),
-          },
-          (data) => data,
-        );
-        return;
-      }
-      await requestJson(
-        `/api/v1/runs/${runId}/agent-sessions`,
+  const sendOnce = async ({ role, instructions, sessionId }: SendMessageInput): Promise<unknown> => {
+    if (sessionId) {
+      return requestJson(
+        `/api/v1/agent-sessions/${sessionId}/tasks`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             schemaVersion: 1,
-            role,
-            traceId: newTraceId(),
-            enqueueInitialTask: true,
+            idempotencyKey: newIdempotencyKey('chat'),
             providerId: null,
             instructions,
           }),
         },
         (data) => data,
       );
+    }
+    return requestJson(
+      `/api/v1/runs/${runId}/agent-sessions`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          schemaVersion: 1,
+          role,
+          traceId: newTraceId(),
+          enqueueInitialTask: true,
+          providerId: null,
+          instructions,
+        }),
+      },
+      (data) => data,
+    );
+  };
+
+  const mutation = useMutation({
+    mutationFn: async (input: SendMessageInput): Promise<void> => {
+      // Local model tasks can fail transiently; give exactly one automatic retry with a
+      // visible "retrying…" state. A second failure is left honest in the thread — no further
+      // retries, no swallowing. The retry re-sends on the same session (a fresh task), so the
+      // prior failed turn stays visible for the audit trail.
+      const first = await sendOnce(input);
+      if (!isTaskFailure(terminalTaskStatus(first))) {
+        return;
+      }
+      retryingRef.current(true);
+      try {
+        await sendOnce(input);
+      } finally {
+        retryingRef.current(false);
+      }
+    },
+    onSettled: () => {
+      retryingRef.current(false);
     },
     onSuccess: async (_result, variables) => {
       await queryClient.invalidateQueries({
@@ -137,4 +193,6 @@ export function useSendAgentMessage(runId: string) {
       }
     },
   });
+
+  return Object.assign(mutation, { isRetrying });
 }

@@ -7,6 +7,7 @@ import { Alert, Badge, EmptyState, ErrorState, LoadingState, Panel } from '@aegi
 import { GraphViewModeToggle, useCinematicGraphStore } from '@/features/cinematic-graph';
 import { GraphViewMode } from '@/features/cinematic-graph/contracts';
 import { useLiveRun } from '@/features/live-run';
+import { RevealAnnouncer } from '@/features/operational-graph';
 import { useRunGraph } from '@/features/shell/hooks/use-shell-queries';
 
 const OperationalGraphView = dynamic(
@@ -97,6 +98,10 @@ export function VisualizationSlot({ runId, incidentId }: VisualizationSlotProps)
             : 'Live Sigma.js operational investigation graph'
         }
       >
+        <RevealAnnouncer
+          nodes={liveRun.bootstrapSnapshot.nodes}
+          revision={liveRun.graphRevision}
+        />
         {viewMode === GraphViewMode.THREE_D ? (
           <CinematicGraphView
             runId={runId}

@@ -10,6 +10,8 @@ import {
   LiveRunProvider,
   useLiveRun,
 } from '@/features/live-run';
+import { OpsFeedPanel } from '@/features/ops-feed';
+import { OperatorConsolePanel } from '@/features/operator-console';
 import { CommandPalette } from '@/features/shell/components/command-palette';
 import { InspectorPanel } from '@/features/shell/components/inspector-panel';
 import { OperationsRail } from '@/features/shell/components/operations-rail';
@@ -76,9 +78,29 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
           >
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
               <LiveRunControls />
-              {runId ? <AgentChatPanel runId={runId} /> : null}
-              {children ??
-                (runId ? <VisualizationSlot runId={runId} incidentId={incidentId} /> : null)}
+              {children ? (
+                children
+              ) : runId ? (
+                /*
+                  Command surface: the operational graph is the centerpiece, flanked by the AI
+                  copilot (steering channel, left) and the ops feed (live heartbeat, right). The
+                  operator console docks beneath the graph. Flanks stack above/below the graph
+                  until there is room to sit beside it (2xl), so the layout stays legible on a
+                  laptop and opens up on an ops-room display.
+                */
+                <div className="flex min-h-0 flex-col gap-4 2xl:flex-row 2xl:items-start">
+                  <div className="flex min-w-0 flex-col gap-4 2xl:w-[21rem] 2xl:shrink-0">
+                    <AgentChatPanel runId={runId} />
+                  </div>
+                  <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+                    <VisualizationSlot runId={runId} incidentId={incidentId} />
+                    <OperatorConsolePanel runId={runId} />
+                  </div>
+                  <div className="flex min-w-0 flex-col gap-4 2xl:w-[22rem] 2xl:shrink-0">
+                    <OpsFeedPanel runId={runId} />
+                  </div>
+                </div>
+              ) : null}
               <TimelineView />
             </div>
             <InspectorPanel runId={runId} incidentId={incidentId} />
