@@ -47,6 +47,19 @@ A scenario is a live blue-team engagement. The player, working with AI agents ba
 - Replay timeline distinguishes defender actions (chat instructions, agent tasks, approvals, executions) from attacker/simulation events; post-run ground-truth overlay.
 - Verify gate green (`scripts/verify.ps1`), golden replays intact, visual verification in Chrome on the rebuilt container.
 
+## Phase 7 — The 2v1: operator console + agent autonomy (owner direction, 2026-07-23)
+
+Product owner direction: the player is an active operator working *alongside* the AI (player + AI vs attacker), and the AI must feel like an agent teammate, not a chatbot.
+
+- **Operator console**: expose the same allowlisted READ/ANALYSIS tool registry the agents use as player-facing UI on the run page — log/event search with filters, per-asset network activity view, asset deep-dive, operator-pinned hypotheses. Player and agent work the same evidence pool as peers.
+- **Direct player actions**: player-initiated containment (isolate, revoke credentials, restrict access, restart/rollback) through the existing policy → command pipeline. Class 2/3 player actions get a confirm-with-consequences step (the player is the incident commander approving their own call); identical audit trail and scoring impact as agent-proposed actions.
+- **Autonomous triage loop**: new alert → WATCHTOWER auto-task (event-driven, not per-tick polling — bounded local-model load) → finding posted to an **ops feed** without being asked.
+- **Standing directives**: persistent taskings ("monitor the logistics zone network") re-evaluated when new relevant evidence lands; report-by-exception.
+- **Rules-of-engagement dial**: per-run autonomy level — Observe / Investigate / Forward-deployed (proactively drafts containment proposals). Persisted on the run; visible in chat and feed.
+- **Ops feed**: unified live stream of agent findings, player actions, detections, and reveals; chat remains the steering channel and becomes one tab of the agent surface.
+
+Deferred by owner decision: LLM-driven attacker ("adversarial mode") and multi-attacker scenarios — future scenario types, not retrofits.
+
 ## Non-goals (this iteration)
 
 - Token-by-token LLM streaming (task-lifecycle streaming only).
