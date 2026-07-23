@@ -8,7 +8,10 @@ from typing import Any
 from aegis_contracts import GraphSnapshotV1
 from aegis_contracts.versioning import GRAPH_SNAPSHOT_SCHEMA_VERSION
 from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
+from aegis_simulation_domain.disclosure import redact_graph_snapshot
 from aegis_simulation_domain.runtime import SimulationRuntime
+
+from aegis_simulation.disclosure_resolver import RunDisclosure
 
 
 def _asset_label(manifest: ScenarioManifestV1, asset_id: str) -> str:
@@ -78,3 +81,19 @@ def build_graph_snapshot_from_runtime(
             "revision": snapshot_revision,
         }
     )
+
+
+def redact_snapshot_for_disclosure(
+    snapshot: GraphSnapshotV1,
+    disclosure: RunDisclosure,
+) -> GraphSnapshotV1:
+    """Return a fog-redacted copy of a graph snapshot for operator-facing transport.
+
+    The persisted snapshot is always the truth (source of truth, replay-from-snapshot, and
+    post-run debrief depend on it); redaction is applied only when *serving* to the operator
+    while a run is still active. Undisclosed governed nodes are shown at their baseline
+    status with ``disclosed=false`` and their risk soft-pedalled to the manifest baseline so
+    an attacker-driven spike never leaks. Everything else passes through unchanged with
+    ``disclosed=true``.
+    """
+    return redact_graph_snapshot(snapshot, disclosure.governing_map, disclosure.inputs)

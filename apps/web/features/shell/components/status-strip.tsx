@@ -4,7 +4,7 @@ import { NodeStatus } from '@aegis/contracts-ts';
 import { Alert, Badge } from '@aegis/ui';
 import type { ReactNode } from 'react';
 
-import { useLiveRun } from '@/features/live-run';
+import { ThreatTempoIndicator, useLiveRun } from '@/features/live-run';
 import { OperatorIdentityBadge } from '@/features/auth';
 import {
   useConnectionStatus,
@@ -115,6 +115,7 @@ export function StatusStrip({ runId }: StatusStripProps) {
           ) : null}
         </div>
       ) : null}
+      {runId && liveRun?.isLiveMode ? <ThreatTempoIndicator runId={runId} /> : null}
       <div className="ml-auto">
         <OperatorIdentityBadge />
       </div>

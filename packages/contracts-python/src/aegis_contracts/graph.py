@@ -72,6 +72,11 @@ class GraphNodeV1(BaseModel):
     criticality: float = Field(ge=0.0, le=1.0)
     status: NodeStatus
     revision: Revision
+    # Fog of war: whether the operator may see this node's *true* security state yet.
+    # Additive (schemaVersion stays 1); defaults true so unredacted producers and legacy
+    # payloads are unaffected. Undisclosed nodes are served with a redacted (baseline)
+    # status; the authoritative event log and post-run/debrief projections keep full truth.
+    disclosed: bool = True
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> GraphNodeV1:

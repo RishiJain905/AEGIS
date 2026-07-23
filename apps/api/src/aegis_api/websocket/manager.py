@@ -51,6 +51,7 @@ from aegis_api.websocket.connection import (
     new_trace_id,
 )
 from aegis_api.websocket.consumer import GatewayStreamConsumer
+from aegis_api.websocket.disclosure import RunDisclosureTracker
 from aegis_api.websocket.errors import GatewayError
 from aegis_api.websocket.metrics import GLOBAL_GATEWAY_METRICS, GatewayMetrics
 from aegis_api.websocket.recovery import SubscriptionRecoveryService, envelope_from_domain_event
@@ -74,6 +75,10 @@ class WebSocketGatewayManager:
         self._recovery = SubscriptionRecoveryService(self._config)
         self._connections: dict[str, ConnectionState] = {}
         self._subscription_index: dict[tuple[str, str], set[str]] = {}
+        # Fog of war: one disclosure tracker per subscribed run, seeded from persisted truth
+        # on subscribe and updated as reveal/alert/lifecycle events flow through fan-out.
+        # Redacts undisclosed attacker status changes on every operator-bound frame.
+        self._run_trackers: dict[str, RunDisclosureTracker] = {}
         self._redis: Redis | None = None
         self._consumer: GatewayStreamConsumer | None = None
         self._consumer_task: asyncio.Task[None] | None = None
@@ -172,6 +177,12 @@ class WebSocketGatewayManager:
                 self._remove_connection_subscriptions(connection)
 
     async def deliver_envelope(self, envelope: RealtimeMessageEnvelopeV1) -> None:
+        # Fold reveal/alert/lifecycle events into the run's disclosure state before fan-out
+        # so already-connected clients' future frames redact/reveal correctly.
+        tracker = self._run_trackers.get(envelope.event.run_id)
+        if tracker is not None:
+            tracker.note_event(envelope.event)
+
         key = (envelope.event.run_id, envelope.channel)
         async with self._lock:
             connection_ids = list(self._subscription_index.get(key, set()))
@@ -264,6 +275,9 @@ class WebSocketGatewayManager:
                 run_id=payload.run_id,
                 channel=payload.channel,
             )
+            # Seed/refresh fog-of-war disclosure from persisted truth before any backfill so
+            # the resync path redacts by current disclosure and converges after reveals.
+            await self._seed_run_tracker(session, payload.run_id)
             plan = await self._recovery.plan_recovery(
                 session,
                 run_id=payload.run_id,
@@ -319,6 +333,36 @@ class WebSocketGatewayManager:
                     ),
                 ),
             )
+
+    async def _seed_run_tracker(self, session: AsyncSession, run_id: str) -> None:
+        """Build/refresh the run's disclosure tracker from persisted truth.
+
+        Overwriting with the authoritative current state on each subscribe is safe: it is a
+        superset of the incremental fan-out updates, so live redaction stays correct and a
+        post-reveal resync converges. Failures degrade to no redaction rather than dropping
+        the subscription — fog is best-effort transport hygiene, never a hard dependency.
+        """
+        from aegis_persistence.repositories.postgres import PostgresRunRepository
+        from aegis_simulation.disclosure_resolver import ACTIVE_RUN_STATUSES
+
+        from aegis_api.runs.service import get_run_command_service
+
+        try:
+            run = await PostgresRunRepository(session).get_by_id(run_id)
+            if run is None:
+                return
+            disclosure = await get_run_command_service().resolve_disclosure(session, run)
+            if not disclosure.has_hidden_state:
+                self._run_trackers.pop(run_id, None)
+                return
+            self._run_trackers[run_id] = RunDisclosureTracker(
+                governing_map=dict(disclosure.governing_map),
+                revealed_condition_ids=set(disclosure.inputs.revealed_condition_ids),
+                alerted_asset_ids=set(disclosure.inputs.alerted_asset_ids),
+                active=run.status in ACTIVE_RUN_STATUSES,
+            )
+        except Exception:  # noqa: BLE001 — never fail a subscription over fog seeding
+            logger.warning("Fog-of-war tracker seed failed for run %s", run_id, exc_info=True)
 
     async def _handle_unsubscribe(
         self,
@@ -383,6 +427,13 @@ class WebSocketGatewayManager:
         subscription: SubscriptionState,
         envelope: RealtimeMessageEnvelopeV1,
     ) -> None:
+        # Single choke point for every operator-bound event (live, resync backfill, and gap
+        # fill). Fog-of-war redaction rewrites undisclosed attacker status changes here so no
+        # raw frame ever leaks truth, regardless of delivery path.
+        tracker = self._run_trackers.get(envelope.event.run_id)
+        if tracker is not None:
+            envelope = tracker.redact(envelope)
+
         if not connection.remember_event_id(envelope.event.event_id):
             self._metrics.record_duplicate()
             return

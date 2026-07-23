@@ -6,6 +6,7 @@ import asyncio
 import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from aegis_contracts import (
     DomainEventEnvelopeV1,
@@ -23,11 +24,21 @@ from aegis_contracts.versioning import (
 from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
+from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
 from aegis_simulation_domain import SimulationEngine, SimulationError, SimulationErrorCode
 from aegis_simulation_domain.runtime import SimulationRuntime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from aegis_simulation.application import SIMULATION_COMMAND_SCOPE, SimulationApplicationService
-from aegis_simulation.graph_projection import build_graph_snapshot_from_runtime
+from aegis_simulation.disclosure_resolver import (
+    ACTIVE_RUN_STATUSES,
+    RunDisclosure,
+    resolve_run_disclosure,
+)
+from aegis_simulation.graph_projection import (
+    build_graph_snapshot_from_runtime,
+    redact_snapshot_for_disclosure,
+)
 
 SCENARIO_PACKAGE_BY_VERSION: dict[str, str] = {
     "scenario-version:1.0.0-silent-relay": "scenarios/operation-silent-relay",
@@ -86,6 +97,64 @@ class RunCommandService:
     # action execution. A single cached ``SimulationRuntime`` is not safe under interleaved
     # awaits, so all of them acquire ``lock_for(run_id)`` before mutating it.
     _run_locks: dict[str, asyncio.Lock] = field(default_factory=dict)
+    # Fog of war: latest per-run threat-tempo scalar (0..1), refreshed by the tick engine
+    # each post-step and read by the operator-facing bootstrap payload. In-process only
+    # (single API writer); never persisted to the authoritative event stream so it cannot
+    # perturb determinism/golden replays. Absent until the first tick computes it.
+    _threat_tempo: dict[str, float] = field(default_factory=dict)
+    # Manifests are immutable per scenario version; cache to avoid re-reading the package
+    # from disk on every disclosure resolution.
+    _manifest_cache: dict[str, ScenarioManifestV1] = field(default_factory=dict)
+
+    def set_threat_tempo(self, run_id: str, value: float) -> None:
+        self._threat_tempo[run_id] = max(0.0, min(1.0, value))
+
+    def get_threat_tempo(self, run_id: str) -> float | None:
+        return self._threat_tempo.get(run_id)
+
+    def clear_threat_tempo(self, run_id: str) -> None:
+        self._threat_tempo.pop(run_id, None)
+
+    def manifest_for_scenario_version(self, scenario_version_id: str) -> ScenarioManifestV1:
+        """Public manifest accessor (cached) for operator-facing fog resolution."""
+        return self._manifest_for_run(scenario_version_id)
+
+    def _manifest_for_run(self, scenario_version_id: str) -> ScenarioManifestV1:
+        manifest = self._manifest_cache.get(scenario_version_id)
+        if manifest is None:
+            package_dir = self.resolve_package_dir(
+                package_path=None,
+                scenario_version_id=scenario_version_id,
+            )
+            manifest = SimulationEngine.load_manifest(package_dir)
+            self._manifest_cache[scenario_version_id] = manifest
+        return manifest
+
+    async def resolve_disclosure(
+        self,
+        session: AsyncSession,
+        run: Any,
+    ) -> RunDisclosure:
+        """Resolve current fog-of-war disclosure for a run's operator-facing projection.
+
+        Prefers reveal state from a live cached runtime when present (no checkpoint read);
+        alerted assets always come from persisted rows.
+        """
+        manifest = self._manifest_for_run(run.scenario_version_id)
+        revealed: frozenset[str] | None = None
+        cached = self.runtime_cache.get(run.id)
+        if cached is not None:
+            revealed = frozenset(
+                condition.condition_id
+                for condition in cached.runtime.world.hidden_conditions.values()
+                if condition.revealed
+            )
+        return await resolve_run_disclosure(
+            session,
+            run_id=run.id,
+            manifest=manifest,
+            revealed_condition_ids=revealed,
+        )
 
     def lock_for(self, run_id: str) -> asyncio.Lock:
         """Return the per-run serialization lock, creating it on first use.
@@ -174,6 +243,7 @@ class RunCommandService:
             seed=seed,
             run_id=request.run_id,
             owner_user_id=owner_user_id,
+            loadout=request.loadout,
         )
         _ = manifest
 
@@ -305,11 +375,20 @@ class RunCommandService:
         events = await PostgresEventQueryRepository(uow.session).list_by_run(run_id)
         last_sequence = events[-1].sequence if events else 0
 
+        # Fog of war: while the run is active, the operator sees only disclosed truth. Once
+        # terminal (stopped/completed), the graph switches to full ground truth for debrief.
+        threat_tempo: float | None = None
+        if run.status in ACTIVE_RUN_STATUSES:
+            disclosure = await self.resolve_disclosure(uow.session, run)
+            snapshot = redact_snapshot_for_disclosure(snapshot, disclosure)
+            threat_tempo = self.get_threat_tempo(run_id)
+
         return SnapshotBootstrapPayloadV1(
             schema_version=SNAPSHOT_BOOTSTRAP_SCHEMA_VERSION,
             run=run,
             graph_snapshot=snapshot,
             last_applied_sequence=last_sequence,
+            threat_tempo=threat_tempo,
         )
 
     async def _persist_runtime_checkpoint(

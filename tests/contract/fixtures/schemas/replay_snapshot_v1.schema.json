@@ -127,11 +127,23 @@
           "type": "string"
         },
         "incidentId": {
-          "title": "Incidentid",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Incidentid"
         },
         "role": {
           "$ref": "#/$defs/AgentRole"
+        },
+        "runId": {
+          "title": "Runid",
+          "type": "string"
         },
         "schemaVersion": {
           "minimum": 1,
@@ -153,7 +165,7 @@
       "required": [
         "schemaVersion",
         "id",
-        "incidentId",
+        "runId",
         "role",
         "state",
         "traceId",
@@ -448,6 +460,11 @@
           "minimum": 0.0,
           "title": "Criticality",
           "type": "number"
+        },
+        "disclosed": {
+          "default": true,
+          "title": "Disclosed",
+          "type": "boolean"
         },
         "entityType": {
           "$ref": "#/$defs/EntityType"
@@ -1062,12 +1079,69 @@
       "title": "ReplayStateV1",
       "type": "object"
     },
+    "RulesOfEngagementV1": {
+      "description": "Per-run autonomy dial (Phase 7). Higher tiers let agents act more proactively;\nevery state change still passes policy + human approval (Class 2/3 never auto-execute).",
+      "enum": ["observe", "investigate", "forward_deployed"],
+      "title": "RulesOfEngagementV1",
+      "type": "string"
+    },
+    "RunLoadoutV1": {
+      "additionalProperties": false,
+      "description": "Per-run capability loadout chosen at launch; a variety axis alongside the seed.",
+      "properties": {
+        "biasGuard": {
+          "default": true,
+          "title": "Biasguard",
+          "type": "boolean"
+        },
+        "roe": {
+          "$ref": "#/$defs/RulesOfEngagementV1",
+          "default": "investigate"
+        },
+        "schemaVersion": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "threatTempo": {
+          "default": true,
+          "title": "Threattempo",
+          "type": "boolean"
+        }
+      },
+      "title": "RunLoadoutV1",
+      "type": "object"
+    },
     "RunV1": {
       "additionalProperties": false,
       "properties": {
         "id": {
           "title": "Id",
           "type": "string"
+        },
+        "loadout": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RunLoadoutV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ownerUserId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owneruserid"
         },
         "revision": {
           "minimum": 0,

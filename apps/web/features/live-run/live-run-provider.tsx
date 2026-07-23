@@ -79,6 +79,14 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
   const [graphRevision, setGraphRevision] = useState(0);
   const transportRef = useRef<RealtimeTransport | null>(null);
   const gapRecoveryRef = useRef(false);
+  // Fog-of-war reveal convergence: a disclosure flip (hidden-condition reveal, or an alert
+  // landing on a previously-undisclosed asset) means the server will now serve the asset's
+  // true state. The live status deltas that changed it already passed redacted, so the
+  // client converges by resyncing the (serve-time disclosure-correct) snapshot. `resyncRef`
+  // lets `processEnvelope` invoke `performResync` (declared below); `lastRevealResyncRef`
+  // throttles bursts so a flurry of alerts triggers at most one resync per window.
+  const resyncRef = useRef<(() => Promise<void>) | null>(null);
+  const lastRevealResyncRef = useRef(0);
 
   const [state, dispatch] = useReducer(
     (current: RunReplicatedState, action: Parameters<typeof runReplicatedReducer>[1]) =>
@@ -143,6 +151,19 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         return;
       }
       applyEventToGraph(envelope.event);
+      // Fog-of-war reveal moment: on a disclosure flip, converge the graph to the now-
+      // disclosed truth by resyncing the snapshot (throttled against bursts). The timeline
+      // already announces these events for accessibility (aria-live status region).
+      if (
+        envelope.event.type === 'sim.hidden_condition.revealed' ||
+        envelope.event.type.startsWith('alert.')
+      ) {
+        const now = Date.now();
+        if (now - lastRevealResyncRef.current > 1500 && !gapRecoveryRef.current) {
+          lastRevealResyncRef.current = now;
+          void resyncRef.current?.();
+        }
+      }
       if (envelope.event.type.startsWith('alert.')) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.runs.alerts(runId) });
       }
@@ -235,6 +256,12 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       gapRecoveryRef.current = false;
     }
   }, [applyEventToGraph, runId]);
+
+  // Keep the reveal-convergence ref pointed at the latest resync closure so the
+  // event handler can trigger it without a declaration-order dependency.
+  useEffect(() => {
+    resyncRef.current = performResync;
+  }, [performResync]);
 
   useEffect(() => {
     if (!isLiveMode) {

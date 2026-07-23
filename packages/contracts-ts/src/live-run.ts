@@ -160,6 +160,9 @@ export const snapshotBootstrapPayloadSchema = z
     run: runSchema,
     graphSnapshot: graphSnapshotSchema,
     lastAppliedSequence: sequenceSchema,
+    // Fog-of-war ambient pressure scalar in [0, 1]; null when absent/not yet computed.
+    // Additive (schemaVersion unchanged). Scalar only — no asset/condition leak.
+    threatTempo: z.number().min(0).max(1).nullable().optional(),
   })
   .strict()
   .superRefine((value, ctx) => {

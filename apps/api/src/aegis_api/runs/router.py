@@ -30,6 +30,8 @@ from aegis_persistence.repositories.postgres import (
     PostgresScenarioVersionRepository,
 )
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
+from aegis_simulation.disclosure_resolver import ACTIVE_RUN_STATUSES
+from aegis_simulation.graph_projection import redact_snapshot_for_disclosure
 from aegis_simulation_domain.errors import SimulationError, SimulationErrorCode
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -239,13 +241,19 @@ async def get_run_graph(
         if isinstance(authorized, JSONResponse):
             return authorized
         snapshot = await PostgresGraphSnapshotRepository(session).get_latest_for_run(run_id)
-    if snapshot is None:
-        envelope = ApiErrorEnvelopeV1(
-            schema_version=1,
-            code=ContractErrorCode.VALIDATION_FAILED.value,
-            message=f"Graph snapshot not found for run: {run_id}",
-        )
-        return JSONResponse(status_code=404, content=envelope.model_dump(by_alias=True))
+        if snapshot is None:
+            envelope = ApiErrorEnvelopeV1(
+                schema_version=1,
+                code=ContractErrorCode.VALIDATION_FAILED.value,
+                message=f"Graph snapshot not found for run: {run_id}",
+            )
+            return JSONResponse(status_code=404, content=envelope.model_dump(by_alias=True))
+        # Fog of war: redact undisclosed attacker state while the run is active; serve full
+        # ground truth once the run is terminal (debrief). The persisted snapshot is always
+        # the truth — redaction happens only on this operator-facing read.
+        if authorized.status in ACTIVE_RUN_STATUSES:
+            disclosure = await _run_service.resolve_disclosure(session, authorized)
+            snapshot = redact_snapshot_for_disclosure(snapshot, disclosure)
     return snapshot
 
 

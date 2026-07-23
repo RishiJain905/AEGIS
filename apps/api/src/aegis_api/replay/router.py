@@ -26,14 +26,51 @@ from aegis_persistence.object_storage import build_object_storage
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_replay.errors import ReplayEngineError
 from aegis_replay.service import ReplayService
+from aegis_simulation.disclosure_resolver import ACTIVE_RUN_STATUSES
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from aegis_api.auth.deps import require_actor, require_permission
 from aegis_api.auth.run_authz import require_run_access
 from aegis_api.db.session import get_db_session_maker
+from aegis_api.runs.service import get_run_command_service
 
 router = APIRouter(prefix="/api/v1/replay", tags=["replay"])
+
+
+async def _reconstruct_operator_state(
+    service: ReplayService,
+    uow: PostgresUnitOfWork,
+    *,
+    run_id: str,
+    sequence: int | None = None,
+    sim_time: datetime | None = None,
+    incident_id: str | None = None,
+    prefer_snapshot: bool = True,
+) -> ReplayStateV1:
+    """Reconstruct with fog-of-war: redacted while the run is live, full truth once over."""
+    run = await uow.runs.get_by_id(run_id)
+    run_active = run is not None and run.status in ACTIVE_RUN_STATUSES
+    if run is None or not run_active:
+        return await service.reconstruct(
+            uow,
+            run_id=run_id,
+            sequence=sequence,
+            sim_time=sim_time,
+            incident_id=incident_id,
+            prefer_snapshot=prefer_snapshot,
+        )
+    manifest = get_run_command_service().manifest_for_scenario_version(run.scenario_version_id)
+    return await service.reconstruct_operator_view(
+        uow,
+        run_id=run_id,
+        manifest=manifest,
+        run_active=run_active,
+        sequence=sequence,
+        sim_time=sim_time,
+        incident_id=incident_id,
+        prefer_snapshot=prefer_snapshot,
+    )
 
 SimTimeQuery = Annotated[datetime | None, Query(alias="simTime")]
 IncidentIdQuery = Annotated[str | None, Query(alias="incidentId")]
@@ -112,7 +149,8 @@ async def get_replay_state(
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
         await require_run_access(uow, run_id, actor)
         try:
-            return await service.reconstruct(
+            return await _reconstruct_operator_state(
+                service,
                 uow,
                 run_id=run_id,
                 sequence=sequence,
@@ -230,7 +268,9 @@ async def replay_diagnostic_harness(
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
         await require_run_access(uow, run_id, actor)
         try:
-            state = await service.reconstruct(uow, run_id=run_id, sequence=sequence)
+            state = await _reconstruct_operator_state(
+                service, uow, run_id=run_id, sequence=sequence
+            )
             snapshots = await service.list_snapshots(uow, run_id=run_id)
             equivalence = None
             if include_equivalence:

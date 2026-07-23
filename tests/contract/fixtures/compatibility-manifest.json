@@ -240,7 +240,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_delta_v1.schema.json",
-      "sha256": "a61051321482d083bc245eec3d8e0655959cc7940e2be472519bfd6ea61cc78a"
+      "sha256": "6ac6afb0b18ec2ec7214667a58ff88b4ba6f5b9f61f119f4daa0c7e69124ddae"
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_edge_v1.schema.json",
@@ -248,7 +248,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_node_v1.schema.json",
-      "sha256": "44c8f4dfe00b16bebcdea6949a062a7a32bd078b53f57c5ba64c20cc58879362"
+      "sha256": "3439e9137e225b06bf102428ac1b78a5d7f07fea712ec7676025ab81212aa127"
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_path_query_v1.schema.json",
@@ -260,7 +260,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/graph_snapshot_v1.schema.json",
-      "sha256": "2ede124ee2da3fadf5fea217917f459fee56eba082538eb40a781ebf3128394b"
+      "sha256": "846d3142e7b1f44eab67d5ef73672de517addf6699a65729d386a38066aeeedb"
     },
     {
       "path": "tests/contract/fixtures/schemas/grounding_validation_result_v1.schema.json",
@@ -446,11 +446,11 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_snapshot_v1.schema.json",
-      "sha256": "5f1f30a469d73ffb3110041c855699971c71788666835157b20a83eb4fde4a80"
+      "sha256": "c7b553c98d4bbeb200b5e726179a37d7dfc59cac863db8c40544aa33494e8659"
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_state_v1.schema.json",
-      "sha256": "c5e37c72168bb6936598f3288106fb922021b60566ff3570e5ac4df5cbdb615e"
+      "sha256": "bb22c061a654734d9f5af4100e4e23a5dd72071825ec6ee51c96a491132115ff"
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_view_state_v1.schema.json",
@@ -609,7 +609,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/snapshot_bootstrap_v1.schema.json",
-      "sha256": "ff1fd0f88412f92879ef074f56ad05be9d051f21f2164013097d24206f66b36f"
+      "sha256": "ae37c83c6c73f2ff1555161af2174f83082bdd9ec4c20df1993f771820b3e067"
     },
     {
       "path": "tests/contract/fixtures/schemas/snapshot_manifest_v1.schema.json",

@@ -143,6 +143,11 @@
           "title": "Criticality",
           "type": "number"
         },
+        "disclosed": {
+          "default": true,
+          "title": "Disclosed",
+          "type": "boolean"
+        },
         "entityType": {
           "$ref": "#/$defs/EntityType"
         },

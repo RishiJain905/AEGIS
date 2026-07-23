@@ -22,6 +22,12 @@ from aegis_contracts.versioning import (
 from aegis_persistence.object_storage import ObjectStoragePort
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
+from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
+from aegis_simulation_domain.disclosure import (
+    build_governing_map,
+    disclosure_inputs_from_events,
+    redact_graph_snapshot,
+)
 from aegis_simulation_domain.runtime import SIMULATION_ENGINE_VERSION
 
 from aegis_replay.diff import diff_states
@@ -233,6 +239,52 @@ class ReplayService:
             fallback_reason=fallback_reason,
         )
         return projector.to_replay_state(provenance=provenance, incident_id=incident_id)
+
+    async def reconstruct_operator_view(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        run_id: str,
+        manifest: ScenarioManifestV1,
+        run_active: bool,
+        sequence: int | None = None,
+        sim_time: datetime | None = None,
+        incident_id: str | None = None,
+        prefer_snapshot: bool = True,
+    ) -> ReplayStateV1:
+        """Operator-facing replay: fog-respecting mid-run, full truth once the run is over.
+
+        Reconstructs authoritative (truthful) state, then — only while the run is still live
+        — redacts the graph to what the operator knew *as of the reconstructed sequence*.
+        Disclosure is derived purely from the reveal/alert events up to that sequence, so it
+        is deterministic and does not depend on any live/current-time state. Once the run is
+        terminal, the untouched ground-truth reconstruction is returned for debrief.
+
+        Diagnostic/equivalence paths deliberately use :meth:`reconstruct` (full truth) — fog
+        is an operator-presentation concern, not a determinism concern.
+        """
+        state = await self.reconstruct(
+            uow,
+            run_id=run_id,
+            sequence=sequence,
+            sim_time=sim_time,
+            incident_id=incident_id,
+            prefer_snapshot=prefer_snapshot,
+        )
+        if not run_active or state.graph is None:
+            return state
+        governing_map = build_governing_map(manifest)
+        if not governing_map:
+            return state
+        target_sequence = state.cursor.sequence
+        events = await self._load_all_events(uow, run_id)
+        inputs = disclosure_inputs_from_events(
+            event for event in events if event.sequence <= target_sequence
+        )
+        redacted_graph = redact_graph_snapshot(state.graph, governing_map, inputs)
+        if redacted_graph is state.graph:
+            return state
+        return state.model_copy(update={"graph": redacted_graph})
 
     async def create_snapshot(
         self,

@@ -61,6 +61,11 @@ export const graphNodeSchema = z
     criticality: z.number().min(0).max(1),
     status: z.enum(['normal', 'suspicious', 'under_investigation', 'contained', 'compromised']),
     revision: revisionSchema,
+    // Fog of war: whether the operator may see this node's true security state yet.
+    // Additive (schemaVersion stays 1); optional so existing producers/fixtures are
+    // unaffected — the server always sends it and consumers treat an absent value as
+    // disclosed. Undisclosed nodes arrive with a redacted (baseline) status until detected.
+    disclosed: z.boolean().optional(),
   })
   .strict()
   .superRefine((value, ctx) => {
