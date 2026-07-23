@@ -14,6 +14,7 @@ import type {
 } from '@aegis/contracts-ts';
 import { Badge, Button, EmptyState, LoadingState, cn, typographyTokens } from '@aegis/ui';
 
+import { AdversaryDossier } from '@/features/after-action/dossier/adversary-dossier';
 import { useAfterActionView } from '@/features/after-action/use-after-action-queries';
 import {
   MetaRow,
@@ -732,7 +733,7 @@ export interface AfterActionDashboardProps {
   runId: string;
 }
 
-export function AfterActionDashboard({ runId }: AfterActionDashboardProps) {
+function ScoreSection({ runId }: AfterActionDashboardProps) {
   const query = useAfterActionView(runId);
 
   if (query.isLoading) {
@@ -765,4 +766,17 @@ export function AfterActionDashboard({ runId }: AfterActionDashboardProps) {
   }
 
   return <DashboardBody view={query.data} />;
+}
+
+export function AfterActionDashboard({ runId }: AfterActionDashboardProps) {
+  // The score section and the adversary dossier are independently gated: the dossier
+  // self-gates on terminal run status (rendering a sealed state mid-run) so it appears even
+  // before a completed run has been scored, while the score section renders whatever the
+  // after-action query returns.
+  return (
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <ScoreSection runId={runId} />
+      <AdversaryDossier runId={runId} />
+    </div>
+  );
 }
