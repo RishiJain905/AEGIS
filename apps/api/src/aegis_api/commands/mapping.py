@@ -5,16 +5,15 @@ from __future__ import annotations
 from aegis_contracts.approvals import AuthorizedSimulationCommandV1
 from aegis_contracts.proposals import ScenarioCommandTemplateV1
 from aegis_contracts.versioning import AUTHORIZED_SIMULATION_COMMAND_SCHEMA_VERSION
+from aegis_policy.commands import COMMAND_STATUS_MAP  # shared single source of truth
 
-COMMAND_STATUS_MAP: dict[ScenarioCommandTemplateV1, str] = {
-    ScenarioCommandTemplateV1.OBSERVE: "observed",
-    ScenarioCommandTemplateV1.INCREASE_MONITORING: "heightened_monitoring",
-    ScenarioCommandTemplateV1.ISOLATE: "isolated",
-    ScenarioCommandTemplateV1.RESTRICT_ACCESS: "access_restricted",
-    ScenarioCommandTemplateV1.REVOKE_CREDENTIALS: "credentials_revoked",
-    ScenarioCommandTemplateV1.RESTART_SERVICE: "restarting",
-    ScenarioCommandTemplateV1.ROLLBACK_DEPLOYMENT: "rolling_back",
-}
+__all__ = [
+    "APPROVAL_IDEMPOTENCY_SCOPE",
+    "COMMAND_STATUS_MAP",
+    "DEFAULT_AUTHORIZATION_TOKEN",
+    "DEFAULT_OPERATOR_ACTOR_ID",
+    "map_scenario_command_to_authorized",
+]
 
 DEFAULT_OPERATOR_ACTOR_ID = "asset:operator-console"
 DEFAULT_AUTHORIZATION_TOKEN = "synthetic-operator-token"

@@ -91,6 +91,22 @@ def draw_random_seed() -> int:
     return secrets.randbelow(_MAX_RANDOM_SEED) + 1
 
 
+_MAX_COMMANDER_INTENT_CHARS = 280
+
+
+def _normalize_commander_intent(intent: str | None) -> str | None:
+    """Trim the operator's commander's intent; an empty/whitespace value persists as None.
+
+    The contract already bounds length, but a skipped field may arrive as "" (empty
+    field submitted); normalizing to None keeps "no intent" a single representation
+    on the run and in the after-action review.
+    """
+    if intent is None:
+        return None
+    trimmed = intent.strip()[:_MAX_COMMANDER_INTENT_CHARS]
+    return trimmed or None
+
+
 @dataclass
 class RunCommandService:
     workspace_root: Path
@@ -247,6 +263,7 @@ class RunCommandService:
             run_id=request.run_id,
             owner_user_id=owner_user_id,
             loadout=request.loadout,
+            commander_intent=_normalize_commander_intent(request.commander_intent),
         )
         _ = manifest
 

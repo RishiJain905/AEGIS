@@ -45,6 +45,7 @@ class SimulationApplicationService:
         run_id: str | None = None,
         owner_user_id: str | None = None,
         loadout: RunLoadoutV1 | None = None,
+        commander_intent: str | None = None,
     ) -> tuple[SimulationRuntime, ScenarioManifestV1]:
         manifest = SimulationEngine.load_manifest(package_dir)
         scenario_id = manifest.metadata.scenario_id
@@ -83,6 +84,7 @@ class SimulationApplicationService:
             revision=0,
             owner_user_id=owner_user_id,
             loadout=loadout if loadout is not None else RunLoadoutV1(),
+            commander_intent=commander_intent,
         )
 
         existing = await self._uow.scenarios.get_by_id(scenario_id)

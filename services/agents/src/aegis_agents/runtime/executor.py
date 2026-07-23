@@ -27,6 +27,7 @@ from aegis_agents.runtime.registry import (
 )
 from aegis_agents.runtime.session_service import AgentSessionService
 from aegis_agents.security.scenario_content import (
+    build_commander_intent_message,
     build_operator_directive_message,
     build_scenario_data_message,
     build_session_history_message,
@@ -379,6 +380,14 @@ class TaskExecutor:
             ),
             scenario_data,
         ]
+        # Commander's intent (run-wide operator priorities) steers WHAT every role
+        # prioritises for the whole engagement — applied to all roles, run-scoped and
+        # incident-scoped alike. Untrusted, non-authoritative free text, delimited like
+        # the operator directive. Absent when the operator skipped it (or on legacy runs).
+        run = await uow.runs.get_by_id(run_id)
+        commander_intent = getattr(run, "commander_intent", None) if run is not None else None
+        if commander_intent:
+            messages.append(build_commander_intent_message(commander_intent))
         # Multi-turn continuity: a bounded digest of prior turns in this session
         # so a run-scoped session feels like a conversation.
         history = await self._build_session_history(uow, session_id=session.id, before_task_id=task.id)

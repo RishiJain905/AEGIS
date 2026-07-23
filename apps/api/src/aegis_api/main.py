@@ -21,6 +21,7 @@ from aegis_api.auth.router import router as auth_router
 from aegis_api.auth.service import AuthServiceError
 from aegis_api.auth.startup import seed_dev_identities
 from aegis_api.autonomy.poller import AutonomyPoller
+from aegis_api.blast_radius.router import router as blast_radius_router
 from aegis_api.console.router import router as console_router
 from aegis_api.db.session import get_db_session_maker, init_db, shutdown_db
 from aegis_api.detection.observability import router as detection_observability_router
@@ -28,6 +29,7 @@ from aegis_api.detection.router import router as detection_router
 from aegis_api.directives.router import router as directives_router
 from aegis_api.features.observability import router as feature_observability_router
 from aegis_api.features.router import router as features_router
+from aegis_api.ghost.router import router as ghost_router
 from aegis_api.investigation.router import router as investigation_router
 from aegis_api.models.observability import router as models_observability_router
 from aegis_api.models.router import router as models_router
@@ -35,6 +37,7 @@ from aegis_api.observability import build_ready_response
 from aegis_api.observability import protected_router as ops_protected_router
 from aegis_api.observability import public_router as ops_public_router
 from aegis_api.operator_actions.router import router as operator_router
+from aegis_api.profile.router import router as profile_router
 from aegis_api.providers.observability import router as providers_observability_router
 from aegis_api.providers.router import router as providers_router
 from aegis_api.realtime.backfill import router as backfill_router
@@ -221,6 +224,7 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.include_router(runs_router, dependencies=read_runs)
     app.include_router(operator_router, dependencies=read_runs)
     app.include_router(console_router, dependencies=read_runs)
+    app.include_router(blast_radius_router, dependencies=read_runs)
     app.include_router(directives_router, dependencies=read_investigation)
     app.include_router(features_router, dependencies=read_investigation)
     app.include_router(feature_observability_router, dependencies=admin_manage)
@@ -238,6 +242,10 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.include_router(reports_router, dependencies=read_reports)
     app.include_router(replay_router, dependencies=read_replay)
     app.include_router(scoring_router, dependencies=read_scoring)
+    app.include_router(profile_router, dependencies=read_scoring)
+    # Ghost branch (post-run counterfactual replay) is an after-action read feature; it
+    # never mutates run state, so it rides the scoring read permission + run ownership gate.
+    app.include_router(ghost_router, dependencies=read_scoring)
     app.include_router(agents_observability_router, dependencies=admin_manage)
     app.include_router(admin_router, dependencies=admin_manage)
     app.include_router(create_websocket_router(gateway))
