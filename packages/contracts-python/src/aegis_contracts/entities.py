@@ -40,6 +40,7 @@ from aegis_contracts.versioning import (
     INCIDENT_SCHEMA_VERSION,
     MODEL_MANIFEST_SCHEMA_VERSION,
     MODEL_SCORE_SCHEMA_VERSION,
+    RUN_LOADOUT_SCHEMA_VERSION,
     RUN_SCHEMA_VERSION,
     SCENARIO_SCHEMA_VERSION,
     SCENARIO_VERSION_SCHEMA_VERSION,
@@ -86,6 +87,45 @@ class ActionClass(StrEnum):
     LOW_IMPACT = "class_1"
     OPERATIONAL = "class_2"
     CRITICAL = "class_3"
+
+
+class RulesOfEngagementV1(StrEnum):
+    """Per-run autonomy dial (Phase 7). Higher tiers let agents act more proactively;
+    every state change still passes policy + human approval (Class 2/3 never auto-execute)."""
+
+    OBSERVE = "observe"
+    INVESTIGATE = "investigate"
+    FORWARD_DEPLOYED = "forward_deployed"
+
+
+class AutonomyInitiatorV1(StrEnum):
+    """Who originated an agent task, so the UI can distinguish autonomous initiative
+    from operator tasking."""
+
+    OPERATOR = "operator"
+    AUTONOMY = "autonomy"
+
+
+class RunLoadoutV1(BaseModel):
+    """Per-run capability loadout chosen at launch; a variety axis alongside the seed."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    schema_version: int = Field(default=RUN_LOADOUT_SCHEMA_VERSION, alias="schemaVersion", ge=1)
+    bias_guard: bool = Field(default=True, alias="biasGuard")
+    threat_tempo: bool = Field(default=True, alias="threatTempo")
+    roe: RulesOfEngagementV1 = Field(default=RulesOfEngagementV1.INVESTIGATE)
+
+    @model_validator(mode="after")
+    def validate_schema_version(self) -> RunLoadoutV1:
+        assert_supported_schema_version("run_loadout", self.schema_version)
+        if self.schema_version != RUN_LOADOUT_SCHEMA_VERSION:
+            raise ContractValidationError(
+                code=ContractErrorCode.SCHEMA_VERSION_UNSUPPORTED,
+                message=f"Unsupported run loadout schema version: {self.schema_version}",
+                details={"schemaVersion": self.schema_version},
+            )
+        return self
 
 
 class ProposalStatus(StrEnum):
@@ -159,6 +199,10 @@ class RunV1(BaseModel):
     # field (schemaVersion stays 1): legacy/seeded rows may be null and are backfilled
     # to a demo/admin owner by migration 014. See ADR 0034.
     owner_user_id: AuthoredId | None = Field(default=None, alias="ownerUserId")
+    # Phase 7 capability loadout chosen at launch (bias guard, threat tempo, RoE).
+    # Additive optional field (schemaVersion stays 1): legacy/seeded rows are null and
+    # treated as the default loadout. Persisted in the run payload; round-trips here.
+    loadout: RunLoadoutV1 | None = None
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> RunV1:

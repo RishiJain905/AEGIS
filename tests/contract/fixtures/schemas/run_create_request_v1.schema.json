@@ -1,6 +1,57 @@
 {
+  "$defs": {
+    "RulesOfEngagementV1": {
+      "description": "Per-run autonomy dial (Phase 7). Higher tiers let agents act more proactively;\nevery state change still passes policy + human approval (Class 2/3 never auto-execute).",
+      "enum": [
+        "observe",
+        "investigate",
+        "forward_deployed"
+      ],
+      "title": "RulesOfEngagementV1",
+      "type": "string"
+    },
+    "RunLoadoutV1": {
+      "additionalProperties": false,
+      "description": "Per-run capability loadout chosen at launch; a variety axis alongside the seed.",
+      "properties": {
+        "biasGuard": {
+          "default": true,
+          "title": "Biasguard",
+          "type": "boolean"
+        },
+        "roe": {
+          "$ref": "#/$defs/RulesOfEngagementV1",
+          "default": "investigate"
+        },
+        "schemaVersion": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "threatTempo": {
+          "default": true,
+          "title": "Threattempo",
+          "type": "boolean"
+        }
+      },
+      "title": "RunLoadoutV1",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "properties": {
+    "loadout": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RunLoadoutV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "runId": {
       "anyOf": [
         {
@@ -34,7 +85,10 @@
       "title": "Seed"
     }
   },
-  "required": ["schemaVersion", "scenarioPackagePath"],
+  "required": [
+    "schemaVersion",
+    "scenarioPackagePath"
+  ],
   "title": "RunCreateRequestV1",
   "type": "object"
 }

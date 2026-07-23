@@ -10,6 +10,7 @@ from aegis_contracts import (
     ActorType,
     DomainEventEnvelopeV1,
     IdempotencyRecordV1,
+    RunLoadoutV1,
     RunV1,
     ScenarioV1,
     ScenarioVersionV1,
@@ -43,6 +44,7 @@ class SimulationApplicationService:
         seed: int,
         run_id: str | None = None,
         owner_user_id: str | None = None,
+        loadout: RunLoadoutV1 | None = None,
     ) -> tuple[SimulationRuntime, ScenarioManifestV1]:
         manifest = SimulationEngine.load_manifest(package_dir)
         scenario_id = manifest.metadata.scenario_id
@@ -80,6 +82,7 @@ class SimulationApplicationService:
             sim_time=runtime.configuration.initial_sim_time,
             revision=0,
             owner_user_id=owner_user_id,
+            loadout=loadout if loadout is not None else RunLoadoutV1(),
         )
 
         existing = await self._uow.scenarios.get_by_id(scenario_id)

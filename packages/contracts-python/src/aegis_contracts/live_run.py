@@ -8,7 +8,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from aegis_contracts.api import IdempotencyMetadataV1
-from aegis_contracts.entities import RunV1
+from aegis_contracts.entities import RunLoadoutV1, RunV1
 from aegis_contracts.graph import GraphDeltaV1, GraphSnapshotV1
 from aegis_contracts.versioning import (
     assert_supported_schema_version,
@@ -153,6 +153,11 @@ class SnapshotBootstrapPayloadV1(BaseModel):
     run: RunV1
     graph_snapshot: GraphSnapshotV1 = Field(alias="graphSnapshot")
     last_applied_sequence: int = Field(alias="lastAppliedSequence")
+    # Fog-of-war ambient pressure scalar in [0, 1] (higher = more undetected attacker
+    # progress). Additive (schemaVersion unchanged); null when the run carries no
+    # hidden-condition tension or tempo has not been computed yet. Scalar only — never
+    # discloses which asset or condition drives it.
+    threat_tempo: float | None = Field(default=None, alias="threatTempo", ge=0.0, le=1.0)
 
     @field_validator("schema_version")
     @classmethod
@@ -172,6 +177,9 @@ class RunCreateRequestV1(BaseModel):
     # schemaVersion stays 1; existing clients that send a seed are unaffected.
     seed: int | None = None
     run_id: str | None = Field(default=None, alias="runId")
+    # Phase 7 capability loadout chosen at launch. Additive optional field (schemaVersion
+    # stays 1): when omitted the server persists the default loadout on the run.
+    loadout: RunLoadoutV1 | None = None
 
     @field_validator("schema_version")
     @classmethod

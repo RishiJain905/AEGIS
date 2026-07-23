@@ -20,6 +20,8 @@ from aegis_api.auth.deps import AuthDependencyError, auth_error_response, requir
 from aegis_api.auth.router import router as auth_router
 from aegis_api.auth.service import AuthServiceError
 from aegis_api.auth.startup import seed_dev_identities
+from aegis_api.autonomy.poller import AutonomyPoller
+from aegis_api.console.router import router as console_router
 from aegis_api.db.session import get_db_session_maker, init_db, shutdown_db
 from aegis_api.detection.observability import router as detection_observability_router
 from aegis_api.detection.router import router as detection_router
@@ -31,6 +33,7 @@ from aegis_api.models.router import router as models_router
 from aegis_api.observability import build_ready_response
 from aegis_api.observability import protected_router as ops_protected_router
 from aegis_api.observability import public_router as ops_public_router
+from aegis_api.operator_actions.router import router as operator_router
 from aegis_api.providers.observability import router as providers_observability_router
 from aegis_api.providers.router import router as providers_router
 from aegis_api.realtime.backfill import router as backfill_router
@@ -92,7 +95,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     app.state.sim_ticker = ticker
     await ticker.start()
+    # Event-driven autonomous triage loop: consumes newly-persisted alerts and enqueues
+    # bounded, RoE-gated WATCHTOWER auto-tasks. Decoupled from the tick engine; enqueue-only
+    # so it never runs the model inline.
+    autonomy_poller = AutonomyPoller(
+        session_maker=get_db_session_maker(),
+        settings=settings,
+    )
+    app.state.autonomy_poller = autonomy_poller
+    await autonomy_poller.start()
     yield
+    await autonomy_poller.stop()
     await ticker.stop()
     await gateway.stop()
     await shutdown_db(settings)
@@ -205,6 +218,8 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.include_router(status_router, dependencies=read_runs)
     app.include_router(observability_router, dependencies=admin_manage)
     app.include_router(runs_router, dependencies=read_runs)
+    app.include_router(operator_router, dependencies=read_runs)
+    app.include_router(console_router, dependencies=read_runs)
     app.include_router(features_router, dependencies=read_investigation)
     app.include_router(feature_observability_router, dependencies=admin_manage)
     app.include_router(detection_router, dependencies=read_investigation)

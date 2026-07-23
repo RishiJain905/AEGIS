@@ -147,6 +147,13 @@ class EventTypeRegistry:
         "report.version.created": 1,
         "report.generation.completed": 1,
         "report.generation.failed": 1,
+        # Phase 7 — operator console, direct actions, autonomy, directives.
+        "operator.action.proposed": 1,
+        "run.roe_changed": 1,
+        "autonomy.task.enqueued": 1,
+        "directive.created": 1,
+        "directive.triggered": 1,
+        "directive.deleted": 1,
     }
 
     @classmethod

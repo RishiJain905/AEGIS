@@ -61,6 +61,7 @@ class AgentTaskService:
             trace_id=session.trace_id,
             provider_id=provider_id,
             instructions=request.instructions,
+            initiator=request.initiator,
             created_at=now,
             updated_at=now,
         )

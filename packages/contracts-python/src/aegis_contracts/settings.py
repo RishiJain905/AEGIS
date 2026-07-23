@@ -98,6 +98,23 @@ class AegisSettings(BaseSettings):
     # reveals by <=720s). Distinct from golden-seeds `simulationSteps`, which is test
     # metadata for the fixed-step determinism harness, not a live horizon.
     AEGIS_SIM_MAX_SIM_SECONDS: int = Field(default=1500, ge=1)
+    # Fog of war — threat-tempo saturation window (sim-seconds). An undisclosed, triggered
+    # hidden condition reaches full ambient pressure after dwelling undetected this long.
+    AEGIS_THREAT_TEMPO_SATURATION_SIM_SECONDS: float = Field(default=600.0, gt=0.0)
+
+    # Phase 7 — autonomous triage loop budgets. The event-driven loop enqueues bounded
+    # WATCHTOWER/ORACLE auto-tasks when new alerts land; these cap local-model load so a
+    # burst of alerts cannot flood the agent runtime. All env-tunable.
+    # Max simultaneously-queued/running autonomy tasks per run.
+    AEGIS_AUTONOMY_MAX_CONCURRENT_TASKS: int = Field(default=2, ge=0)
+    # Wall-clock seconds a given asset is on cooldown after an autonomy task fires for it.
+    AEGIS_AUTONOMY_PER_ASSET_COOLDOWN_SECONDS: float = Field(default=120.0, ge=0.0)
+    # Hard ceiling on total autonomy tasks a single run may ever enqueue.
+    AEGIS_AUTONOMY_MAX_TASKS_PER_RUN: int = Field(default=50, ge=0)
+    # Master switch for the autonomous triage loop (independent of the tick engine).
+    AEGIS_AUTONOMY_ENABLED: bool = True
+    # How often the autonomy poller scans RUNNING runs for newly-persisted alerts.
+    AEGIS_AUTONOMY_POLL_INTERVAL_SECONDS: float = Field(default=3.0, gt=0.0)
 
     # Phase 32 HTTP trust-boundary hardening
     AEGIS_REQUEST_BODY_MAX_BYTES: int = Field(default=1_048_576, ge=1)

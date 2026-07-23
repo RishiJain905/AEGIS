@@ -7,7 +7,12 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from aegis_contracts.entities import AgentRole, AgentSessionState, AgentSessionV1
+from aegis_contracts.entities import (
+    AgentRole,
+    AgentSessionState,
+    AgentSessionV1,
+    AutonomyInitiatorV1,
+)
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 from aegis_contracts.primitives import (
     AgentArtifactId,
@@ -185,6 +190,10 @@ class AgentTaskV1(BaseModel):
     instructions: str | None = Field(
         default=None, max_length=MAX_OPERATOR_INSTRUCTIONS_LENGTH
     )
+    # Phase 7: who originated the task. "operator" (default) for player-tasked work,
+    # "autonomy" for the event-driven autonomous triage loop, so the UI can distinguish
+    # unprompted agent initiative from operator tasking. Additive optional field.
+    initiator: AutonomyInitiatorV1 = Field(default=AutonomyInitiatorV1.OPERATOR)
     error_code: str | None = Field(default=None, alias="errorCode")
     error_message: str | None = Field(default=None, alias="errorMessage")
     created_at: UtcTimestamp = Field(alias="createdAt")
@@ -344,6 +353,8 @@ class CreateAgentTaskRequestV1(BaseModel):
     instructions: str | None = Field(
         default=None, max_length=MAX_OPERATOR_INSTRUCTIONS_LENGTH
     )
+    # Phase 7: task origin. Defaults to "operator"; the autonomy loop passes "autonomy".
+    initiator: AutonomyInitiatorV1 = Field(default=AutonomyInitiatorV1.OPERATOR)
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> CreateAgentTaskRequestV1:

@@ -207,6 +207,20 @@ READY_RESPONSE_SCHEMA_VERSION: Final[int] = 1
 DEPENDENCY_STATUS_SCHEMA_VERSION: Final[int] = 1
 METRIC_LABEL_POLICY_SCHEMA_VERSION: Final[int] = 1
 
+# Phase 7 — operator console, direct actions, rules-of-engagement, autonomy, directives, feed.
+RUN_LOADOUT_SCHEMA_VERSION: Final[int] = 1
+OPERATOR_ACTION_REQUEST_SCHEMA_VERSION: Final[int] = 1
+OPERATOR_ACTION_RESPONSE_SCHEMA_VERSION: Final[int] = 1
+ROE_CHANGE_REQUEST_SCHEMA_VERSION: Final[int] = 1
+STANDING_DIRECTIVE_SCHEMA_VERSION: Final[int] = 1
+CREATE_DIRECTIVE_REQUEST_SCHEMA_VERSION: Final[int] = 1
+CONSOLE_EVENT_SEARCH_REQUEST_SCHEMA_VERSION: Final[int] = 1
+CONSOLE_EVENT_SEARCH_RESULT_SCHEMA_VERSION: Final[int] = 1
+CONSOLE_ASSET_DETAIL_SCHEMA_VERSION: Final[int] = 1
+OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION: Final[int] = 1
+RUN_FEED_ENTRY_SCHEMA_VERSION: Final[int] = 1
+RUN_FEED_PAGE_SCHEMA_VERSION: Final[int] = 1
+
 SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "domain_event": frozenset({DOMAIN_EVENT_SCHEMA_VERSION}),
     "graph_node": frozenset({GRAPH_NODE_SCHEMA_VERSION}),
@@ -397,6 +411,18 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "ready_response": frozenset({READY_RESPONSE_SCHEMA_VERSION}),
     "dependency_status": frozenset({DEPENDENCY_STATUS_SCHEMA_VERSION}),
     "metric_label_policy": frozenset({METRIC_LABEL_POLICY_SCHEMA_VERSION}),
+    "run_loadout": frozenset({RUN_LOADOUT_SCHEMA_VERSION}),
+    "operator_action_request": frozenset({OPERATOR_ACTION_REQUEST_SCHEMA_VERSION}),
+    "operator_action_response": frozenset({OPERATOR_ACTION_RESPONSE_SCHEMA_VERSION}),
+    "roe_change_request": frozenset({ROE_CHANGE_REQUEST_SCHEMA_VERSION}),
+    "standing_directive": frozenset({STANDING_DIRECTIVE_SCHEMA_VERSION}),
+    "create_directive_request": frozenset({CREATE_DIRECTIVE_REQUEST_SCHEMA_VERSION}),
+    "console_event_search_request": frozenset({CONSOLE_EVENT_SEARCH_REQUEST_SCHEMA_VERSION}),
+    "console_event_search_result": frozenset({CONSOLE_EVENT_SEARCH_RESULT_SCHEMA_VERSION}),
+    "console_asset_detail": frozenset({CONSOLE_ASSET_DETAIL_SCHEMA_VERSION}),
+    "operator_hypothesis_request": frozenset({OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION}),
+    "run_feed_entry": frozenset({RUN_FEED_ENTRY_SCHEMA_VERSION}),
+    "run_feed_page": frozenset({RUN_FEED_PAGE_SCHEMA_VERSION}),
 }
 
 
