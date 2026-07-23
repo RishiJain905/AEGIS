@@ -115,6 +115,7 @@ export function useCreateRun() {
       scenarioPackagePath: string;
       seed?: number;
       loadout?: CreateRunLoadout;
+      commanderIntent?: string;
     }) => {
       const response = await apiFetch('/api/v1/runs', {
         method: 'POST',
@@ -129,6 +130,10 @@ export function useCreateRun() {
           ...(input.seed !== undefined ? { seed: input.seed } : {}),
           // Omit loadout entirely to let the server persist the default loadout.
           ...(input.loadout !== undefined ? { loadout: input.loadout } : {}),
+          // Omit commanderIntent entirely when the operator skipped it.
+          ...(input.commanderIntent !== undefined
+            ? { commanderIntent: input.commanderIntent }
+            : {}),
         }),
       });
       if (!response.ok) {

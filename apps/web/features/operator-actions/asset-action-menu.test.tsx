@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -57,7 +58,14 @@ afterEach(() => {
 });
 
 function renderMenu() {
-  return render(<AssetActionMenu runId="run_x" assetId="asset:vpn-gw" assetLabel="VPN Gateway" />);
+  // The consequences dialog fetches a blast-radius preview via TanStack Query; the confirm-
+  // gating behaviour under test needs a client in context (the query itself is not asserted).
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <AssetActionMenu runId="run_x" assetId="asset:vpn-gw" assetLabel="VPN Gateway" />
+    </QueryClientProvider>,
+  );
 }
 
 describe('AssetActionMenu confirm gating', () => {

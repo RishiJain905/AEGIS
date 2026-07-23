@@ -12,7 +12,9 @@ import type {
 import { Alert, Badge, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
 import { ApprovalControls } from '@/features/approval/approval-controls';
+import { BlastRadiusSummary, useBlastRadius } from '@/features/operator-actions';
 import { useInvestigationDetail } from '@/features/investigation/use-investigation-queries';
+import type { ScenarioCommandTemplate } from '@/features/command-surface';
 
 export interface ProposalsPanelProps {
   incidentId: string;
@@ -44,17 +46,31 @@ function selectedOption(revision: ProposalRevisionV1 | undefined): ResponseOptio
 
 function ProposalCard({
   incidentId,
+  runId,
   proposal,
   revision,
   decisions,
 }: {
   incidentId: string;
+  runId: string;
   proposal: ActionProposalV1;
   revision: ProposalRevisionV1 | undefined;
   decisions: PolicyDecisionV1[];
 }) {
   const option = selectedOption(revision);
   const latestDecision = decisions.filter((decision) => decision.proposalId === proposal.id).at(-1);
+
+  // Blast-radius preview for the same Class 2/3 containment the approver is about to allow.
+  const isContainment = proposal.actionClass === 'class_2' || proposal.actionClass === 'class_3';
+  const targetAssetId = option?.targetAssetId ?? proposal.targetAssetId;
+  const scenarioCommand = (option?.scenarioCommand ??
+    proposal.scenarioCommand) as ScenarioCommandTemplate | null;
+  const blastRadius = useBlastRadius(
+    runId,
+    isContainment ? scenarioCommand : null,
+    isContainment ? targetAssetId : null,
+    { enabled: isContainment && Boolean(scenarioCommand) },
+  );
 
   return (
     <li
@@ -128,6 +144,15 @@ function ProposalCard({
           </Alert>
         </div>
       ) : null}
+      {isContainment && scenarioCommand ? (
+        <div className="mt-3">
+          <BlastRadiusSummary
+            preview={blastRadius.data}
+            loading={blastRadius.isLoading}
+            error={blastRadius.isError}
+          />
+        </div>
+      ) : null}
       <ApprovalControls
         incidentId={incidentId}
         proposal={proposal}
@@ -187,6 +212,7 @@ function ProposalsContent({
             >
               <ProposalCard
                 incidentId={incidentId}
+                runId={detail.runId}
                 proposal={proposal}
                 revision={revisionsByProposal.get(proposal.id)}
                 decisions={decisionsByProposal.get(proposal.id) ?? []}

@@ -9,7 +9,13 @@
 import type { RunFeedEntry } from '@/features/command-surface';
 
 export type FeedRow =
-  | { kind: 'entry'; key: string; entry: RunFeedEntry; detection: boolean }
+  | {
+      kind: 'entry';
+      key: string;
+      entry: RunFeedEntry;
+      detection: boolean;
+      biasCheck: boolean;
+    }
   | { kind: 'collapsed'; key: string; entries: RunFeedEntry[]; count: number };
 
 function payloadString(payload: Record<string, unknown>, key: string): string | null {
@@ -50,6 +56,26 @@ export function isDetection(entry: RunFeedEntry): boolean {
 }
 
 /**
+ * A bias-guard finding — an autonomous ORACLE beat that re-examined a leading hypothesis
+ * against contradicting evidence. Rendered as a distinct "BIAS CHECK" beat so the operator
+ * notices their working theory being challenged (a no-change bias check still collapses).
+ */
+export function isBiasCheck(entry: RunFeedEntry): boolean {
+  if (entry.category !== 'agent' || entry.initiator !== 'autonomy') {
+    return false;
+  }
+  const haystacks = [entry.summary.toLowerCase(), entry.type.toLowerCase()];
+  const p = entry.payload;
+  for (const key of ['kind', 'taskKind', 'origin', 'reason']) {
+    const token = payloadString(p, key);
+    if (token !== null) {
+      haystacks.push(token);
+    }
+  }
+  return haystacks.some((text) => text.includes('bias') || text.includes('contradict'));
+}
+
+/**
  * Build newest-first render rows, collapsing runs of routine autonomy no-change reports.
  * Detections are always standalone `entry` rows flagged `detection: true`.
  */
@@ -66,7 +92,13 @@ export function buildFeedRows(entries: RunFeedEntry[]): FeedRow[] {
       return;
     }
     if (group.length === 1) {
-      rows.push({ kind: 'entry', key: first.eventId, entry: first, detection: false });
+      rows.push({
+        kind: 'entry',
+        key: first.eventId,
+        entry: first,
+        detection: false,
+        biasCheck: false,
+      });
     } else {
       rows.push({
         kind: 'collapsed',
@@ -88,6 +120,7 @@ export function buildFeedRows(entries: RunFeedEntry[]): FeedRow[] {
       key: entry.eventId,
       entry,
       detection: isDetection(entry),
+      biasCheck: isBiasCheck(entry),
     });
   }
   flush();

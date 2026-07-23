@@ -154,7 +154,7 @@ export default function ScenariosPage() {
   // Which live scenario is mid-launch in the loadout step, if any.
   const [loadoutScenarioId, setLoadoutScenarioId] = useState<string | null>(null);
 
-  const launch = (scenarioId: string, loadout?: RunLoadout) => {
+  const launch = (scenarioId: string, loadout?: RunLoadout, commanderIntent?: string) => {
     const isTutorial = presentationFor(scenarioId).kind === 'tutorial';
     void createRun
       .mutateAsync({
@@ -162,6 +162,7 @@ export default function ScenariosPage() {
         // undefined for seedless scenarios → server draws a random seed.
         seed: scenarioSeed(scenarioId),
         loadout,
+        commanderIntent,
       })
       .then((result) => {
         // Arm the guided walkthrough immediately so the coach mark is live the moment the
@@ -392,9 +393,9 @@ export default function ScenariosPage() {
         }}
         scenarioName={loadoutScenarioName}
         launching={createRun.isPending}
-        onLaunch={(loadout) => {
+        onLaunch={(loadout, commanderIntent) => {
           if (loadoutScenarioId) {
-            launch(loadoutScenarioId, loadout);
+            launch(loadoutScenarioId, loadout, commanderIntent);
           }
         }}
       />

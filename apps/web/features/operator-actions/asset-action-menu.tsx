@@ -182,6 +182,7 @@ export function AssetActionMenu({
       {pendingConfirm ? (
         <ActionConsequencesDialog
           open
+          runId={runId}
           command={pendingConfirm.command}
           assetLabel={assetLabel}
           assetId={assetId}

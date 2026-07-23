@@ -3,6 +3,8 @@ export type { AssetActionMenuProps } from './asset-action-menu';
 export { AssetDetailDrawer } from './asset-detail-drawer';
 export { AssetCommandSection } from './asset-command-section';
 export { ActionConsequencesDialog } from './action-consequences-dialog';
+export { BlastRadiusSummary } from './blast-radius-summary';
+export { useBlastRadius } from './use-blast-radius';
 export { ActionResultToast } from './action-result-toast';
 export type { ActionResult } from './action-result-toast';
 export { useSelectedAsset } from './use-selected-asset';

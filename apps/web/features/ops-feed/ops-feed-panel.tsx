@@ -51,16 +51,29 @@ function InitiatorBadge({ initiator }: { initiator: string | null | undefined })
   return null;
 }
 
-function EntryRow({ entry, detection }: { entry: RunFeedEntry; detection: boolean }) {
+function EntryRow({
+  entry,
+  detection,
+  biasCheck,
+}: {
+  entry: RunFeedEntry;
+  detection: boolean;
+  biasCheck: boolean;
+}) {
   const meta = categoryMeta(entry.category);
+  const biasBeat = biasCheck && !detection;
   return (
     <li
       className={cn(
         'flex items-start gap-3 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-3 py-2',
         detection &&
           'border-[color-mix(in_srgb,var(--aegis-risk-critical)_60%,transparent)] bg-[color-mix(in_srgb,var(--aegis-risk-critical)_10%,var(--aegis-surface-raised))] shadow-[0_0_18px_-6px_var(--aegis-risk-critical)]',
+        biasBeat &&
+          'border-[color-mix(in_srgb,var(--aegis-risk-medium)_55%,transparent)] bg-[color-mix(in_srgb,var(--aegis-risk-medium)_9%,var(--aegis-surface-raised))]',
       )}
-      data-testid={detection ? 'ops-feed-detection' : 'ops-feed-entry'}
+      data-testid={
+        detection ? 'ops-feed-detection' : biasBeat ? 'ops-feed-bias-check' : 'ops-feed-entry'
+      }
       data-category={entry.category}
     >
       <span
@@ -73,6 +86,10 @@ function EntryRow({ entry, detection }: { entry: RunFeedEntry; detection: boolea
           {detection ? (
             <span className="rounded-[var(--aegis-radius-sm)] bg-[var(--aegis-risk-critical)] px-1.5 py-0.5 font-[family-name:var(--aegis-font-display)] text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--aegis-surface-base)]">
               Detection
+            </span>
+          ) : biasBeat ? (
+            <span className="rounded-[var(--aegis-radius-sm)] bg-[var(--aegis-risk-medium)] px-1.5 py-0.5 font-[family-name:var(--aegis-font-display)] text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--aegis-surface-base)]">
+              Bias check
             </span>
           ) : (
             <span
@@ -145,7 +162,7 @@ function FeedRowView({ row }: { row: FeedRow }) {
   if (row.kind === 'collapsed') {
     return <CollapsedRow entries={row.entries} count={row.count} />;
   }
-  return <EntryRow entry={row.entry} detection={row.detection} />;
+  return <EntryRow entry={row.entry} detection={row.detection} biasCheck={row.biasCheck} />;
 }
 
 export interface OpsFeedPanelProps {

@@ -15,7 +15,10 @@ import type {
 import { Badge, Button, EmptyState, LoadingState, cn, typographyTokens } from '@aegis/ui';
 
 import { AdversaryDossier } from '@/features/after-action/dossier/adversary-dossier';
+import { GhostBranchPanel } from '@/features/after-action/ghost/ghost-branch-panel';
 import { useAfterActionView } from '@/features/after-action/use-after-action-queries';
+import { IntentReview } from '@/features/intent';
+import { OperatorProfilePanel } from '@/features/operator-profile';
 import {
   MetaRow,
   MonoChip,
@@ -776,7 +779,10 @@ export function AfterActionDashboard({ runId }: AfterActionDashboardProps) {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <ScoreSection runId={runId} />
+      <IntentReview runId={runId} />
       <AdversaryDossier runId={runId} />
+      <GhostBranchPanel runId={runId} />
+      <OperatorProfilePanel />
     </div>
   );
 }

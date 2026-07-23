@@ -11,10 +11,14 @@ export const queryKeys = {
     alerts: (runId: string) => ['runs', runId, 'alerts'] as const,
     riskScores: (runId: string) => ['runs', runId, 'risk-scores'] as const,
     graph: (runId: string) => ['runs', runId, 'graph'] as const,
+    blastRadius: (runId: string, command: string, assetId: string) =>
+      ['runs', runId, 'blast-radius', command, assetId] as const,
+    consoleHypotheses: (runId: string) => ['runs', runId, 'console-hypotheses'] as const,
     readOnly: (runId: string) => ['runs', runId, 'read-only'] as const,
     afterActionReport: (runId: string) => ['runs', runId, 'after-action-report'] as const,
     afterAction: (runId: string) => ['runs', runId, 'after-action'] as const,
     score: (runId: string) => ['runs', runId, 'score'] as const,
+    decisionPoints: (runId: string) => ['runs', runId, 'ghost', 'decision-points'] as const,
     reportVersions: (runId: string) => ['runs', runId, 'report-versions'] as const,
   },
   incidents: {

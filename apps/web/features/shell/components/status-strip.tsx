@@ -5,6 +5,7 @@ import { Alert, Badge } from '@aegis/ui';
 import type { ReactNode } from 'react';
 
 import { readRunLoadout } from '@/features/command-surface';
+import { SitrepButton } from '@/features/comms-desk';
 import { LoadoutChips, RoeDial } from '@/features/loadout';
 import { ThreatTempoIndicator, useLiveRun } from '@/features/live-run';
 import { OperatorIdentityBadge } from '@/features/auth';
@@ -77,6 +78,9 @@ export function StatusStrip({ runId }: StatusStripProps) {
   // The run's persisted capability loadout (bias guard, threat tempo, RoE). Absent on legacy
   // runs → chips/dial hidden. The RoE dial edits it mid-run; disabled when the run is read-only.
   const loadout = readRunLoadout(runQuery.data);
+  // The run's optional commander's intent (operator priorities set at launch). Surfaced as a
+  // compact chip alongside the loadout so it stays visible for the whole engagement.
+  const commanderIntent = runQuery.data?.commanderIntent ?? null;
 
   return (
     <div
@@ -121,13 +125,14 @@ export function StatusStrip({ runId }: StatusStripProps) {
         </div>
       ) : null}
       {runId && liveRun?.isLiveMode ? <ThreatTempoIndicator runId={runId} /> : null}
-      {runId && loadout ? (
+      {runId && (loadout || commanderIntent) ? (
         <div className="flex items-center gap-2 border-l border-[var(--aegis-border-subtle)] pl-4">
-          <LoadoutChips loadout={loadout} />
-          <RoeDial runId={runId} current={loadout.roe} disabled={readOnly} />
+          <LoadoutChips loadout={loadout} commanderIntent={commanderIntent} />
+          {loadout ? <RoeDial runId={runId} current={loadout.roe} disabled={readOnly} /> : null}
         </div>
       ) : null}
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
+        {runId ? <SitrepButton runId={runId} /> : null}
         <OperatorIdentityBadge />
       </div>
       {!liveRun?.isLiveMode && connectionStatus === 'offline' ? (

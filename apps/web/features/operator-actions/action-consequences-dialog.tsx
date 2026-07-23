@@ -18,8 +18,12 @@ import {
   type ScenarioCommandTemplate,
 } from '@/features/command-surface';
 
+import { BlastRadiusSummary } from './blast-radius-summary';
+import { useBlastRadius } from './use-blast-radius';
+
 export interface ActionConsequencesDialogProps {
   open: boolean;
+  runId: string;
   command: ScenarioCommandTemplate;
   assetLabel: string;
   assetId: string;
@@ -38,6 +42,7 @@ export interface ActionConsequencesDialogProps {
  */
 export function ActionConsequencesDialog({
   open,
+  runId,
   command,
   assetLabel,
   assetId,
@@ -50,6 +55,7 @@ export function ActionConsequencesDialog({
 }: ActionConsequencesDialogProps) {
   const meta = commandMeta(command);
   const critical = meta.actionClass === 'class_3';
+  const blastRadius = useBlastRadius(runId, command, assetId, { enabled: open });
 
   return (
     <Dialog
@@ -94,6 +100,12 @@ export function ActionConsequencesDialog({
               </p>
             </div>
           </Alert>
+
+          <BlastRadiusSummary
+            preview={blastRadius.data}
+            loading={blastRadius.isLoading}
+            error={blastRadius.isError}
+          />
 
           <div className="flex flex-col gap-1">
             <label

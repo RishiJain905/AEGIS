@@ -56,12 +56,14 @@ function Toggle({
   );
 }
 
+const MAX_COMMANDER_INTENT = 280;
+
 export interface LoadoutLaunchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   scenarioName: string;
   launching: boolean;
-  onLaunch: (loadout: RunLoadout) => void;
+  onLaunch: (loadout: RunLoadout, commanderIntent?: string) => void;
 }
 
 /**
@@ -80,6 +82,7 @@ export function LoadoutLaunchDialog({
   const [biasGuard, setBiasGuard] = useState(DEFAULT_LOADOUT.biasGuard);
   const [threatTempo, setThreatTempo] = useState(DEFAULT_LOADOUT.threatTempo);
   const [roe, setRoe] = useState<RulesOfEngagement>(DEFAULT_LOADOUT.roe);
+  const [intent, setIntent] = useState('');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,6 +114,36 @@ export function LoadoutLaunchDialog({
               checked={threatTempo}
               onChange={setThreatTempo}
             />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="loadout-commander-intent"
+              className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]"
+            >
+              Commander&apos;s intent
+            </label>
+            <textarea
+              id="loadout-commander-intent"
+              data-testid="loadout-commander-intent"
+              value={intent}
+              maxLength={MAX_COMMANDER_INTENT}
+              rows={2}
+              onChange={(e) => {
+                setIntent(e.target.value);
+              }}
+              placeholder="e.g. priority: protect student records; evidence preservation second"
+              className="resize-none rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-3 py-2 text-sm text-[var(--aegis-text-primary)] placeholder:text-[var(--aegis-text-faint)] focus:border-[var(--aegis-border-strong)] focus:outline-none"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[var(--aegis-text-faint)]">
+                Optional. Agents triage against this; your after-action reviews your actions against
+                it.
+              </span>
+              <span className="font-mono text-[10px] text-[var(--aegis-text-muted)]">
+                {intent.length}/{MAX_COMMANDER_INTENT}
+              </span>
+            </div>
           </div>
 
           <fieldset className="flex flex-col gap-2">
@@ -167,7 +200,10 @@ export function LoadoutLaunchDialog({
           </Button>
           <Button
             onClick={() => {
-              onLaunch({ schemaVersion: 1, biasGuard, threatTempo, roe });
+              onLaunch(
+                { schemaVersion: 1, biasGuard, threatTempo, roe },
+                intent.trim() || undefined,
+              );
             }}
             disabled={launching}
             data-testid="loadout-launch-confirm"

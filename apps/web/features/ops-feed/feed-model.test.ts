@@ -4,6 +4,7 @@ import type { RunFeedEntry } from '@/features/command-surface';
 
 import {
   buildFeedRows,
+  isBiasCheck,
   isDetection,
   isNoChangeAutonomyReport,
   latestDetection,
@@ -99,5 +100,25 @@ describe('feed-model', () => {
       entry({ sequence: 3, category: 'alert' }),
     ]);
     expect(latest?.sequence).toBe(5);
+  });
+
+  it('flags an autonomous bias-guard finding as a bias check', () => {
+    const biasCheck = entry({
+      sequence: 1,
+      initiator: 'autonomy',
+      summary: 'ORACLE bias guard: new evidence contradicts the leading hypothesis',
+    });
+    expect(isBiasCheck(biasCheck)).toBe(true);
+    const rows = buildFeedRows([biasCheck]);
+    expect(rows[0]).toMatchObject({ kind: 'entry', biasCheck: true });
+  });
+
+  it('does not flag an operator-tasked or non-bias finding as a bias check', () => {
+    expect(
+      isBiasCheck(entry({ sequence: 1, initiator: 'operator', summary: 'bias guard note' })),
+    ).toBe(false);
+    expect(
+      isBiasCheck(entry({ sequence: 2, initiator: 'autonomy', summary: 'routine sweep' })),
+    ).toBe(false);
   });
 });
