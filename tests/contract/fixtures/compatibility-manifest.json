@@ -541,7 +541,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_create_request_v1.schema.json",
-      "sha256": "ffa8199629986a7d8fd86fc46f153c4919197fce24d49687edc6d0682494ca47"
+      "sha256": "566f77defe9a9f4aa70ca86cbca4cede9606794e5ce583f2c7cca45886938bcf"
     },
     {
       "path": "tests/contract/fixtures/schemas/run_score_v1.schema.json",

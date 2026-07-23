@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -64,10 +66,49 @@ class RuntimeCacheEntry:
     package_dir: Path
 
 
+# Cryptographically random seed range: 1..2^31-1. Kept within a signed 32-bit range so
+# the value round-trips cleanly through the `runs.seed` BIGINT column and every downstream
+# consumer (RNG streams, id derivation) that treats the seed as a positive integer.
+_MAX_RANDOM_SEED = 2**31 - 1
+
+
+def draw_random_seed() -> int:
+    """Draw a cryptographically random simulation seed in [1, 2^31-1]."""
+    return secrets.randbelow(_MAX_RANDOM_SEED) + 1
+
+
 @dataclass
 class RunCommandService:
     workspace_root: Path
     runtime_cache: dict[str, RuntimeCacheEntry] = field(default_factory=dict)
+    # Per-run asyncio locks serialize every writer that touches a run's cached runtime:
+    # the tick engine, the manual lifecycle routes (step/pause/resume/stop), and approved
+    # action execution. A single cached ``SimulationRuntime`` is not safe under interleaved
+    # awaits, so all of them acquire ``lock_for(run_id)`` before mutating it.
+    _run_locks: dict[str, asyncio.Lock] = field(default_factory=dict)
+
+    def lock_for(self, run_id: str) -> asyncio.Lock:
+        """Return the per-run serialization lock, creating it on first use.
+
+        Lazily constructed inside the running event loop (this service is instantiated at
+        import time, before any loop exists).
+        """
+        lock = self._run_locks.get(run_id)
+        if lock is None:
+            lock = asyncio.Lock()
+            self._run_locks[run_id] = lock
+        return lock
+
+    def evict(self, run_id: str) -> None:
+        """Drop a run's cached runtime so the next access re-restores from durable state.
+
+        Used after a failed command (which may have left the in-memory runtime mutated but
+        unpersisted) and by the tick engine when an out-of-band writer — e.g. an approved
+        action executed on an isolated runtime — has appended effect events the cached
+        runtime has not observed. Restore replays the checkpoint plus post-checkpoint sim
+        events, so eviction is always safe and never loses persisted state.
+        """
+        self.runtime_cache.pop(run_id, None)
 
     def resolve_package_dir(self, *, package_path: str | None, scenario_version_id: str) -> Path:
         relative = package_path or SCENARIO_PACKAGE_BY_VERSION.get(scenario_version_id)
@@ -122,17 +163,22 @@ class RunCommandService:
                 message=f"Scenario package not found: {request.scenario_package_path}",
             )
 
+        # Server-side RNG: an omitted seed draws a fresh cryptographically random seed
+        # that is then persisted like any other, so the run remains fully deterministic
+        # for its (now concrete) seed. A supplied seed is used verbatim.
+        seed = request.seed if request.seed is not None else draw_random_seed()
+
         service = SimulationApplicationService(uow)
         runtime, manifest = await service.create_run_from_package(
             package_dir,
-            seed=request.seed,
+            seed=seed,
             run_id=request.run_id,
             owner_user_id=owner_user_id,
         )
         _ = manifest
 
         command = service.build_command(
-            command_id=idempotency_key or f"cmd-start-{request.seed}-{runtime.run_id}",
+            command_id=idempotency_key or f"cmd-start-{seed}-{runtime.run_id}",
             command_type=SimulationCommandType.START,
             run_id=runtime.run_id,
         )
@@ -287,6 +333,10 @@ class RunCommandService:
     ) -> SimulationRuntime:
         cached = self.runtime_cache.get(run_id)
         if cached is not None:
+            # Out-of-band writers (detection alerts, approvals, reports) append events to
+            # this run's sequence stream without touching the cached runtime. Re-sync the
+            # next sequence so the next STEP never collides with an already-persisted event.
+            await self._sync_next_sequence(uow, cached.runtime)
             return cached.runtime
 
         run = await uow.runs.get_by_id(run_id)
@@ -327,12 +377,25 @@ class RunCommandService:
             self._replay_events(runtime, sim_events)
 
         # Keep sequence monotonic across mixed sim + approval/agent event streams.
-        next_persisted = await uow.events.next_sequence(run_id)
-        if next_persisted > runtime.world.next_sequence:
-            runtime.world.next_sequence = next_persisted
+        await self._sync_next_sequence(uow, runtime)
 
         self.runtime_cache[run_id] = RuntimeCacheEntry(runtime=runtime, package_dir=package_dir)
         return runtime
+
+    @staticmethod
+    async def _sync_next_sequence(
+        uow: PostgresUnitOfWork, runtime: SimulationRuntime
+    ) -> None:
+        """Advance the runtime's next sequence past any persisted out-of-band events.
+
+        Alerts, approvals, and report events append to the run's ``(run_id, sequence)``
+        stream without going through the cached runtime; skipping the runtime forward keeps
+        the next stepped event's sequence unique. The determinism-golden *normalized* hash
+        is unaffected — it is computed over sim event content, not raw sequence numbers.
+        """
+        next_persisted = await uow.events.next_sequence(runtime.run_id)
+        if next_persisted > runtime.world.next_sequence:
+            runtime.world.next_sequence = next_persisted
 
     def _replay_events(
         self, runtime: SimulationRuntime, events: list[DomainEventEnvelopeV1]

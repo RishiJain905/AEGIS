@@ -90,11 +90,19 @@ export function useRunCommands(runId: string) {
   return { pause, resume, stop, step };
 }
 
+/**
+ * Resume a paused run outside a component that owns a `useRunCommands` hook — e.g. the
+ * scenarios catalogue, which resumes the latest owned run before navigating into it.
+ */
+export async function resumeRun(runId: string): Promise<void> {
+  await postRunCommand(`/api/v1/runs/${runId}/resume`, newIdempotencyKey('resume'));
+}
+
 export function useCreateRun() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { scenarioPackagePath: string; seed: number }) => {
+    mutationFn: async (input: { scenarioPackagePath: string; seed?: number }) => {
       const response = await fetch(`${getApiBaseUrl()}/api/v1/runs`, {
         method: 'POST',
         headers: {
@@ -105,7 +113,8 @@ export function useCreateRun() {
         body: JSON.stringify({
           schemaVersion: 1,
           scenarioPackagePath: input.scenarioPackagePath,
-          seed: input.seed,
+          // Omit seed entirely to let the server draw a cryptographically random one.
+          ...(input.seed !== undefined ? { seed: input.seed } : {}),
         }),
       });
       if (!response.ok) {

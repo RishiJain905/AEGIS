@@ -166,7 +166,11 @@ class RunCreateRequestV1(BaseModel):
 
     schema_version: int = Field(alias="schemaVersion")
     scenario_package_path: str = Field(alias="scenarioPackagePath")
-    seed: int
+    # Optional: when omitted the API draws a cryptographically random seed in
+    # [1, 2^31-1] and persists it (server-side RNG). A supplied seed pins the run
+    # deterministically (golden tests always pin their seeds). Additive change —
+    # schemaVersion stays 1; existing clients that send a seed are unaffected.
+    seed: int | None = None
     run_id: str | None = Field(default=None, alias="runId")
 
     @field_validator("schema_version")

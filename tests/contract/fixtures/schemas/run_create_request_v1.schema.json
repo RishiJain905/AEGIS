@@ -22,11 +22,19 @@
       "type": "integer"
     },
     "seed": {
-      "title": "Seed",
-      "type": "integer"
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Seed"
     }
   },
-  "required": ["schemaVersion", "scenarioPackagePath", "seed"],
+  "required": ["schemaVersion", "scenarioPackagePath"],
   "title": "RunCreateRequestV1",
   "type": "object"
 }

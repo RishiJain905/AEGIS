@@ -177,7 +177,9 @@ export const runCreateRequestSchema = z
   .object({
     schemaVersion: z.number().int().min(1),
     scenarioPackagePath: z.string().min(1),
-    seed: z.number().int(),
+    // Optional: omit to have the API draw a cryptographically random seed and
+    // persist it (server-side RNG). A supplied seed pins the run deterministically.
+    seed: z.number().int().optional(),
     runId: runIdSchema.optional(),
   })
   .strict()

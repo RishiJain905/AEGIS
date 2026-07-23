@@ -30,20 +30,23 @@ from aegis_persistence.repositories.postgres import (
     PostgresScenarioVersionRepository,
 )
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
-from aegis_policy.authz.matrix import actor_has_permission
-from aegis_simulation.run_command_service import RunCommandService
 from aegis_simulation_domain.errors import SimulationError, SimulationErrorCode
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aegis_api.auth.deps import require_actor, require_permission
+from aegis_api.auth.run_authz import actor_is_admin, has_run_access
 from aegis_api.db.session import db_session, get_db_session_maker
+from aegis_api.runs.lifecycle import finalize_stopped_run
+from aegis_api.runs.service import get_run_command_service
 
 router = APIRouter(prefix="/api/v1", tags=["runs"])
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[5]
-_run_service = RunCommandService(workspace_root=WORKSPACE_ROOT)
+# Process-wide shared instance: the manual lifecycle routes below and the background tick
+# engine mutate the same cached runtimes and serialize on the same per-run locks.
+_run_service = get_run_command_service()
 
 
 def _simulation_error_response(exc: SimulationError) -> JSONResponse:
@@ -61,10 +64,6 @@ def _simulation_error_response(exc: SimulationError) -> JSONResponse:
         details=exc.details or {},
     )
     return JSONResponse(status_code=status, content=envelope.model_dump(by_alias=True))
-
-
-def _actor_is_admin(actor: AuthenticatedActorV1) -> bool:
-    return actor_has_permission(actor, PermissionV1.ADMIN_MANAGE)
 
 
 def _run_not_found_response(run_id: str) -> JSONResponse:
@@ -96,9 +95,7 @@ def _authorize_run(
     """
     if run is None:
         return _run_not_found_response(run_id)
-    if _actor_is_admin(actor):
-        return run
-    if run.owner_user_id is not None and run.owner_user_id == actor.user_id:
+    if has_run_access(run, actor):
         return run
     return _forbidden_run_response(run_id)
 
@@ -187,7 +184,7 @@ async def list_runs(
     session_maker = get_db_session_maker()
     async with session_maker() as session:
         repo = PostgresRunRepository(session)
-        if _actor_is_admin(actor):
+        if actor_is_admin(actor):
             return await repo.list_all()
         return await repo.list_for_owner(actor.user_id)
 
@@ -286,20 +283,41 @@ async def _run_command(
         return JSONResponse(status_code=400, content=envelope.model_dump(by_alias=True))
 
     session_maker = get_db_session_maker()
+    settings = request.app.state.settings
     try:
-        async with PostgresUnitOfWork(session_maker, settings=request.app.state.settings) as uow:
+        # Serialize with the tick engine and any other manual command on the same run so
+        # they never mutate the shared cached runtime concurrently. The lock is held across
+        # the whole transaction (including commit) so a tick cannot interleave a run-row
+        # update between this command's persist and its commit.
+        async with (
+            _run_service.lock_for(run_id),
+            PostgresUnitOfWork(session_maker, settings=settings) as uow,
+        ):
             run = await uow.runs.get_by_id(run_id)
             authorized = _authorize_run(run, actor, run_id)
             if isinstance(authorized, JSONResponse):
                 return authorized
-            return await _run_service.execute_lifecycle_command(
+            response = await _run_service.execute_lifecycle_command(
                 uow,
                 run_id,
                 command_type,
                 idempotency_key=idempotency_key,
             )
     except SimulationError as exc:
+        # A failed command may have left the cached runtime mutated but unpersisted; evict
+        # it so the next access re-restores clean state from the checkpoint + event stream.
+        _run_service.evict(run_id)
         return _simulation_error_response(exc)
+
+    # After a stop commits, produce the after-action artifacts (best-effort, own
+    # transaction) so a manually stopped run finalizes exactly like a ticker-completed one.
+    if command_type == SimulationCommandType.STOP and response.run.status == "stopped":
+        await finalize_stopped_run(
+            session_maker,
+            run_id=run_id,
+            settings=settings,
+        )
+    return response
 
 
 _RunWriteActor = Annotated[

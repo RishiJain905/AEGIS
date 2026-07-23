@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button, EmptyState, ErrorState, LoadingState, cn, typographyTokens } from '@aegis/ui';
 
 import { CommandCentreShell } from '@/features/shell/components/command-centre-shell';
-import { useCreateRun } from '@/features/live-run';
+import { resumeRun, useCreateRun } from '@/features/live-run';
 import { useRuns, useScenarios } from '@/features/shell/hooks/use-shell-queries';
 
 // Demo/admin owner assigned to seeded/legacy runs by migration 014. Runs owned by this
@@ -15,7 +15,11 @@ const DEMO_OWNER_USER_ID = 'user:admin-alpha';
 
 interface ScenarioLaunchConfig {
   packagePath: string;
-  seed: number;
+  // A pinned seed makes the scenario deterministic on launch. Omit it (as Operation
+  // Silent Relay does) to launch seedless, so the server draws a fresh random seed per
+  // run — each run gets a different hidden root cause. Kept optional (not removed) so a
+  // deterministic tutorial scenario can still pin a seed.
+  seed?: number;
   // Scenario-version ids that belong to this scenario, used to match the caller's owned
   // runs (GET /runs is already owner-scoped server-side) to a "Resume latest run" action.
   versionIds: string[];
@@ -24,7 +28,6 @@ interface ScenarioLaunchConfig {
 const SCENARIO_LAUNCH_CONFIG: Record<string, ScenarioLaunchConfig> = {
   'scenario:operation-silent-relay': {
     packagePath: 'scenarios/operation-silent-relay',
-    seed: 1000,
     versionIds: ['scenario-version:1.0.0-silent-relay'],
   },
 };
@@ -38,8 +41,8 @@ function scenarioPackagePath(scenarioId: string): string {
   return `scenarios/${scenarioId.split(':')[1] ?? ''}`;
 }
 
-function scenarioSeed(scenarioId: string): number {
-  return SCENARIO_LAUNCH_CONFIG[scenarioId]?.seed ?? 1000;
+function scenarioSeed(scenarioId: string): number | undefined {
+  return SCENARIO_LAUNCH_CONFIG[scenarioId]?.seed;
 }
 
 interface RunSummary {
@@ -92,11 +95,25 @@ export default function ScenariosPage() {
     void createRun
       .mutateAsync({
         scenarioPackagePath: scenarioPackagePath(scenarioId),
+        // undefined for seedless scenarios → server draws a random seed.
         seed: scenarioSeed(scenarioId),
       })
       .then((result) => {
         router.push(`/runs/${result.run.id}`);
       });
+  };
+
+  // Resume the caller's latest owned run. A paused run is resumed server-side before we
+  // navigate, so the tick engine starts advancing it again the moment the operator opens it.
+  const openLatestRun = (run: RunSummary) => {
+    const navigate = () => router.push(`/runs/${run.id}`);
+    if (run.status === 'paused') {
+      void resumeRun(run.id)
+        .then(navigate)
+        .catch(() => navigate());
+      return;
+    }
+    navigate();
   };
 
   const isLoading = scenariosQuery.isPending || runsQuery.isPending;
@@ -184,7 +201,10 @@ export default function ScenariosPage() {
                       </h2>
                       <div className="flex flex-wrap items-center gap-2">
                         <MetaChip label="ID" value={scenarioId} />
-                        <MetaChip label="Seed" value={String(scenarioSeed(scenarioId))} />
+                        <MetaChip
+                          label="Seed"
+                          value={scenarioSeed(scenarioId)?.toString() ?? 'Server RNG'}
+                        />
                         {latestRun ? (
                           <span className="inline-flex items-center gap-1.5 rounded-[var(--aegis-radius-sm)] border border-[color-mix(in_srgb,var(--aegis-accent-line)_45%,transparent)] bg-[var(--aegis-accent-soft)] px-2 py-1">
                             <span
@@ -218,7 +238,7 @@ export default function ScenariosPage() {
                           variant="secondary"
                           data-testid={`resume-run-${scenarioId}`}
                           onClick={() => {
-                            router.push(`/runs/${latestRun.id}`);
+                            openLatestRun(latestRun);
                           }}
                         >
                           {isDemoRun ? 'Open demo run' : 'Resume latest run'} ({latestRun.status})

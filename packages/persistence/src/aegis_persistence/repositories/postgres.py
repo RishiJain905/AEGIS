@@ -171,6 +171,18 @@ class PostgresRunRepository:
         )
         return [run_to_domain(row) for row in result.scalars().all()]
 
+    async def list_running(self) -> list[RunV1]:
+        """Return RUNNING runs (oldest first) for the tick engine to advance.
+
+        Ordered by ``started_at`` ascending so long-lived runs are serviced before newer
+        ones each cycle; status is the authoritative RUNNING/paused/stopped signal, so this
+        is restart-safe (the ticker rediscovers live runs from the DB after any restart).
+        """
+        result = await self._session.execute(
+            select(RunRow).where(RunRow.status == "running").order_by(RunRow.started_at.asc())
+        )
+        return [run_to_domain(row) for row in result.scalars().all()]
+
     async def get_by_id(self, run_id: str) -> RunV1 | None:
         row = await self._session.get(RunRow, run_id)
         return run_to_domain(row) if row else None

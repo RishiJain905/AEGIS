@@ -2,9 +2,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { push, mutateAsync, useScenarios, useRuns } = vi.hoisted(() => ({
+const { push, mutateAsync, resumeRun, useScenarios, useRuns } = vi.hoisted(() => ({
   push: vi.fn(),
   mutateAsync: vi.fn(),
+  resumeRun: vi.fn(),
   useScenarios: vi.fn(),
   useRuns: vi.fn(),
 }));
@@ -19,6 +20,7 @@ vi.mock('@/features/shell/components/command-centre-shell', () => ({
 
 vi.mock('@/features/live-run', () => ({
   useCreateRun: () => ({ isPending: false, mutateAsync }),
+  resumeRun,
 }));
 
 vi.mock('@/features/shell/hooks/use-shell-queries', () => ({
@@ -51,6 +53,8 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
   beforeEach(() => {
     push.mockReset();
     mutateAsync.mockReset();
+    resumeRun.mockReset();
+    resumeRun.mockResolvedValue(undefined);
     useScenarios.mockReturnValue(scenariosSuccess());
   });
 
@@ -72,9 +76,10 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
     fireEvent.click(screen.getByTestId('start-run-scenario:operation-silent-relay'));
 
     await waitFor(() => {
+      // Seedless launch: no seed is sent, so the server draws a random one.
       expect(mutateAsync).toHaveBeenCalledWith({
         scenarioPackagePath: 'scenarios/operation-silent-relay',
-        seed: 1000,
+        seed: undefined,
       });
     });
     await waitFor(() => {
@@ -100,6 +105,33 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
     const resume = screen.getByTestId('resume-run-scenario:operation-silent-relay');
     expect(resume).toBeInTheDocument();
     fireEvent.click(resume);
+    // A running run needs no resume call — navigate straight in.
+    expect(resumeRun).not.toHaveBeenCalled();
     expect(push).toHaveBeenCalledWith('/runs/run_owned_1');
+  });
+
+  it('resumes a paused run before navigating into it', async () => {
+    useRuns.mockReturnValue(
+      runsResult([
+        {
+          id: 'run_paused_1',
+          scenarioVersionId: 'scenario-version:1.0.0-silent-relay',
+          status: 'paused',
+          startedAt: '2026-06-30T02:00:00.000Z',
+          ownerUserId: 'user:operator-alpha',
+        },
+      ]),
+    );
+
+    render(<ScenariosPage />);
+
+    fireEvent.click(screen.getByTestId('resume-run-scenario:operation-silent-relay'));
+
+    await waitFor(() => {
+      expect(resumeRun).toHaveBeenCalledWith('run_paused_1');
+    });
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith('/runs/run_paused_1');
+    });
   });
 });

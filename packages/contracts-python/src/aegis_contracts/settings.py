@@ -85,6 +85,20 @@ class AegisSettings(BaseSettings):
     AEGIS_LOG_JSON: bool = True
     AEGIS_TELEMETRY_RETENTION_HOURS: int = Field(default=168, ge=1)
 
+    # Phase 2 (scenario revamp) — in-process simulation tick engine. The API process
+    # owns the single RunCommandService runtime cache, so it is the single writer that
+    # periodically advances every RUNNING run. See docs/superpowers/specs.
+    AEGIS_SIM_TICK_ENABLED: bool = True
+    AEGIS_SIM_TICK_INTERVAL_SECONDS: float = Field(default=2.0, gt=0.0)
+    AEGIS_SIM_STEPS_PER_TICK: int = Field(default=1, ge=1)
+    # Engine-visible completion horizon: the ticker STOPs a run once its virtual clock
+    # has advanced this many sim-seconds past the scenario's initial sim time. Sim-time
+    # is restart-safe (restored from the checkpoint) and covers the full scripted
+    # narrative (Operation Silent Relay: all scripted effects fire by ~00:21:00, hidden
+    # reveals by <=720s). Distinct from golden-seeds `simulationSteps`, which is test
+    # metadata for the fixed-step determinism harness, not a live horizon.
+    AEGIS_SIM_MAX_SIM_SECONDS: int = Field(default=1500, ge=1)
+
     # Phase 32 HTTP trust-boundary hardening
     AEGIS_REQUEST_BODY_MAX_BYTES: int = Field(default=1_048_576, ge=1)
     AEGIS_RATE_LIMIT_REQUESTS_PER_MINUTE: int = Field(default=120, ge=1)

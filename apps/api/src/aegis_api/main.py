@@ -20,7 +20,7 @@ from aegis_api.auth.deps import AuthDependencyError, auth_error_response, requir
 from aegis_api.auth.router import router as auth_router
 from aegis_api.auth.service import AuthServiceError
 from aegis_api.auth.startup import seed_dev_identities
-from aegis_api.db.session import init_db, shutdown_db
+from aegis_api.db.session import get_db_session_maker, init_db, shutdown_db
 from aegis_api.detection.observability import router as detection_observability_router
 from aegis_api.detection.router import router as detection_router
 from aegis_api.features.observability import router as feature_observability_router
@@ -42,6 +42,8 @@ from aegis_api.reports.router import router as reports_router
 from aegis_api.risk.observability import router as risk_observability_router
 from aegis_api.risk.router import router as risk_router
 from aegis_api.runs.router import router as runs_router
+from aegis_api.runs.service import get_run_command_service
+from aegis_api.runs.tick_engine import SimulationTicker
 from aegis_api.scoring.router import router as scoring_router
 from aegis_api.security.middleware import (
     RequestBodyLimitMiddleware,
@@ -80,7 +82,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await seed_dev_identities(settings)
     gateway: WebSocketGatewayManager = app.state.gateway
     await gateway.start()
+    # Single-writer simulation tick engine: advances every RUNNING run on a cadence,
+    # sharing the runs router's RunCommandService (and its per-run locks) so ticks and
+    # manual commands never race on the same runtime.
+    ticker = SimulationTicker(
+        command_service=get_run_command_service(),
+        session_maker=get_db_session_maker(),
+        settings=settings,
+    )
+    app.state.sim_ticker = ticker
+    await ticker.start()
     yield
+    await ticker.stop()
     await gateway.stop()
     await shutdown_db(settings)
     shutdown_observability()

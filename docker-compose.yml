@@ -78,6 +78,13 @@ services:
       S3_BUCKET: ${S3_BUCKET:-aegis-artifacts}
       API_PORT: 8000
       WEB_PORT: 3000
+      # Simulation tick engine: the API process advances every RUNNING run on a cadence
+      # and auto-completes it (STOP + after-action) at the sim-time horizon. See
+      # .env.example for tuning notes.
+      AEGIS_SIM_TICK_ENABLED: ${AEGIS_SIM_TICK_ENABLED:-true}
+      AEGIS_SIM_TICK_INTERVAL_SECONDS: ${AEGIS_SIM_TICK_INTERVAL_SECONDS:-2.0}
+      AEGIS_SIM_STEPS_PER_TICK: ${AEGIS_SIM_STEPS_PER_TICK:-1}
+      AEGIS_SIM_MAX_SIM_SECONDS: ${AEGIS_SIM_MAX_SIM_SECONDS:-1500}
       OTEL_ENABLED: ${OTEL_ENABLED:-true}
       OTEL_SERVICE_NAME: aegis-api
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}

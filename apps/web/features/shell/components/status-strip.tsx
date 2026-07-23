@@ -69,6 +69,9 @@ export function StatusStrip({ runId }: StatusStripProps) {
   const runStatus = liveRun?.isLiveMode ? liveRun.state.runStatus : runQuery.data?.status;
   const simTime = liveRun?.isLiveMode ? liveRun.state.simTime : runQuery.data?.simTime;
   const sequence = liveRun?.isLiveMode ? liveRun.state.lastAppliedSequence : undefined;
+  // The run's actual seed (server-drawn when launched seedless). Surfaced so operators can
+  // see and cite the seed for a given run — determinism is anchored to it.
+  const seed = runQuery.data?.seed;
 
   return (
     <div
@@ -102,6 +105,9 @@ export function StatusStrip({ runId }: StatusStripProps) {
           {runId ? <TelemetryItem label="RUN" value={runId} /> : null}
           {runStatus ? (
             <TelemetryItem label="STATUS" value={runStatus} testId="run-status" />
+          ) : null}
+          {seed !== undefined ? (
+            <TelemetryItem label="SEED" value={seed} testId="run-seed" />
           ) : null}
           {simTime ? <TelemetryItem label="SIM" value={simTime} testId="sim-time" /> : null}
           {sequence !== undefined ? (
