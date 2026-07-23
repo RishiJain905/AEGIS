@@ -183,6 +183,7 @@ function buildReplayState(
           {
             schemaVersion: 1,
             id: 'agent-session:ags_synthetic_001',
+            runId,
             incidentId: 'incident:inc_synthetic_001',
             role: 'TRACE',
             state: 'gathering',
