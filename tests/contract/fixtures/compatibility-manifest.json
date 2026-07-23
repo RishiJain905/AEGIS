@@ -37,7 +37,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_session_detail_v1.schema.json",
-      "sha256": "161f9e72ec8417bd39ec0e527fbd486958ca6724e242144383a9f4fcaaa559af"
+      "sha256": "a2351f5f8beeedb1d86ba957be5746aa8d2248c923edf7353a5561293f907c79"
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_session_v1.schema.json",
@@ -49,7 +49,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_task_v1.schema.json",
-      "sha256": "3056668a0668dc57c7700d055cab8b16d4a7615b0ebe471260e38e9d2e662b7c"
+      "sha256": "9f390966c4baf96a4dff9accd52f8fa9d3a645b945620a7c08c00e71d95dd513"
     },
     {
       "path": "tests/contract/fixtures/schemas/alert_v1.schema.json",
@@ -170,7 +170,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/create_agent_task_request_v1.schema.json",
-      "sha256": "e491d26998c2d3a6e605d662dacb34c1bb2269fff38e5d21571ce2ffd49340ee"
+      "sha256": "b8e31148f041e5b085e6ace6128c353ce01c828f3edbbfc511a14431d14899f3"
     },
     {
       "path": "tests/contract/fixtures/schemas/create_directive_request_v1.schema.json",
@@ -592,7 +592,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_command_response_v1.schema.json",
-      "sha256": "e4710e503efcd0997f659faf9fd44ddc454cbb3d870b09d41f3c4889b7f4ef71"
+      "sha256": "7b37fbe6fdf61055b719634ac072e235b0a0a35dbe8f6226b4643da889c3c222"
     },
     {
       "path": "tests/contract/fixtures/schemas/run_comparison_v1.schema.json",
@@ -605,7 +605,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_create_request_v1.schema.json",
-      "sha256": "a510e472d818c421c0731e4698a98560ddb5f97b09fbe2235f18f0c16d41b465"
+      "sha256": "574fca3ac6f0ac5585af1d14a3c03bcc90c2f8a2ca3593d0d49405b7ca260bac"
     },
     {
       "path": "tests/contract/fixtures/schemas/run_feed_entry_v1.schema.json",
@@ -629,7 +629,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_v1.schema.json",
-      "sha256": "4f9ead71e5dfa9a8dc3219bd5fa8fb9b007d1c10f8169b35721f2a8cbb600cc9"
+      "sha256": "aa475ac65bd6197506e54e9ff55045bec42de55f1d057b1f16cd8fc8671d9c11"
     },
     {
       "path": "tests/contract/fixtures/schemas/scenario_v1.schema.json",

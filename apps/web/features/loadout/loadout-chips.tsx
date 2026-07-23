@@ -1,6 +1,6 @@
 'use client';
 
-import { ROE_DOCTRINE, type RunLoadout } from '@/features/command-surface';
+import { ROE_DOCTRINE, type RunLoadout } from '@/features/command-surface/contracts';
 
 function Chip({ label, active }: { label: string; active: boolean }) {
   return (

@@ -12,9 +12,9 @@ import {
 import {
   ROE_DOCTRINE,
   RULES_OF_ENGAGEMENT,
-  useChangeRoe,
   type RulesOfEngagement,
-} from '@/features/command-surface';
+} from '@/features/command-surface/contracts';
+import { useChangeRoe } from '@/features/command-surface/use-operator-actions';
 
 const ROE_TONE: Record<RulesOfEngagement, string> = {
   observe: 'var(--aegis-text-muted)',

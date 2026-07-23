@@ -19,7 +19,7 @@ import {
   RULES_OF_ENGAGEMENT,
   type RulesOfEngagement,
   type RunLoadout,
-} from '@/features/command-surface';
+} from '@/features/command-surface/contracts';
 
 function Toggle({
   id,
