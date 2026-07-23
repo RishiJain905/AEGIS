@@ -192,6 +192,56 @@ services:
       otel-collector:
         condition: service_started
 
+  agent-worker:
+    build:
+      context: .
+      dockerfile: services/workers/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    environment:
+      AEGIS_ENV: development
+      # Executes queued agent tasks — including autonomy-enqueued WATCHTOWER/ORACLE
+      # triage — against the local model. Manual copilot tasks run inline in the API;
+      # autonomy tasks are async and need this worker.
+      AEGIS_WORKER_MODE: agent-runtime
+      LOG_LEVEL: info
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-aegis}
+      POSTGRES_USER: ${POSTGRES_USER:-aegis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aegis_dev}
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-aegis}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-aegis_dev_secret}
+      S3_BUCKET: ${S3_BUCKET:-aegis-artifacts}
+      API_PORT: 8000
+      WEB_PORT: 3000
+      OTEL_ENABLED: ${OTEL_ENABLED:-true}
+      OTEL_SERVICE_NAME: aegis-agent-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      AEGIS_LOG_JSON: ${AEGIS_LOG_JSON:-true}
+      AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
+      AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
+      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwen3.5-9B.Q8_0.gguf}
+      AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
+      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-180}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+
   simulator:
     build:
       context: .
