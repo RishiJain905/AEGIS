@@ -127,7 +127,9 @@ describe('AgentChatPanel', () => {
 
   it('renders a failed turn honestly', async () => {
     apiFetch.mockResolvedValue(
-      jsonResponse({ sessions: [watchtowerSessionDetail({ taskStatus: 'failed', withError: true })] }),
+      jsonResponse({
+        sessions: [watchtowerSessionDetail({ taskStatus: 'failed', withError: true })],
+      }),
     );
 
     renderPanel();

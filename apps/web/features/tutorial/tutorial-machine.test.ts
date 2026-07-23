@@ -45,9 +45,9 @@ describe('tutorial-machine · computeActiveStep', () => {
   it('does not leap past the watch step from ambient telemetry before welcome is acknowledged', () => {
     // Telemetry and an alert are present, but the operator has not begun: they stay on
     // welcome rather than being skipped past the coaching.
-    expect(
-      computeActiveStep(evidence({ telemetryFlowing: true, alertRaised: true }), 0),
-    ).toBe(WELCOME);
+    expect(computeActiveStep(evidence({ telemetryFlowing: true, alertRaised: true }), 0)).toBe(
+      WELCOME,
+    );
   });
 
   it('walks the full happy path one user milestone at a time', () => {
@@ -85,9 +85,9 @@ describe('tutorial-machine · computeActiveStep', () => {
   it('supports skip-ahead: a satisfied user milestone pulls the walkthrough forward', () => {
     // The operator opened an incident and tasked an agent while the overlay was still on
     // an early step; the machine jumps to the step after the furthest milestone.
-    expect(
-      computeActiveStep(evidence({ incidentOpened: true, agentTaskCreated: true }), 0),
-    ).toBe(CONTAINMENT);
+    expect(computeActiveStep(evidence({ incidentOpened: true, agentTaskCreated: true }), 0)).toBe(
+      CONTAINMENT,
+    );
   });
 
   it('never regresses below the persisted floor', () => {

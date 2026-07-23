@@ -41,6 +41,9 @@ from aegis_simulation.graph_projection import (
 )
 
 SCENARIO_PACKAGE_BY_VERSION: dict[str, str] = {
+    # Runs created via an explicit scenarioPackagePath derive their version id from the
+    # manifest version (1.0.0), so the bare id must stay restorable too.
+    "scenario-version:1.0.0": "scenarios/operation-silent-relay",
     "scenario-version:1.0.0-silent-relay": "scenarios/operation-silent-relay",
     "scenario-version:1.0.0-fixture": "scenarios/_fixtures/valid-minimal",
     "scenario-version:synthetic-dev-v1": "scenarios/_fixtures/valid-minimal",

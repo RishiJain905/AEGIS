@@ -159,7 +159,9 @@ function ToolChips({ tools }: { tools: ToolInvocationV1[] }) {
       {tools.map((tool) => (
         <Badge key={tool.id} nodeStatus={toolBadgeStatus(tool.status)}>
           <span className="font-mono text-[10px]">{tool.toolName}</span>
-          <span className="ml-1 text-[9px] text-[var(--aegis-text-muted)]">{tool.durationMs}ms</span>
+          <span className="ml-1 text-[9px] text-[var(--aegis-text-muted)]">
+            {tool.durationMs}ms
+          </span>
         </Badge>
       ))}
     </div>
@@ -299,10 +301,7 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
               onRetry={() => void sessionsQuery.refetch()}
             />
           ) : turns.length === 0 && !pending ? (
-            <EmptyState
-              title={`No ${role} activity yet`}
-              description={ROLE_BLURB[role]}
-            />
+            <EmptyState title={`No ${role} activity yet`} description={ROLE_BLURB[role]} />
           ) : (
             <ul className="flex flex-col gap-4">
               {turns.map((turn) => (
@@ -320,11 +319,15 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
                   <div className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-3 py-2">
                     <p
                       className={`text-sm ${
-                        retrying ? 'text-[var(--aegis-risk-medium)]' : 'text-[var(--aegis-text-muted)]'
+                        retrying
+                          ? 'text-[var(--aegis-risk-medium)]'
+                          : 'text-[var(--aegis-text-muted)]'
                       } ${reducedMotion ? '' : 'animate-pulse'}`}
                       data-testid={retrying ? 'agent-chat-retrying' : 'agent-chat-working'}
                     >
-                      {retrying ? `${role} task failed — retrying once…` : `${role} is investigating…`}
+                      {retrying
+                        ? `${role} task failed — retrying once…`
+                        : `${role} is investigating…`}
                     </p>
                   </div>
                 </li>
@@ -339,9 +342,7 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
 
         {sendMessage.isError ? (
           <Alert variant="error">
-            {sendMessage.error instanceof Error
-              ? sendMessage.error.message
-              : 'The request failed.'}
+            {sendMessage.error instanceof Error ? sendMessage.error.message : 'The request failed.'}
           </Alert>
         ) : null}
 

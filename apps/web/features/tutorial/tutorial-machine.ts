@@ -162,10 +162,7 @@ export function isDebriefStep(index: number): boolean {
  * monotonic. Returns the same object identity when nothing changed so callers can skip
  * redundant writes/renders.
  */
-export function advanceProgress(
-  progress: TutorialProgress,
-  activeStep: number,
-): TutorialProgress {
+export function advanceProgress(progress: TutorialProgress, activeStep: number): TutorialProgress {
   if (activeStep <= progress.reached) {
     return progress;
   }

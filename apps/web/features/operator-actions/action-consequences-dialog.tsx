@@ -77,7 +77,9 @@ export function ActionConsequencesDialog({
               Target
             </p>
             <p className="text-sm text-[var(--aegis-text-primary)]">{assetLabel}</p>
-            <code className="font-mono text-[10px] text-[var(--aegis-text-secondary)]">{assetId}</code>
+            <code className="font-mono text-[10px] text-[var(--aegis-text-secondary)]">
+              {assetId}
+            </code>
           </div>
 
           <Alert variant={critical ? 'error' : 'warning'} title="Consequences">

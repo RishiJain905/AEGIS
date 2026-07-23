@@ -2,10 +2,7 @@
   "$defs": {
     "AutonomyInitiatorV1": {
       "description": "Who originated an agent task, so the UI can distinguish autonomous initiative\nfrom operator tasking.",
-      "enum": [
-        "operator",
-        "autonomy"
-      ],
+      "enum": ["operator", "autonomy"],
       "title": "AutonomyInitiatorV1",
       "type": "string"
     }
@@ -53,10 +50,7 @@
       "type": "integer"
     }
   },
-  "required": [
-    "schemaVersion",
-    "idempotencyKey"
-  ],
+  "required": ["schemaVersion", "idempotencyKey"],
   "title": "CreateAgentTaskRequestV1",
   "type": "object"
 }

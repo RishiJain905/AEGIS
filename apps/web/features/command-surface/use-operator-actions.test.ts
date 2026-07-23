@@ -23,16 +23,17 @@ describe('useSubmitOperatorAction', () => {
   it('posts the operator action with the confirm flag and target asset', async () => {
     apiFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        schemaVersion: 1,
-        proposalId: 'proposal:p1',
-        incidentId: 'incident:i1',
-        actionClass: 'class_2',
-        status: 'executed',
-        policyOutcome: 'approval_required',
-        reasonCodes: [],
-        executed: true,
-      }),
+      json: () =>
+        Promise.resolve({
+          schemaVersion: 1,
+          proposalId: 'proposal:p1',
+          incidentId: 'incident:i1',
+          actionClass: 'class_2',
+          status: 'executed',
+          policyOutcome: 'approval_required',
+          reasonCodes: [],
+          executed: true,
+        }),
     });
 
     const { result } = renderHook(() => useSubmitOperatorAction('run_x'), { wrapper });
@@ -59,16 +60,17 @@ describe('useSubmitOperatorAction', () => {
   it('surfaces a policy block as a resolved response, not a throw', async () => {
     apiFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        schemaVersion: 1,
-        proposalId: 'proposal:p2',
-        incidentId: 'incident:i2',
-        actionClass: 'class_3',
-        status: 'blocked',
-        policyOutcome: 'block',
-        reasonCodes: ['blocked_criticality_threshold'],
-        executed: false,
-      }),
+      json: () =>
+        Promise.resolve({
+          schemaVersion: 1,
+          proposalId: 'proposal:p2',
+          incidentId: 'incident:i2',
+          actionClass: 'class_3',
+          status: 'blocked',
+          policyOutcome: 'block',
+          reasonCodes: ['blocked_criticality_threshold'],
+          executed: false,
+        }),
     });
     const { result } = renderHook(() => useSubmitOperatorAction('run_x'), { wrapper });
     const response = await result.current.mutateAsync({
@@ -85,7 +87,9 @@ describe('useSubmitOperatorAction', () => {
     expect(readRunLoadout(null)).toBeNull();
     expect(readRunLoadout({ id: 'run_x' })).toBeNull();
     expect(
-      readRunLoadout({ loadout: { schemaVersion: 1, biasGuard: false, threatTempo: true, roe: 'observe' } }),
+      readRunLoadout({
+        loadout: { schemaVersion: 1, biasGuard: false, threatTempo: true, roe: 'observe' },
+      }),
     ).toMatchObject({ biasGuard: false, threatTempo: true, roe: 'observe' });
   });
 });

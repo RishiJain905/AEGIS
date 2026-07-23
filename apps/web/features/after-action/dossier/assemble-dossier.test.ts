@@ -48,18 +48,47 @@ const CONDITION = 'hidden-cause-compromised-credentials';
 function credentialsRun(): DossierEvent[] {
   return [
     event(1, 'sim.run.started', 0, {}),
-    event(2, 'sim.branch.selected', 0, { branchGroup: 'root-cause', branchId: 'branch-cause-credentials' }),
+    event(2, 'sim.branch.selected', 0, {
+      branchGroup: 'root-cause',
+      branchId: 'branch-cause-credentials',
+    }),
     // covert beats
     event(3, 'sim.hidden_condition.triggered', 5, { conditionId: CONDITION }),
     event(4, 'sim.asset.status_changed', 15, { assetId: CREDENTIALS_ASSET, status: 'compromised' }),
     // detection surfaces the asset at +21m (dwell 6m), reveal fires at +25m (dwell 20m)
-    event(5, 'alert.created', 21, { assetId: CREDENTIALS_ASSET, title: 'Anomalous authentication' }),
+    event(5, 'alert.created', 21, {
+      assetId: CREDENTIALS_ASSET,
+      title: 'Anomalous authentication',
+    }),
     event(7, 'incident.created', 22, { title: 'Suspicious logistics bot' }),
     event(6, 'sim.hidden_condition.revealed', 25, { conditionId: CONDITION }),
     // defender response
-    event(11, 'run.roe_changed', 12, { newRoe: 'forward-deployed' }, { actorType: 'operator', actorId: 'user:op1', subjectType: 'operator', subjectId: 'user:op1' }),
-    event(8, 'operator.action.proposed', 30, { scenarioCommand: 'isolate_asset', targetAssetId: CREDENTIALS_ASSET, initiator: 'operator' }, { actorType: 'operator', actorId: 'user:op1' }),
-    event(9, 'action.executed', 31, { proposalId: 'prp_1', incidentId: 'inc_1' }, { actorType: 'operator', actorId: 'user:op1' }),
+    event(
+      11,
+      'run.roe_changed',
+      12,
+      { newRoe: 'forward-deployed' },
+      {
+        actorType: 'operator',
+        actorId: 'user:op1',
+        subjectType: 'operator',
+        subjectId: 'user:op1',
+      },
+    ),
+    event(
+      8,
+      'operator.action.proposed',
+      30,
+      { scenarioCommand: 'isolate_asset', targetAssetId: CREDENTIALS_ASSET, initiator: 'operator' },
+      { actorType: 'operator', actorId: 'user:op1' },
+    ),
+    event(
+      9,
+      'action.executed',
+      31,
+      { proposalId: 'prp_1', incidentId: 'inc_1' },
+      { actorType: 'operator', actorId: 'user:op1' },
+    ),
     // containment world-note (system actor, benign status) — belongs to neither lane
     event(10, 'sim.asset.status_changed', 32, { assetId: CREDENTIALS_ASSET, status: 'contained' }),
     // noise the dossier must ignore, including a type the TS registry does not enumerate
@@ -235,7 +264,10 @@ describe('assembleAdversaryDossier — never-detected campaign', () => {
     const events: DossierEvent[] = [
       event(1, 'sim.run.started', 0, {}),
       event(2, 'sim.hidden_condition.triggered', 5, { conditionId: CONDITION }),
-      event(3, 'sim.asset.status_changed', 15, { assetId: CREDENTIALS_ASSET, status: 'compromised' }),
+      event(3, 'sim.asset.status_changed', 15, {
+        assetId: CREDENTIALS_ASSET,
+        status: 'compromised',
+      }),
       event(4, 'sim.run.stopped', 40, {}),
     ];
     const dossier = assembleAdversaryDossier({

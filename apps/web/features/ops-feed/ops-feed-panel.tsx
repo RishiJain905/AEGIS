@@ -117,10 +117,7 @@ function CollapsedRow({ entries, count }: { entries: RunFeedEntry[]; count: numb
         aria-expanded={open}
         className="flex w-full items-center gap-2 text-left"
       >
-        <span
-          aria-hidden="true"
-          className="font-mono text-[10px] text-[var(--aegis-text-muted)]"
-        >
+        <span aria-hidden="true" className="font-mono text-[10px] text-[var(--aegis-text-muted)]">
           {open ? '▾' : '▸'}
         </span>
         <span className="text-xs text-[var(--aegis-text-muted)]">

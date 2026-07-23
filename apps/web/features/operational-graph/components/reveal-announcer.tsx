@@ -68,9 +68,7 @@ export function RevealAnnouncer({ nodes, revision }: RevealAnnouncerProps) {
   }, [revealed]);
 
   const message =
-    revealed.length > 0
-      ? `Detection: ${revealed.map((r) => r.label).join(', ')} now visible.`
-      : '';
+    revealed.length > 0 ? `Detection: ${revealed.map((r) => r.label).join(', ')} now visible.` : '';
 
   return (
     <>

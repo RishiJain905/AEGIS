@@ -34,10 +34,7 @@ function activeRunIdFromPath(pathname: string): string | null {
 }
 
 /** Resolve a nav item's href: run-scoped items follow the active run, else fall back to it. */
-function navHref(
-  item: (typeof NAV_ITEMS)[number],
-  activeRunId: string | null,
-): string {
+function navHref(item: (typeof NAV_ITEMS)[number], activeRunId: string | null): string {
   if (!item.runScoped) {
     return item.base;
   }

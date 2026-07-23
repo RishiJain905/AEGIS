@@ -16,13 +16,14 @@ from aegis_contracts import (
     ConsoleEventSearchResultV1,
     HypothesisV1,
     OperatorHypothesisRequestV1,
+    PermissionV1,
     RunFeedPageV1,
 )
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from aegis_api.auth.deps import require_actor
+from aegis_api.auth.deps import require_actor, require_permission
 from aegis_api.auth.run_authz import require_run_access
 from aegis_api.console.service import ConsoleService
 from aegis_api.db.session import get_db_session_maker
@@ -67,6 +68,7 @@ async def get_console_asset(
 @router.post(
     "/runs/{run_id}/console/hypotheses",
     response_model=HypothesisV1,
+    dependencies=[Depends(require_permission(PermissionV1.INVESTIGATION_TRIGGER))],
 )
 async def create_console_hypothesis(
     run_id: str,

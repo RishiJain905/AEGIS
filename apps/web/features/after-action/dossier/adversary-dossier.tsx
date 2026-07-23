@@ -38,7 +38,9 @@ function Surface({ className, children, ...props }: HTMLAttributes<HTMLElement>)
 function ZoneHeading({ children, count }: { children: ReactNode; count?: number }) {
   return (
     <div className="flex items-center gap-2.5">
-      <h3 className={cn(typographyTokens.displayMd, 'flex-none text-[var(--aegis-text-secondary)]')}>
+      <h3
+        className={cn(typographyTokens.displayMd, 'flex-none text-[var(--aegis-text-secondary)]')}
+      >
         {children}
       </h3>
       {typeof count === 'number' ? (
@@ -87,18 +89,12 @@ const EXFIL_TONE: Record<ExfilStatus, { pill: 'accent' | 'warning' | 'neutral'; 
   },
 };
 
-function KeyMomentStat({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-}) {
+function KeyMomentStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-text-muted)]')}>{label}</span>
+      <span className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-text-muted)]')}>
+        {label}
+      </span>
       <span className="font-mono text-lg font-semibold tabular-nums text-[var(--aegis-text-primary)]">
         {value}
       </span>
@@ -113,18 +109,26 @@ function DossierHeader({ dossier }: { dossier: AdversaryDossierViewModel }) {
   const start = km.runStartSimTime;
 
   return (
-    <Surface className="p-6 lg:p-7" data-testid="dossier-header" aria-label="Adversary dossier summary">
+    <Surface
+      className="p-6 lg:p-7"
+      data-testid="dossier-header"
+      aria-label="Adversary dossier summary"
+    >
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-2">
-            <span className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-status-compromised)]')}>
+            <span
+              className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-status-compromised)]')}
+            >
               Adversary dossier
             </span>
             <h2
               className="font-[family-name:var(--aegis-font-display)] text-2xl font-semibold tracking-[0.01em] text-[var(--aegis-text-primary)]"
               data-testid="dossier-root-cause"
             >
-              {dossier.rootCauseKnown ? `Root cause: ${dossier.rootCauseLabel}` : dossier.rootCauseLabel}
+              {dossier.rootCauseKnown
+                ? `Root cause: ${dossier.rootCauseLabel}`
+                : dossier.rootCauseLabel}
             </h2>
             <p className="max-w-xl text-sm leading-6 text-[var(--aegis-text-secondary)]">
               What the attacker did while you were responding — reconstructed from the full event
@@ -245,10 +249,7 @@ function TimelineRow({
         )}
       >
         <div
-          className={cn(
-            'flex items-center gap-2',
-            isAttacker ? 'flex-row-reverse' : 'flex-row',
-          )}
+          className={cn('flex items-center gap-2', isAttacker ? 'flex-row-reverse' : 'flex-row')}
         >
           <span className="font-mono text-[0.65rem] text-[var(--aegis-text-muted)] tabular-nums">
             {offset}
@@ -327,9 +328,7 @@ function SealedState({ runStatus }: { runStatus: string | undefined }) {
           Revealing the attacker&apos;s full campaign mid-run would lift the fog of war. Once this
           run reaches a terminal state, the adversary lane unlocks for debrief.
         </p>
-        {runStatus ? (
-          <Pill>{`Run status: ${runStatus}`}</Pill>
-        ) : null}
+        {runStatus ? <Pill>{`Run status: ${runStatus}`}</Pill> : null}
       </div>
     </Surface>
   );
@@ -360,11 +359,7 @@ export function AdversaryDossier({ runId }: AdversaryDossierProps) {
         ? `${error.code}: ${error.message}`
         : 'Failed to reconstruct the adversary campaign';
     return (
-      <EmptyState
-        title="Dossier unavailable"
-        description={message}
-        data-testid="dossier-error"
-      />
+      <EmptyState title="Dossier unavailable" description={message} data-testid="dossier-error" />
     );
   }
 

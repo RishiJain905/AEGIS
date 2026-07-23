@@ -185,8 +185,8 @@ export default function ScenariosPage() {
   };
 
   const loadoutScenarioName =
-    scenariosQuery.data?.find((s: { id: string; name: string }) => s.id === loadoutScenarioId)?.name ??
-    'this operation';
+    scenariosQuery.data?.find((s: { id: string; name: string }) => s.id === loadoutScenarioId)
+      ?.name ?? 'this operation';
 
   // Resume the caller's latest owned run. A paused run is resumed server-side before we
   // navigate, so the tick engine starts advancing it again the moment the operator opens it.
@@ -284,101 +284,101 @@ export default function ScenariosPage() {
                   a.name.localeCompare(b.name),
               )
               .map((scenario: { name: string; id: string }) => {
-              const scenarioId = scenario.id;
-              const presentation = presentationFor(scenarioId);
-              const isTutorial = presentation.kind === 'tutorial';
-              const latestRun = latestOwnedRun(scenarioId, runsQuery.data as RunSummary[]);
-              const isDemoRun = latestRun?.ownerUserId === DEMO_OWNER_USER_ID;
-              return (
-                <li key={scenarioId}>
-                  <article
-                    data-testid={`scenario-card-${scenarioId}`}
-                    className={cn(
-                      'group relative flex flex-col gap-6 overflow-hidden rounded-[var(--aegis-radius-xl)] border bg-[color-mix(in_srgb,var(--aegis-surface-panel)_82%,transparent)] p-6 shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl transition-[border-color,box-shadow] duration-[var(--aegis-motion-duration-normal)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)] hover:shadow-[var(--aegis-shadow-panel-hover)] motion-reduce:transition-none sm:flex-row sm:items-center sm:justify-between sm:gap-8',
-                      isTutorial
-                        ? 'border-[color-mix(in_srgb,var(--aegis-accent-line)_50%,transparent)] hover:border-[color-mix(in_srgb,var(--aegis-accent-line)_70%,transparent)]'
-                        : 'border-[var(--aegis-border-subtle)] hover:border-[color-mix(in_srgb,var(--aegis-accent-line)_55%,transparent)]',
-                    )}
-                  >
-                    <div className="flex min-w-0 flex-col gap-3">
-                      <span
-                        className={cn(
-                          'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1',
-                          typographyTokens.monoSm,
-                          'uppercase',
-                          isTutorial
-                            ? 'border-[color-mix(in_srgb,var(--aegis-accent-line)_55%,transparent)] bg-[var(--aegis-accent-soft)] text-[var(--aegis-accent-strong)]'
-                            : 'border-[var(--aegis-border-default)] bg-[color-mix(in_srgb,var(--aegis-surface-elevated)_70%,transparent)] text-[var(--aegis-text-secondary)]',
-                        )}
-                        data-testid={`scenario-badge-${scenarioId}`}
-                      >
+                const scenarioId = scenario.id;
+                const presentation = presentationFor(scenarioId);
+                const isTutorial = presentation.kind === 'tutorial';
+                const latestRun = latestOwnedRun(scenarioId, runsQuery.data as RunSummary[]);
+                const isDemoRun = latestRun?.ownerUserId === DEMO_OWNER_USER_ID;
+                return (
+                  <li key={scenarioId}>
+                    <article
+                      data-testid={`scenario-card-${scenarioId}`}
+                      className={cn(
+                        'group relative flex flex-col gap-6 overflow-hidden rounded-[var(--aegis-radius-xl)] border bg-[color-mix(in_srgb,var(--aegis-surface-panel)_82%,transparent)] p-6 shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl transition-[border-color,box-shadow] duration-[var(--aegis-motion-duration-normal)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)] hover:shadow-[var(--aegis-shadow-panel-hover)] motion-reduce:transition-none sm:flex-row sm:items-center sm:justify-between sm:gap-8',
+                        isTutorial
+                          ? 'border-[color-mix(in_srgb,var(--aegis-accent-line)_50%,transparent)] hover:border-[color-mix(in_srgb,var(--aegis-accent-line)_70%,transparent)]'
+                          : 'border-[var(--aegis-border-subtle)] hover:border-[color-mix(in_srgb,var(--aegis-accent-line)_55%,transparent)]',
+                      )}
+                    >
+                      <div className="flex min-w-0 flex-col gap-3">
                         <span
-                          aria-hidden="true"
                           className={cn(
-                            'size-1.5 rounded-full',
+                            'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1',
+                            typographyTokens.monoSm,
+                            'uppercase',
                             isTutorial
-                              ? 'bg-[var(--aegis-accent-cyan)] shadow-[0_0_8px_var(--aegis-accent-cyan)]'
-                              : 'bg-[var(--aegis-text-faint)]',
+                              ? 'border-[color-mix(in_srgb,var(--aegis-accent-line)_55%,transparent)] bg-[var(--aegis-accent-soft)] text-[var(--aegis-accent-strong)]'
+                              : 'border-[var(--aegis-border-default)] bg-[color-mix(in_srgb,var(--aegis-surface-elevated)_70%,transparent)] text-[var(--aegis-text-secondary)]',
                           )}
-                        />
-                        {presentation.badge}
-                      </span>
-                      <h2 className="font-[family-name:var(--aegis-font-display)] text-xl font-semibold tracking-[-0.005em] text-[var(--aegis-text-primary)] sm:text-2xl">
-                        {scenario.name}
-                      </h2>
-                      <p className="max-w-xl text-[0.8125rem] leading-5 text-[var(--aegis-text-secondary)]">
-                        {presentation.tagline}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <MetaChip label="ID" value={scenarioId} />
-                        <MetaChip
-                          label="Seed"
-                          value={`${scenarioSeed(scenarioId)?.toString() ?? 'Server RNG'} · ${presentation.seedCaption}`}
-                        />
-                        {latestRun ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-[var(--aegis-radius-sm)] border border-[color-mix(in_srgb,var(--aegis-accent-line)_45%,transparent)] bg-[var(--aegis-accent-soft)] px-2 py-1">
-                            <span
-                              aria-hidden="true"
-                              className="size-1.5 rounded-full bg-[var(--aegis-accent-cyan)]"
-                            />
-                            <span
-                              className={cn(
-                                typographyTokens.monoSm,
-                                'uppercase text-[var(--aegis-accent-strong)]',
-                              )}
-                            >
-                              {isDemoRun ? 'Demo run' : 'Run available'}
+                          data-testid={`scenario-badge-${scenarioId}`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={cn(
+                              'size-1.5 rounded-full',
+                              isTutorial
+                                ? 'bg-[var(--aegis-accent-cyan)] shadow-[0_0_8px_var(--aegis-accent-cyan)]'
+                                : 'bg-[var(--aegis-text-faint)]',
+                            )}
+                          />
+                          {presentation.badge}
+                        </span>
+                        <h2 className="font-[family-name:var(--aegis-font-display)] text-xl font-semibold tracking-[-0.005em] text-[var(--aegis-text-primary)] sm:text-2xl">
+                          {scenario.name}
+                        </h2>
+                        <p className="max-w-xl text-[0.8125rem] leading-5 text-[var(--aegis-text-secondary)]">
+                          {presentation.tagline}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <MetaChip label="ID" value={scenarioId} />
+                          <MetaChip
+                            label="Seed"
+                            value={`${scenarioSeed(scenarioId)?.toString() ?? 'Server RNG'} · ${presentation.seedCaption}`}
+                          />
+                          {latestRun ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-[var(--aegis-radius-sm)] border border-[color-mix(in_srgb,var(--aegis-accent-line)_45%,transparent)] bg-[var(--aegis-accent-soft)] px-2 py-1">
+                              <span
+                                aria-hidden="true"
+                                className="size-1.5 rounded-full bg-[var(--aegis-accent-cyan)]"
+                              />
+                              <span
+                                className={cn(
+                                  typographyTokens.monoSm,
+                                  'uppercase text-[var(--aegis-accent-strong)]',
+                                )}
+                              >
+                                {isDemoRun ? 'Demo run' : 'Run available'}
+                              </span>
                             </span>
-                          </span>
-                        ) : null}
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-none flex-wrap items-center gap-2.5">
-                      <Button
-                        data-testid={`start-run-${scenarioId}`}
-                        disabled={createRun.isPending}
-                        onClick={() => {
-                          startRun(scenarioId);
-                        }}
-                      >
-                        Start new run
-                      </Button>
-                      {latestRun ? (
+                      <div className="flex flex-none flex-wrap items-center gap-2.5">
                         <Button
-                          variant="secondary"
-                          data-testid={`resume-run-${scenarioId}`}
+                          data-testid={`start-run-${scenarioId}`}
+                          disabled={createRun.isPending}
                           onClick={() => {
-                            openLatestRun(latestRun);
+                            startRun(scenarioId);
                           }}
                         >
-                          {isDemoRun ? 'Open demo run' : 'Resume latest run'} ({latestRun.status})
+                          Start new run
                         </Button>
-                      ) : null}
-                    </div>
-                  </article>
-                </li>
-              );
-            })}
+                        {latestRun ? (
+                          <Button
+                            variant="secondary"
+                            data-testid={`resume-run-${scenarioId}`}
+                            onClick={() => {
+                              openLatestRun(latestRun);
+                            }}
+                          >
+                            {isDemoRun ? 'Open demo run' : 'Resume latest run'} ({latestRun.status})
+                          </Button>
+                        ) : null}
+                      </div>
+                    </article>
+                  </li>
+                );
+              })}
           </ul>
         ) : null}
       </section>

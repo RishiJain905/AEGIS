@@ -73,10 +73,7 @@ export function useSubmitOperatorAction(runId: string) {
         incidentId: input.incidentId ?? null,
         idempotencyKey: newIdempotencyKey('op-action'),
       };
-      return postJson<OperatorActionResponse>(
-        `/api/v1/runs/${runId}/operator-actions`,
-        request,
-      );
+      return postJson<OperatorActionResponse>(`/api/v1/runs/${runId}/operator-actions`, request);
     },
     onSuccess: async () => {
       await Promise.all([

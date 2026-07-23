@@ -57,9 +57,7 @@ afterEach(() => {
 });
 
 function renderMenu() {
-  return render(
-    <AssetActionMenu runId="run_x" assetId="asset:vpn-gw" assetLabel="VPN Gateway" />,
-  );
+  return render(<AssetActionMenu runId="run_x" assetId="asset:vpn-gw" assetLabel="VPN Gateway" />);
 }
 
 describe('AssetActionMenu confirm gating', () => {

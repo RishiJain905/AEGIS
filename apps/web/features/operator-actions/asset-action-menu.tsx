@@ -81,7 +81,12 @@ export function AssetActionMenu({
             // Keep the dialog open so the operator sees why and can retry.
             setDialogError(message);
           } else {
-            setToast({ commandLabel: meta.label, assetLabel, response: null, errorMessage: message });
+            setToast({
+              commandLabel: meta.label,
+              assetLabel,
+              response: null,
+              errorMessage: message,
+            });
           }
         },
       },
@@ -100,7 +105,9 @@ export function AssetActionMenu({
     runAction(command, `Operator ${meta.label.toLowerCase()} on ${assetLabel}.`, false);
   };
 
-  const readOnly = COMMAND_CATALOGUE.filter((c) => c.actionClass === 'class_0' || c.actionClass === 'class_1');
+  const readOnly = COMMAND_CATALOGUE.filter(
+    (c) => c.actionClass === 'class_0' || c.actionClass === 'class_1',
+  );
   const operational = COMMAND_CATALOGUE.filter((c) => c.actionClass === 'class_2');
   const critical = COMMAND_CATALOGUE.filter((c) => c.actionClass === 'class_3');
 

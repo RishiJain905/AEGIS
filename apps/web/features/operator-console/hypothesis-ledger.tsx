@@ -43,7 +43,10 @@ export function HypothesisLedger({ runId }: { runId: string }) {
         className="flex flex-col gap-2"
       >
         <div className="flex flex-col gap-1">
-          <label htmlFor="hyp-statement" className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
+          <label
+            htmlFor="hyp-statement"
+            className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]"
+          >
             Working hypothesis
           </label>
           <textarea
@@ -58,7 +61,10 @@ export function HypothesisLedger({ runId }: { runId: string }) {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="hyp-assets" className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
+          <label
+            htmlFor="hyp-assets"
+            className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]"
+          >
             Implicated assets (comma-separated)
           </label>
           <input
@@ -72,7 +78,10 @@ export function HypothesisLedger({ runId }: { runId: string }) {
           />
         </div>
         <div className="flex items-center gap-3">
-          <label htmlFor="hyp-confidence" className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
+          <label
+            htmlFor="hyp-confidence"
+            className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]"
+          >
             Confidence
           </label>
           <input

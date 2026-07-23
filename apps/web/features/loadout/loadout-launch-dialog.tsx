@@ -87,8 +87,8 @@ export function LoadoutLaunchDialog({
         <DialogHeader>
           <DialogTitle>Configure loadout</DialogTitle>
           <DialogDescription>
-            Play your cards for {scenarioName}. These capabilities are fixed for the run and,
-            with the seed, make every engagement different.
+            Play your cards for {scenarioName}. These capabilities are fixed for the run and, with
+            the seed, make every engagement different.
           </DialogDescription>
         </DialogHeader>
 
@@ -117,7 +117,11 @@ export function LoadoutLaunchDialog({
             <legend className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
               Rules of engagement
             </legend>
-            <div className="flex flex-col gap-1.5" role="radiogroup" aria-label="Rules of engagement">
+            <div
+              className="flex flex-col gap-1.5"
+              role="radiogroup"
+              aria-label="Rules of engagement"
+            >
               {RULES_OF_ENGAGEMENT.map((candidate) => {
                 const selected = candidate === roe;
                 const doctrine = ROE_DOCTRINE[candidate];
@@ -152,7 +156,13 @@ export function LoadoutLaunchDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => { onOpenChange(false); }} disabled={launching}>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              onOpenChange(false);
+            }}
+            disabled={launching}
+          >
             Cancel
           </Button>
           <Button

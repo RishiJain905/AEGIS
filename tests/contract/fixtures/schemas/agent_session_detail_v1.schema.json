@@ -1,12 +1,7 @@
 {
   "$defs": {
     "AgentArtifactType": {
-      "enum": [
-        "step_result",
-        "hypothesis",
-        "proposal",
-        "audit"
-      ],
+      "enum": ["step_result", "hypothesis", "proposal", "audit"],
       "title": "AgentArtifactType",
       "type": "string"
     },
@@ -55,14 +50,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "schemaVersion",
-        "id",
-        "taskId",
-        "sessionId",
-        "artifactType",
-        "createdAt"
-      ],
+      "required": ["schemaVersion", "id", "taskId", "sessionId", "artifactType", "createdAt"],
       "title": "AgentArtifactV1",
       "type": "object"
     },
@@ -108,24 +96,12 @@
           "type": "integer"
         }
       },
-      "required": [
-        "schemaVersion",
-        "maxTokens",
-        "maxLatencyMs",
-        "maxCostUsd"
-      ],
+      "required": ["schemaVersion", "maxTokens", "maxLatencyMs", "maxCostUsd"],
       "title": "AgentBudgetV1",
       "type": "object"
     },
     "AgentRole": {
-      "enum": [
-        "WATCHTOWER",
-        "TRACE",
-        "ORACLE",
-        "BASTION",
-        "WARDEN",
-        "SCRIBE"
-      ],
+      "enum": ["WATCHTOWER", "TRACE", "ORACLE", "BASTION", "WARDEN", "SCRIBE"],
       "title": "AgentRole",
       "type": "string"
     },
@@ -265,14 +241,7 @@
       "type": "object"
     },
     "AgentTaskStatus": {
-      "enum": [
-        "queued",
-        "running",
-        "completed",
-        "failed",
-        "cancelled",
-        "timed_out"
-      ],
+      "enum": ["queued", "running", "completed", "failed", "cancelled", "timed_out"],
       "title": "AgentTaskStatus",
       "type": "string"
     },
@@ -423,30 +392,18 @@
       "type": "object"
     },
     "AgentToolClass": {
-      "enum": [
-        "read",
-        "analysis_write",
-        "proposal",
-        "execution"
-      ],
+      "enum": ["read", "analysis_write", "proposal", "execution"],
       "title": "AgentToolClass",
       "type": "string"
     },
     "AutonomyInitiatorV1": {
       "description": "Who originated an agent task, so the UI can distinguish autonomous initiative\nfrom operator tasking.",
-      "enum": [
-        "operator",
-        "autonomy"
-      ],
+      "enum": ["operator", "autonomy"],
       "title": "AutonomyInitiatorV1",
       "type": "string"
     },
     "ToolInvocationStatus": {
-      "enum": [
-        "success",
-        "failed",
-        "rejected"
-      ],
+      "enum": ["success", "failed", "rejected"],
       "title": "ToolInvocationStatus",
       "type": "string"
     },
@@ -599,10 +556,7 @@
       "type": "array"
     }
   },
-  "required": [
-    "schemaVersion",
-    "session"
-  ],
+  "required": ["schemaVersion", "session"],
   "title": "AgentSessionDetailV1",
   "type": "object"
 }

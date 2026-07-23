@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import type { RunFeedEntry } from '@/features/command-surface';
 
-import { buildFeedRows, isDetection, isNoChangeAutonomyReport, latestDetection } from './feed-model';
+import {
+  buildFeedRows,
+  isDetection,
+  isNoChangeAutonomyReport,
+  latestDetection,
+} from './feed-model';
 
 function entry(overrides: Partial<RunFeedEntry> & { sequence: number }): RunFeedEntry {
   return {
@@ -51,7 +56,12 @@ describe('feed-model', () => {
     const rows = buildFeedRows([
       entry({ sequence: 1, initiator: 'autonomy', payload: { outcome: 'no_change' } }),
       entry({ sequence: 2, initiator: 'autonomy', payload: { outcome: 'no_change' } }),
-      entry({ sequence: 3, category: 'proposal', initiator: 'autonomy', summary: 'Drafted isolation' }),
+      entry({
+        sequence: 3,
+        category: 'proposal',
+        initiator: 'autonomy',
+        summary: 'Drafted isolation',
+      }),
       entry({ sequence: 4, initiator: 'autonomy', payload: { outcome: 'no_change' } }),
       entry({ sequence: 5, initiator: 'autonomy', payload: { outcome: 'no_change' } }),
     ]);

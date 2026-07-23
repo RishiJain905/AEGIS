@@ -127,7 +127,11 @@ export function useSendAgentMessage(runId: string) {
   const retryingRef = useRef(setIsRetrying);
   retryingRef.current = setIsRetrying;
 
-  const sendOnce = async ({ role, instructions, sessionId }: SendMessageInput): Promise<unknown> => {
+  const sendOnce = async ({
+    role,
+    instructions,
+    sessionId,
+  }: SendMessageInput): Promise<unknown> => {
     if (sessionId) {
       return requestJson(
         `/api/v1/agent-sessions/${sessionId}/tasks`,

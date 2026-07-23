@@ -36,7 +36,12 @@ vi.mock('./fetch-run-events', () => ({
 // Imported after the mocks are registered.
 import { AdversaryDossier } from './adversary-dossier';
 
-function ev(sequence: number, type: string, minutes: number, payload: Record<string, unknown>): DossierEvent {
+function ev(
+  sequence: number,
+  type: string,
+  minutes: number,
+  payload: Record<string, unknown>,
+): DossierEvent {
   return {
     sequence,
     type,
@@ -52,7 +57,10 @@ function ev(sequence: number, type: string, minutes: number, payload: Record<str
 function terminalEvents(): DossierEvent[] {
   return [
     ev(1, 'sim.run.started', 0, {}),
-    ev(2, 'sim.branch.selected', 0, { branchGroup: 'root-cause', branchId: 'branch-cause-credentials' }),
+    ev(2, 'sim.branch.selected', 0, {
+      branchGroup: 'root-cause',
+      branchId: 'branch-cause-credentials',
+    }),
     ev(3, 'sim.hidden_condition.triggered', 5, { conditionId: CONDITION }),
     ev(4, 'sim.asset.status_changed', 15, { assetId: CREDENTIALS_ASSET, status: 'compromised' }),
     ev(5, 'alert.created', 21, { assetId: CREDENTIALS_ASSET, title: 'Anomalous authentication' }),
@@ -72,7 +80,14 @@ function scoreStub() {
     grade: 'B',
     passed: true,
     components: [
-      { criterionId: 'c1', label: 'Detection', weight: 1, rawScore: 0.8, weightedContribution: 80, explanations: [] },
+      {
+        criterionId: 'c1',
+        label: 'Detection',
+        weight: 1,
+        rawScore: 0.8,
+        weightedContribution: 80,
+        explanations: [],
+      },
     ],
     provenance: {
       scenarioVersion: 'v1',

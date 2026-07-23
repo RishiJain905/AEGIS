@@ -249,7 +249,10 @@ export function intervalUnionSeconds(intervals: readonly (readonly [number, numb
   return Math.round(totalMs / 1000);
 }
 
-function label(assetId: string | undefined, assetLabels: Record<string, string>): string | undefined {
+function label(
+  assetId: string | undefined,
+  assetLabels: Record<string, string>,
+): string | undefined {
   if (!assetId) {
     return undefined;
   }
@@ -317,8 +320,7 @@ export function assembleAdversaryDossier(input: AssembleDossierInput): Adversary
   /* --- root cause -------------------------------------------------------- */
   const rootCauseBranch = events.find(
     (e) =>
-      e.type === 'sim.branch.selected' &&
-      payloadString(e.payload, 'branchGroup') === 'root-cause',
+      e.type === 'sim.branch.selected' && payloadString(e.payload, 'branchGroup') === 'root-cause',
   );
   const rootCauseBranchId = rootCauseBranch
     ? payloadString(rootCauseBranch.payload, 'branchId')
@@ -447,8 +449,7 @@ export function assembleAdversaryDossier(input: AssembleDossierInput): Adversary
     defenderActions.find((d) => d.kind === 'execution')?.simTime,
     events.find(
       (e) =>
-        e.type === 'sim.asset.status_changed' &&
-        payloadString(e.payload, 'status') === 'contained',
+        e.type === 'sim.asset.status_changed' && payloadString(e.payload, 'status') === 'contained',
     )?.simTime,
   );
 

@@ -53,12 +53,16 @@ export function RoeDial({ runId, current, disabled }: RoeDialProps) {
             className="size-1.5 rounded-full"
             style={{ backgroundColor: ROE_TONE[current] }}
           />
-          <span className="font-mono uppercase tracking-wide text-[var(--aegis-text-muted)]">RoE</span>
+          <span className="font-mono uppercase tracking-wide text-[var(--aegis-text-muted)]">
+            RoE
+          </span>
           <span className="font-medium text-[var(--aegis-text-secondary)]">{doctrine.label}</span>
           {changeRoe.isPending ? (
             <span className="text-[var(--aegis-text-muted)]">…</span>
           ) : (
-            <span aria-hidden="true" className="text-[var(--aegis-text-muted)]">▾</span>
+            <span aria-hidden="true" className="text-[var(--aegis-text-muted)]">
+              ▾
+            </span>
           )}
         </button>
       </DropdownMenuTrigger>

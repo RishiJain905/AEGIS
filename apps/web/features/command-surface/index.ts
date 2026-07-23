@@ -7,8 +7,4 @@ export {
   readRunLoadout,
   type SubmitOperatorActionInput,
 } from './use-operator-actions';
-export {
-  useConsoleSearch,
-  useOperatorHypotheses,
-  type ConsoleSearchFilters,
-} from './use-console';
+export { useConsoleSearch, useOperatorHypotheses, type ConsoleSearchFilters } from './use-console';

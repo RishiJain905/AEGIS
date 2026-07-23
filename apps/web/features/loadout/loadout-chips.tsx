@@ -15,7 +15,9 @@ function Chip({ label, active }: { label: string; active: boolean }) {
           backgroundColor: active ? 'var(--aegis-accent-cyan)' : 'var(--aegis-text-faint)',
         }}
       />
-      <span className={active ? 'text-[var(--aegis-text-secondary)]' : 'text-[var(--aegis-text-muted)]'}>
+      <span
+        className={active ? 'text-[var(--aegis-text-secondary)]' : 'text-[var(--aegis-text-muted)]'}
+      >
         {label}
       </span>
     </span>

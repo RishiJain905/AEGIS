@@ -98,10 +98,7 @@ export function VisualizationSlot({ runId, incidentId }: VisualizationSlotProps)
             : 'Live Sigma.js operational investigation graph'
         }
       >
-        <RevealAnnouncer
-          nodes={liveRun.bootstrapSnapshot.nodes}
-          revision={liveRun.graphRevision}
-        />
+        <RevealAnnouncer nodes={liveRun.bootstrapSnapshot.nodes} revision={liveRun.graphRevision} />
         {viewMode === GraphViewMode.THREE_D ? (
           <CinematicGraphView
             runId={runId}

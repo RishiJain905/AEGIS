@@ -21,10 +21,7 @@ function StatBar({ label, value }: { label: string; value: number }) {
         {label}
       </span>
       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--aegis-border-subtle)]">
-        <div
-          className="h-full bg-[var(--aegis-accent)]"
-          style={{ width: `${String(pct)}%` }}
-        />
+        <div className="h-full bg-[var(--aegis-accent)]" style={{ width: `${String(pct)}%` }} />
       </div>
       <span className="w-9 text-right font-mono text-[10px] tabular-nums text-[var(--aegis-text-secondary)]">
         {pct}%
@@ -71,11 +68,7 @@ export function AssetDetailDrawer({
 
         <div className="flex flex-col gap-4 px-5 pb-6">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              className={cn(
-                !disclosed && 'opacity-70',
-              )}
-            >
+            <Badge className={cn(!disclosed && 'opacity-70')}>
               {disclosed ? node.status.replace(/_/g, ' ') : 'not yet detected'}
             </Badge>
             {!disclosed ? (
@@ -96,8 +89,8 @@ export function AssetDetailDrawer({
             </p>
             <AssetActionMenu runId={runId} assetId={node.id} assetLabel={node.label} />
             <p className="text-[10px] leading-4 text-[var(--aegis-text-muted)]">
-              Routed through the same policy pipeline as agent proposals. Class 2/3 actions ask
-              you to confirm the consequences.
+              Routed through the same policy pipeline as agent proposals. Class 2/3 actions ask you
+              to confirm the consequences.
             </p>
           </div>
         </div>

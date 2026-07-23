@@ -2,11 +2,7 @@
   "$defs": {
     "RulesOfEngagementV1": {
       "description": "Per-run autonomy dial (Phase 7). Higher tiers let agents act more proactively;\nevery state change still passes policy + human approval (Class 2/3 never auto-execute).",
-      "enum": [
-        "observe",
-        "investigate",
-        "forward_deployed"
-      ],
+      "enum": ["observe", "investigate", "forward_deployed"],
       "title": "RulesOfEngagementV1",
       "type": "string"
     },
@@ -85,10 +81,7 @@
       "title": "Seed"
     }
   },
-  "required": [
-    "schemaVersion",
-    "scenarioPackagePath"
-  ],
+  "required": ["schemaVersion", "scenarioPackagePath"],
   "title": "RunCreateRequestV1",
   "type": "object"
 }

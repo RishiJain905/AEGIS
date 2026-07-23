@@ -42,11 +42,7 @@ export const OperatorActionStatus = {
   BLOCKED: 'blocked',
 } as const;
 
-export const operatorActionStatusSchema = z.enum([
-  'executed',
-  'confirmation_required',
-  'blocked',
-]);
+export const operatorActionStatusSchema = z.enum(['executed', 'confirmation_required', 'blocked']);
 
 export type OperatorActionStatusV1 = z.infer<typeof operatorActionStatusSchema>;
 

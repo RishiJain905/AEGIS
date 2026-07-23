@@ -25,7 +25,11 @@ export function AssetCommandSection({ runId }: { runId: string }) {
     <Panel title="Operator command" density="compact" data-testid="asset-command-section">
       <div className="flex flex-col gap-2">
         <p className="text-xs text-[var(--aegis-text-secondary)]">
-          Act on <span className="font-medium text-[var(--aegis-text-primary)]">{selected.node.label}</span> directly, as incident commander.
+          Act on{' '}
+          <span className="font-medium text-[var(--aegis-text-primary)]">
+            {selected.node.label}
+          </span>{' '}
+          directly, as incident commander.
         </p>
         <AssetActionMenu
           runId={runId}

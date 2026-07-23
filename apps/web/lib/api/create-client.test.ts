@@ -6,10 +6,11 @@ const ORIGINAL_DATA_SOURCE = process.env.NEXT_PUBLIC_AEGIS_DATA_SOURCE;
 const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
 
 function setEnv(key: string, value: string | undefined): void {
+  const env = process.env as Record<string, string | undefined>;
   if (value === undefined) {
-    delete (process.env as Record<string, string | undefined>)[key];
+    Reflect.deleteProperty(env, key);
   } else {
-    (process.env as Record<string, string | undefined>)[key] = value;
+    env[key] = value;
   }
 }
 

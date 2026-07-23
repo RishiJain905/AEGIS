@@ -4,7 +4,11 @@ import { useState } from 'react';
 
 import { Alert, Button, EmptyState, LoadingState, cn } from '@aegis/ui';
 
-import { useConsoleSearch, type ConsoleEvent, type ConsoleSearchFilters } from '@/features/command-surface';
+import {
+  useConsoleSearch,
+  type ConsoleEvent,
+  type ConsoleSearchFilters,
+} from '@/features/command-surface';
 
 function nullIfBlank(value: string): string | null {
   const trimmed = value.trim();
@@ -25,15 +29,16 @@ function payloadPreview(payload: Record<string, unknown>): string {
 
 const inputClass =
   'w-full rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-base)] px-2.5 py-1.5 text-xs text-[var(--aegis-text-primary)] placeholder:text-[var(--aegis-text-muted)] focus:border-[var(--aegis-accent)] focus:outline-none';
-const labelClass =
-  'font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]';
+const labelClass = 'font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]';
 
 function EventRow({ event }: { event: ConsoleEvent }) {
   const preview = payloadPreview(event.payload);
   return (
     <li className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-3 py-2">
       <div className="flex flex-wrap items-center gap-2">
-        <code className="font-mono text-[11px] text-[var(--aegis-accent-strong)]">{event.type}</code>
+        <code className="font-mono text-[11px] text-[var(--aegis-accent-strong)]">
+          {event.type}
+        </code>
         <span className="ml-auto font-mono text-[10px] tabular-nums text-[var(--aegis-text-muted)]">
           {event.simTime}
         </span>
@@ -174,13 +179,20 @@ export function EventSearch({ runId }: { runId: string }) {
       <div className="flex flex-col gap-2" aria-live="polite">
         {consoleSearch.isError ? (
           <Alert variant="error">
-            {consoleSearch.error instanceof Error ? consoleSearch.error.message : 'The search failed.'}
+            {consoleSearch.error instanceof Error
+              ? consoleSearch.error.message
+              : 'The search failed.'}
           </Alert>
         ) : null}
         {consoleSearch.isPending && consoleSearch.events.length === 0 ? (
           <LoadingState message="Querying the evidence pool…" />
-        ) : consoleSearch.hasSearched && consoleSearch.events.length === 0 && !consoleSearch.isPending ? (
-          <EmptyState title="No matching events" description="Widen the filters and search again." />
+        ) : consoleSearch.hasSearched &&
+          consoleSearch.events.length === 0 &&
+          !consoleSearch.isPending ? (
+          <EmptyState
+            title="No matching events"
+            description="Widen the filters and search again."
+          />
         ) : consoleSearch.events.length > 0 ? (
           <>
             <ul className="flex flex-col gap-1.5">

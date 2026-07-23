@@ -28,9 +28,9 @@ describe('terminalTaskStatus', () => {
     expect(terminalTaskStatus({ status: 'failed' })).toBe('failed');
   });
   it('reads the newest task status from a session-detail response', () => {
-    expect(
-      terminalTaskStatus({ tasks: [{ status: 'completed' }, { status: 'timed_out' }] }),
-    ).toBe('timed_out');
+    expect(terminalTaskStatus({ tasks: [{ status: 'completed' }, { status: 'timed_out' }] })).toBe(
+      'timed_out',
+    );
   });
   it('returns null when no status is present', () => {
     expect(terminalTaskStatus({})).toBeNull();

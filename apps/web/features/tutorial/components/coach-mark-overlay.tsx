@@ -132,7 +132,10 @@ export function CoachMarkOverlay({
     let top = anchorRect.top + anchorRect.height + CARD_GAP;
     if (top + cardHeight > viewportHeight - VIEWPORT_MARGIN) {
       const above = anchorRect.top - cardHeight - CARD_GAP;
-      top = above >= VIEWPORT_MARGIN ? above : Math.max(VIEWPORT_MARGIN, viewportHeight - cardHeight - VIEWPORT_MARGIN);
+      top =
+        above >= VIEWPORT_MARGIN
+          ? above
+          : Math.max(VIEWPORT_MARGIN, viewportHeight - cardHeight - VIEWPORT_MARGIN);
     }
     const left = Math.min(
       Math.max(anchorRect.left, VIEWPORT_MARGIN),
@@ -253,9 +256,7 @@ export function CoachMarkOverlay({
       >
         <div className="flex flex-col gap-3 p-5">
           <div className="flex items-center justify-between gap-3">
-            <span
-              className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-accent-strong)]')}
-            >
+            <span className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-accent-strong)]')}>
               {step.eyebrow}
             </span>
             <span
@@ -339,8 +340,8 @@ export function CoachMarkOverlay({
       </div>
 
       <VisuallyHidden aria-live="polite" role="status">
-        Guided run, step {stepNumber} of {STEP_COUNT}: {step.title}. Pointing at{' '}
-        {step.pointerLabel}.
+        Guided run, step {stepNumber} of {STEP_COUNT}: {step.title}. Pointing at {step.pointerLabel}
+        .
       </VisuallyHidden>
     </div>,
     document.body,

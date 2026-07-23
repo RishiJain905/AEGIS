@@ -19,7 +19,7 @@ export function getDataSource(): DataSource {
     return 'api';
   }
   if (process.env.NODE_ENV === 'production') {
-    // eslint-disable-next-line no-console -- surface a misconfigured production build loudly.
+    // Surface a misconfigured production build loudly.
     console.error(
       'NEXT_PUBLIC_AEGIS_DATA_SOURCE=fixture is not permitted in production builds; ' +
         'falling back to the API client.',

@@ -23,7 +23,10 @@ async function fetchFeedPage(
   cursor: number | null,
   signal: AbortSignal | undefined,
 ): Promise<RunFeedPage> {
-  const query = cursor !== null ? `?cursor=${String(cursor)}&limit=${String(FEED_PAGE_LIMIT)}` : `?limit=${String(FEED_PAGE_LIMIT)}`;
+  const query =
+    cursor !== null
+      ? `?cursor=${String(cursor)}&limit=${String(FEED_PAGE_LIMIT)}`
+      : `?limit=${String(FEED_PAGE_LIMIT)}`;
   const response = await apiFetch(`/api/v1/runs/${runId}/feed${query}`, { signal });
   if (!response.ok) {
     throw new ApiClientError({

@@ -2,8 +2,8 @@
 
 These model the "2v1": the player acts directly as an operator alongside AI agents that
 behave like autonomous teammates. All state-changing operator actions flow through the
-same policy → approval → execution pipeline agent proposals use (see
-``aegis_api.operator_actions``); nothing here bypasses policy.
+same policy → approval → execution pipeline agent proposals use (the API's
+operator-actions service); nothing here bypasses policy.
 """
 
 from __future__ import annotations

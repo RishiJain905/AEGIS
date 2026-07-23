@@ -63,7 +63,12 @@ describe('OpsFeedPanel', () => {
   it('has no accessibility violations in dark and light themes', async () => {
     useRunFeed.mockReturnValue(
       feedResult([
-        entry({ sequence: 1, category: 'alert', summary: 'Suspicious auth burst', initiator: null }),
+        entry({
+          sequence: 1,
+          category: 'alert',
+          summary: 'Suspicious auth burst',
+          initiator: null,
+        }),
         entry({ sequence: 2, initiator: 'operator', summary: 'TRACE followed the lead' }),
       ]),
     );
