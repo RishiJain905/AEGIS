@@ -64,6 +64,10 @@ COPY --chown=aegis:aegis packages/observability/src packages/observability/src
 COPY --chown=aegis:aegis services/reports/src services/reports/src
 COPY --chown=aegis:aegis services/agents/src services/agents/src
 COPY --chown=aegis:aegis scenarios/operation-silent-relay scenarios/operation-silent-relay
+# The guided tutorial's package must ship too — create_run resolves it from disk
+# (scenarios/synthetic-training) and the catalogue lists it as launchable. Without
+# it, launching the tutorial 4xxs with "Scenario package not found".
+COPY --chown=aegis:aegis scenarios/synthetic-training scenarios/synthetic-training
 COPY --chown=aegis:aegis alembic.ini alembic.ini
 COPY --chown=aegis:aegis migrations migrations
 ENV PATH="/app/.venv/bin:$PATH" \

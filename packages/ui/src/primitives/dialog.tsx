@@ -19,7 +19,7 @@ export const DialogOverlay = forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-50 bg-[rgb(1_5_9_/_0.6)] backdrop-blur-[3px] aegis-motion-fade data-[state=open]:opacity-100 data-[state=closed]:opacity-0',
+      'fixed inset-0 z-50 bg-[rgb(1_5_9_/_0.82)] backdrop-blur-[4px] aegis-motion-fade data-[state=open]:opacity-100 data-[state=closed]:opacity-0',
       className,
     )}
     {...props}
@@ -36,7 +36,10 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-strong)] bg-[linear-gradient(145deg,var(--aegis-surface-raised),var(--aegis-surface-panel))] p-6 shadow-[var(--aegis-shadow-dialog)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)] aegis-motion-fade',
+        // Solid opaque surface as the base background-color, with the subtle sheen gradient
+        // layered on top (background-image). The explicit solid color guarantees the panel is
+        // fully opaque so page content never reads through it behind the dialog fields.
+        'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-strong)] bg-[var(--aegis-surface-panel)] bg-[linear-gradient(145deg,var(--aegis-surface-raised),var(--aegis-surface-panel))] p-6 shadow-[var(--aegis-shadow-dialog)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[var(--aegis-border-highlight)] aegis-motion-fade',
         focusTokens.ring,
         className,
       )}

@@ -172,6 +172,35 @@ describe('AgentChatPanel', () => {
     });
   });
 
+  it('resolves a still-running turn to its artifact via the poll refetch', async () => {
+    // First list load: the task is still running (renders "Working…"). The poll refetch
+    // then returns the completed turn, which must replace the working state — the panel
+    // must never stay stuck on "Working…" once the backend reaches a terminal state.
+    let calls = 0;
+    apiFetch.mockImplementation((_path: string, init?: RequestInit) => {
+      if ((init?.method ?? 'GET') === 'GET') {
+        calls += 1;
+        const status = calls >= 2 ? 'completed' : 'running';
+        return Promise.resolve(jsonResponse({ sessions: [watchtowerSessionDetail({ taskStatus: status })] }));
+      }
+      return Promise.resolve(jsonResponse(watchtowerSessionDetail()));
+    });
+
+    renderPanel();
+    const panel = await screen.findByTestId('agent-chat-panel');
+    expect(await within(panel).findByText('Working…')).toBeInTheDocument();
+
+    // The poll interval (2500ms) drives the refetch that surfaces the completed turn.
+    await waitFor(
+      () =>
+        expect(
+          within(panel).getByText('The identity provider shows anomalous auth.'),
+        ).toBeInTheDocument(),
+      { timeout: 5000 },
+    );
+    expect(within(panel).queryByText('Working…')).not.toBeInTheDocument();
+  });
+
   it('sends a follow-up as a task on the existing role session', async () => {
     apiFetch.mockImplementation((_path: string, init?: RequestInit) => {
       if ((init?.method ?? 'GET') === 'GET') {

@@ -33,12 +33,19 @@ function newIdempotencyKey(prefix: string): string {
   return `${prefix}-${String(Date.now())}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+// Upper bound on how long the UI waits for an inline agent turn before it stops
+// blocking the composer. The backend runs the model inline and commits terminal state
+// (including failures) before responding, so a request that outlives this is a stuck
+// socket, not live work — abort it so the pending state resolves. The committed turn,
+// if the backend did finish, still surfaces via the polling refetch of the session list.
+const SEND_TIMEOUT_MS = 180_000;
+
 async function requestJson<T>(
   path: string,
   init: RequestInit,
   parse: (data: unknown) => T,
 ): Promise<T> {
-  const response = await apiFetch(path, init);
+  const response = await apiFetch(path, { ...init, signal: AbortSignal.timeout(SEND_TIMEOUT_MS) });
   if (!response.ok) {
     let envelope: { code?: string; message?: string; traceId?: string } | undefined;
     try {
@@ -54,6 +61,15 @@ async function requestJson<T>(
     });
   }
   return parse((await response.json()) as unknown);
+}
+
+/** Task statuses that are still in flight (the turn is not yet resolved). */
+const NON_TERMINAL_TASK_STATUSES = new Set(['queued', 'running']);
+
+function hasInFlightTask(details: AgentSessionDetailV1[] | undefined): boolean {
+  return (details ?? []).some((detail) =>
+    detail.tasks.some((task) => NON_TERMINAL_TASK_STATUSES.has(task.status)),
+  );
 }
 
 /** Fetch every agent session anchored to a run (restores all chat threads). */
@@ -73,6 +89,10 @@ export function useRunAgentSessions(runId: string) {
       const raw = Array.isArray(body.sessions) ? body.sessions : [];
       return raw.map((entry) => parseContract(agentSessionDetailSchema, entry));
     },
+    // Poll while any task is still queued/running so a turn that reaches a terminal
+    // state on the backend surfaces here even if the originating request is slow or a
+    // realtime invalidation was missed. Idle threads do not poll.
+    refetchInterval: (query) => (hasInFlightTask(query.state.data) ? 2500 : false),
   });
 }
 

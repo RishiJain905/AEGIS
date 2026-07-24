@@ -10,6 +10,7 @@ import type { RunLoadout } from '@/features/command-surface';
 import { LoadoutLaunchDialog } from '@/features/loadout';
 import { CommandCentreShell } from '@/features/shell/components/command-centre-shell';
 import { resumeRun, useCreateRun } from '@/features/live-run';
+import { ApiClientError } from '@/lib/api/types';
 import { useRuns, useScenarios } from '@/features/shell/hooks/use-shell-queries';
 // Import the pure storage helper directly (not the feature barrel) so the catalogue page
 // does not pull the overlay/evidence/api graph into its bundle.
@@ -172,6 +173,12 @@ export default function ScenariosPage() {
         }
         setLoadoutScenarioId(null);
         router.push(`/runs/${result.run.id}`);
+      })
+      .catch(() => {
+        // A rejected launch (e.g. the server can't resolve the scenario package) must not
+        // fail silently — close the loadout step and let the mutation's error surface below
+        // instead of leaving the operator staring at an unresponsive button.
+        setLoadoutScenarioId(null);
       });
   };
 
@@ -261,6 +268,20 @@ export default function ScenariosPage() {
             data-testid="scenarios-error"
             message="Unable to load scenarios."
             onRetry={() => void scenariosQuery.refetch()}
+          />
+        ) : null}
+
+        {createRun.isError ? (
+          <ErrorState
+            data-testid="create-run-error"
+            message={
+              createRun.error instanceof ApiClientError && createRun.error.status === 400
+                ? 'This scenario could not be launched — its package is unavailable on the server. Try Operation Silent Relay, or contact an operator to provision the scenario.'
+                : 'Could not start the run. Check the connection and try again.'
+            }
+            onRetry={() => {
+              createRun.reset();
+            }}
           />
         ) : null}
 

@@ -26,6 +26,7 @@ from aegis_persistence.repositories.streaming import PostgresEventQueryRepositor
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
 from aegis_simulation_domain import SimulationEngine, SimulationError, SimulationErrorCode
+from aegis_simulation_domain.ids import derive_run_id
 from aegis_simulation_domain.runtime import SimulationRuntime
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,6 +46,11 @@ SCENARIO_PACKAGE_BY_VERSION: dict[str, str] = {
     # manifest version (1.0.0), so the bare id must stay restorable too.
     "scenario-version:1.0.0": "scenarios/operation-silent-relay",
     "scenario-version:1.0.0-silent-relay": "scenarios/operation-silent-relay",
+    # The guided tutorial's version must be restorable too, or /bootstrap and resume
+    # fail with "No scenario package mapping" once the run's runtime is no longer cached
+    # (returning to the run, API restart, a different worker) — leaving the tutorial's
+    # live view unable to load.
+    "scenario-version:1.0.0-synthetic-training": "scenarios/synthetic-training",
     "scenario-version:1.0.0-fixture": "scenarios/_fixtures/valid-minimal",
     "scenario-version:synthetic-dev-v1": "scenarios/_fixtures/valid-minimal",
 }
@@ -250,6 +256,35 @@ class RunCommandService:
                 code=SimulationErrorCode.VALIDATION_FAILED,
                 message=f"Scenario package not found: {request.scenario_package_path}",
             )
+
+        # Deterministic run ids: the run id is derived from (seed, scenario_version_id), so a
+        # pinned-seed scenario (the guided tutorial launches at seed 1000) resolves to the same
+        # run id on every launch. Re-launching would otherwise collide on the runs primary key
+        # and 500. Detect the existing run and return it (resume the deterministic run) instead
+        # of crashing — the frontend then navigates straight into it. Seedless scenarios draw a
+        # fresh random seed and never take this path.
+        if request.seed is not None and request.run_id is None:
+            manifest_for_guard = SimulationEngine.load_manifest(package_dir)
+            derived_run_id = derive_run_id(
+                run_seed=request.seed,
+                scenario_version_id=f"scenario-version:{manifest_for_guard.metadata.version}",
+            )
+            existing_run = await uow.runs.get_by_id(derived_run_id)
+            if existing_run is not None:
+                return RunCommandResponseV1(
+                    schema_version=RUN_COMMAND_RESPONSE_SCHEMA_VERSION,
+                    run=existing_run,
+                    events_emitted=0,
+                    idempotency=(
+                        IdempotencyMetadataV1(
+                            schema_version=1,
+                            idempotency_key=idempotency_key,
+                            replayed=True,
+                        )
+                        if idempotency_key
+                        else None
+                    ),
+                )
 
         # Server-side RNG: an omitted seed draws a fresh cryptographically random seed
         # that is then persisted like any other, so the run remains fully deterministic

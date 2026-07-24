@@ -50,6 +50,10 @@ interface LiveRunContextValue {
 
 const LiveRunContext = createContext<LiveRunContextValue | null>(null);
 
+// Upper bound on the recently-seen event-id ring maintained client-side. Mirrors
+// the reducer's own bound; `lastAppliedSequence` is the authoritative dedup key.
+const SEEN_EVENT_ID_LIMIT = 512;
+
 function getWsUrl(): string {
   return process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:8000/ws/v1/realtime';
 }
@@ -79,6 +83,16 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
   const [graphRevision, setGraphRevision] = useState(0);
   const transportRef = useRef<RealtimeTransport | null>(null);
   const gapRecoveryRef = useRef(false);
+  // Synchronous mirrors of the reducer's dedup keys. The reducer state updates
+  // asynchronously (dispatch is batched), so a burst of live events processed
+  // in the same tick would all read the same stale `state.lastAppliedSequence`
+  // closure and spuriously mark a gap. These refs advance synchronously as each
+  // event is applied, keeping gap detection accurate and — crucially — keeping
+  // `applyEventToGraph` free of per-event state dependencies so the WebSocket
+  // lifecycle effect does not tear down and re-subscribe on every delta.
+  const lastAppliedSequenceRef = useRef(0);
+  const seenEventIdsRef = useRef<Set<string>>(new Set());
+  const locallyPausedRef = useRef(false);
   // Fog-of-war reveal convergence: a disclosure flip (hidden-condition reveal, or an alert
   // landing on a previously-undisclosed asset) means the server will now serve the asset's
   // true state. The live status deltas that changed it already passed redacted, so the
@@ -104,45 +118,80 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
     connectionHealthRef.current = state.connectionHealth;
   }, [state.connectionHealth]);
 
-  const applyEventToGraph = useCallback(
-    (event: DomainEventEnvelopeV1) => {
-      const actions = projectDomainEventToActions(event, {
-        lastAppliedSequence: state.lastAppliedSequence,
-        seenEventIds: new Set(state.seenEventIds),
-        knownNodes: knownNodesRef.current,
-      });
-      for (const action of actions) {
-        dispatch(action);
-        if (action.type === 'mark_gap') {
-          // Mirror the reducer: once a gap is detected, freeze the graph store
-          // too until a snapshot resync reconciles both projections.
-          connectionHealthRef.current = ConnectionHealthState.GAP;
-          continue;
-        }
-        if (connectionHealthRef.current === ConnectionHealthState.GAP) {
-          continue;
-        }
-        if (action.type === 'apply_graph_delta') {
-          graphStoreRef.current.applyDelta(action.delta);
-          setGraphRevision((value) => value + 1);
-        }
-        if (action.type === 'load_graph_snapshot') {
-          graphStoreRef.current.loadSnapshot(action.snapshot);
-          knownNodesRef.current = new Map(action.snapshot.nodes.map((node) => [node.id, node]));
-          setBootstrapSnapshot(action.snapshot);
-          setGraphRevision((value) => value + 1);
-        }
+  // Stable across renders: reads/writes the synchronous sequence + seen-id refs
+  // rather than reducer state, so it never re-creates per applied event. That
+  // stability is what keeps `processEnvelope`/`performResync` — and therefore the
+  // WebSocket lifecycle effect — from tearing down and re-subscribing on every
+  // delta. `fromResync` events come from `performResync`'s own catch-up loop and
+  // must bypass the in-progress-resync drop guard.
+  const applyEventToGraph = useCallback((event: DomainEventEnvelopeV1, fromResync = false) => {
+    // While a snapshot resync is rebuilding authoritative state, drop live deltas
+    // to avoid interleaving a stale live stream with the freshly loaded snapshot.
+    // Any sequences skipped here are recovered by post-resync gap detection.
+    if (gapRecoveryRef.current && !fromResync) {
+      return;
+    }
+
+    const actions = projectDomainEventToActions(event, {
+      lastAppliedSequence: lastAppliedSequenceRef.current,
+      seenEventIds: seenEventIdsRef.current,
+      knownNodes: knownNodesRef.current,
+    });
+
+    let markedGap = false;
+    let applied = false;
+    for (const action of actions) {
+      dispatch(action);
+      if (action.type === 'mark_gap') {
+        // Mirror the reducer: once a gap is detected, freeze the graph store too
+        // until a snapshot resync reconciles both projections.
+        connectionHealthRef.current = ConnectionHealthState.GAP;
+        markedGap = true;
+        continue;
       }
-    },
-    [state.lastAppliedSequence, state.seenEventIds],
-  );
+      if (connectionHealthRef.current === ConnectionHealthState.GAP) {
+        continue;
+      }
+      if (action.type === 'noop_duplicate') {
+        continue;
+      }
+      applied = true;
+      if (action.type === 'apply_graph_delta') {
+        graphStoreRef.current.applyDelta(action.delta);
+        setGraphRevision((value) => value + 1);
+      }
+      if (action.type === 'load_graph_snapshot') {
+        graphStoreRef.current.loadSnapshot(action.snapshot);
+        knownNodesRef.current = new Map(action.snapshot.nodes.map((node) => [node.id, node]));
+        setBootstrapSnapshot(action.snapshot);
+        setGraphRevision((value) => value + 1);
+      }
+    }
+
+    if (applied) {
+      lastAppliedSequenceRef.current = Math.max(lastAppliedSequenceRef.current, event.sequence);
+      seenEventIdsRef.current.add(event.eventId);
+      if (seenEventIdsRef.current.size > SEEN_EVENT_ID_LIMIT) {
+        seenEventIdsRef.current = new Set(
+          Array.from(seenEventIdsRef.current).slice(-SEEN_EVENT_ID_LIMIT),
+        );
+      }
+    }
+
+    // A client-detected gap must recover by resyncing the authoritative snapshot.
+    // Guarded against re-entrancy so a gap found while already recovering (or a
+    // burst of gaps) triggers at most one resync.
+    if (markedGap && !gapRecoveryRef.current) {
+      void resyncRef.current?.();
+    }
+  }, []);
 
   const processEnvelope = useCallback(
     (envelope: RealtimeMessageEnvelopeV1) => {
       if (envelope.event.runId !== runId) {
         return;
       }
-      if (state.locallyPaused) {
+      if (locallyPausedRef.current) {
         dispatch({
           type: 'set_connection_health',
           connectionHealth: ConnectionHealthState.LOCALLY_PAUSED,
@@ -151,13 +200,12 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         return;
       }
       applyEventToGraph(envelope.event);
-      // Fog-of-war reveal moment: on a disclosure flip, converge the graph to the now-
-      // disclosed truth by resyncing the snapshot (throttled against bursts). The timeline
-      // already announces these events for accessibility (aria-live status region).
-      if (
-        envelope.event.type === 'sim.hidden_condition.revealed' ||
-        envelope.event.type.startsWith('alert.')
-      ) {
+      // Fog-of-war reveal moment: on an actual disclosure flip, converge the graph to the
+      // now-disclosed truth by resyncing the snapshot (throttled against bursts). Restricted
+      // to real reveal events — resyncing on every `alert.*` flipped the view to
+      // SNAPSHOT_RESYNC/"stale" every ~1.5s during an active run, which read as a flicker.
+      // Alerts still update the graph via their own risk/status delta events.
+      if (envelope.event.type === 'sim.hidden_condition.revealed') {
         const now = Date.now();
         if (now - lastRevealResyncRef.current > 1500 && !gapRecoveryRef.current) {
           lastRevealResyncRef.current = now;
@@ -194,6 +242,12 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         }
       }
       if (envelope.event.type.startsWith('agent.')) {
+        // The copilot panel reads the run-scoped session list; refresh it so a task
+        // reaching a terminal state clears the pending "Working…" turn promptly instead
+        // of waiting on the poll interval.
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.agentSessions.listForRun(runId),
+        });
         const sessionId = envelope.event.payload.sessionId;
         if (typeof sessionId === 'string' && sessionId.length > 0) {
           void queryClient.invalidateQueries({
@@ -209,11 +263,12 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       }
       saveStoredCursor(runId, envelope.event.sequence);
     },
-    [applyEventToGraph, queryClient, runId, state.locallyPaused],
+    [applyEventToGraph, queryClient, runId],
   );
 
   const performResync = useCallback(async () => {
     gapRecoveryRef.current = true;
+    connectionHealthRef.current = ConnectionHealthState.SNAPSHOT_RESYNC;
     dispatch({
       type: 'set_connection_health',
       connectionHealth: ConnectionHealthState.SNAPSHOT_RESYNC,
@@ -225,6 +280,10 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       knownNodesRef.current = new Map(bootstrap.graphSnapshot.nodes.map((node) => [node.id, node]));
       setBootstrapSnapshot(bootstrap.graphSnapshot);
       setGraphRevision((value) => value + 1);
+      // Reset the synchronous dedup mirrors to the snapshot's authoritative
+      // sequence before replaying missed events on top of it.
+      lastAppliedSequenceRef.current = bootstrap.lastAppliedSequence;
+      connectionHealthRef.current = ConnectionHealthState.CATCHING_UP;
       dispatch({
         type: 'load_graph_snapshot',
         snapshot: bootstrap.graphSnapshot,
@@ -243,10 +302,11 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         bootstrap.lastAppliedSequence + 500,
       );
       for (const event of events) {
-        applyEventToGraph(event);
+        applyEventToGraph(event, true);
         saveStoredCursor(runId, event.sequence);
       }
 
+      connectionHealthRef.current = ConnectionHealthState.CONNECTED;
       dispatch({
         type: 'set_connection_health',
         connectionHealth: ConnectionHealthState.CONNECTED,
@@ -285,6 +345,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         knownNodesRef.current = new Map(
           bootstrapPayload.graphSnapshot.nodes.map((node) => [node.id, node]),
         );
+        lastAppliedSequenceRef.current = bootstrapPayload.lastAppliedSequence;
         setBootstrapSnapshot(bootstrapPayload.graphSnapshot);
         setGraphRevision((value) => value + 1);
         dispatch({
@@ -421,6 +482,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
   }, [runId]);
 
   const setLocallyPaused = useCallback((paused: boolean) => {
+    locallyPausedRef.current = paused;
     dispatch({ type: 'set_locally_paused', locallyPaused: paused });
   }, []);
 
