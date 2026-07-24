@@ -27,6 +27,7 @@ from aegis_agents.runtime.registry import (
     build_definition,
 )
 from aegis_agents.runtime.session_service import AgentSessionService, _run_sim_time
+from aegis_agents.runtime.state_machine import can_transition
 from aegis_agents.security.scenario_content import (
     build_commander_intent_message,
     build_operator_directive_message,
@@ -338,33 +339,39 @@ class TaskExecutor:
             # Discard the read snapshot; nothing was written by this transaction.
             await uow.rollback()
             return None
-        session = await self._sessions.transition(
-            uow,
-            session=session,
-            to_state=AgentSessionState.GATHERING,
-            reason="task_started",
-            task_id=task.id,
-            run_id=run_id,
-        )
-        next_sequence = await uow.events.next_sequence(run_id)
-        await uow.append_event(
-            build_task_started_event(
-                event_id=new_runtime_id("evt"),
-                run_id=run_id,
-                sequence=next_sequence,
-                session_id=session.id,
-                task_id=task.id,
-                trace_id=task.trace_id,
-                sim_time=await _run_sim_time(uow, run_id),
-            )
-        )
 
-        # Build the generation request within this same transaction. A failure
-        # here (budget exceeded, cancellation) still persists a FAILED task: the
-        # task is already claimed RUNNING, so we write the terminal failure into
-        # the open transaction (alongside the claim + started event) and commit,
-        # matching the pre-split behavior.
+        # Once the task is claimed RUNNING, it MUST reach a committed terminal
+        # state (or a committed ready-to-run prepared task) — never be left
+        # orphaned in 'running'. The session-start, started event, and request
+        # build are all funnelled: any failure here (a terminal/un-transitionable
+        # session, budget, cancellation, unexpected error) persists a terminal
+        # task and commits, alongside the claim, matching the pre-split behavior.
         try:
+            # A run-scoped lane/chat session that already rests at GATHERING (from
+            # a prior failed turn — run-scoped sessions are never terminated by a
+            # failure, see _fail_task) needs no transition; otherwise advance
+            # QUEUED/VERIFYING -> GATHERING for this turn.
+            if session.state != AgentSessionState.GATHERING:
+                session = await self._sessions.transition(
+                    uow,
+                    session=session,
+                    to_state=AgentSessionState.GATHERING,
+                    reason="task_started",
+                    task_id=task.id,
+                    run_id=run_id,
+                )
+            next_sequence = await uow.events.next_sequence(run_id)
+            await uow.append_event(
+                build_task_started_event(
+                    event_id=new_runtime_id("evt"),
+                    run_id=run_id,
+                    sequence=next_sequence,
+                    session_id=session.id,
+                    task_id=task.id,
+                    trace_id=task.trace_id,
+                    sim_time=await _run_sim_time(uow, run_id),
+                )
+            )
             request, run_scoped, visible_ids, role_handler = await self._build_request(
                 uow,
                 task=running,
@@ -923,19 +930,33 @@ class TaskExecutor:
             }
         )
         await uow.agent_tasks.update(failed)
-        terminal_state = (
-            AgentSessionState.CANCELLED
-            if code == AgentRuntimeErrorCode.TASK_CANCELLED
-            else AgentSessionState.FAILED
-        )
-        await self._sessions.transition(
-            uow,
-            session=session,
-            to_state=terminal_state,
-            reason=code.value.lower(),
-            task_id=task.id,
-            run_id=run_id,
-        )
+        # Session handling on failure:
+        # - Run-scoped lane/chat sessions (incident_id is None: autonomy lanes and
+        #   operator copilot chats) host many turns and MUST survive a failed turn
+        #   — symmetric with the success path, which also keeps run-scoped sessions
+        #   non-terminal. Terminating them would kill the whole autonomy lane and
+        #   strand its other queued tasks. So we leave the session untouched.
+        # - Incident-scoped sessions model one investigation and go terminal.
+        # A guard keeps this defensive: if the session cannot transition to the
+        # target (already terminal, e.g. a legacy orphan), skip it rather than
+        # raising — a claimed task must still reach its terminal state.
+        run_scoped = task.incident_id is None
+        target_state: AgentSessionState | None
+        if run_scoped:
+            target_state = None
+        elif code == AgentRuntimeErrorCode.TASK_CANCELLED:
+            target_state = AgentSessionState.CANCELLED
+        else:
+            target_state = AgentSessionState.FAILED
+        if target_state is not None and can_transition(session.state, target_state):
+            await self._sessions.transition(
+                uow,
+                session=session,
+                to_state=target_state,
+                reason=code.value.lower(),
+                task_id=task.id,
+                run_id=run_id,
+            )
         next_sequence = await uow.events.next_sequence(run_id)
         await uow.append_event(
             build_task_completed_event(

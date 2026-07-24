@@ -164,7 +164,7 @@ async def test_duplicate_task_idempotency(unit_of_work) -> None:
 
 
 @pytest.mark.asyncio
-async def test_recovery_marks_running_tasks_failed(unit_of_work) -> None:
+async def test_recovery_requeues_orphaned_running_tasks(unit_of_work) -> None:
     incident_id, _run_id, _evidence_id = await seed_incident_with_evidence(unit_of_work)
     sessions = AgentSessionService()
     tasks = AgentTaskService()
@@ -190,5 +190,12 @@ async def test_recovery_marks_running_tasks_failed(unit_of_work) -> None:
     )
     running = task.model_copy(update={"status": AgentTaskStatus.RUNNING})
     await unit_of_work.agent_tasks.update(running)
+    # Startup recovery reclaims a first-attempt orphan by requeueing it (attempt++)
+    # so the runtime retries it, rather than failing it outright.
     recovered = await recover_running_tasks(unit_of_work)
     assert recovered == 1
+    reclaimed = await unit_of_work.agent_tasks.get_by_id(task.id)
+    assert reclaimed is not None
+    assert reclaimed.status == AgentTaskStatus.QUEUED
+    assert reclaimed.attempt == 2
+    assert reclaimed.started_at is None
