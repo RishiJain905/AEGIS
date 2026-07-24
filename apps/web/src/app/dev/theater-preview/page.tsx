@@ -6,6 +6,7 @@
 // containment. Not linked from anywhere; delete before merge.
 
 import { useEffect, useState } from 'react';
+import { notFound } from 'next/navigation';
 
 import type { GraphEdgeV1, GraphNodeV1, GraphSnapshotV1 } from '@aegis/contracts-ts';
 
@@ -144,6 +145,12 @@ function buildSnapshot(phase: number): GraphSnapshotV1 {
 export default function TheaterPreviewPage() {
   const [phase, setPhase] = useState(0);
   const [snapshot, setSnapshot] = useState(() => buildSnapshot(0));
+
+  // Dev-only harness: unreachable in production builds even if the
+  // delete-before-merge sweep misses this file.
+  if (process.env.NODE_ENV === 'production') {
+    notFound();
+  }
 
   useEffect(() => {
     if (phase >= 3) {
