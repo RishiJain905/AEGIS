@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
@@ -97,6 +98,30 @@ AGENT_STEP_OUTPUT_SCHEMA: dict[str, Any] = {
 DEFAULT_TASK_TIMEOUT_SECONDS = 30.0
 
 
+@dataclass
+class _PreparedTask:
+    """State carried from the claim/prepare phase into generation and persistence.
+
+    ``session`` is pinned at GATHERING — the committed post-claim state. The
+    persist phase transitions a *local copy* forward (HYPOTHESIZING/VERIFYING/…),
+    so this object stays at GATHERING and remains the correct base for a failure
+    transition: if a later phase aborts, its transaction is rolled back and the
+    on-disk session is once again GATHERING, matching ``session`` here.
+    """
+
+    task: Any
+    session: Any
+    run_id: str
+    agent_name: str
+    definition: Any
+    budget: Any
+    incident_title: str | None
+    run_scoped: bool
+    visible_ids: set[str]
+    role_handler: Any
+    request: GenerationRequestV1
+
+
 class TaskExecutor:
     def __init__(
         self,
@@ -117,6 +142,34 @@ class TaskExecutor:
         self._cancelled.add(task_id)
 
     async def execute(self, uow: PostgresUnitOfWork, task_id: str) -> None:
+        """Execute one agent task with the model call held OUTSIDE any transaction.
+
+        The task runs in three short transactions on ``uow``'s session:
+
+        1. **Claim + prepare** — atomically claim QUEUED->RUNNING (exactly-once
+           CAS), append the task-started event, and build the generation request,
+           then COMMIT. Appending an event acquires the per-run
+           ``pg_advisory_xact_lock`` (see ``PostgresEventRepository.next_sequence``);
+           committing here releases it immediately.
+        2. **Generation** — call the model with NO transaction open, so the
+           advisory lock is free. This is the fix: the tick engine appends step
+           events under the *same* per-run advisory lock, so a transaction held
+           across a 60-120s model call froze the whole run. The generation facade
+           is built with ``session=None`` (in-memory artifact repo) and never
+           touches ``uow``'s session, so no transaction spans ``generate()``.
+        3. **Persist** — grounding validation, tool execution, artifact + result
+           events, mark the task terminal, then COMMIT (re-acquiring the advisory
+           lock only for the few milliseconds those short writes take).
+
+        ``uow`` stays caller-supplied — the API routes and the worker create it,
+        and the SCRIBE routes create the task in the *same* uow before calling
+        here, so the executor must use that session (a separate connection would
+        not see the still-uncommitted task). The executor now owns the intra-task
+        commits so the model call cannot span a transaction. On ANY failure a
+        FAILED/TIMED_OUT task is persisted (committed) and an ``AgentRuntimeError``
+        is re-raised: the interactive routes suppress it, the worker
+        logs-and-continues.
+        """
         import time
 
         started = time.perf_counter()
@@ -124,37 +177,70 @@ class TaskExecutor:
         status = "ok"
         tool_failure = False
         try:
-            task = await uow.agent_tasks.get_by_id(task_id)
-            if task is None:
-                raise AgentRuntimeError(
-                    code=AgentRuntimeErrorCode.TASK_NOT_FOUND,
-                    message=f"Agent task not found: {task_id}",
-                )
-            if task.status != AgentTaskStatus.QUEUED:
+            # Phase 1: claim, append started event, build request, commit.
+            prepared = await self._claim_and_prepare(uow, task_id)
+            if prepared is None:
+                # Not found/not queued/claim lost -> no-op, exactly as before.
                 return
+            agent_name = prepared.agent_name
 
-            session = await uow.agent_sessions.get_by_id(task.session_id)
-            if session is None:
-                raise AgentRuntimeError(
-                    code=AgentRuntimeErrorCode.SESSION_NOT_FOUND,
-                    message=f"Agent session not found: {task.session_id}",
-                    trace_id=task.trace_id,
-                )
-            agent_name = str(getattr(session, "role", None) or "unknown")
+            # Phase 2: the model call, with NO open transaction / advisory lock.
+            # Only the generation call is time-boxed: it is the minutes-long step,
+            # and bounding it via cancellation while a transaction were open would
+            # risk poisoning the connection. Tool execution in phase 3 is local,
+            # fast DB work.
             try:
-                from aegis_observability.context import merge_context
-
-                merge_context(
-                    service="agents",
-                    operation="agent.task",
-                    agent_session_id=session.id,
-                    run_id=getattr(session, "run_id", None),
-                    incident_id=task.incident_id,
-                    trace_id=task.trace_id,
+                response = await asyncio.wait_for(
+                    self._generation.generate(prepared.request),
+                    timeout=self._timeout_seconds,
                 )
-            except Exception:  # noqa: BLE001
-                pass
-            await self._execute_body(uow, task_id=task_id, task=task, session=session)
+            except TimeoutError as exc:
+                await self._fail_and_commit(
+                    uow,
+                    prepared,
+                    code=AgentRuntimeErrorCode.TASK_TIMEOUT,
+                    message="Agent task timed out",
+                )
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.TASK_TIMEOUT,
+                    message="Agent task timed out",
+                    trace_id=prepared.task.trace_id,
+                ) from exc
+            except AgentRuntimeError as exc:
+                await self._fail_and_commit(uow, prepared, code=exc.code, message=exc.message)
+                raise
+            except Exception as exc:
+                await self._fail_and_commit(
+                    uow,
+                    prepared,
+                    code=AgentRuntimeErrorCode.INTERNAL,
+                    message=str(exc),
+                )
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.INTERNAL,
+                    message="Agent task failed",
+                    trace_id=prepared.task.trace_id,
+                ) from exc
+
+            # Phase 3: persist results / tool calls / completion in a short txn.
+            try:
+                await self._persist_result(uow, prepared, response)
+                await uow.commit()
+            except AgentRuntimeError as exc:
+                await self._fail_and_commit(uow, prepared, code=exc.code, message=exc.message)
+                raise
+            except Exception as exc:
+                await self._fail_and_commit(
+                    uow,
+                    prepared,
+                    code=AgentRuntimeErrorCode.INTERNAL,
+                    message=str(exc),
+                )
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.INTERNAL,
+                    message="Agent task failed",
+                    trace_id=prepared.task.trace_id,
+                ) from exc
         except Exception:
             status = "error"
             raise
@@ -171,14 +257,52 @@ class TaskExecutor:
             except Exception:  # noqa: BLE001
                 pass
 
-    async def _execute_body(
+    async def _claim_and_prepare(
         self,
         uow: PostgresUnitOfWork,
-        *,
         task_id: str,
-        task: Any,
-        session: Any,
-    ) -> None:
+    ) -> _PreparedTask | None:
+        """Phase 1: claim the task, emit the started event, and build the request.
+
+        Runs in a single short transaction that COMMITS before returning, so the
+        per-run advisory lock (taken by the started-event append) is released
+        before the model call. Returns ``None`` for the no-op cases (task missing
+        from QUEUED, or a lost claim race). A failure while building the request
+        (budget exceeded, cancellation) persists a FAILED task in this same
+        transaction — the task is already claimed RUNNING, matching the pre-split
+        single-transaction failure behavior — then re-raises.
+        """
+        task = await uow.agent_tasks.get_by_id(task_id)
+        if task is None:
+            raise AgentRuntimeError(
+                code=AgentRuntimeErrorCode.TASK_NOT_FOUND,
+                message=f"Agent task not found: {task_id}",
+            )
+        if task.status != AgentTaskStatus.QUEUED:
+            return None
+
+        session = await uow.agent_sessions.get_by_id(task.session_id)
+        if session is None:
+            raise AgentRuntimeError(
+                code=AgentRuntimeErrorCode.SESSION_NOT_FOUND,
+                message=f"Agent session not found: {task.session_id}",
+                trace_id=task.trace_id,
+            )
+        agent_name = str(getattr(session, "role", None) or "unknown")
+        try:
+            from aegis_observability.context import merge_context
+
+            merge_context(
+                service="agents",
+                operation="agent.task",
+                agent_session_id=session.id,
+                run_id=getattr(session, "run_id", None),
+                incident_id=task.incident_id,
+                trace_id=task.trace_id,
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
         # Run-scoped tasks (operator tasking before the first incident) carry no
         # incident; run_id is anchored on the session. Incident-scoped tasks must
         # still resolve their incident (a dangling incident_id is a data error).
@@ -211,7 +335,9 @@ class TaskExecutor:
         # zero rows updated and no-ops, so a task never executes twice.
         claimed = await uow.agent_tasks.claim_transition(running, from_statuses=("queued",))
         if not claimed:
-            return
+            # Discard the read snapshot; nothing was written by this transaction.
+            await uow.rollback()
+            return None
         session = await self._sessions.transition(
             uow,
             session=session,
@@ -232,33 +358,21 @@ class TaskExecutor:
             )
         )
 
+        # Build the generation request within this same transaction. A failure
+        # here (budget exceeded, cancellation) still persists a FAILED task: the
+        # task is already claimed RUNNING, so we write the terminal failure into
+        # the open transaction (alongside the claim + started event) and commit,
+        # matching the pre-split behavior.
         try:
-            await asyncio.wait_for(
-                self._run_task_body(
-                    uow=uow,
-                    task=running,
-                    session=session,
-                    run_id=run_id,
-                    incident_title=incident_title,
-                    definition=definition,
-                    budget=budget,
-                ),
-                timeout=self._timeout_seconds,
-            )
-        except TimeoutError as exc:
-            await self._fail_task(
+            request, run_scoped, visible_ids, role_handler = await self._build_request(
                 uow,
                 task=running,
                 session=session,
                 run_id=run_id,
-                code=AgentRuntimeErrorCode.TASK_TIMEOUT,
-                message="Agent task timed out",
+                incident_title=incident_title,
+                definition=definition,
+                budget=budget,
             )
-            raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.TASK_TIMEOUT,
-                message="Agent task timed out",
-                trace_id=task.trace_id,
-            ) from exc
         except AgentRuntimeError as exc:
             await self._fail_task(
                 uow,
@@ -268,6 +382,7 @@ class TaskExecutor:
                 code=exc.code,
                 message=exc.message,
             )
+            await uow.commit()
             raise
         except Exception as exc:
             await self._fail_task(
@@ -278,23 +393,47 @@ class TaskExecutor:
                 code=AgentRuntimeErrorCode.INTERNAL,
                 message=str(exc),
             )
+            await uow.commit()
             raise AgentRuntimeError(
                 code=AgentRuntimeErrorCode.INTERNAL,
                 message="Agent task failed",
-                trace_id=task.trace_id,
+                trace_id=running.trace_id,
             ) from exc
 
-    async def _run_task_body(
+        # Commit the claim + started event, releasing the advisory lock BEFORE
+        # the model call runs.
+        await uow.commit()
+        return _PreparedTask(
+            task=running,
+            session=session,
+            run_id=run_id,
+            agent_name=agent_name,
+            definition=definition,
+            budget=budget,
+            incident_title=incident_title,
+            run_scoped=run_scoped,
+            visible_ids=visible_ids,
+            role_handler=role_handler,
+            request=request,
+        )
+
+    async def _build_request(
         self,
-        *,
         uow: PostgresUnitOfWork,
+        *,
         task: Any,
         session: Any,
         run_id: str,
         incident_title: str | None,
         definition: Any,
         budget: Any,
-    ) -> None:
+    ) -> tuple[GenerationRequestV1, bool, set[str], Any]:
+        """Assemble the model request (reads only). Returns request + metadata.
+
+        No event/lock-taking writes happen here, so it can share the claim
+        transaction. Raises on cancellation or budget exhaustion, which the
+        caller turns into a persisted FAILED task.
+        """
         if task.id in self._cancelled:
             raise AgentRuntimeError(
                 code=AgentRuntimeErrorCode.TASK_CANCELLED,
@@ -417,7 +556,32 @@ class TaskExecutor:
             ),
             capabilities_required=[ProviderCapability.STRUCTURED_OUTPUT],
         )
-        response = await self._generation.generate(request)
+        return request, run_scoped, visible_ids, role_handler
+
+    async def _persist_result(
+        self,
+        uow: PostgresUnitOfWork,
+        prepared: _PreparedTask,
+        response: Any,
+    ) -> None:
+        """Phase 3: validate grounding, run tools, and persist the terminal state.
+
+        All writes land in a short transaction the caller commits. The advisory
+        lock is only re-taken by the event appends here, and only for the few
+        milliseconds each short write holds it — never across the model call.
+        """
+        task = prepared.task
+        # Advance a LOCAL copy of the session; ``prepared.session`` stays at
+        # GATHERING so a failure can be recorded against the committed state.
+        session = prepared.session
+        run_id = prepared.run_id
+        budget = prepared.budget
+        visible_ids = prepared.visible_ids
+        role_handler = prepared.role_handler
+        run_scoped = prepared.run_scoped
+        definition = prepared.definition
+        request = prepared.request
+
         if response.error is not None:
             raise AgentRuntimeError(
                 code=AgentRuntimeErrorCode.PROVIDER_FAILURE,
@@ -706,6 +870,33 @@ class TaskExecutor:
             )
         digest = json.dumps(turns, ensure_ascii=False, separators=(",", ":"))
         return build_session_history_message(digest)
+
+    async def _fail_and_commit(
+        self,
+        uow: PostgresUnitOfWork,
+        prepared: _PreparedTask,
+        *,
+        code: AgentRuntimeErrorCode,
+        message: str,
+    ) -> None:
+        """Persist a terminal failure for a claimed task in its own transaction.
+
+        Any partial writes from a failed persist phase are rolled back first, so
+        the failure is recorded against the committed post-claim state (the
+        on-disk session is GATHERING, matching ``prepared.session``). Commits so
+        the FAILED/TIMED_OUT state survives even when the caller rolls back on the
+        re-raised error (the worker) or suppresses it (the interactive routes).
+        """
+        await uow.rollback()
+        await self._fail_task(
+            uow,
+            task=prepared.task,
+            session=prepared.session,
+            run_id=prepared.run_id,
+            code=code,
+            message=message,
+        )
+        await uow.commit()
 
     async def _fail_task(
         self,

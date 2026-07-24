@@ -43,12 +43,13 @@ _READ = [Depends(require_permission(PermissionV1.INVESTIGATION_READ))]
 async def _execute_committing_failure(task_id: str) -> None:
     """Run a task inline and persist terminal failures for these interactive routes.
 
-    ``TaskExecutor.execute`` writes a FAILED/TIMED_OUT task and then re-raises so
-    the worker/CLI can react, but a raised exception rolls the UnitOfWork back
-    (losing the failed status) and surfaces as a 500. The chat needs the failed
-    turn to persist and be returned, so here we swallow the runtime error inside
-    the UnitOfWork — the executor already wrote the terminal state into it, and the
-    context manager commits it on clean exit. Non-runtime errors still propagate.
+    ``TaskExecutor.execute`` splits the task into short transactions (so the model
+    call holds no transaction / advisory lock) and owns its own commits: it
+    persists and COMMITS a FAILED/TIMED_OUT task before re-raising ``AgentRuntimeError``
+    so the worker/CLI can react. The chat needs the failed turn to persist and be
+    returned rather than surfacing as a 500, so we swallow that runtime error here;
+    the terminal state is already committed, and the route re-reads it. Non-runtime
+    errors still propagate.
     """
     executor = create_task_executor(force_in_memory=False)
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
