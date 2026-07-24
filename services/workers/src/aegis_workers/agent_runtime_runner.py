@@ -6,28 +6,50 @@ import asyncio
 import contextlib
 import os
 import signal
-import time
 from collections.abc import Awaitable, Callable
 
 from aegis_agents.runtime.executor import TaskExecutor
 from aegis_agents.runtime.factory import _resolve_task_timeout_seconds, create_task_executor
-from aegis_agents.runtime.recovery import (
-    DEFAULT_ORPHAN_GRACE_SECONDS,
-    recover_orphaned_tasks,
-    recover_running_tasks,
-)
+from aegis_agents.runtime.recovery import recover_orphaned_tasks, recover_running_tasks
 from aegis_contracts import load_settings
 from aegis_persistence.engine import create_engine, dispose_engine, get_session_maker
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
+def _orphan_lease_seconds() -> float:
+    """Lease TTL after which a RUNNING task is presumed orphaned and reclaimable.
+
+    A task legitimately runs for at most the task timeout (the executor's own
+    ``wait_for`` bounds the model call), so anything RUNNING well past that has no
+    live executor. Default is 2x the task timeout — comfortably above a real 27B
+    turn — so a genuinely in-flight task is never reclaimed. Env-tunable.
+    """
+    override = os.environ.get("AEGIS_AGENT_ORPHAN_LEASE_SECONDS")
+    if override is not None:
+        with contextlib.suppress(ValueError):
+            value = float(override)
+            if value > 0:
+                return value
+    return 2.0 * _resolve_task_timeout_seconds()
+
+
 async def _poll_once(
     session_maker: async_sessionmaker[AsyncSession],
     executor: TaskExecutor,
     *,
+    orphan_lease_seconds: float,
     stop_event: asyncio.Event | None = None,
 ) -> int:
+    # Reclaim orphans FIRST, every pass, before draining the queue: a task
+    # stranded in 'running' by a dead/replaced worker (the split commits the
+    # queued->running claim early, so there is no in-band rollback) is returned to
+    # 'queued' — attempt incremented, up to the retry cap, then failed — and is
+    # picked up by the very same list_queued below. This is the standing safety net
+    # for "worker replaced mid-task"; startup recovery only fires once at boot.
+    async with PostgresUnitOfWork(session_maker) as uow:
+        await recover_orphaned_tasks(uow, older_than_seconds=orphan_lease_seconds)
+
     processed = 0
     async with PostgresUnitOfWork(session_maker) as uow:
         queued = await uow.agent_tasks.list_queued(limit=10)
@@ -50,15 +72,6 @@ async def _poll_once(
                 await uow.rollback()
                 continue
     return processed
-
-
-async def _recover_orphans_once(
-    session_maker: async_sessionmaker[AsyncSession],
-    *,
-    older_than_seconds: float,
-) -> int:
-    async with PostgresUnitOfWork(session_maker) as uow:
-        return await recover_orphaned_tasks(uow, older_than_seconds=older_than_seconds)
 
 
 async def _run_poll_loop(
@@ -85,29 +98,20 @@ async def _run_loop(stop_event: asyncio.Event | None = None) -> None:
     executor = create_task_executor()
     stop_event = stop_event or asyncio.Event()
     # Startup recovery: any RUNNING task belongs to a prior (dead) process — requeue
-    # it (attempt++) so it is retried, or fail it if it has exhausted retries.
+    # it (attempt++) so it is retried immediately, or fail it once retries are
+    # exhausted. (older_than=0: at boot this process owns no in-flight task.)
     async with PostgresUnitOfWork(session_maker) as uow:
         await recover_running_tasks(uow)
     interval = float(os.environ.get("AEGIS_AGENT_RUNTIME_POLL_SECONDS", "1.0"))
-    # Periodic orphan sweep: a task stranded in 'running' past the task timeout plus
-    # a grace margin (so a live slow-model task is never stolen from its executor)
-    # is requeued/failed. Cadence is env-tunable and independent of the fast poll.
-    orphan_grace = float(
-        os.environ.get("AEGIS_AGENT_ORPHAN_GRACE_SECONDS", str(DEFAULT_ORPHAN_GRACE_SECONDS))
-    )
-    orphan_age = _resolve_task_timeout_seconds() + orphan_grace
-    recovery_interval = float(os.environ.get("AEGIS_AGENT_ORPHAN_SWEEP_SECONDS", "30.0"))
-    last_recovery = time.monotonic()
+    orphan_lease_seconds = _orphan_lease_seconds()
 
     async def poll() -> int:
-        nonlocal last_recovery
-        processed = await _poll_once(session_maker, executor, stop_event=stop_event)
-        now = time.monotonic()
-        if now - last_recovery >= recovery_interval:
-            last_recovery = now
-            with contextlib.suppress(Exception):
-                await _recover_orphans_once(session_maker, older_than_seconds=orphan_age)
-        return processed
+        return await _poll_once(
+            session_maker,
+            executor,
+            orphan_lease_seconds=orphan_lease_seconds,
+            stop_event=stop_event,
+        )
 
     try:
         await _run_poll_loop(poll, stop_event, interval=interval)

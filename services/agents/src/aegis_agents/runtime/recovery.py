@@ -31,10 +31,9 @@ from aegis_contracts.agent_runtime import AgentTaskStatus, AgentTaskV1
 from aegis_contracts.entities import AgentSessionState
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
-# A task may legitimately run for the full task timeout; only reclaim well beyond
-# it so a live (slow-model) task is never stolen from its own executor.
-DEFAULT_ORPHAN_GRACE_SECONDS = 60.0
-# Mirror AgentTaskService.retry_task's cap (attempt >= 2 is non-retryable).
+# Mirror AgentTaskService.retry_task's cap (attempt >= 2 is non-retryable). The
+# reclaim lease TTL lives in the worker (2x the task timeout); this only caps how
+# many times an orphan is requeued before it is failed terminally.
 DEFAULT_MAX_ATTEMPTS = 2
 
 

@@ -26,6 +26,10 @@ class _FakeAgentTasks:
     async def list_queued(self, *, limit: int = 10) -> list[_FakeTask]:
         return list(self._tasks)
 
+    async def list_running(self) -> list[_FakeTask]:
+        # Orphan reclaim runs first each poll; no orphans in this drain test.
+        return []
+
 
 class _FakeUoW:
     def __init__(self, tasks: list[_FakeTask]) -> None:
@@ -64,6 +68,7 @@ async def test_poll_once_finishes_inflight_then_skips_new_after_stop(
     processed = await agent_runtime_runner._poll_once(
         session_maker=None,
         executor=_FakeExecutor(),  # type: ignore[arg-type]
+        orphan_lease_seconds=999.0,
         stop_event=stop,
     )
 
