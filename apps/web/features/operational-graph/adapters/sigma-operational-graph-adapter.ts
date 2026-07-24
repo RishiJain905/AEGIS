@@ -26,7 +26,11 @@ import {
   type EdgeHighlightKind,
 } from '../semantic/graph-semantic-styles';
 import { EdgeActivityTracker, edgeFlowPhase } from '../semantic/edge-activity';
+import { detectRevealTransitions, type NodeRevealState } from '../semantic/reveal-detection';
+import { zoneLabelFromClusterId, UNZONED_CLUSTER_ID } from '../layout/zone-layout';
 import { drawAegisNodeHover, drawAegisNodeLabel } from '../rendering/aegis-canvas-renderers';
+import { rollupZoneThreat, ZoneOverlay, type ZoneRenderState } from '../rendering/zone-overlay';
+import { SignalOverlay, type NodeSignal, type SignalStatus } from '../rendering/signal-overlay';
 import {
   AliveEdgeArrowProgram,
   AliveEdgeLineProgram,
@@ -118,6 +122,10 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
   private readonly edgeActivity = new EdgeActivityTracker();
   private flowProfile: EdgeFlowProfile = 'static';
   private flowFrameHandle: number | null = null;
+  private zoneOverlay: ZoneOverlay | null = null;
+  private signalOverlay: SignalOverlay | null = null;
+  private revealState: Map<string, NodeRevealState> | null = null;
+  private lastRevealedNodeIds: string[] = [];
 
   constructor(container: HTMLElement, reducedMotion = false) {
     this.container = container;
@@ -164,12 +172,20 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
         arrow: AliveEdgeArrowProgram,
       },
     });
+    // Overlay layers (zone hulls under edges, status/reveal signals under
+    // nodes). Guarded so renderer test doubles without the layer API still
+    // exercise the adapter's projection logic.
+    if (typeof this.sigma.createCanvas === 'function') {
+      this.zoneOverlay = new ZoneOverlay(this.sigma, this.graph);
+      this.signalOverlay = new SignalOverlay(this.sigma, this.graph, this.reducedMotion);
+    }
     this.syncFlowDriver();
     return this.sigma;
   }
 
   setReducedMotion(reduced: boolean): void {
     this.reducedMotion = reduced;
+    this.signalOverlay?.setReducedMotion(reduced);
   }
 
   /**
@@ -451,6 +467,8 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       }
     }
 
+    this.updateOverlays(snapshot, renderNodeIds);
+
     this.sigma?.refresh();
 
     return {
@@ -459,6 +477,59 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       nodeCount: renderNodeIds.length + presentationNodes.length,
       edgeCount: renderEdgeIds.length,
     };
+  }
+
+  /** Zone frames, status halos, and the reveal pulse — all derived from the
+   * same canonical snapshot the node projection used this sync tick. */
+  private updateOverlays(snapshot: GraphSnapshotV1, renderNodeIds: string[]): void {
+    const renderSet = new Set(renderNodeIds);
+
+    const { revealedNodeIds, nextState } = detectRevealTransitions(this.revealState, snapshot.nodes);
+    this.revealState = nextState;
+    this.lastRevealedNodeIds = revealedNodeIds.filter((nodeId) => renderSet.has(nodeId));
+
+    if (!this.zoneOverlay && !this.signalOverlay) {
+      return;
+    }
+
+    const clusterLabels = new Map(snapshot.clusters.map((cluster) => [cluster.id, cluster.label]));
+    const zoneMembers = new Map<string, { memberIds: string[]; statuses: string[] }>();
+    const signals: NodeSignal[] = [];
+
+    for (const node of snapshot.nodes) {
+      if (!renderSet.has(node.id)) {
+        continue;
+      }
+      const zoneId = node.clusterId ?? UNZONED_CLUSTER_ID;
+      const zone = zoneMembers.get(zoneId) ?? { memberIds: [], statuses: [] };
+      zone.memberIds.push(node.id);
+      zone.statuses.push(node.status);
+      zoneMembers.set(zoneId, zone);
+
+      if (node.status !== 'normal' && node.disclosed !== false) {
+        signals.push({ id: node.id, status: node.status as SignalStatus });
+      }
+    }
+
+    const zones: ZoneRenderState[] = [...zoneMembers.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([zoneId, zone]) => ({
+        id: zoneId,
+        label: clusterLabels.get(zoneId) ?? zoneLabelFromClusterId(zoneId),
+        memberIds: zone.memberIds,
+        threat: rollupZoneThreat(zone.statuses),
+      }));
+
+    this.zoneOverlay?.setZones(zones);
+    this.signalOverlay?.setSignals(signals);
+    if (this.lastRevealedNodeIds.length > 0) {
+      this.signalOverlay?.addReveals(this.lastRevealedNodeIds);
+    }
+  }
+
+  /** Node ids whose fog-of-war reveal fired on the most recent sync. */
+  getLastRevealedNodeIds(): string[] {
+    return [...this.lastRevealedNodeIds];
   }
 
   applyHighlight(
@@ -526,6 +597,12 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       cancelAnimationFrame(this.flowFrameHandle);
       this.flowFrameHandle = null;
     }
+    this.zoneOverlay?.dispose();
+    this.zoneOverlay = null;
+    this.signalOverlay?.dispose();
+    this.signalOverlay = null;
+    this.revealState = null;
+    this.lastRevealedNodeIds = [];
     if (this.sigma) {
       this.sigma.kill();
       this.sigma = null;

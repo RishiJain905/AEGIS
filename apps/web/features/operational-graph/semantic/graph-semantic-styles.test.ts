@@ -66,10 +66,24 @@ describe('graph semantic styles', () => {
       makeEdge({ confidence: 1, eventCount: 12, riskContribution: 0.65 }),
     );
 
-    expect(style.color).toBe('#ef4444');
+    expect(style.color).toBe('#ff9b55');
     expect(style.color).not.toMatch(/rgba|#[0-9a-f]{8}/i);
     expect(style.opacity).toBeGreaterThan(0.5);
     expect(style.opacity).toBeLessThanOrEqual(1);
+  });
+
+  it('reserves red for high-risk edges and keeps routine activity calm', () => {
+    const routine = getEdgeVisualStyle(
+      makeEdge({ confidence: 1, eventCount: 12, riskContribution: 0.1 }),
+    );
+    const hostile = getEdgeVisualStyle(
+      makeEdge({ confidence: 1, eventCount: 12, riskContribution: 0.9 }),
+    );
+    const idle = getEdgeVisualStyle(makeEdge({ eventCount: 0, riskContribution: 0 }));
+
+    expect(routine.color).toBe('#36a9e1');
+    expect(hostile.color).toBe('#ff7078');
+    expect(idle.color).toBe('#5d6b7e');
   });
 
   it('uses arrow type for high-confidence directed edges', () => {

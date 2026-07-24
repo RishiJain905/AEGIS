@@ -55,6 +55,18 @@ export const layoutWorkerEdgeSchema = z
 
 export type LayoutWorkerEdge = z.infer<typeof layoutWorkerEdgeSchema>;
 
+/** Containment disc for one zone: the force pass may refine node placement
+ * inside the disc but never move a node out of its zone sector. */
+export const layoutZoneConstraintSchema = z
+  .object({
+    x: z.number(),
+    y: z.number(),
+    radius: z.number().positive(),
+  })
+  .strict();
+
+export type LayoutZoneConstraint = z.infer<typeof layoutZoneConstraintSchema>;
+
 export const layoutWorkerSettingsSchema = z
   .object({
     iterations: z.number().int().min(1).max(500),
@@ -67,15 +79,16 @@ export const layoutWorkerSettingsSchema = z
 
 export type LayoutWorkerSettings = z.infer<typeof layoutWorkerSettingsSchema>;
 
-// Tuned for readable spread: strong repulsion and near-zero gravity keep
-// clusters from collapsing into a central clump; higher slowDown plus more
-// iterations lets the layout settle instead of oscillating.
+// Zone containment (zoneConstraints) replaces gravity as the anti-scatter
+// force, so gravity stays near zero — any global pull toward the origin is
+// exactly the central-hairball failure mode. Repulsion is moderate: it only
+// has to spread nodes within a zone disc, never across the whole board.
 export const defaultLayoutWorkerSettings: LayoutWorkerSettings = {
-  iterations: 180,
-  gravity: 0.8,
-  scalingRatio: 60,
+  iterations: 140,
+  gravity: 0.02,
+  scalingRatio: 30,
   barnesHutOptimize: true,
-  slowDown: 4,
+  slowDown: 5,
 };
 
 export const layoutWorkerRequestSchema = z
@@ -88,6 +101,7 @@ export const layoutWorkerRequestSchema = z
     nodes: z.array(layoutWorkerNodeSchema),
     edges: z.array(layoutWorkerEdgeSchema),
     seedPositions: z.record(z.string(), layoutPositionSchema),
+    zoneConstraints: z.record(z.string(), layoutZoneConstraintSchema).optional(),
     settings: layoutWorkerSettingsSchema,
   })
   .strict();

@@ -22,10 +22,7 @@ import {
   type GraphVisualState,
 } from '@/features/operational-graph/contracts/graph-visual-state';
 import { useInvestigationDetail } from '@/features/investigation';
-import {
-  balanceLayoutAspect,
-  filterNodesBySearch,
-} from '@/features/operational-graph/layout/initial-layout';
+import { filterNodesBySearch } from '@/features/operational-graph/layout/initial-layout';
 import {
   autoCollapseClusterIds,
   buildLodRenderHints,
@@ -132,34 +129,40 @@ const LEGEND_ITEMS = [
   { label: 'Device', color: '#8999ff', shape: 'diamond' as const },
   { label: 'Database', color: '#efb85a', shape: 'square' as const },
   {
-    label: 'High risk',
+    label: 'Compromised',
     color: '#ff7078',
     shape: 'ring' as const,
-    description: 'Risk-driven halo',
+    description: 'Attacker confirmed on asset',
   },
   {
-    label: 'High risk path',
-    color: '#f7bd4a',
-    shape: 'line' as const,
-    description: 'Selected trace',
+    label: 'Suspicious',
+    color: '#f1c257',
+    shape: 'ring' as const,
+    description: 'Anomalous signals, unconfirmed',
   },
   {
-    label: 'Neighborhood',
-    color: '#3ec7e8',
+    label: 'Investigating',
+    color: '#68d0ee',
+    shape: 'ring' as const,
+    description: 'Under active investigation',
+  },
+  {
+    label: 'Contained',
+    color: '#9aa8ff',
+    shape: 'ring' as const,
+    description: 'Isolated — dashed rim',
+  },
+  {
+    label: 'High-risk link',
+    color: '#ff9b55',
     shape: 'line' as const,
-    description: 'One-hop focus',
+    description: 'Edge carrying attack-path risk',
   },
   {
     label: 'Evidence',
     color: '#fbbf24',
     shape: 'diamond' as const,
     description: 'Evidence-linked marker',
-  },
-  {
-    label: 'Incident scope',
-    color: '#fb5b65',
-    shape: 'ring' as const,
-    description: 'Dashed containment rim',
   },
 ];
 
@@ -462,9 +465,10 @@ export function OperationalGraphView({
       layoutCoordinatorRef.current = new LayoutCoordinator({
         instrumentation: instrumentationRef.current,
         onPositionsUpdated: (positions) => {
-          const balancedPositions = balanceLayoutAspect(positions);
-          workerPositionsRef.current = balancedPositions;
-          mergeNodePositions(balancedPositions);
+          // Positions arrive pre-shaped by the zone sector layout; no aspect
+          // correction — stretching would tear nodes out of their zone frames.
+          workerPositionsRef.current = positions;
+          mergeNodePositions(positions);
           scheduleSync();
         },
         onLayoutStatusChanged: (status) => {

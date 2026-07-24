@@ -33,6 +33,52 @@ export function buildLayoutGraph(request: LayoutWorkerRequest): Graph {
   return graph;
 }
 
+/**
+ * Zone containment: pull any node that drifted outside its zone disc back to
+ * the disc boundary. Runs after every FA2 batch and overlap sweep, so edge
+ * attraction can arrange nodes *within* a sector (cross-zone links settle on
+ * the facing rim) but can never merge sectors into a central clump.
+ */
+function clampToZones(
+  graph: Graph,
+  zoneByNode: ReadonlyMap<string, { x: number; y: number; radius: number }>,
+  pinnedNodes: ReadonlySet<string>,
+): void {
+  for (const [nodeId, zone] of zoneByNode) {
+    if (pinnedNodes.has(nodeId) || !graph.hasNode(nodeId)) {
+      continue;
+    }
+    const x = graph.getNodeAttribute(nodeId, 'x') as number;
+    const y = graph.getNodeAttribute(nodeId, 'y') as number;
+    const dx = x - zone.x;
+    const dy = y - zone.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance <= zone.radius || distance < 1e-9) {
+      continue;
+    }
+    const scale = zone.radius / distance;
+    graph.setNodeAttribute(nodeId, 'x', zone.x + dx * scale);
+    graph.setNodeAttribute(nodeId, 'y', zone.y + dy * scale);
+  }
+}
+
+function buildZoneByNode(
+  request: LayoutWorkerRequest,
+): Map<string, { x: number; y: number; radius: number }> {
+  const zoneByNode = new Map<string, { x: number; y: number; radius: number }>();
+  const constraints = request.zoneConstraints;
+  if (!constraints) {
+    return zoneByNode;
+  }
+  for (const node of request.nodes) {
+    const constraint = node.clusterId ? constraints[node.clusterId] : undefined;
+    if (constraint) {
+      zoneByNode.set(node.id, constraint);
+    }
+  }
+  return zoneByNode;
+}
+
 export function runForceAtlas2(
   request: LayoutWorkerRequest,
   shouldCancel: () => boolean,
@@ -40,6 +86,7 @@ export function runForceAtlas2(
 ): ForceAtlas2RunResult {
   const graph = buildLayoutGraph(request);
   const pinnedNodes = new Set(request.nodes.filter((node) => node.pinned).map((node) => node.id));
+  const zoneByNode = buildZoneByNode(request);
   const settings = {
     iterations: request.settings.iterations,
     settings: {
@@ -75,11 +122,15 @@ export function runForceAtlas2(
       graph.setNodeAttribute(nodeId, 'y', node.y);
     }
 
+    clampToZones(graph, zoneByNode, pinnedNodes);
+
     iterationsCompleted += currentBatch;
     onProgress?.(iterationsCompleted);
   }
 
-  resolveNodeOverlaps(graph, pinnedNodes);
+  resolveNodeOverlaps(graph, pinnedNodes, () => {
+    clampToZones(graph, zoneByNode, pinnedNodes);
+  });
 
   const positions: Record<string, { x: number; y: number }> = {};
   graph.forEachNode((nodeId, attributes) => {
@@ -92,16 +143,25 @@ export function runForceAtlas2(
   return { positions, iterationsCompleted };
 }
 
-const OVERLAP_RADIUS = 60;
+// Half the minimum node spacing. Must stay well below the intra-zone ring
+// spacing (76 units): at the old value of 60 the pass pushed every pair 120
+// units apart and exploded zone structure into a uniform scatter.
+const OVERLAP_RADIUS = 30;
 const OVERLAP_SWEEPS = 32;
 
 /**
  * Post-layout collision pass: FA2 without size awareness happily stacks nodes
  * on top of each other in dense clusters. A few relaxation sweeps pushing any
  * pair closer than 2×OVERLAP_RADIUS apart guarantees labels and hit targets
- * never fully overlap. Deterministic (fixed order, no randomness).
+ * never fully overlap. Deterministic (fixed order, no randomness). The
+ * per-sweep hook re-applies zone containment so separation can't leak nodes
+ * across sector boundaries.
  */
-function resolveNodeOverlaps(graph: Graph, pinnedNodes: ReadonlySet<string>): void {
+function resolveNodeOverlaps(
+  graph: Graph,
+  pinnedNodes: ReadonlySet<string>,
+  afterSweep?: () => void,
+): void {
   const nodeIds = graph.nodes().sort((a, b) => a.localeCompare(b));
   const minDistance = OVERLAP_RADIUS * 2;
 
@@ -145,6 +205,7 @@ function resolveNodeOverlaps(graph: Graph, pinnedNodes: ReadonlySet<string>): vo
         moved = true;
       }
     }
+    afterSweep?.();
     if (!moved) {
       break;
     }

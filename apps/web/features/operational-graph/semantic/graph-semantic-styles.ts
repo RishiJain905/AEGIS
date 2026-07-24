@@ -158,8 +158,19 @@ export function getEdgeVisualStyle(edge: GraphEdgeV1): EdgeVisualStyle {
 
   const confidenceOpacity = isInferred ? 0.35 : 0.4 + edge.confidence * 0.6;
   const activityOpacity = 0.3 + riskWeight * 0.5;
+  // Red is reserved for risk: an active edge only escalates toward the risk
+  // accents as its risk contribution rises — routine traffic reads as calm
+  // comms blue, so the attacker's path is the only red thing on the board.
+  const color =
+    riskWeight >= 0.8
+      ? '#ff7078'
+      : riskWeight >= 0.55
+        ? '#ff9b55'
+        : hasActivity
+          ? '#36a9e1'
+          : '#5d6b7e';
   return {
-    color: hasActivity ? '#ef4444' : '#94a3b8',
+    color,
     size: hasActivity ? 1.5 + Math.log10(edge.eventCount + 1) : 0.8,
     type: edge.directed && edge.confidence >= 0.75 ? 'arrow' : 'line',
     opacity: Math.min(1, hasActivity ? confidenceOpacity * activityOpacity : confidenceOpacity),

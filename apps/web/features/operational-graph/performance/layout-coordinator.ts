@@ -15,7 +15,7 @@ import {
   type LayoutWorkerResult,
 } from '../contracts/layout-worker-protocol';
 import { LayoutStatus } from '../contracts/graph-visual-state';
-import { computeInitialLayout } from '../layout/initial-layout';
+import { computeZoneLayout, zoneConstraintsFromLayout } from '../layout/zone-layout';
 import { LayoutWorkerClient } from './layout-worker-client';
 import { PerformanceInstrumentation } from './performance-instrumentation';
 import { applyPinnedPositions, strongestNeighborSeeds } from './position-persistence';
@@ -130,8 +130,8 @@ export class LayoutCoordinator {
       (edge) => visibleNodeIds.includes(edge.source) && visibleNodeIds.includes(edge.target),
     );
 
-    const seedFromLayout = computeInitialLayout(visibleNodes, snapshot.clusters, this.positions);
-    const seeded = strongestNeighborSeeds(visibleNodes, visibleEdges, seedFromLayout);
+    const zoneLayout = computeZoneLayout(visibleNodes, snapshot.clusters, this.positions);
+    const seeded = strongestNeighborSeeds(visibleNodes, visibleEdges, zoneLayout.positions);
     const pinnedPositions = applyPinnedPositions(seeded, pinnedNodeIds, seeded);
 
     const requestId = nextRequestId();
@@ -157,6 +157,7 @@ export class LayoutCoordinator {
         weight: edge.riskContribution + edge.confidence,
       })),
       seedPositions: pinnedPositions,
+      zoneConstraints: zoneConstraintsFromLayout(zoneLayout.zones),
       settings:
         mode === 'full'
           ? defaultLayoutWorkerSettings

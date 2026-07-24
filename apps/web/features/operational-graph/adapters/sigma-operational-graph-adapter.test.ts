@@ -136,6 +136,43 @@ describe('SigmaOperationalGraphAdapter', () => {
     document.body.removeChild(container);
   });
 
+  it('fires the fog-of-war reveal when a node escalates between syncs', () => {
+    const snapshot = parseContract(graphSnapshotSchema, shellDataset.graphSnapshots[0]);
+    const normalNode = snapshot.nodes.find((node) => node.status === 'normal');
+    if (!normalNode) {
+      throw new Error('fixture needs a normal-status node');
+    }
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const adapter = new SigmaOperationalGraphAdapter(container);
+    const filterSet =
+      defaultGraphVisualState.filterSet as import('@aegis/graph-domain').GraphFilterSet;
+
+    const store = createGraphStore();
+    store.loadSnapshot(snapshot);
+    adapter.syncFromStore(store, filterSet, defaultGraphVisualState);
+    expect(adapter.getLastRevealedNodeIds()).toEqual([]);
+
+    const escalated = {
+      ...snapshot,
+      nodes: snapshot.nodes.map((node) =>
+        node.id === normalNode.id ? { ...node, status: 'compromised' as const } : node,
+      ),
+    };
+    const nextStore = createGraphStore();
+    nextStore.loadSnapshot(escalated);
+    adapter.syncFromStore(nextStore, filterSet, defaultGraphVisualState);
+    expect(adapter.getLastRevealedNodeIds()).toEqual([normalNode.id]);
+
+    // A third sync with no change must not re-fire the beat.
+    adapter.syncFromStore(nextStore, filterSet, defaultGraphVisualState);
+    expect(adapter.getLastRevealedNodeIds()).toEqual([]);
+
+    adapter.dispose();
+    document.body.removeChild(container);
+  });
+
   it('disposes sigma and clears graph on cleanup', () => {
     const container = document.createElement('div');
     container.style.width = '200px';
