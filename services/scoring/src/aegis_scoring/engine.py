@@ -32,7 +32,11 @@ from aegis_scoring.errors import ScoringError
 from aegis_scoring.facts import ScoringFacts
 from aegis_scoring.ids import new_runtime_id
 
-COMPLETED_STATUSES = frozenset({"completed", "complete", "finished", "ended"})
+# Terminal run statuses that are eligible for scoring. "stopped" (operator ended the
+# run early) is terminal and scoreable — the operator still gets a debrief — matching
+# lifecycle.finalize_stopped_run and the operator-profile assembler, which both treat a
+# stopped run as a completed engagement.
+COMPLETED_STATUSES = frozenset({"completed", "complete", "finished", "ended", "stopped"})
 
 
 def _canonical_items(items: Iterable[Any]) -> list[Any]:

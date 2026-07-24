@@ -174,6 +174,13 @@ def test_incomplete_run_fails_closed() -> None:
     assert exc.value.code == ScoreErrorCode.SCORE_INCOMPLETE_RUN
 
 
+def test_stopped_run_is_scoreable() -> None:
+    # An operator-stopped run is terminal and must still produce a score/debrief,
+    # matching lifecycle.finalize_stopped_run and the operator-profile assembler.
+    score = compute_run_score(_base_facts(run_status="stopped"))
+    assert score.overall_score >= 0
+
+
 def test_correct_rejection_earns_restraint_credit() -> None:
     facts = _base_facts(
         approvals=[
