@@ -83,6 +83,20 @@ def build_governing_map(manifest: ScenarioManifestV1) -> dict[str, GovernedAsset
                 continue
             condition_ids_by_asset.setdefault(asset_id, set()).add(condition.id)
 
+    # Kill-chain campaigns (Phase 1): an attacker technique compromises its anchor asset,
+    # which must stay under fog until detection/investigation reveals it — same machinery
+    # as hidden conditions, keyed by a synthetic ``campaign:<id>`` condition that no reveal
+    # event emits, so the asset is disclosed only once an alert references it. Statically
+    # resolvable anchors (``by_id``, and the campaign entry) are governed here; anchors that
+    # resolve at runtime over live edges are governed by the graph projection in Phase 3.
+    for campaign in manifest.campaigns:
+        synthetic_condition = f"campaign:{campaign.id}"
+        for anchor in [campaign.entry_anchor, *(t.anchor for t in campaign.techniques)]:
+            anchor_asset = anchor.asset_id if anchor.mode == "by_id" else None
+            if anchor_asset is None:
+                continue
+            condition_ids_by_asset.setdefault(str(anchor_asset), set()).add(synthetic_condition)
+
     return {
         asset_id: GovernedAsset(
             asset_id=asset_id,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from aegis_scenario_sdk.compatibility import is_platform_version_compatible
 from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
 from aegis_scenario_sdk.diagnostics import ValidationDiagnostic
@@ -163,6 +165,8 @@ def validate_semantics(manifest: ScenarioManifestV1) -> list[ValidationDiagnosti
                 )
             )
 
+    _validate_campaigns(manifest, diagnostics, track, asset_ids)
+
     for index, objective in enumerate(manifest.objectives):
         track(objective.id, f"objectives[{index}].id")
         local_ids.add(objective.id)
@@ -206,6 +210,117 @@ def validate_semantics(manifest: ScenarioManifestV1) -> list[ValidationDiagnosti
             diagnostics.append(media_issue)
 
     return diagnostics
+
+
+def _dangling(
+    diagnostics: list[ValidationDiagnostic],
+    *,
+    path: str,
+    message: str,
+    details: dict[str, object],
+) -> None:
+    diagnostics.append(
+        ValidationDiagnostic(
+            code=ScenarioErrorCode.DANGLING_REFERENCE,
+            path=path,
+            message=message,
+            details=details,
+        )
+    )
+
+
+def _validate_anchor(
+    diagnostics: list[ValidationDiagnostic],
+    anchor: object,
+    path: str,
+    asset_ids: set[str],
+) -> None:
+    from aegis_scenario_sdk.contracts.manifest import AnchorSelectorMode
+
+    mode = getattr(anchor, "mode", None)
+    asset_id = getattr(anchor, "asset_id", None)
+    from_asset_id = getattr(anchor, "from_asset_id", None)
+    relationship_type = getattr(anchor, "relationship_type", None)
+    if mode == AnchorSelectorMode.BY_ID and (asset_id is None or asset_id not in asset_ids):
+        _dangling(
+            diagnostics,
+            path=f"{path}.assetId",
+            message=f"Anchor by_id references unknown asset: {asset_id}",
+            details={"assetId": asset_id},
+        )
+    if mode == AnchorSelectorMode.ALONG_EDGE and relationship_type is None:
+        diagnostics.append(
+            ValidationDiagnostic(
+                code=ScenarioErrorCode.VALIDATION_FAILED,
+                path=f"{path}.relationshipType",
+                message="Anchor along_edge requires a relationshipType",
+                details={},
+            )
+        )
+    if from_asset_id is not None and from_asset_id not in asset_ids:
+        _dangling(
+            diagnostics,
+            path=f"{path}.fromAssetId",
+            message=f"Anchor fromAssetId references unknown asset: {from_asset_id}",
+            details={"fromAssetId": from_asset_id},
+        )
+
+
+def _validate_campaigns(
+    manifest: ScenarioManifestV1,
+    diagnostics: list[ValidationDiagnostic],
+    track: Callable[[str, str], None],
+    asset_ids: set[str],
+) -> None:
+    branch_ids = {branch.id for branch in manifest.branches}
+    for index, campaign in enumerate(manifest.campaigns):
+        track(campaign.id, f"campaigns[{index}].id")
+        if campaign.bound_branch_id not in branch_ids:
+            _dangling(
+                diagnostics,
+                path=f"campaigns[{index}].boundBranchId",
+                message=f"Campaign bound to unknown branch: {campaign.bound_branch_id}",
+                details={"boundBranchId": campaign.bound_branch_id},
+            )
+        _validate_anchor(
+            diagnostics, campaign.entry_anchor, f"campaigns[{index}].entryAnchor", asset_ids
+        )
+        technique_ids: set[str] = set()
+        for t_index, technique in enumerate(campaign.techniques):
+            t_path = f"campaigns[{index}].techniques[{t_index}]"
+            if technique.id in technique_ids:
+                _append_duplicate(diagnostics, path=f"{t_path}.id", identifier=technique.id)
+            technique_ids.add(technique.id)
+            _validate_anchor(diagnostics, technique.anchor, f"{t_path}.anchor", asset_ids)
+            for s_index, signal in enumerate(technique.signals):
+                _validate_plugin(diagnostics, signal.plugin, f"{t_path}.signals[{s_index}].plugin")
+        for r_index, reaction in enumerate(campaign.reactions):
+            r_path = f"campaigns[{index}].reactions[{r_index}]"
+            move = reaction.counter_move
+            if move.technique_id is not None and move.technique_id not in technique_ids:
+                _dangling(
+                    diagnostics,
+                    path=f"{r_path}.counterMove.techniqueId",
+                    message=f"Reaction references unknown technique: {move.technique_id}",
+                    details={"techniqueId": move.technique_id},
+                )
+            if move.asset_id is not None and move.asset_id not in asset_ids:
+                _dangling(
+                    diagnostics,
+                    path=f"{r_path}.counterMove.assetId",
+                    message=f"Reaction pivot references unknown asset: {move.asset_id}",
+                    details={"assetId": move.asset_id},
+                )
+            if reaction.precondition.asset_id is not None and (
+                reaction.precondition.asset_id not in asset_ids
+            ):
+                _dangling(
+                    diagnostics,
+                    path=f"{r_path}.precondition.assetId",
+                    message=f"Reaction precondition references unknown asset: "
+                    f"{reaction.precondition.asset_id}",
+                    details={"assetId": reaction.precondition.asset_id},
+                )
 
 
 def _validate_plugin(

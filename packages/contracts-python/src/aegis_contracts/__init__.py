@@ -191,6 +191,15 @@ from aegis_contracts.investigation import (
     TriggerWatchtowerRequestV1,
     WatchtowerTriageResultV1,
 )
+from aegis_contracts.killchain import (
+    KILLCHAIN_CAMPAIGN_ACTIVATED,
+    KILLCHAIN_CAMPAIGN_STALLED,
+    KILLCHAIN_EXFILTRATION_COMPLETED,
+    KILLCHAIN_REACTION_FIRED,
+    KILLCHAIN_TECHNIQUE_EXECUTED,
+    AttackTactic,
+    CampaignStatus,
+)
 from aegis_contracts.live_run import (
     ConnectionHealthSnapshotV1,
     ConnectionHealthState,
@@ -422,6 +431,13 @@ __all__ = [
     "ApprovalDecision",
     "ApprovalErrorCode",
     "ApprovalV1",
+    "AttackTactic",
+    "CampaignStatus",
+    "KILLCHAIN_CAMPAIGN_ACTIVATED",
+    "KILLCHAIN_CAMPAIGN_STALLED",
+    "KILLCHAIN_EXFILTRATION_COMPLETED",
+    "KILLCHAIN_REACTION_FIRED",
+    "KILLCHAIN_TECHNIQUE_EXECUTED",
     "ApproveProposalRequestV1",
     "ApproveProposalResponseV1",
     "AuthorizedSimulationCommandV1",

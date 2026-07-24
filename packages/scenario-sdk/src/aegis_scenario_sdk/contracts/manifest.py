@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import StrEnum
 from typing import Any
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 from aegis_contracts.graph import AssetType, NodeStatus, RelationshipType
+from aegis_contracts.killchain import AttackTactic
 from aegis_contracts.primitives import AssetId, ClusterId, EdgeId, ScenarioId, SimTimestamp
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -172,6 +174,141 @@ class MediaReferenceV1(BaseModel):
     description: str = ""
 
 
+class AnchorSelectorMode(StrEnum):
+    """How a kill-chain technique chooses the asset it targets (its *anchor*)."""
+
+    BY_ID = "by_id"
+    BY_ASSET_TYPE = "by_asset_type"
+    ALONG_EDGE = "along_edge"
+
+
+class EdgeDirection(StrEnum):
+    OUTBOUND = "outbound"
+    INBOUND = "inbound"
+
+
+class AnchorSelectorV1(BaseModel):
+    """Declarative rule selecting a technique's anchor asset.
+
+    ``by_id`` names an asset outright (entry, crown-jewel, egress). ``along_edge``
+    traverses a real relationship edge of ``relationship_type`` from the campaign's
+    current foothold (or ``from_asset_id`` when set) — the deterministic backbone of
+    lateral movement / privilege escalation over the org's true topology.
+    ``by_asset_type`` picks the lowest-id asset of a type (crown-jewel fallback).
+    """
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    mode: AnchorSelectorMode
+    asset_id: AssetId | None = Field(default=None, alias="assetId")
+    asset_type: AssetType | None = Field(default=None, alias="assetType")
+    relationship_type: RelationshipType | None = Field(
+        default=None, alias="relationshipType"
+    )
+    direction: EdgeDirection = EdgeDirection.OUTBOUND
+    from_asset_id: AssetId | None = Field(default=None, alias="fromAssetId")
+
+
+class TechniqueSignalTarget(StrEnum):
+    ANCHOR = "anchor"
+    FOOTHOLD = "foothold"
+
+
+class TechniqueSignalV1(BaseModel):
+    """A telemetry beat the technique emits so detection/investigation can catch it."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    plugin: BehaviorPluginConfigV1
+    target: TechniqueSignalTarget = TechniqueSignalTarget.ANCHOR
+
+
+class KillChainTechniqueV1(BaseModel):
+    """One ATT&CK technique (a tactic realized by a specific technique id)."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    id: ScenarioLocalId
+    tactic: AttackTactic
+    attack_technique_id: str = Field(alias="attackTechniqueId", min_length=1)
+    name: str = Field(min_length=1)
+    anchor: AnchorSelectorV1
+    dwell_sim_seconds: float = Field(alias="dwellSimSeconds", gt=0.0)
+    compromise_status: NodeStatus = Field(
+        default=NodeStatus.COMPROMISED, alias="compromiseStatus"
+    )
+    moves_foothold: bool = Field(default=True, alias="movesFoothold")
+    signals: list[TechniqueSignalV1] = Field(default_factory=list)
+    establishes: list[str] = Field(default_factory=list)
+
+
+class ReactionPreconditionType(StrEnum):
+    FOOTHOLD_ISOLATED = "foothold_isolated"
+    ASSET_STATUS_IS = "asset_status_is"
+    CAPABILITY_REVOKED = "capability_revoked"
+
+
+_DEFAULT_DISRUPTED_STATUSES = ("contained", "isolated", "quarantined")
+
+
+class ReactionPreconditionV1(BaseModel):
+    """A declarative predicate over world state that arms a scripted counter-move."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    type: ReactionPreconditionType
+    asset_id: AssetId | None = Field(default=None, alias="assetId")
+    statuses: list[str] = Field(
+        default_factory=lambda: list(_DEFAULT_DISRUPTED_STATUSES)
+    )
+    capability: str | None = None
+
+
+class ReactionCounterMoveType(StrEnum):
+    PIVOT_TO_ASSET = "pivot_to_asset"
+    ACTIVATE_TECHNIQUE = "activate_technique"
+    STALL = "stall"
+
+
+class ReactionCounterMoveV1(BaseModel):
+    """The scripted move an attacker makes when a precondition fires.
+
+    A counter may only use capability the attacker has already established in-world:
+    ``pivot_to_asset`` requires an already-compromised foothold; ``activate_technique``
+    a pre-declared persistence/backup technique (optionally gated on ``requires_capability``).
+    ``stall`` models running out of options — a defensive win.
+    """
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    type: ReactionCounterMoveType
+    asset_id: AssetId | None = Field(default=None, alias="assetId")
+    technique_id: ScenarioLocalId | None = Field(default=None, alias="techniqueId")
+    requires_capability: str | None = Field(default=None, alias="requiresCapability")
+
+
+class ReactionRuleV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    id: ScenarioLocalId
+    precondition: ReactionPreconditionV1
+    counter_move: ReactionCounterMoveV1 = Field(alias="counterMove")
+
+
+class KillChainCampaignV1(BaseModel):
+    """An ordered ATT&CK technique graph bound to a seed-selected root-cause branch."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    id: ScenarioLocalId
+    name: str = Field(min_length=1)
+    bound_branch_group: str = Field(alias="boundBranchGroup", min_length=1)
+    bound_branch_id: ScenarioLocalId = Field(alias="boundBranchId")
+    entry_anchor: AnchorSelectorV1 = Field(alias="entryAnchor")
+    techniques: list[KillChainTechniqueV1] = Field(min_length=1)
+    reactions: list[ReactionRuleV1] = Field(default_factory=list)
+
+
 class ScenarioManifestV1(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
@@ -189,6 +326,7 @@ class ScenarioManifestV1(BaseModel):
     )
     objectives: list[ObjectiveDefinitionV1] = Field(default_factory=list)
     branches: list[OutcomeBranchDefinitionV1] = Field(default_factory=list)
+    campaigns: list[KillChainCampaignV1] = Field(default_factory=list)
     scoring: ScoringDefinitionV1
     media: list[MediaReferenceV1] = Field(default_factory=list)
 

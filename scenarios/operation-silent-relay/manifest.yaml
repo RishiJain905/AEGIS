@@ -999,6 +999,140 @@ branches:
   outcomes:
   - targetRef: evt-consequence-remediate
     description: Fix deployment or credential root with moderate risk
+campaigns:
+- id: campaign-credentials-relay
+  name: Silent Relay — Credential Compromise Kill Chain
+  boundBranchGroup: root-cause
+  boundBranchId: branch-cause-credentials
+  entryAnchor:
+    mode: by_id
+    assetId: asset:identity-svc-logistics-bot
+  techniques:
+  - id: technique-initial-access
+    tactic: initial_access
+    attackTechniqueId: T1078
+    name: Valid Accounts
+    anchor:
+      mode: by_id
+      assetId: asset:identity-svc-logistics-bot
+    dwellSimSeconds: 75
+    compromiseStatus: compromised
+    movesFoothold: true
+    establishes:
+    - valid-account:logistics-bot
+    signals:
+    - target: anchor
+      plugin:
+        pluginId: telemetry.auth_attempt
+        config:
+          failureRate: 0.7
+          successRate: 0.3
+  - id: technique-lateral-identity
+    tactic: lateral_movement
+    attackTechniqueId: T1021
+    name: Remote Services
+    anchor:
+      mode: along_edge
+      relationshipType: AUTHENTICATED_TO
+      direction: outbound
+    dwellSimSeconds: 75
+    compromiseStatus: compromised
+    movesFoothold: true
+    signals:
+    - target: anchor
+      plugin:
+        pluginId: telemetry.auth_attempt
+        config:
+          failureRate: 0.2
+          successRate: 0.8
+  - id: technique-privilege-escalation
+    tactic: privilege_escalation
+    attackTechniqueId: T1078
+    name: Valid Accounts (Domain)
+    anchor:
+      mode: along_edge
+      relationshipType: ADMINISTERS
+      direction: outbound
+    dwellSimSeconds: 75
+    compromiseStatus: compromised
+    movesFoothold: true
+    establishes:
+    - backup-cred:svc-account-vault
+    signals:
+    - target: anchor
+      plugin:
+        pluginId: telemetry.auth_attempt
+        config:
+          failureRate: 0.15
+          successRate: 0.85
+  - id: technique-collection-pii
+    tactic: collection
+    attackTechniqueId: T1213
+    name: Data from Information Repositories
+    anchor:
+      mode: by_id
+      assetId: asset:database-customer-pii
+    dwellSimSeconds: 75
+    compromiseStatus: compromised
+    movesFoothold: false
+    signals:
+    - target: anchor
+      plugin:
+        pluginId: telemetry.database_query
+        config:
+          queriesPerInterval: 50
+          anomalyRate: 0.9
+  - id: technique-exfiltration
+    tactic: exfiltration
+    attackTechniqueId: T1041
+    name: Exfiltration Over C2 Channel
+    anchor:
+      mode: by_id
+      assetId: asset:svc-comms-gateway
+    dwellSimSeconds: 75
+    compromiseStatus: compromised
+    movesFoothold: false
+    signals:
+    - target: anchor
+      plugin:
+        pluginId: telemetry.network_flow
+        config:
+          bytesPerInterval: 131072
+          protocol: tcp
+  - id: technique-persistence-account
+    tactic: persistence
+    attackTechniqueId: T1136
+    name: Create Account
+    anchor:
+      mode: by_id
+      assetId: asset:svc-sso-broker
+    dwellSimSeconds: 120
+    compromiseStatus: compromised
+    movesFoothold: true
+  reactions:
+  - id: reaction-foothold-isolated
+    precondition:
+      type: foothold_isolated
+      statuses:
+      - contained
+      - isolated
+      - quarantined
+    counterMove:
+      type: pivot_to_asset
+      assetId: asset:identity-svc-logistics-bot
+  - id: reaction-credential-revoked
+    precondition:
+      type: capability_revoked
+      capability: backup-cred:svc-account-vault
+      assetId: asset:svc-service-account-vault
+      statuses:
+      - contained
+      - isolated
+      - revoked
+    counterMove:
+      type: activate_technique
+      techniqueId: technique-persistence-account
+      requiresCapability: backup-cred:svc-account-vault
 objectives:
 - id: objective-detect-cause
   label: Identify the true root cause

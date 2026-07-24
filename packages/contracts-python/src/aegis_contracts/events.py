@@ -105,6 +105,12 @@ class EventTypeRegistry:
         "sim.branch.selected": 1,
         "sim.hidden_condition.revealed": 1,
         "sim.hidden_condition.triggered": 1,
+        # Phase 1 game loop — attacker MITRE ATT&CK kill-chain engine.
+        "sim.killchain.campaign_activated": 1,
+        "sim.killchain.technique_executed": 1,
+        "sim.killchain.reaction_fired": 1,
+        "sim.killchain.exfiltration_completed": 1,
+        "sim.killchain.campaign_stalled": 1,
         "telemetry.authentication.failed": 1,
         "telemetry.authentication.succeeded": 1,
         "telemetry.api.request": 1,

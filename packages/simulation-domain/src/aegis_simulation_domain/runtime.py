@@ -6,6 +6,15 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
 from aegis_contracts import ActorRef, ActorType, DomainEventEnvelopeV1
+from aegis_contracts.killchain import (
+    KILLCHAIN_CAMPAIGN_ACTIVATED,
+    KILLCHAIN_CAMPAIGN_STALLED,
+    KILLCHAIN_EXFILTRATION_COMPLETED,
+    KILLCHAIN_REACTION_FIRED,
+    KILLCHAIN_TECHNIQUE_EXECUTED,
+    AttackTactic,
+    CampaignStatus,
+)
 from aegis_contracts.simulation import (
     RunConfigurationV1,
     ScheduledEventSourceType,
@@ -21,18 +30,39 @@ from aegis_contracts.versioning import (
     SIMULATION_CHECKPOINT_SCHEMA_VERSION,
 )
 from aegis_scenario_sdk.compatibility import is_platform_version_compatible
-from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
+from aegis_scenario_sdk.contracts.manifest import (
+    KillChainCampaignV1,
+    ReactionCounterMoveType,
+    ReactionRuleV1,
+    ScenarioManifestV1,
+    TechniqueSignalTarget,
+)
 
 from aegis_simulation_domain.clock import VirtualClock
 from aegis_simulation_domain.errors import SimulationError, SimulationErrorCode
 from aegis_simulation_domain.event_queue import DeterministicEventQueue
 from aegis_simulation_domain.handlers import execute_plugin
 from aegis_simulation_domain.ids import derive_checkpoint_id, derive_event_id, derive_trace_id
+from aegis_simulation_domain.killchain import (
+    counter_move_available,
+    find_campaign,
+    precondition_met,
+    resolve_anchor,
+    technique_index,
+)
 from aegis_simulation_domain.normalized_hash import checkpoint_checksum
 from aegis_simulation_domain.random_streams import SeededRandomStreams
-from aegis_simulation_domain.world_state import WorldState
+from aegis_simulation_domain.world_state import CampaignRuntimeState, WorldState
 
 SIMULATION_ENGINE_VERSION = "0.0.0-phase10"
+
+# Internal, engine-only scheduled-event plugin id: the attacker campaign enqueues these to
+# advance a technique on the sim clock. It is never authored in a manifest (so the plugin
+# registry / scenario validation never see it) — the runtime intercepts it before the
+# allowlisted-plugin dispatch. Priority sits between authored effects (<=4) and telemetry
+# generators (10) so an advance resolves deterministically against same-time telemetry.
+_KILLCHAIN_ADVANCE_PLUGIN = "killchain.advance"
+_KILLCHAIN_ADVANCE_PRIORITY = 5
 
 
 @dataclass
@@ -83,6 +113,7 @@ class SimulationRuntime:
         if scheduled is None:
             return []
         events = self._process_scheduled_event(scheduled)
+        events.extend(self._process_killchain_reactions())
         try:
             from aegis_observability.instrumentation import record_simulation_events
 
@@ -283,6 +314,11 @@ class SimulationRuntime:
             if selected != scheduled.branch_gate_branch_id:
                 return []
         self.clock.advance_to(scheduled.sim_time)
+        if scheduled.plugin_id == _KILLCHAIN_ADVANCE_PLUGIN:
+            advance_events = self._process_killchain_advance(scheduled)
+            advance_events.extend(self._process_hidden_condition_reveals())
+            advance_events.extend(self._maybe_activate_campaigns())
+            return advance_events
         generator = None
         if scheduled.source_type == ScheduledEventSourceType.GENERATOR:
             generator = self.world.generators.get(scheduled.event_id)
@@ -335,6 +371,7 @@ class SimulationRuntime:
                     target_asset_id=generator.target_asset_id,
                 )
             )
+        emitted.extend(self._maybe_activate_campaigns())
         return emitted
 
     def _process_hidden_condition_triggers(
@@ -397,6 +434,327 @@ class SimulationRuntime:
         for generator in self.world.generators.values():
             return generator.target_asset_id
         return None
+
+    # ------------------------------------------------------------------ #
+    # Attacker kill-chain engine (Phase 1)                                #
+    # ------------------------------------------------------------------ #
+
+    def _maybe_activate_campaigns(self) -> list[DomainEventEnvelopeV1]:
+        """Activate any campaign whose bound root-cause branch is now selected.
+
+        Idempotent: each campaign activates at most once (on the first step after its
+        branch is chosen). Campaign-free scenarios and unselected branches produce nothing,
+        so behaviour is byte-identical for everything except the seed that selects the
+        bound branch.
+        """
+        emitted: list[DomainEventEnvelopeV1] = []
+        for campaign in self.manifest.campaigns:
+            if campaign.id in self.world.campaigns:
+                continue
+            selected = self.world.selected_branches.get(campaign.bound_branch_group)
+            if selected != campaign.bound_branch_id:
+                continue
+            entry = resolve_anchor(
+                campaign.entry_anchor,
+                world=self.world,
+                foothold_id=None,
+                rng=self.rng,
+                stream_key=f"killchain.entry:{campaign.id}",
+            )
+            state = CampaignRuntimeState(
+                campaign_id=campaign.id,
+                status=CampaignStatus.ACTIVE.value,
+                active=True,
+                current_foothold_id=entry,
+            )
+            if entry is not None:
+                state.established_footholds.add(entry)
+            self.world.campaigns[campaign.id] = state
+            emitted.append(
+                self._killchain_event(
+                    KILLCHAIN_CAMPAIGN_ACTIVATED,
+                    entry,
+                    {
+                        "campaignId": campaign.id,
+                        "campaignName": campaign.name,
+                        "boundBranchId": campaign.bound_branch_id,
+                        "entryAssetId": entry,
+                    },
+                )
+            )
+            self._schedule_advance(state, campaign, 0, self.clock.sim_time)
+        return emitted
+
+    def _schedule_advance(
+        self,
+        state: CampaignRuntimeState,
+        campaign: KillChainCampaignV1,
+        index: int,
+        base_time: datetime,
+    ) -> None:
+        """Resolve technique ``index``'s anchor and queue its execution after its dwell.
+
+        Keeps exactly one advance in flight per campaign: if one is already queued this
+        only re-targets it (used by re-anchoring reactions), so the queue never accrues
+        duplicate advances.
+        """
+        state.next_technique_index = index
+        technique = campaign.techniques[index]
+        state.pending_anchor_id = resolve_anchor(
+            technique.anchor,
+            world=self.world,
+            foothold_id=state.current_foothold_id,
+            rng=self.rng,
+            stream_key=f"killchain.anchor:{campaign.id}:{index}",
+        )
+        if state.advance_pending:
+            return
+        state.advance_pending = True
+        state.schedule_seq += 1
+        sim_time = base_time + timedelta(seconds=technique.dwell_sim_seconds)
+        self.queue.enqueue(
+            ScheduledEventV1(
+                schema_version=SCHEDULED_EVENT_SCHEMA_VERSION,
+                event_id=f"killchain:{campaign.id}:{state.schedule_seq}",
+                sim_time=sim_time,
+                priority=_KILLCHAIN_ADVANCE_PRIORITY,
+                tie_breaker=0,
+                source_type=ScheduledEventSourceType.SCHEDULED,
+                plugin_id=_KILLCHAIN_ADVANCE_PLUGIN,
+                config={"campaignId": campaign.id, "techniqueIndex": index},
+            )
+        )
+
+    def _process_killchain_advance(
+        self, scheduled: ScheduledEventV1
+    ) -> list[DomainEventEnvelopeV1]:
+        """Execute the campaign's current technique and schedule the next one.
+
+        Emits the technique's attacker telemetry (so detection can catch it), a truth
+        ``technique_executed`` marker, and a ``sim.asset.status_changed`` compromising the
+        anchor; then walks the campaign forward — moving the foothold, banking established
+        capabilities, and resolving the next anchor over real edges — or resolving to
+        exfiltration success.
+        """
+        campaign_id = str(scheduled.config.get("campaignId", ""))
+        state = self.world.campaigns.get(campaign_id)
+        campaign = find_campaign(self.manifest.campaigns, campaign_id)
+        if state is None or campaign is None:
+            return []
+        state.advance_pending = False
+        if not state.active:
+            return []
+        index = state.next_technique_index
+        if index < 0 or index >= len(campaign.techniques):
+            state.active = False
+            return []
+        technique = campaign.techniques[index]
+        anchor_id = state.pending_anchor_id
+        emitted: list[DomainEventEnvelopeV1] = []
+
+        for signal in technique.signals:
+            target = (
+                anchor_id
+                if signal.target == TechniqueSignalTarget.ANCHOR
+                else state.current_foothold_id
+            )
+            result = execute_plugin(
+                plugin_id=signal.plugin.plugin_id,
+                config=dict(signal.plugin.config),
+                target_asset_id=target,
+                world=self.world,
+                run_id=self.run_id,
+                run_seed=self.configuration.seed,
+                sequence=self.world.next_sequence,
+                sim_time=self.clock.sim_time,
+                recorded_at_epoch=self.configuration.recorded_at_epoch,
+                rng=self.rng,
+                generator=None,
+                manifest=self.manifest,
+            )
+            for event in result.events:
+                self._record_event(event)
+                emitted.append(event)
+
+        emitted.append(
+            self._killchain_event(
+                KILLCHAIN_TECHNIQUE_EXECUTED,
+                anchor_id,
+                {
+                    "campaignId": campaign_id,
+                    "techniqueId": technique.id,
+                    "tactic": technique.tactic.value,
+                    "attackTechniqueId": technique.attack_technique_id,
+                    "techniqueName": technique.name,
+                    "anchorAssetId": anchor_id,
+                    "status": technique.compromise_status.value,
+                },
+            )
+        )
+
+        if anchor_id is not None:
+            asset = self.world.assets.get(anchor_id)
+            if asset is not None:
+                asset.status = technique.compromise_status.value
+                asset.revision += 1
+            emitted.append(
+                self._killchain_event(
+                    "sim.asset.status_changed",
+                    anchor_id,
+                    {"assetId": anchor_id, "status": technique.compromise_status.value},
+                )
+            )
+
+        state.completed_technique_ids.append(technique.id)
+        if anchor_id is not None:
+            state.established_footholds.add(anchor_id)
+        for capability in technique.establishes:
+            state.established_capabilities.add(capability)
+        if technique.moves_foothold and anchor_id is not None:
+            state.current_foothold_id = anchor_id
+
+        if technique.tactic == AttackTactic.EXFILTRATION:
+            state.active = False
+            state.status = CampaignStatus.SUCCEEDED.value
+            emitted.append(
+                self._killchain_event(
+                    KILLCHAIN_EXFILTRATION_COMPLETED,
+                    anchor_id,
+                    {
+                        "campaignId": campaign_id,
+                        "techniqueId": technique.id,
+                        "anchorAssetId": anchor_id,
+                    },
+                )
+            )
+            return emitted
+
+        next_index = index + 1
+        if next_index < len(campaign.techniques):
+            self._schedule_advance(state, campaign, next_index, self.clock.sim_time)
+        else:
+            state.active = False
+        return emitted
+
+    def _process_killchain_reactions(self) -> list[DomainEventEnvelopeV1]:
+        """Evaluate each active campaign's reaction rules against current world state.
+
+        Deterministic and fire-once per rule. In an undisrupted run no precondition holds,
+        so nothing fires and the event stream is exactly the base attacker plan. This is
+        the hook Phase 2 drives from real operator/AI actions; Phase 1 proves it by
+        mutating world state in a test and stepping.
+        """
+        emitted: list[DomainEventEnvelopeV1] = []
+        for campaign_id in sorted(self.world.campaigns):
+            state = self.world.campaigns[campaign_id]
+            if not state.active:
+                continue
+            campaign = find_campaign(self.manifest.campaigns, campaign_id)
+            if campaign is None:
+                continue
+            for reaction in campaign.reactions:
+                if reaction.id in state.fired_reaction_ids:
+                    continue
+                if not precondition_met(
+                    reaction.precondition, world=self.world, state=state
+                ):
+                    continue
+                state.fired_reaction_ids.add(reaction.id)
+                emitted.extend(self._apply_counter_move(campaign, state, reaction))
+        return emitted
+
+    def _apply_counter_move(
+        self,
+        campaign: KillChainCampaignV1,
+        state: CampaignRuntimeState,
+        reaction: ReactionRuleV1,
+    ) -> list[DomainEventEnvelopeV1]:
+        move = reaction.counter_move
+        available = counter_move_available(move, campaign=campaign, state=state)
+        emitted: list[DomainEventEnvelopeV1] = []
+        outcome = "stalled"
+        if not available or move.type == ReactionCounterMoveType.STALL:
+            state.active = False
+            state.status = CampaignStatus.STALLED.value
+        elif move.type == ReactionCounterMoveType.PIVOT_TO_ASSET:
+            state.current_foothold_id = str(move.asset_id)
+            index = state.next_technique_index
+            if 0 <= index < len(campaign.techniques):
+                if state.advance_pending:
+                    technique = campaign.techniques[index]
+                    state.pending_anchor_id = resolve_anchor(
+                        technique.anchor,
+                        world=self.world,
+                        foothold_id=state.current_foothold_id,
+                        rng=self.rng,
+                        stream_key=f"killchain.anchor:{campaign.id}:{index}",
+                    )
+                else:
+                    self._schedule_advance(state, campaign, index, self.clock.sim_time)
+            outcome = "pivoted"
+        elif move.type == ReactionCounterMoveType.ACTIVATE_TECHNIQUE:
+            activate_index = technique_index(campaign, str(move.technique_id))
+            if activate_index is not None:
+                self._schedule_advance(state, campaign, activate_index, self.clock.sim_time)
+                outcome = "activated_technique"
+            else:
+                state.active = False
+                state.status = CampaignStatus.STALLED.value
+
+        emitted.append(
+            self._killchain_event(
+                KILLCHAIN_REACTION_FIRED,
+                state.current_foothold_id,
+                {
+                    "campaignId": campaign.id,
+                    "reactionId": reaction.id,
+                    "precondition": reaction.precondition.type.value,
+                    "counterMove": move.type.value,
+                    "outcome": outcome,
+                },
+            )
+        )
+        if outcome == "stalled":
+            emitted.append(
+                self._killchain_event(
+                    KILLCHAIN_CAMPAIGN_STALLED,
+                    state.current_foothold_id,
+                    {"campaignId": campaign.id, "reactionId": reaction.id},
+                )
+            )
+        return emitted
+
+    def _killchain_event(
+        self,
+        event_type: str,
+        subject_asset_id: str | None,
+        payload: dict[str, object],
+    ) -> DomainEventEnvelopeV1:
+        """Build + record a kill-chain domain event (attacker actor, asset subject)."""
+        sequence = self.world.next_sequence
+        if subject_asset_id:
+            subject = ActorRef(type=ActorType.ASSET, id=subject_asset_id)
+        else:
+            subject = ActorRef(type=ActorType.SYSTEM, id="asset:simulation-engine")
+        event = DomainEventEnvelopeV1(
+            event_id=derive_event_id(
+                run_seed=self.configuration.seed,
+                sequence=sequence,
+                event_type=event_type,
+            ),
+            run_id=self.run_id,
+            sequence=sequence,
+            type=event_type,
+            schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
+            sim_time=self.clock.sim_time,
+            recorded_at=self.configuration.recorded_at_epoch + timedelta(milliseconds=sequence),
+            actor=ActorRef(type=ActorType.SYSTEM, id="asset:simulation-engine"),
+            subject=subject,
+            payload={"schemaVersion": 1, **payload},
+            trace_id=derive_trace_id(run_seed=self.configuration.seed, sequence=sequence),
+        )
+        self._record_event(event)
+        return event
 
     def _record_event(self, event: DomainEventEnvelopeV1) -> None:
         self.events.append(event)

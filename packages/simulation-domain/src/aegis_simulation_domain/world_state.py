@@ -68,6 +68,41 @@ class HiddenConditionState:
 
 
 @dataclass
+class CampaignRuntimeState:
+    """In-world progression of an active attacker kill-chain campaign.
+
+    Held on ``WorldState`` and mutated deterministically by the runtime as techniques
+    advance on the sim clock. Progression is a pure function of (seed, world state,
+    action sequence), so a fresh run at the same seed reproduces it exactly and
+    ``deepcopy`` (ghost/counterfactual clones) carries it faithfully.
+
+    NOTE (Phase 1 scope): this is intentionally NOT serialized into the cross-language
+    ``WorldStateSnapshotV1``. Checkpoint/restore therefore does not round-trip campaign
+    progression yet — a documented Phase 2 handoff (Phase 2 owns run resolution and the
+    persistence surface). It is unaffected for campaign-free scenarios, so restart
+    recovery of the shipped fixtures is unchanged.
+    """
+
+    campaign_id: str
+    status: str  # aegis_contracts.CampaignStatus value
+    active: bool = True
+    current_foothold_id: str | None = None
+    established_footholds: set[str] = field(default_factory=set)
+    established_capabilities: set[str] = field(default_factory=set)
+    completed_technique_ids: list[str] = field(default_factory=list)
+    # Index of the technique currently scheduled to execute next.
+    next_technique_index: int = 0
+    # Anchor asset resolved for the currently scheduled advance (resolved at schedule time).
+    pending_anchor_id: str | None = None
+    fired_reaction_ids: set[str] = field(default_factory=set)
+    # Monotonic counter making each scheduled advance's event id unique + deterministic.
+    schedule_seq: int = 0
+    # Whether exactly one advance is already queued (keeps re-anchoring reactions from
+    # enqueuing duplicate advances).
+    advance_pending: bool = False
+
+
+@dataclass
 class WorldState:
     status: SimulationRunStatus = SimulationRunStatus.CREATED
     assets: dict[str, AssetState] = field(default_factory=dict)
@@ -75,6 +110,7 @@ class WorldState:
     generators: dict[str, GeneratorState] = field(default_factory=dict)
     hidden_conditions: dict[str, HiddenConditionState] = field(default_factory=dict)
     selected_branches: dict[str, str] = field(default_factory=dict)
+    campaigns: dict[str, CampaignRuntimeState] = field(default_factory=dict)
     next_sequence: int = 1
 
     @classmethod
