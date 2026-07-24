@@ -1,9 +1,7 @@
 import type { DomainEventEnvelopeV1 } from '@aegis/contracts-ts';
 import { domainEventEnvelopeSchema, parseContract } from '@aegis/contracts-ts';
 
-function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
-}
+import { apiFetch } from '@/lib/api/auth-fetch';
 
 export async function fetchRunEvents(
   runId: string,
@@ -14,12 +12,9 @@ export async function fetchRunEvents(
     from_sequence: String(fromSequence),
     limit: '500',
   });
-  const response = await fetch(
-    `${getApiBaseUrl()}/api/v1/realtime/runs/${runId}/events?${params.toString()}`,
-    {
-      signal,
-      headers: { Accept: 'application/json' },
-    },
+  const response = await apiFetch(
+    `/api/v1/realtime/runs/${runId}/events?${params.toString()}`,
+    { signal },
   );
   if (!response.ok) {
     throw new Error(`Failed to fetch run events: ${String(response.status)}`);
