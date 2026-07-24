@@ -107,7 +107,11 @@ services:
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
       # A local reasoning model can take tens of seconds per turn; give agent tasks
       # generous headroom (they still fail soft past this, shown in the chat).
-      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-180}
+      # The local 27B reasoning model needs 30-90s+ per turn; the provider request
+      # timeout must exceed a real turn or valid generations get cancelled (default 60s).
+      AEGIS_PROVIDER_TIMEOUT_SECONDS: ${AEGIS_PROVIDER_TIMEOUT_SECONDS:-200}
+      AEGIS_PROVIDER_MAX_OUTPUT_TOKENS: ${AEGIS_PROVIDER_MAX_OUTPUT_TOKENS:-4096}
+      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-240}
     ports:
       - '${API_PORT:-8000}:8000'
     depends_on:
@@ -183,7 +187,11 @@ services:
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
       AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
-      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-180}
+      # The local 27B reasoning model needs 30-90s+ per turn; the provider request
+      # timeout must exceed a real turn or valid generations get cancelled (default 60s).
+      AEGIS_PROVIDER_TIMEOUT_SECONDS: ${AEGIS_PROVIDER_TIMEOUT_SECONDS:-200}
+      AEGIS_PROVIDER_MAX_OUTPUT_TOKENS: ${AEGIS_PROVIDER_MAX_OUTPUT_TOKENS:-4096}
+      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-240}
     depends_on:
       postgres:
         condition: service_healthy
@@ -233,7 +241,11 @@ services:
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
       AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
-      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-180}
+      # The local 27B reasoning model needs 30-90s+ per turn; the provider request
+      # timeout must exceed a real turn or valid generations get cancelled (default 60s).
+      AEGIS_PROVIDER_TIMEOUT_SECONDS: ${AEGIS_PROVIDER_TIMEOUT_SECONDS:-200}
+      AEGIS_PROVIDER_MAX_OUTPUT_TOKENS: ${AEGIS_PROVIDER_MAX_OUTPUT_TOKENS:-4096}
+      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-240}
     depends_on:
       postgres:
         condition: service_healthy
