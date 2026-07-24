@@ -87,9 +87,26 @@ The game needs to be *felt*: a persistent **objective/status bar** on the run pa
 5. **Scenario authoring**: silent-relay's 4 campaigns + training's tutorial chain.
 6. Cohesion pass: dossier/ghost/replay reflect the kill chain and outcome; full Chrome playthrough of a real win and a real loss.
 
-## Open design choices for owner sign-off
+## Locked decisions (owner, 2026-07-24)
 
-1. **Kill-chain granularity** — the 5-stage model above, or richer (MITRE-ATT&CK-style with more techniques)? Recommend the 5-stage model first; deepen later.
-2. **Attacker adaptiveness** — deterministic fallback-to-another-foothold (recommended, keeps replays valid) vs a smarter scripted response to your actions. Both stay non-LLM.
-3. **Loss on over-containment** — how punishing? Recommend: over-containment heavily penalizes score and can turn a "contained" into a costly win or a loss if critical services die, so proportionality matters (matches the existing scoring intent).
-4. **Where the objective/pressure bar lives** — top status strip (recommended) vs its own panel.
+1. **MITRE ATT&CK technique-level depth.** Each kill-chain stage is a real ATT&CK *tactic*, realized by a specific *technique* with its ID, e.g.: Initial Access → T1566 Phishing / T1078 Valid Accounts; Execution/Persistence as applicable; Lateral Movement → T1021 Remote Services / T1550 Use Alt Auth Material; Privilege Escalation → T1078 Valid Accounts / T1068 Exploitation; Collection → T1213 Data from Info Repositories / T1005 Local Data; Exfiltration → T1041 Exfil over C2 / T1567 Exfil over Web. Each technique defines: the telemetry/signals it emits (so detection + investigation can catch it), the asset/edge type it targets, and its dwell. Scenarios author a **technique graph** per root-cause campaign. Detection rules + investigation reveal map to techniques (you're identifying *what* the attacker did, ATT&CK-style).
+2. **Smarter scripted-reactive attacker** — still fully non-LLM and deterministic. See determinism model below.
+3. **Proportionality matters** — over-containment heavily penalizes score and can turn a "contained" into a costly win, or a LOSS if critical services are crippled. The real blue-team judgment: stop the threat without destroying the org.
+4. **Objective/exfil-pressure in the top status strip** — extend the existing run header (seed / threat-tempo / RoE) with objective, attacker known-stage/technique, contained-vs-active, and an exfil countdown when imminent.
+
+## Determinism model for a *reactive* attacker (the subtle part)
+
+A reactive attacker must stay seed-deterministic so golden replays and RNG-per-run hold. The reactions are **scripted, not intelligent**: the attacker's next move is a **pure function of (seed, current world state, the ordered set of operator/AI actions taken so far)** — never wall-clock, never RNG outside the seeded stream, never an LLM.
+
+- Each technique/campaign defines **response rules**: preconditions (e.g. "current foothold isolated", "abused credential revoked", "process killed") → a scripted counter-move (activate a pre-planted persistence technique T1547, pivot to a backup credential T1078 established earlier, re-establish from a still-compromised asset, or — if no counter is available — stall/fail). These are authored in the scenario, evaluated deterministically by the engine.
+- Because a reaction is a pure function of the action sequence + world state, **replay is deterministic**: replaying the same run (same seed + same recorded action events) reproduces the identical attacker reactions. Golden replays that take no operator actions exercise the base plan (no reactions fire) and stay valid; action-driven golden fixtures pin a fixed action sequence.
+- The attacker can only counter using capabilities it has **already deterministically established** in-world (a planted persistence, a stolen backup credential, another compromised asset) — no teleporting, no omniscience. Cutting off every established capability before exfil = contained = win. This is the "race to sever every path" tension, with the attacker fighting back within fixed, replayable rules.
+
+## Build order (each phase its own gate; see Phasing above, refined)
+
+P1 **Engine core**: MITRE technique/tactic model + campaign (technique graph) definitions; clock advancement along real edges; deterministic base progression; the **reaction-rule framework** + 2-3 example reactions; fog-respecting events; golden replays updated with explanation. (opus-max, deterministic-critical.)
+P2 **Action→disruption + reactions live**: response actions disrupt techniques; scripted counter-moves fire deterministically; win/lose + proportionality resolution + outcome on the run.
+P3 **Kill-chain/technique state in the operator-facing graph projection** (fog-respecting) — feeds the 2D/3D revamps.
+P4 **Objective/exfil-pressure top-strip UI** + win/lose moment; blast-radius extended to attacker-path preview; inspect-asset + kill-process/block-IP verbs.
+P5 **Scenario authoring**: silent-relay's 4 ATT&CK campaigns; **synthetic-training's one simple, fully-taught kill chain** wired to the guided walkthrough so the tutorial teaches the real loop end to end.
+P6 Cohesion: dossier/ghost/replay/scoring reflect techniques + outcome; full Chrome playthrough of a real WIN and a real LOSS, and a full tutorial run.
