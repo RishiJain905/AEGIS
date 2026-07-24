@@ -16,22 +16,60 @@ import {
 } from '@/features/operational-graph/semantic/edge-activity';
 import type { EdgeFlowProfile } from '@/features/operational-graph/semantic/graph-semantic-styles';
 
-import type { SceneEdge, SceneNode } from '../contracts';
+import type { SceneEdge, SceneNode, SceneZone } from '../contracts';
 import type { CameraBookmark3D } from '../contracts/camera-bookmark-3d';
 import { RenderQualityTier, type RenderQualityTierValue } from '../contracts/render-quality-tier';
 import { dprForTier } from '../lib/capability';
-import { getGlyphTexture } from '../lib/glyph-textures';
-import { applyInstancedNodeAttributes, nodeRadius } from '../lib/instanced-node-attributes';
+import { edgeArcKind, edgeArcPoints, type EdgeArcKind } from '../lib/edge-curves';
+import {
+  applyInstancedNodeAttributes,
+  applyPylonAttributes,
+  nodeRadius,
+} from '../lib/instanced-node-attributes';
 import {
   getSceneFrameloop,
   getSceneQualityProfile,
   type SceneQualityProfile,
 } from '../lib/scene-quality';
 import { resolveThreeColor } from '../lib/three-color';
+import { getZoneLabelTexture } from '../lib/zone-label-texture';
 import { RISK_HALO_FRAGMENT, RISK_HALO_VERTEX } from '../shaders/risk-halo';
 
 /**
- * §7.1 per-instance emissive tint: three's standard/physical materials only
+ * The bastion ring — AEGIS's operations theater. The org renders as a ring of
+ * sector platforms floating in a void: assets are typed crystalline
+ * structures anchored to their platform by light pylons, criticality reads as
+ * skyline height, and cross-zone traffic arcs over the dark interior. Threat
+ * state owns the light: fog-of-war assets sit dark and calm, detection
+ * ignites them, containment visibly severs them.
+ */
+
+const VOID_BG = '#04060b';
+const FOG_COLOR = '#070a13';
+
+const ALERT_RIM: Record<SceneZone['alertLevel'], string> = {
+  calm: '#31435e',
+  guarded: '#9aa8ff',
+  elevated: '#f1c257',
+  critical: '#ff7078',
+};
+
+const ALERT_RIM_OPACITY: Record<SceneZone['alertLevel'], number> = {
+  calm: 0.5,
+  guarded: 0.85,
+  elevated: 0.95,
+  critical: 1,
+};
+
+const STATUS_TINTS: Record<string, string> = {
+  suspicious: '#f1c257',
+  under_investigation: '#68d0ee',
+  contained: '#9aa8ff',
+  compromised: '#ff7078',
+};
+
+/**
+ * Per-instance emissive tint: three's standard/physical materials only
  * support a uniform emissive, so we inject a per-instance emissive attribute
  * (local, reviewed GLSL snippets — no remote shader loading). The attribute is
  * uploaded only when the node set changes; nothing per-frame.
@@ -56,7 +94,119 @@ function injectInstanceEmissive(shader: { vertexShader: string; fragmentShader: 
 
 const instanceEmissiveCacheKey = () => 'aegis-instance-emissive';
 
-function InstancedNodes({
+/** Stable render order for the typed structure groups. */
+const GLYPH_ORDER: ReadonlyArray<SceneNode['glyphShape']> = [
+  'circle',
+  'square',
+  'hexagon',
+  'diamond',
+  'triangle',
+];
+
+/** The 2D glyph language extruded into silhouettes: circle→gem, square→slab,
+ * hexagon→prism, diamond→octahedron, triangle→pyramid. */
+function TypedGeometry({
+  shape,
+  profile,
+}: {
+  shape: SceneNode['glyphShape'];
+  profile: SceneQualityProfile;
+}) {
+  const detail = profile.nodeSegments >= 20 ? 2 : 1;
+  switch (shape) {
+    case 'square':
+      return <boxGeometry args={[1.5, 1.5, 1.5]} />;
+    case 'hexagon':
+      return <cylinderGeometry args={[0.95, 0.95, 1.35, 6]} />;
+    case 'diamond':
+      return <octahedronGeometry args={[1.15, 0]} />;
+    case 'triangle':
+      return <coneGeometry args={[1.05, 1.7, 4]} />;
+    case 'circle':
+      return <icosahedronGeometry args={[1, detail]} />;
+    default: {
+      const _exhaustive: never = shape;
+      throw new Error(`Unhandled glyph shape: ${String(_exhaustive)}`);
+    }
+  }
+}
+
+function TypedNodeInstances({
+  shape,
+  nodes,
+  profile,
+  onSelect,
+  onHover,
+}: {
+  shape: SceneNode['glyphShape'];
+  nodes: SceneNode[];
+  profile: SceneQualityProfile;
+  onSelect: (nodeId: string) => void;
+  onHover: (nodeId: string | null) => void;
+}) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  useEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh) {
+      return;
+    }
+    applyInstancedNodeAttributes(mesh, nodes);
+  }, [nodes]);
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[undefined, undefined, Math.max(nodes.length, 1)]}
+      castShadow={profile.shadows}
+      receiveShadow={profile.shadows}
+      onClick={(event) => {
+        event.stopPropagation();
+        const index = event.instanceId;
+        if (typeof index === 'number' && nodes[index]) {
+          onSelect(nodes[index].id);
+        }
+      }}
+      onPointerOver={(event) => {
+        event.stopPropagation();
+        const index = event.instanceId;
+        if (typeof index === 'number' && nodes[index]) {
+          onHover(nodes[index].id);
+        }
+      }}
+      onPointerOut={() => {
+        onHover(null);
+      }}
+    >
+      <TypedGeometry shape={shape} profile={profile} />
+      {/* No `vertexColors` on these materials: per-instance tinting rides on
+          setColorAt()'s instanceColor (USE_INSTANCING_COLOR). `vertexColors`
+          additionally defines USE_COLOR, whose per-vertex `color` attribute
+          this geometry never provides — the unbound attribute reads
+          (0, 0, 0) on ANGLE and multiplies every instance color to black. */}
+      {profile.material === 'physical' ? (
+        <meshPhysicalMaterial
+          roughness={0.32}
+          metalness={0.22}
+          clearcoat={0.7}
+          clearcoatRoughness={0.28}
+          onBeforeCompile={injectInstanceEmissive}
+          customProgramCacheKey={instanceEmissiveCacheKey}
+        />
+      ) : (
+        <meshStandardMaterial
+          roughness={0.46}
+          metalness={0.14}
+          onBeforeCompile={injectInstanceEmissive}
+          customProgramCacheKey={instanceEmissiveCacheKey}
+        />
+      )}
+    </instancedMesh>
+  );
+}
+
+/** The city itself: one instanced mesh per structure silhouette. */
+function NodeCity({
   nodes,
   profile,
   onSelect,
@@ -67,124 +217,182 @@ function InstancedNodes({
   onSelect: (nodeId: string) => void;
   onHover: (nodeId: string | null) => void;
 }) {
+  const groups = useMemo(() => {
+    const byShape = new Map<SceneNode['glyphShape'], SceneNode[]>();
+    for (const node of nodes) {
+      const bucket = byShape.get(node.glyphShape);
+      if (bucket) {
+        bucket.push(node);
+      } else {
+        byShape.set(node.glyphShape, [node]);
+      }
+    }
+    return GLYPH_ORDER.filter((shape) => byShape.has(shape)).map((shape) => ({
+      shape,
+      members: byShape.get(shape) ?? [],
+    }));
+  }, [nodes]);
+
+  return (
+    <group>
+      {groups.map(({ shape, members }) => (
+        <TypedNodeInstances
+          key={shape}
+          shape={shape}
+          nodes={members}
+          profile={profile}
+          onSelect={onSelect}
+          onHover={onHover}
+        />
+      ))}
+    </group>
+  );
+}
+
+/** Light pylons anchoring every structure to its platform. */
+function NodePylons({ nodes }: { nodes: SceneNode[] }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const colorCoatRef = useRef<THREE.InstancedMesh>(null);
 
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) {
       return;
     }
-    applyInstancedNodeAttributes(mesh, colorCoatRef.current, nodes);
+    applyPylonAttributes(mesh, nodes);
   }, [nodes]);
 
   return (
-    <group>
-      <instancedMesh
-        ref={meshRef}
-        args={[undefined, undefined, Math.max(nodes.length, 1)]}
-        castShadow={profile.shadows}
-        receiveShadow={profile.shadows}
-        onClick={(event) => {
-          event.stopPropagation();
-          const index = event.instanceId;
-          if (typeof index === 'number' && nodes[index]) {
-            onSelect(nodes[index].id);
-          }
-        }}
-        onPointerOver={(event) => {
-          event.stopPropagation();
-          const index = event.instanceId;
-          if (typeof index === 'number' && nodes[index]) {
-            onHover(nodes[index].id);
-          }
-        }}
-        onPointerOut={() => {
-          onHover(null);
-        }}
-      >
-        <icosahedronGeometry
-          args={[1, profile.nodeSegments >= 20 ? 3 : profile.nodeSegments >= 14 ? 2 : 1]}
-        />
-        {/* No `vertexColors` on these materials: per-instance tinting rides on
-            setColorAt()'s instanceColor (USE_INSTANCING_COLOR). `vertexColors`
-            additionally defines USE_COLOR, whose per-vertex `color` attribute
-            this geometry never provides — the unbound attribute reads
-            (0, 0, 0) on ANGLE and multiplies every instance color to black. */}
-        {profile.material === 'physical' ? (
-          <meshPhysicalMaterial
-            roughness={0.36}
-            metalness={0.18}
-            clearcoat={0.68}
-            clearcoatRoughness={0.3}
-            onBeforeCompile={injectInstanceEmissive}
-            customProgramCacheKey={instanceEmissiveCacheKey}
-          />
-        ) : (
-          <meshStandardMaterial
-            roughness={0.48}
-            metalness={0.12}
-            onBeforeCompile={injectInstanceEmissive}
-            customProgramCacheKey={instanceEmissiveCacheKey}
-          />
-        )}
-      </instancedMesh>
-      {profile.glow ? (
-        <instancedMesh
-          ref={colorCoatRef}
-          args={[undefined, undefined, Math.max(nodes.length, 1)]}
-          raycast={() => undefined}
-        >
-          <icosahedronGeometry
-            args={[1, profile.nodeSegments >= 20 ? 3 : profile.nodeSegments >= 14 ? 2 : 1]}
-          />
-          <meshBasicMaterial
-            transparent
-            opacity={0.24}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </instancedMesh>
-      ) : null}
-    </group>
+    <instancedMesh
+      ref={meshRef}
+      args={[undefined, undefined, Math.max(nodes.length, 1)]}
+      raycast={() => undefined}
+    >
+      <boxGeometry args={[1, 1, 1]} />
+      <meshBasicMaterial
+        transparent
+        opacity={0.55}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </instancedMesh>
   );
 }
 
-/** §7.2 billboard type glyphs: always-camera-facing sprites reusing the exact
- * 2D shape language (shared `drawShape` painter). Static — no per-frame work
- * beyond three's sprite billboarding. */
-function NodeGlyphs({ nodes }: { nodes: SceneNode[] }) {
-  const glyphs = useMemo(
-    () =>
-      nodes
-        .map((node) => ({ node, texture: getGlyphTexture(node.glyphShape) }))
-        .filter((entry): entry is { node: SceneNode; texture: THREE.CanvasTexture } =>
-          Boolean(entry.texture),
-        ),
-    [nodes],
-  );
+function circlePoints(radius: number, y: number, segments = 64): THREE.Vector3[] {
+  const points: THREE.Vector3[] = [];
+  for (let index = 0; index <= segments; index += 1) {
+    const angle = (index / segments) * Math.PI * 2;
+    points.push(new THREE.Vector3(Math.cos(angle) * radius, y, Math.sin(angle) * radius));
+  }
+  return points;
+}
+
+function ZoneRim({
+  zone,
+  reducedMotion,
+}: {
+  zone: SceneZone;
+  reducedMotion: boolean;
+}) {
+  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
+  const baseOpacity = ALERT_RIM_OPACITY[zone.alertLevel];
+  const pulses = !reducedMotion && zone.alertLevel === 'critical';
+
+  useFrame(() => {
+    const material = materialRef.current;
+    if (!material || !pulses) {
+      return;
+    }
+    material.opacity = baseOpacity * (0.72 + 0.28 * Math.sin(getGraphAnimationTime() * 3.1));
+  });
 
   return (
+    <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.4, 0]}>
+      <torusGeometry args={[zone.radius + 1.5, 1, 8, 72]} />
+      <meshBasicMaterial
+        ref={materialRef}
+        color={resolveThreeColor(ALERT_RIM[zone.alertLevel]).color}
+        transparent
+        opacity={baseOpacity}
+        toneMapped={false}
+        depthWrite={false}
+      />
+    </mesh>
+  );
+}
+
+/** Sector platforms: disc, alert rim, band etchings, nameplate. */
+function ZonePlatforms({
+  zones,
+  profile,
+  reducedMotion,
+}: {
+  zones: SceneZone[];
+  profile: SceneQualityProfile;
+  reducedMotion: boolean;
+}) {
+  return (
     <group>
-      {glyphs.map(({ node, texture }) => {
-        const scale = nodeRadius(node) * 0.85;
+      {zones.map((zone) => {
+        const labelTexture = getZoneLabelTexture(
+          zone.label,
+          zone.alertLevel === 'calm' ? '#c9d4e8' : ALERT_RIM[zone.alertLevel],
+        );
+        const outward =
+          zone.center.x === 0 && zone.center.z === 0
+            ? { x: 0, z: 1 }
+            : { x: Math.cos(zone.angle), z: Math.sin(zone.angle) };
         return (
-          <sprite
-            key={`glyph-${node.id}`}
-            position={[node.position.x, node.position.y, node.position.z]}
-            scale={[scale, scale, 1]}
-            renderOrder={12}
-          >
-            <spriteMaterial
-              map={texture}
-              transparent
-              opacity={node.dimmed ? 0.18 : 0.9}
-              depthTest={false}
-              depthWrite={false}
-              toneMapped={false}
-            />
-          </sprite>
+          <group key={zone.id} position={[zone.center.x, 0, zone.center.z]}>
+            <mesh position={[0, -3.2, 0]} receiveShadow={profile.shadows}>
+              <cylinderGeometry args={[zone.radius, zone.radius * 1.05, 6, 48]} />
+              <meshStandardMaterial
+                color={resolveThreeColor('#0e121b').color}
+                roughness={0.86}
+                metalness={0.32}
+                emissive={resolveThreeColor('#0d1220').color}
+                emissiveIntensity={0.85}
+              />
+            </mesh>
+            <ZoneRim zone={zone} reducedMotion={reducedMotion} />
+            {[0.3, 0.66, 0.94].map((fraction) => (
+              <Line
+                key={fraction}
+                points={circlePoints(zone.radius * fraction, 0.3)}
+                color={resolveThreeColor('#1c2434').color}
+                lineWidth={0.8}
+                transparent
+                opacity={0.85}
+                depthWrite={false}
+                toneMapped={false}
+              />
+            ))}
+            {labelTexture ? (
+              <sprite
+                position={[outward.x * (zone.radius + 18), 26, outward.z * (zone.radius + 18)]}
+                scale={[110, 20.6, 1]}
+                renderOrder={11}
+              >
+                <spriteMaterial
+                  map={labelTexture}
+                  transparent
+                  opacity={1}
+                  depthWrite={false}
+                  toneMapped={false}
+                />
+              </sprite>
+            ) : null}
+            {zone.alertLevel === 'critical' && profile.glow ? (
+              <pointLight
+                position={[0, 46, 0]}
+                intensity={9_000}
+                distance={zone.radius * 2.6}
+                decay={2}
+                color={resolveThreeColor(ALERT_RIM.critical).color}
+              />
+            ) : null}
+          </group>
         );
       })}
     </group>
@@ -200,10 +408,10 @@ interface AnimatedEdgeEntry {
 }
 
 /**
- * §7.4 semantic edges + §7.9 alive flow for the 3D renderer. Flow uses the
- * dash-offset uniform of the fat-line material (the spec's "dash-offset
- * shader on the edge line material") driven from the shared animation clock
- * in useFrame — scalar uniform writes only, no allocation, no rebuild.
+ * Semantic edges as arcs: intra-zone links hug their platform, inter-zone
+ * highways rise over the ring interior. Flow uses the dash-offset uniform of
+ * the fat-line material driven from the shared animation clock in useFrame —
+ * scalar uniform writes only, no allocation, no rebuild.
  */
 function SceneEdges({
   edges,
@@ -217,7 +425,7 @@ function SceneEdges({
   flowProfile: EdgeFlowProfile;
 }) {
   const segments = useMemo(() => {
-    const byId = new Map(nodes.map((node) => [node.id, node.position]));
+    const byId = new Map(nodes.map((node) => [node.id, node]));
     return edges
       .map((edge) => {
         const source = byId.get(edge.sourceId);
@@ -225,23 +433,28 @@ function SceneEdges({
         if (!source || !target) {
           return null;
         }
+        const kind: EdgeArcKind = edgeArcKind(source.clusterId, target.clusterId);
         const resolved = resolveThreeColor(edge.color, '#94a3b8');
-        // §7.9 gating: 'full' animates every flow-capable edge; 'coarse'
+        // Fog of war: a link touching an undetected asset stays a faint
+        // filament — the topology is visible, its meaning is not.
+        const fogged = !source.disclosed || !target.disclosed;
+        // Flow gating: 'full' animates every flow-capable edge; 'coarse'
         // (MEDIUM tier) only edges on the current selection/highlight;
         // 'static' (reduced motion / LOW tier) animates nothing.
         const flowAnimated =
+          !fogged &&
           edge.flowSpeed > 0 &&
           flowProfile !== 'static' &&
           (flowProfile === 'full' || edge.highlighted);
         return {
           edge,
-          color: resolved.color,
-          opacity: edge.opacity * resolved.opacity,
+          kind,
+          color: fogged ? resolveThreeColor('#3d4656').color : resolved.color,
+          opacity: (fogged ? 0.3 : 1) * edge.opacity * resolved.opacity,
           flowAnimated,
-          points: [
-            new THREE.Vector3(source.x, source.y, source.z),
-            new THREE.Vector3(target.x, target.y, target.z),
-          ] as [THREE.Vector3, THREE.Vector3],
+          points: edgeArcPoints(source.position, target.position, kind).map(
+            (point) => new THREE.Vector3(point.x, point.y, point.z),
+          ),
         };
       })
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
@@ -306,10 +519,10 @@ function SceneEdges({
 
   return (
     <group>
-      {segments.map(({ edge, color, opacity, flowAnimated, points }) => {
-        // Containment (§7.4) keeps a short static dash; alive flow uses a
-        // long, low-contrast travelling dash. Static profile: containment
-        // stays dashed (it is semantic), flow edges render solid.
+      {segments.map(({ edge, kind, color, opacity, flowAnimated, points }) => {
+        // Containment keeps a short static dash; alive flow uses a long,
+        // low-contrast travelling dash. Static profile: containment stays
+        // dashed (it is semantic), flow edges render solid.
         const dashed = edge.dashed || flowAnimated;
         const dashSize = edge.dashed ? 4 : edge.highlighted ? 14 : 22;
         const gapSize = edge.dashed ? 3.5 : edge.highlighted ? 10 : 6;
@@ -321,7 +534,10 @@ function SceneEdges({
             }}
             points={points}
             color={color}
-            lineWidth={Math.max(0.75, edge.width * profile.edgeWidthScale)}
+            lineWidth={Math.max(
+              0.75,
+              edge.width * profile.edgeWidthScale * (kind === 'inter' ? 1.15 : 0.9),
+            )}
             transparent
             opacity={opacity}
             depthWrite={false}
@@ -359,10 +575,9 @@ function RiskAndSelectionAccents({
         ? accents
             .filter(({ halo }) => halo.opacity > 0)
             .map(({ node, radius, halo }) => (
-              // §7.3: sprite-halo billboard behind the node reusing the
-              // existing RISK_HALO radial-falloff shader; uColor carries the
-              // §7.1 risk color, uOpacity scales with severity (critical
-              // brightest — encoded in the halo token's alpha channel).
+              // Sprite-halo billboard behind the node reusing the existing
+              // radial-falloff shader; uColor carries the risk color,
+              // uOpacity scales with severity.
               <Billboard
                 key={`risk-halo-${node.id}`}
                 position={[node.position.x, node.position.y, node.position.z]}
@@ -412,56 +627,309 @@ function RiskAndSelectionAccents({
   );
 }
 
-function StatusMarkers({ nodes }: { nodes: SceneNode[] }) {
-  const markers = useMemo(
-    () =>
-      nodes.map((node) => ({
-        node,
-        radius: nodeRadius(node),
-        status: resolveThreeColor(node.statusColor, '#63d6a2'),
-      })),
+interface SigilRefs {
+  scanRings: THREE.Mesh[];
+  beamMaterials: THREE.MeshBasicMaterial[];
+  haloMaterials: THREE.ShaderMaterial[];
+}
+
+/**
+ * Threat sigils — the attacker made visible. Only disclosed, non-normal
+ * assets earn one: suspicious breathes amber, under-investigation carries a
+ * scanning ring, compromised burns with a vertical beam, contained sits in a
+ * cold cage. All animation funnels through one useFrame walking ref arrays.
+ */
+function ThreatSigils({
+  nodes,
+  profile,
+  reducedMotion,
+}: {
+  nodes: SceneNode[];
+  profile: SceneQualityProfile;
+  reducedMotion: boolean;
+}) {
+  const marked = useMemo(
+    () => nodes.filter((node) => node.disclosed && node.status !== 'normal' && !node.dimmed),
     [nodes],
   );
+  const compromised = useMemo(
+    () => marked.filter((node) => node.status === 'compromised'),
+    [marked],
+  );
+
+  const refs = useRef<SigilRefs>({ scanRings: [], beamMaterials: [], haloMaterials: [] });
+  refs.current.scanRings = [];
+  refs.current.beamMaterials = [];
+  refs.current.haloMaterials = [];
+
+  useFrame(() => {
+    if (reducedMotion) {
+      return;
+    }
+    const time = getGraphAnimationTime();
+    for (const ring of refs.current.scanRings) {
+      ring.rotation.z = time * 0.9;
+    }
+    const beamPulse = 0.4 + 0.2 * Math.sin(time * 4.2);
+    for (const material of refs.current.beamMaterials) {
+      material.opacity = beamPulse;
+    }
+    const haloPulse = 0.55 + 0.3 * Math.sin(time * 2.6);
+    for (const material of refs.current.haloMaterials) {
+      const uniform = material.uniforms['uOpacity'];
+      if (uniform) {
+        uniform.value = (material.userData['baseOpacity'] as number) * haloPulse;
+      }
+    }
+  });
 
   return (
     <group>
-      {markers
-        .filter(({ status }) => status.opacity > 0)
-        .map(({ node, radius, status }) => (
-          <mesh
-            key={`status-${node.id}`}
-            position={[node.position.x, node.position.y + radius + 3.5, node.position.z]}
-          >
-            <octahedronGeometry args={[2.2, 1]} />
-            <meshBasicMaterial color={status.color} toneMapped={false} />
-          </mesh>
-        ))}
-      {markers
-        .filter(({ node }) => node.evidenceMarked || node.incidentMarked)
-        .map(({ node, radius }) => (
-          <mesh
-            key={`marker-${node.id}`}
-            position={[node.position.x, node.position.y - radius - 3.5, node.position.z]}
-            rotation={[0, 0, Math.PI / 4]}
-          >
-            <boxGeometry args={[3.4, 3.4, 3.4]} />
-            <meshBasicMaterial
-              color={resolveThreeColor(node.incidentMarked ? '#fb5b65' : '#fbbf24').color}
-              transparent
-              opacity={0.95}
-              toneMapped={false}
+      {marked.map((node) => {
+        const radius = nodeRadius(node);
+        const tint = STATUS_TINTS[node.status] ?? '#f1c257';
+        const color = resolveThreeColor(tint).color;
+        const position: [number, number, number] = [
+          node.position.x,
+          node.position.y,
+          node.position.z,
+        ];
+
+        return (
+          <group key={`sigil-${node.id}`}>
+            {/* Status gem above the structure — small, always legible, the
+                shared status color language. */}
+            <mesh position={[position[0], position[1] + radius + 4.5, position[2]]}>
+              <octahedronGeometry args={[2.1, 0]} />
+              <meshBasicMaterial color={color} toneMapped={false} />
+            </mesh>
+
+            {profile.glow && (node.status === 'suspicious' || node.status === 'compromised') ? (
+              <Billboard position={position}>
+                <mesh scale={radius * (node.status === 'compromised' ? 4.6 : 3.4)} renderOrder={3}>
+                  <planeGeometry args={[1, 1]} />
+                  <shaderMaterial
+                    ref={(material: THREE.ShaderMaterial | null) => {
+                      if (material) {
+                        material.userData['baseOpacity'] =
+                          node.status === 'compromised' ? 0.62 : 0.38;
+                        refs.current.haloMaterials.push(material);
+                      }
+                    }}
+                    vertexShader={RISK_HALO_VERTEX}
+                    fragmentShader={RISK_HALO_FRAGMENT}
+                    uniforms={{
+                      uColor: { value: color },
+                      uOpacity: { value: node.status === 'compromised' ? 0.62 : 0.38 },
+                    }}
+                    transparent
+                    depthWrite={false}
+                    blending={THREE.AdditiveBlending}
+                  />
+                </mesh>
+              </Billboard>
+            ) : null}
+
+            {node.status === 'under_investigation' ? (
+              <mesh
+                ref={(mesh: THREE.Mesh | null) => {
+                  if (mesh) {
+                    refs.current.scanRings.push(mesh);
+                  }
+                }}
+                position={position}
+                rotation={[Math.PI / 2, 0, 0]}
+              >
+                <torusGeometry args={[radius * 1.8, 0.55, 6, 48, Math.PI * 1.45]} />
+                <meshBasicMaterial
+                  color={color}
+                  transparent
+                  opacity={0.85}
+                  toneMapped={false}
+                  depthWrite={false}
+                />
+              </mesh>
+            ) : null}
+
+            {node.status === 'contained' ? (
+              <mesh position={position}>
+                <octahedronGeometry args={[radius * 1.85, 0]} />
+                <meshBasicMaterial
+                  color={color}
+                  wireframe
+                  transparent
+                  opacity={0.5}
+                  toneMapped={false}
+                  depthWrite={false}
+                />
+              </mesh>
+            ) : null}
+
+            {node.status === 'compromised' ? (
+              <mesh position={[position[0], position[1] + 46, position[2]]}>
+                <cylinderGeometry args={[1.3, 2.6, 96, 8, 1, true]} />
+                <meshBasicMaterial
+                  ref={(material: THREE.MeshBasicMaterial | null) => {
+                    if (material) {
+                      refs.current.beamMaterials.push(material);
+                    }
+                  }}
+                  color={color}
+                  transparent
+                  opacity={0.5}
+                  side={THREE.DoubleSide}
+                  blending={THREE.AdditiveBlending}
+                  depthWrite={false}
+                  toneMapped={false}
+                />
+              </mesh>
+            ) : null}
+          </group>
+        );
+      })}
+
+      {/* Ember light for the fiercest breaches — capped so a mass compromise
+          cannot melt the GPU with dynamic lights. */}
+      {profile.glow
+        ? compromised.slice(0, 4).map((node) => (
+            <pointLight
+              key={`ember-${node.id}`}
+              position={[node.position.x, node.position.y + 26, node.position.z]}
+              intensity={7_000}
+              distance={210}
+              decay={2}
+              color={resolveThreeColor(STATUS_TINTS['compromised'] ?? '#ff7078').color}
             />
-          </mesh>
-        ))}
+          ))
+        : null}
+    </group>
+  );
+}
+
+interface RevealPulse {
+  key: string;
+  x: number;
+  z: number;
+  color: string;
+  start: number;
+}
+
+const REVEAL_SECONDS = 1.7;
+
+/**
+ * Reveal shockwaves: when fog of war lifts on a hostile asset — or an asset
+ * escalates to compromised / drops to contained — a ring detonates outward
+ * across its platform. Pure presentation of a state *transition*; the steady
+ * state is carried by the sigils and materials.
+ */
+function RevealPulses({ nodes, reducedMotion }: { nodes: SceneNode[]; reducedMotion: boolean }) {
+  const previousRef = useRef<Map<string, { disclosed: boolean; status: string }> | null>(null);
+  const [pulses, setPulses] = useState<RevealPulse[]>([]);
+  const meshRefs = useRef(new Map<string, THREE.Mesh>());
+
+  useEffect(() => {
+    const previous = previousRef.current;
+    const next = new Map<string, { disclosed: boolean; status: string }>();
+    for (const node of nodes) {
+      next.set(node.id, { disclosed: node.disclosed, status: node.status });
+    }
+    // First projection is baseline — arriving mid-run must not detonate a
+    // firework for every already-known fact.
+    if (previous !== null && !reducedMotion) {
+      const spawned: RevealPulse[] = [];
+      const now = getGraphAnimationTime();
+      for (const node of nodes) {
+        const before = previous.get(node.id);
+        if (!before) {
+          continue;
+        }
+        const revealed = !before.disclosed && node.disclosed && node.status !== 'normal';
+        const ignited = before.status !== 'compromised' && node.status === 'compromised';
+        const severed = before.status !== 'contained' && node.status === 'contained';
+        if (revealed || (node.disclosed && (ignited || severed))) {
+          spawned.push({
+            key: `${node.id}:${String(now)}`,
+            x: node.position.x,
+            z: node.position.z,
+            color: STATUS_TINTS[node.status] ?? '#f1c257',
+            start: now,
+          });
+        }
+      }
+      if (spawned.length > 0) {
+        setPulses((current) => [...current, ...spawned].slice(-12));
+        const timer = setTimeout(() => {
+          setPulses((current) => current.filter((pulse) => !spawned.includes(pulse)));
+        }, REVEAL_SECONDS * 1000 + 400);
+        previousRef.current = next;
+        return () => {
+          clearTimeout(timer);
+        };
+      }
+    }
+    previousRef.current = next;
+    return undefined;
+  }, [nodes, reducedMotion]);
+
+  useFrame(() => {
+    if (pulses.length === 0) {
+      return;
+    }
+    const time = getGraphAnimationTime();
+    for (const pulse of pulses) {
+      const mesh = meshRefs.current.get(pulse.key);
+      if (!mesh) {
+        continue;
+      }
+      const progress = Math.min(1, (time - pulse.start) / REVEAL_SECONDS);
+      const eased = 1 - Math.pow(1 - progress, 2);
+      mesh.scale.setScalar(4 + eased * 120);
+      const material = mesh.material as THREE.MeshBasicMaterial;
+      material.opacity = (1 - progress) * 0.85;
+      mesh.visible = progress < 1;
+    }
+  });
+
+  if (reducedMotion) {
+    return null;
+  }
+
+  return (
+    <group>
+      {pulses.map((pulse) => (
+        <mesh
+          key={pulse.key}
+          ref={(mesh: THREE.Mesh | null) => {
+            if (mesh) {
+              meshRefs.current.set(pulse.key, mesh);
+            } else {
+              meshRefs.current.delete(pulse.key);
+            }
+          }}
+          position={[pulse.x, 0.8, pulse.z]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          renderOrder={5}
+        >
+          <ringGeometry args={[0.88, 1, 48]} />
+          <meshBasicMaterial
+            color={resolveThreeColor(pulse.color).color}
+            transparent
+            opacity={0.85}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+      ))}
     </group>
   );
 }
 
 /**
- * §7.5: labels stay off by default at dense zoom — the floating node card
- * (`.cinematic-node-label`, restyled per the flattened token system) appears
- * on selection or hover only, matching the 2D canvas hover/select behavior.
- * The accessible entity list below the canvas covers everything else.
+ * Labels stay off at rest — the floating node card appears on selection or
+ * hover only, matching the 2D canvas hover/select behavior. The accessible
+ * entity list below the canvas covers everything else.
  */
 function SceneLabels({
   nodes,
@@ -489,8 +957,11 @@ function SceneLabels({
       <div className="cinematic-node-label" data-testid={testId}>
         <span>{node.label}</span>
         <small>
-          Risk {Math.round(node.riskScore * 100)}
-          {node.status !== 'normal' ? ` · ${node.status.replaceAll('_', ' ')}` : ''}
+          {node.disclosed
+            ? `Risk ${String(Math.round(node.riskScore * 100))}${
+                node.status !== 'normal' ? ` · ${node.status.replaceAll('_', ' ')}` : ''
+              }`
+            : 'Not yet detected'}
         </small>
       </div>
     </Html>
@@ -622,54 +1093,66 @@ function CameraController({
   );
 }
 
-function SceneAtmosphere({ nodes, profile }: { nodes: SceneNode[]; profile: SceneQualityProfile }) {
-  const dimensions = useMemo(() => {
-    if (nodes.length === 0) {
-      return { size: 1_200, floor: -240 };
+/** Deterministic LCG so the starfield never twinkles differently per mount. */
+function starfieldPositions(count: number): Float32Array {
+  const positions = new Float32Array(count * 3);
+  let seed = 1337;
+  const random = () => {
+    seed = (seed * 1_664_525 + 1_013_904_223) >>> 0;
+    return seed / 0xffffffff;
+  };
+  for (let index = 0; index < count; index += 1) {
+    const radius = 1_500 + random() * 1_100;
+    const theta = random() * Math.PI * 2;
+    const y = -500 + random() * 1_600;
+    positions[index * 3] = Math.cos(theta) * radius;
+    positions[index * 3 + 1] = y;
+    positions[index * 3 + 2] = Math.sin(theta) * radius;
+  }
+  return positions;
+}
+
+/** The void: polar deck grid beneath the ring, sparse static particle field. */
+function SceneAtmosphere({ zones }: { zones: SceneZone[] }) {
+  const deckRadius = useMemo(() => {
+    if (zones.length === 0) {
+      return 640;
     }
-    const xs = nodes.map((node) => node.position.x);
-    const ys = nodes.map((node) => node.position.y);
-    const zs = nodes.map((node) => node.position.z);
-    const span = Math.max(
-      Math.max(...xs) - Math.min(...xs),
-      Math.max(...zs) - Math.min(...zs),
-      600,
+    return (
+      Math.max(
+        ...zones.map((zone) => Math.hypot(zone.center.x, zone.center.z) + zone.radius),
+      ) + 150
     );
-    return {
-      size: span * 2.4,
-      // The ground plane sits just beneath the risk skyline's lowest node so
-      // altitude reads as height-above-plan (§7.6).
-      floor: Math.min(...ys) - 60,
-    };
-  }, [nodes]);
+  }, [zones]);
+
+  const stars = useMemo(() => starfieldPositions(420), []);
 
   return (
     <group>
-      {/* Grid quieted ~35% (§7.7): ambient orientation aid, not a competing
-          pattern against the risk-colored nodes it sets off. */}
-      <gridHelper
+      <polarGridHelper
         args={[
-          dimensions.size,
-          profile.nodeSegments >= 20 ? 42 : 28,
-          resolveThreeColor('#2c2c36').color,
-          resolveThreeColor('#15151b').color,
+          deckRadius,
+          16,
+          8,
+          96,
+          resolveThreeColor('#151c2b').color,
+          resolveThreeColor('#0b101b').color,
         ]}
-        position={[0, dimensions.floor, 0]}
+        position={[0, -42, 0]}
       />
-      <mesh
-        position={[0, dimensions.floor - 2, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow={profile.shadows}
-      >
-        <planeGeometry args={[dimensions.size, dimensions.size]} />
-        <meshStandardMaterial
-          color={resolveThreeColor('#0c0c11').color}
-          roughness={0.9}
-          metalness={0.05}
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[stars, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={2.4}
+          sizeAttenuation
+          color={resolveThreeColor('#40527c').color}
           transparent
-          opacity={0.72}
+          opacity={0.5}
+          depthWrite={false}
         />
-      </mesh>
+      </points>
     </group>
   );
 }
@@ -677,11 +1160,12 @@ function SceneAtmosphere({ nodes, profile }: { nodes: SceneNode[]; profile: Scen
 export interface CinematicSceneCanvasProps {
   nodes: SceneNode[];
   edges: SceneEdge[];
+  zones: SceneZone[];
   camera: CameraBookmark3D;
   qualityTier: RenderQualityTierValue;
   dprCap: number;
   reducedMotion: boolean;
-  /** §7.9 flow gate resolved by the view from the capability report. */
+  /** Flow gate resolved by the view from the capability report. */
   flowProfile: EdgeFlowProfile;
   onReady: () => void;
   onSelectNode: (nodeId: string) => void;
@@ -691,6 +1175,7 @@ export interface CinematicSceneCanvasProps {
 export function CinematicSceneCanvas({
   nodes,
   edges,
+  zones,
   camera,
   qualityTier,
   dprCap,
@@ -725,7 +1210,7 @@ export function CinematicSceneCanvas({
       className="cinematic-canvas-shell relative h-full min-h-[22rem] w-full overflow-hidden"
       data-testid="cinematic-graph-canvas"
       role="img"
-      aria-label="Three.js semantic graph canvas"
+      aria-label="3D operations theater: sector platforms of the bastion ring"
     >
       <Canvas
         dpr={dpr}
@@ -747,52 +1232,46 @@ export function CinematicSceneCanvas({
           glRef.current = gl;
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = qualityTier === RenderQualityTier.HIGH ? 1.18 : 1.05;
+          gl.toneMappingExposure = qualityTier === RenderQualityTier.HIGH ? 1.26 : 1.12;
           gl.shadowMap.enabled = profile.shadows;
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
-          gl.setClearColor(0x08080b, 1);
+          gl.setClearColor(new THREE.Color(VOID_BG), 1);
           onReady();
         }}
       >
-        <color attach="background" args={[resolveThreeColor('#08080b').color]} />
+        <color attach="background" args={[resolveThreeColor(VOID_BG).color]} />
         <fog
           attach="fog"
-          args={[resolveThreeColor('#0d0d12').color, profile.fogNear, profile.fogFar]}
+          args={[resolveThreeColor(FOG_COLOR).color, profile.fogNear, profile.fogFar]}
         />
-        <ambientLight intensity={0.46} />
-        <hemisphereLight args={[0xd8d2c2, 0x0c0c11, 1.08]} />
+        <ambientLight intensity={0.32} />
+        <hemisphereLight
+          args={[
+            resolveThreeColor('#3d4c66').color,
+            resolveThreeColor('#05070c').color,
+            0.9,
+          ]}
+        />
         <directionalLight
-          position={[620, 880, 540]}
-          intensity={2.15}
-          color={resolveThreeColor('#f3ead4').color}
+          position={[420, 700, 260]}
+          intensity={1.95}
+          color={resolveThreeColor('#dfe8f5').color}
           castShadow={profile.shadows}
         />
-        <pointLight
-          position={[-520, 180, 280]}
-          intensity={48_000}
-          distance={1_300}
-          decay={2}
-          color={resolveThreeColor('#e8b542').color}
-        />
-        <pointLight
-          position={[420, -260, -360]}
-          intensity={30_000}
-          distance={1_100}
-          decay={2}
-          color={resolveThreeColor('#f59e0b').color}
+        <directionalLight
+          position={[-380, 220, -420]}
+          intensity={0.5}
+          color={resolveThreeColor('#5a6f96').color}
         />
         <CameraController bookmark={camera} reducedMotion={reducedMotion} />
-        <SceneAtmosphere nodes={nodes} profile={profile} />
+        <SceneAtmosphere zones={zones} />
+        <ZonePlatforms zones={zones} profile={profile} reducedMotion={reducedMotion} />
         <SceneEdges edges={edges} nodes={nodes} profile={profile} flowProfile={flowProfile} />
+        <NodePylons nodes={nodes} />
         <RiskAndSelectionAccents nodes={nodes} profile={profile} />
-        <InstancedNodes
-          nodes={nodes}
-          profile={profile}
-          onSelect={onSelectNode}
-          onHover={setHoveredNodeId}
-        />
-        <NodeGlyphs nodes={nodes} />
-        <StatusMarkers nodes={nodes} />
+        <NodeCity nodes={nodes} profile={profile} onSelect={onSelectNode} onHover={setHoveredNodeId} />
+        <ThreatSigils nodes={nodes} profile={profile} reducedMotion={reducedMotion} />
+        <RevealPulses nodes={nodes} reducedMotion={reducedMotion} />
         <SceneLabels nodes={nodes} hoveredNodeId={hoveredNodeId} />
       </Canvas>
       <div

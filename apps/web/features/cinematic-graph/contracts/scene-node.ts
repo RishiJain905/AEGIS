@@ -30,6 +30,9 @@ export const sceneNodeSchema = z
     sizeTier: z.number().positive(),
     glyphShape: z.enum(['circle', 'diamond', 'square', 'triangle', 'hexagon']),
     size: z.number().positive(),
+    /** Fog of war: false while the operator has not yet detected this asset —
+     * the scene renders it as a dark, calm husk regardless of other styling. */
+    disclosed: z.boolean(),
     selected: z.boolean(),
     highlighted: z.boolean(),
     dimmed: z.boolean(),

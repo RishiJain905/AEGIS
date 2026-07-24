@@ -421,9 +421,10 @@ export function CinematicGraphView({
     <div className="flex min-h-[16rem] flex-col gap-3" data-testid="cinematic-graph-view">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--aegis-text-secondary)]">
         <p data-testid="cinematic-graph-meta">
-          Semantic 3D · sequence {String(projection.sequence)} · revision{' '}
-          {String(projection.revision)} · {String(projection.nodeCount)} nodes /{' '}
-          {String(projection.edgeCount)} edges · tier {qualityTier}
+          Ops theater · sequence {String(projection.sequence)} · revision{' '}
+          {String(projection.revision)} · {String(projection.zones.length)} sectors ·{' '}
+          {String(projection.nodeCount)} nodes / {String(projection.edgeCount)} edges · tier{' '}
+          {qualityTier}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <GraphCameraControls
@@ -514,6 +515,7 @@ export function CinematicGraphView({
         <CinematicSceneCanvas
           nodes={projection.nodes}
           edges={projection.edges}
+          zones={projection.zones}
           camera={camera}
           qualityTier={qualityTier}
           dprCap={capability.devicePixelRatioCap}

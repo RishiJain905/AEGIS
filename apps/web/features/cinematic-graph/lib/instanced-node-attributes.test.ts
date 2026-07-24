@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { SceneNode } from '../contracts';
 import { SCENE_NODE_SCHEMA_VERSION } from '../contracts';
-import { applyInstancedNodeAttributes } from './instanced-node-attributes';
+import {
+  applyInstancedNodeAttributes,
+  applyPylonAttributes,
+  nodeRadius,
+} from './instanced-node-attributes';
 import { resolveThreeColor } from './three-color';
 
 function makeSceneNode(overrides: Partial<SceneNode> = {}): SceneNode {
@@ -25,6 +29,7 @@ function makeSceneNode(overrides: Partial<SceneNode> = {}): SceneNode {
     sizeTier: 1,
     glyphShape: 'circle',
     size: 12,
+    disclosed: true,
     selected: false,
     highlighted: false,
     dimmed: false,
@@ -54,7 +59,7 @@ describe('applyInstancedNodeAttributes', () => {
     ];
     const mesh = makeInstancedMesh(nodes.length);
 
-    applyInstancedNodeAttributes(mesh, null, nodes);
+    applyInstancedNodeAttributes(mesh, nodes);
 
     expect(mesh.instanceColor).not.toBeNull();
     const colors = mesh.instanceColor as THREE.InstancedBufferAttribute;
@@ -78,7 +83,7 @@ describe('applyInstancedNodeAttributes', () => {
     const nodes = [makeSceneNode({ emissiveColor: '#ff7078' })];
     const mesh = makeInstancedMesh(nodes.length);
 
-    applyInstancedNodeAttributes(mesh, null, nodes);
+    applyInstancedNodeAttributes(mesh, nodes);
 
     const emissive = mesh.geometry.getAttribute('instanceEmissive');
     expect(emissive).toBeDefined();
@@ -88,20 +93,23 @@ describe('applyInstancedNodeAttributes', () => {
     expect(emissive.getZ(0)).toBeCloseTo(accent.b * 0.62, 5);
   });
 
-  it('mirrors matrices and accent colors onto the additive color coat', () => {
-    const nodes = [makeSceneNode({ position: { x: 120, y: 60, z: -40 } })];
+  it('collapses undisclosed nodes to a dark husk with almost no emissive', () => {
+    const nodes = [
+      makeSceneNode({ id: 'asset:hidden', disclosed: false, emissiveColor: '#ff7078' }),
+      makeSceneNode({ id: 'asset:visible', disclosed: true, emissiveColor: '#ff7078' }),
+    ];
     const mesh = makeInstancedMesh(nodes.length);
-    const coat = makeInstancedMesh(nodes.length);
 
-    applyInstancedNodeAttributes(mesh, coat, nodes);
+    applyInstancedNodeAttributes(mesh, nodes);
 
-    expect(coat.instanceColor).not.toBeNull();
-    const coatMatrix = new THREE.Matrix4();
-    coat.getMatrixAt(0, coatMatrix);
-    const coatPosition = new THREE.Vector3().setFromMatrixPosition(coatMatrix);
-    expect(coatPosition.x).toBeCloseTo(120, 5);
-    expect(coatPosition.y).toBeCloseTo(60, 5);
-    expect(coatPosition.z).toBeCloseTo(-40, 5);
+    const colors = mesh.instanceColor as THREE.InstancedBufferAttribute;
+    const emissive = mesh.geometry.getAttribute('instanceEmissive');
+    const base = resolveThreeColor(nodes[0]?.color ?? '#36a9e1').color;
+    // Fog-of-war base color moves well away from the disclosed asset color
+    // (blue channel: the service cyan collapses toward the dark husk).
+    expect(Math.abs(colors.getZ(0) - base.b)).toBeGreaterThan(0.1);
+    // …and the emissive is an order of magnitude below the disclosed twin.
+    expect(emissive.getX(0)).toBeLessThan(emissive.getX(1) * 0.2);
   });
 
   it('refreshes the cached instanced bounding sphere so raycasts hit after a warm remount', () => {
@@ -118,7 +126,7 @@ describe('applyInstancedNodeAttributes', () => {
     mesh.computeBoundingSphere();
     expect(mesh.boundingSphere?.radius ?? 0).toBeLessThan(2);
 
-    applyInstancedNodeAttributes(mesh, null, nodes);
+    applyInstancedNodeAttributes(mesh, nodes);
     mesh.updateMatrixWorld(true);
 
     // The sphere must now cover the laid-out instances…
@@ -133,5 +141,60 @@ describe('applyInstancedNodeAttributes', () => {
     const hits = raycaster.intersectObject(mesh, false);
     expect(hits.length).toBeGreaterThan(0);
     expect(hits[0]?.instanceId).toBe(0);
+  });
+});
+
+describe('applyPylonAttributes', () => {
+  it('spans each pylon from the platform surface to just below the node body', () => {
+    const node = makeSceneNode({ position: { x: 40, y: 60, z: -20 } });
+    const mesh = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshBasicMaterial(),
+      1,
+    );
+
+    applyPylonAttributes(mesh, [node]);
+
+    const matrix = new THREE.Matrix4();
+    mesh.getMatrixAt(0, matrix);
+    const position = new THREE.Vector3();
+    const scale = new THREE.Vector3();
+    matrix.decompose(position, new THREE.Quaternion(), scale);
+
+    expect(position.x).toBeCloseTo(40, 5);
+    expect(position.z).toBeCloseTo(-20, 5);
+    // Top of the pylon (center + half height) stays below the node center.
+    expect(position.y + scale.y / 2).toBeLessThan(60);
+    expect(position.y - scale.y / 2).toBeCloseTo(1.5, 3);
+  });
+
+  it('burns the whole column for compromised assets and dims fog-of-war stems', () => {
+    const compromised = makeSceneNode({
+      id: 'asset:burning',
+      status: 'compromised',
+      emissiveColor: '#ff7078',
+    });
+    const hidden = makeSceneNode({ id: 'asset:hidden', disclosed: false });
+    const mesh = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshBasicMaterial(),
+      2,
+    );
+
+    applyPylonAttributes(mesh, [compromised, hidden]);
+
+    const colors = mesh.instanceColor as THREE.InstancedBufferAttribute;
+    const accent = resolveThreeColor('#ff7078').color;
+    expect(colors.getX(0)).toBeCloseTo(accent.r, 5);
+    // The undisclosed stem is far darker than the burning column.
+    expect(colors.getX(1)).toBeLessThan(colors.getX(0) * 0.25);
+  });
+});
+
+describe('nodeRadius', () => {
+  it('scales with size tier and selection', () => {
+    const base = makeSceneNode();
+    const selected = makeSceneNode({ selected: true });
+    expect(nodeRadius(selected)).toBeGreaterThan(nodeRadius(base));
   });
 });

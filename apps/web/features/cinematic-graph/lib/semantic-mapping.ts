@@ -23,19 +23,6 @@ import {
   type SceneNode,
 } from '../contracts';
 
-/**
- * §7.6 risk-skyline altitude: the ground plane carries the 2D layout (scene
- * X/Z stay synced to the operational graph's X/Y), and only the node's height
- * above the plane is derived — client-side, at render time — from its risk
- * score. Modest range so the scene reads as a skyline, not a tower.
- */
-const RISK_ALTITUDE_BASE = 24;
-const RISK_ALTITUDE_RANGE = 150;
-
-export function riskAltitude(riskScore: number): number {
-  return RISK_ALTITUDE_BASE + Math.min(1, Math.max(0, riskScore)) * RISK_ALTITUDE_RANGE;
-}
-
 export function highlightKindForMode(
   mode: GraphVisualState['highlightMode'],
 ): EdgeHighlightKind | null {
@@ -81,6 +68,10 @@ export function mapCanonicalNodeToSceneNode(input: {
   const isIsolation = visualState.isolationActive && highlightNodes.size > 0;
   const isDimmed =
     (isIsolation && !isHighlighted) || (layerDimmed && !isHighlighted && !isSelected);
+  // Fog of war: the server redacts an undisclosed node's true status, and the
+  // scene additionally mutes every threat affordance so the asset reads as a
+  // calm, dark silhouette until it is detected.
+  const disclosed = node.disclosed !== false;
   // Halo only for genuinely elevated risk — a halo on every low-risk node
   // reads as noise, not signal.
   const riskEmphasized = style.riskBand === 'high' || style.riskBand === 'critical';
@@ -95,24 +86,27 @@ export function mapCanonicalNodeToSceneNode(input: {
     riskScore: node.riskScore,
     criticality: node.criticality,
     status: node.status,
+    // Position is owned entirely by the deterministic zone layout (platform
+    // placement + criticality hover height) — risk drives light, not altitude.
     position: {
       x: position.x,
-      y: riskAltitude(node.riskScore),
+      y: position.y,
       z: position.z,
     },
     color: style.color,
     statusColor:
-      visualState.overlayToggles.status && node.status !== 'normal'
+      disclosed && visualState.overlayToggles.status && node.status !== 'normal'
         ? style.statusColor
         : 'transparent',
     riskHaloColor:
-      visualState.overlayToggles.risk && riskEmphasized
+      disclosed && visualState.overlayToggles.risk && riskEmphasized
         ? getRiskHaloColor(style.riskBand)
         : 'transparent',
     emissiveColor: accent.emissiveColor,
     sizeTier: getNodeSizeTier(node.assetType),
     glyphShape: getNodeShape(node.assetType),
     size: style.size + (isSelected ? 4 : 0),
+    disclosed,
     selected: isSelected,
     highlighted: isHighlighted,
     dimmed: isDimmed,

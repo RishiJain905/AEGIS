@@ -7,10 +7,13 @@ import type { CapabilityReport } from './capability-report';
 import type { RenderQualityTierValue } from './render-quality-tier';
 import type { SceneEdge } from './scene-edge';
 import type { SceneNode } from './scene-node';
+import type { SceneZone } from './scene-zone';
 
 export interface SceneProjection {
   nodes: SceneNode[];
   edges: SceneEdge[];
+  /** Sector platforms of the bastion ring, derived from graph clusters. */
+  zones: SceneZone[];
   nodeCount: number;
   edgeCount: number;
   sequence: number;
@@ -21,6 +24,8 @@ export interface SceneProjection {
 }
 
 export interface SyncSceneOptions {
+  /** Accepted for API compatibility; the 3D layout is intrinsic (zone
+   * architecture) and no longer mirrors 2D drag positions. */
   nodePositions?: Record<string, { x: number; y: number }>;
   workerPositions?: Record<string, { x: number; y: number }>;
   qualityTier?: RenderQualityTierValue;

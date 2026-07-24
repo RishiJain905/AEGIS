@@ -2,8 +2,8 @@ import type { CameraBookmark3D, SceneNode } from '../contracts';
 import { defaultCameraBookmark3D } from '../contracts/camera-bookmark-3d';
 
 const MIN_SCENE_RADIUS = 80;
-const CAMERA_PADDING = 1.2;
-const CAMERA_DIRECTION = { x: 0.68, y: 0.52, z: 0.72 } as const;
+const CAMERA_PADDING = 1.06;
+const CAMERA_DIRECTION = { x: 0.6, y: 0.46, z: 0.78 } as const;
 const MIN_FOCUS_DISTANCE = 240;
 const MAX_FOCUS_DISTANCE = 2_400;
 

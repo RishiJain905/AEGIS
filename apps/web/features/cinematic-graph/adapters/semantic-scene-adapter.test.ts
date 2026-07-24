@@ -68,7 +68,7 @@ describe('SemanticSceneAdapter', () => {
     adapter.dispose();
   });
 
-  it('normalizes Sigma layout units before framing the 38-node scene', () => {
+  it('lays the theater out from canonical clusters, ignoring 2D drag positions', () => {
     const snapshot = parseContract(graphSnapshotSchema, shellDataset.graphSnapshots[1]);
     const store = createGraphStore();
     store.loadSnapshot(snapshot);
@@ -92,11 +92,77 @@ describe('SemanticSceneAdapter', () => {
         qualityTier: RenderQualityTier.HIGH,
       },
     );
-    const xs = projection.nodes.map((node) => node.position.x);
-    const ys = projection.nodes.map((node) => node.position.y);
 
-    expect(Math.max(...xs) - Math.min(...xs)).toBeLessThanOrEqual(760);
-    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(760);
+    // One sector platform per distinct clusterId in the fixture.
+    const clusterIds = new Set(
+      snapshot.nodes.map((node) => node.clusterId).filter((id): id is string => Boolean(id)),
+    );
+    expect(projection.zones.map((zone) => zone.id).sort()).toEqual([...clusterIds].sort());
+
+    // Every node sits on its own platform footprint, regardless of the 2D
+    // drag positions passed in (the 3D architecture is intrinsic).
+    const zoneById = new Map(projection.zones.map((zone) => [zone.id, zone]));
+    for (const node of projection.nodes) {
+      const zone = node.clusterId ? zoneById.get(node.clusterId) : undefined;
+      expect(zone).toBeDefined();
+      const distance = Math.hypot(
+        node.position.x - (zone?.center.x ?? 0),
+        node.position.z - (zone?.center.z ?? 0),
+      );
+      expect(distance).toBeLessThanOrEqual(zone?.radius ?? 0);
+    }
+
+    // The whole ring stays inside a bounded, renderable world span.
+    const xs = projection.nodes.map((node) => node.position.x);
+    const zs = projection.nodes.map((node) => node.position.z);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeLessThanOrEqual(1_600);
+    expect(Math.max(...zs) - Math.min(...zs)).toBeLessThanOrEqual(1_600);
+    adapter.dispose();
+  });
+
+  it('rolls zone alert levels up from disclosed statuses only', () => {
+    const snapshot = parseContract(graphSnapshotSchema, shellDataset.graphSnapshots[1]);
+    const compromisedId = snapshot.nodes.find((node) => node.clusterId)?.id;
+    const compromisedCluster = snapshot.nodes.find((node) => node.clusterId)?.clusterId;
+    const doctored = {
+      ...snapshot,
+      nodes: snapshot.nodes.map((node) => {
+        if (node.id === compromisedId) {
+          return { ...node, status: 'compromised' as const, disclosed: true };
+        }
+        if (node.clusterId === compromisedCluster) {
+          // A second hostile node in the same zone stays undisclosed — fog of
+          // war must keep it from raising the platform alert on its own.
+          return { ...node, status: 'suspicious' as const, disclosed: false };
+        }
+        return { ...node, disclosed: true };
+      }),
+    };
+    const store = createGraphStore();
+    store.loadSnapshot(parseContract(graphSnapshotSchema, doctored));
+    const adapter = createSemanticSceneAdapter();
+
+    const projection = adapter.syncFromStore(
+      store,
+      defaultGraphVisualState.filterSet as import('@aegis/graph-domain').GraphFilterSet,
+      defaultGraphVisualState,
+      { qualityTier: RenderQualityTier.HIGH },
+    );
+
+    const hotZone = projection.zones.find((zone) => zone.id === compromisedCluster);
+    expect(hotZone?.alertLevel).toBe('critical');
+    for (const zone of projection.zones) {
+      if (zone.id !== compromisedCluster) {
+        expect(zone.alertLevel).toBe('calm');
+      }
+    }
+
+    // The undisclosed hostile keeps its dark-husk projection.
+    const hidden = projection.nodes.find(
+      (node) => node.clusterId === compromisedCluster && node.id !== compromisedId,
+    );
+    expect(hidden?.disclosed).toBe(false);
+    expect(hidden?.statusColor).toBe('transparent');
     adapter.dispose();
   });
 

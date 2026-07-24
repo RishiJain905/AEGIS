@@ -39,6 +39,12 @@ export {
   type SceneNode,
 } from './scene-node';
 export {
+  SCENE_ZONE_SCHEMA_VERSION,
+  parseSceneZone,
+  sceneZoneSchema,
+  type SceneZone,
+} from './scene-zone';
+export {
   SemanticSceneAdapterError,
   type SceneProjection,
   type SemanticSceneAdapter,

@@ -17,11 +17,14 @@ import { computeLayerEmphasis } from '@/features/operational-graph/semantic/laye
 import { EdgeActivityTracker } from '@/features/operational-graph/semantic/edge-activity';
 
 import { mapCanonicalEdgeToSceneEdge, mapCanonicalNodeToSceneNode } from '../lib/semantic-mapping';
-import { normalizeScenePositions, resolveStablePositions } from '../lib/stable-positions';
+import { computeZoneLayout, zoneAlertLevel } from '../lib/zone-layout';
 import { focusNodeBookmark, frameSceneNodes } from '../lib/camera-framing';
+import { SCENE_ZONE_SCHEMA_VERSION, type SceneZone } from '../contracts/scene-zone';
 
 export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
   private lastProjection: SceneProjection | null = null;
+  /** Nodes + platform proxies, so camera framing covers the architecture. */
+  private frameables: Array<{ position: { x: number; y: number; z: number }; size: number }> = [];
   private readonly edgeActivity = new EdgeActivityTracker();
   private capabilityReport: CapabilityReport = defaultCapabilityReport;
   private camera: CameraBookmark3D = defaultCameraBookmark3D;
@@ -59,6 +62,7 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
       const empty: SceneProjection = {
         nodes: [],
         edges: [],
+        zones: [],
         nodeCount: 0,
         edgeCount: 0,
         sequence: snapshot.sequence,
@@ -75,16 +79,12 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
     const visibleNodeIds = new Set(filtered.visibleNodeIds);
     const visibleEdgeIds = new Set(filtered.visibleEdgeIds);
     const visibleNodes = snapshot.nodes.filter((node) => visibleNodeIds.has(node.id));
-    const positions = normalizeScenePositions(
-      resolveStablePositions(
-        visibleNodes,
-        snapshot.clusters,
-        {
-          ...visualState.nodePositions,
-          ...(options.nodePositions ?? {}),
-        },
-        options.workerPositions ?? {},
-      ),
+    // Bastion-ring layout: platform-per-cluster placement derived purely from
+    // canonical node/cluster data. 2D drag positions intentionally do not
+    // leak in — the 3D theater has its own intrinsic architecture.
+    const { positions, zones: zonePlacements } = computeZoneLayout(
+      visibleNodes,
+      snapshot.clusters,
     );
 
     const evidenceNodeIds = options.evidenceNodeIds ?? new Set<string>();
@@ -123,16 +123,41 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
         }),
       );
 
+    // Zone alert rollup over disclosed member statuses only — fog of war
+    // means an undetected asset can never tint its platform.
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    const zones: SceneZone[] = zonePlacements.map((placement) => ({
+      schemaVersion: SCENE_ZONE_SCHEMA_VERSION,
+      id: placement.id,
+      label: placement.label,
+      center: placement.center,
+      radius: placement.radius,
+      angle: placement.angle,
+      alertLevel: zoneAlertLevel(
+        placement.nodeIds
+          .map((nodeId) => nodeById.get(nodeId))
+          .filter((node): node is NonNullable<typeof node> => node !== undefined && node.disclosed)
+          .map((node) => node.status),
+      ),
+      nodeCount: placement.nodeIds.length,
+    }));
+
     // Frame automatically only on the first projection; afterwards the camera
     // belongs to the operator (orbit) or explicit focus/reset actions, so live
-    // graph revisions never yank the viewpoint.
+    // graph revisions never yank the viewpoint. Framing covers the platforms,
+    // not just the nodes, so the ring's architecture is in the opening shot.
+    this.frameables = [
+      ...nodes.map((node) => ({ position: node.position, size: node.size })),
+      ...zones.map((zone) => ({ position: zone.center, size: zone.radius })),
+    ];
     if (this.automaticCamera && this.lastProjection === null) {
-      this.camera = frameSceneNodes(nodes, this.camera.fov);
+      this.camera = frameSceneNodes(this.frameables, this.camera.fov);
     }
 
     const projection: SceneProjection = {
       nodes,
       edges,
+      zones,
       nodeCount: nodes.length,
       edgeCount: edges.length,
       sequence: snapshot.sequence,
@@ -175,7 +200,7 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
     if (!node) {
       return null;
     }
-    const bookmark = focusNodeBookmark(node, this.camera, projectionNodes);
+    const bookmark = focusNodeBookmark(node, this.camera, this.frameables);
     this.camera = bookmark;
     this.automaticCamera = false;
     return bookmark;
@@ -184,7 +209,7 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
   resetCamera(): CameraBookmark3D {
     this.assertNotDisposed();
     this.automaticCamera = true;
-    this.camera = frameSceneNodes(this.lastProjection?.nodes ?? [], defaultCameraBookmark3D.fov);
+    this.camera = frameSceneNodes(this.frameables, defaultCameraBookmark3D.fov);
     return this.camera;
   }
 
@@ -217,6 +242,7 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
 
   dispose(): void {
     this.lastProjection = null;
+    this.frameables = [];
     this.edgeActivity.clear();
     this.capabilityReport = defaultCapabilityReport;
     this.camera = defaultCameraBookmark3D;

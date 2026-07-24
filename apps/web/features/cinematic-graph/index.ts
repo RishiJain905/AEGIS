@@ -5,5 +5,5 @@ export { GraphViewModeToggle } from './components/graph-view-mode-toggle';
 export { CapabilityFallbackNotice } from './components/capability-fallback';
 export * from './contracts';
 export { probeCapabilityReport, recommendQualityTier, dprForTier } from './lib/capability';
-export { resolveStablePositions, toScenePosition } from './lib/stable-positions';
+export { computeZoneLayout, zoneAlertLevel, ZONE_UNASSIGNED_ID } from './lib/zone-layout';
 export { useCinematicGraphStore } from './stores/cinematic-graph-store';
