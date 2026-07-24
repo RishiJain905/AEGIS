@@ -103,7 +103,7 @@ services:
       # start the optional `llama` profile and override the URLs to http://llama:8086/v1.)
       AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
-      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
+      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Gwimi-4-12B-IT-Q6_K.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
       # A local reasoning model can take tens of seconds per turn; give agent tasks
       # generous headroom (they still fail soft past this, shown in the chat).
@@ -185,7 +185,7 @@ services:
       # the same provider (see the api service note above).
       AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
-      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
+      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Gwimi-4-12B-IT-Q6_K.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
       # The local 27B reasoning model needs 30-90s+ per turn; the provider request
       # timeout must exceed a real turn or valid generations get cancelled (default 60s).
@@ -239,7 +239,7 @@ services:
       AEGIS_LOG_JSON: ${AEGIS_LOG_JSON:-true}
       AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
-      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
+      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Gwimi-4-12B-IT-Q6_K.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
       # The local 27B reasoning model needs 30-90s+ per turn; the provider request
       # timeout must exceed a real turn or valid generations get cancelled (default 60s).
