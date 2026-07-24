@@ -26,7 +26,7 @@ from aegis_agents.runtime.registry import (
     AgentDefinitionRegistry,
     build_definition,
 )
-from aegis_agents.runtime.session_service import AgentSessionService
+from aegis_agents.runtime.session_service import AgentSessionService, _run_sim_time
 from aegis_agents.security.scenario_content import (
     build_commander_intent_message,
     build_operator_directive_message,
@@ -355,6 +355,7 @@ class TaskExecutor:
                 session_id=session.id,
                 task_id=task.id,
                 trace_id=task.trace_id,
+                sim_time=await _run_sim_time(uow, run_id),
             )
         )
 
@@ -752,6 +753,7 @@ class TaskExecutor:
                     trace_id=task.trace_id,
                     tool_name=tool_name,
                     status=tool_status,
+                    sim_time=await _run_sim_time(uow, run_id),
                 )
             )
 
@@ -820,6 +822,7 @@ class TaskExecutor:
                 task_id=task.id,
                 trace_id=task.trace_id,
                 status="completed",
+                sim_time=await _run_sim_time(uow, run_id),
             )
         )
 
@@ -943,5 +946,6 @@ class TaskExecutor:
                 task_id=task.id,
                 trace_id=task.trace_id,
                 status=failed.status.value,
+                sim_time=await _run_sim_time(uow, run_id),
             )
         )

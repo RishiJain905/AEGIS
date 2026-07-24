@@ -1,4 +1,13 @@
-"""Agent domain event builders."""
+"""Agent domain event builders.
+
+Every agent event carries two timestamps with distinct meaning (architecture
+contract §7): ``sim_time`` is the run's VIRTUAL clock and must be supplied by the
+caller from the run (``RunV1.sim_time``); ``recorded_at`` is the WALL-CLOCK instant
+the event was persisted. Stamping ``sim_time`` with ``datetime.now()`` is a bug —
+it renders agent activity ~204 days off (wall date minus the sim epoch) on the
+replay/dossier timeline while alerts and operator commands sit at their true
+sim-time offsets.
+"""
 
 from __future__ import annotations
 
@@ -22,16 +31,16 @@ def build_session_started_event(
     session_id: str,
     trace_id: str,
     role: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="agent.session.started",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={"schemaVersion": 1, "sessionId": session_id, "role": role},
@@ -50,8 +59,8 @@ def build_session_state_changed_event(
     to_state: AgentSessionState,
     task_id: str | None,
     reason: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "schemaVersion": 1,
         "sessionId": session_id,
@@ -67,8 +76,8 @@ def build_session_state_changed_event(
         sequence=sequence,
         type="agent.session.state_changed",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload=payload,
@@ -84,16 +93,16 @@ def build_task_started_event(
     session_id: str,
     task_id: str,
     trace_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="agent.task.started",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={"schemaVersion": 1, "sessionId": session_id, "taskId": task_id},
@@ -110,8 +119,8 @@ def build_task_completed_event(
     task_id: str,
     trace_id: str,
     status: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     event_type = "agent.task.completed" if status == "completed" else "agent.task.failed"
     return DomainEventEnvelopeV1(
         event_id=event_id,
@@ -119,8 +128,8 @@ def build_task_completed_event(
         sequence=sequence,
         type=event_type,
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={"schemaVersion": 1, "sessionId": session_id, "taskId": task_id, "status": status},
@@ -138,16 +147,16 @@ def build_tool_invoked_event(
     trace_id: str,
     tool_name: str,
     status: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="agent.tool.invoked",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={

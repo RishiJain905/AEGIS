@@ -103,6 +103,7 @@ async def _seed_feed_events(uow, run_id: str) -> None:
             task_id=new_runtime_id("atk"),
             trace_id=new_runtime_id("trc"),
             status="completed",
+            sim_time=datetime.now(UTC),
         ),
     )
     # A low-level telemetry event that must NOT surface in the feed.

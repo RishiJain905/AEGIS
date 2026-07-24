@@ -27,6 +27,16 @@ from aegis_contracts.versioning import (
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 
+async def _run_sim_time(uow: PostgresUnitOfWork, run_id: str) -> datetime:
+    """Current VIRTUAL sim-time of the run — the clock agent events must carry.
+
+    Falls back to wall-clock only if the run is somehow missing (it never is on a
+    live path); the event's ``recorded_at`` is always wall-clock separately.
+    """
+    run = await uow.runs.get_by_id(run_id)
+    return run.sim_time if run is not None else datetime.now(UTC)
+
+
 class AgentSessionService:
     def __init__(self, registry: AgentDefinitionRegistry | None = None) -> None:
         self._registry = registry or DEFAULT_AGENT_REGISTRY
@@ -103,6 +113,7 @@ class AgentSessionService:
                 session_id=session.id,
                 trace_id=session.trace_id,
                 role=session.role.value,
+                sim_time=await _run_sim_time(uow, run_id),
             )
         )
         return session
@@ -169,6 +180,7 @@ class AgentSessionService:
                 to_state=to_state,
                 task_id=task_id,
                 reason=reason,
+                sim_time=await _run_sim_time(uow, run_id),
             )
         )
         return updated
