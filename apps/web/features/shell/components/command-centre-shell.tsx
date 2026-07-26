@@ -1,15 +1,14 @@
 'use client';
 
-import { DisconnectedState, cn } from '@aegis/ui';
+import { cn } from '@aegis/ui';
 import { useEffect } from 'react';
 
-import { ConnectionHealthBanner, LiveRunProvider, useLiveRun } from '@/features/live-run';
+import { ConnectionHealthBanner, LiveRunProvider } from '@/features/live-run';
 import { CommandPalette } from '@/features/shell/components/command-palette';
 import { OperationsRail } from '@/features/shell/components/operations-rail';
 import { RunWorkspace } from '@/features/shell/components/run-workspace';
 import { StatusStrip } from '@/features/shell/components/status-strip';
 import { useKeyboardShortcuts } from '@/features/shell/hooks/use-keyboard-shortcuts';
-import { useConnectionStatus } from '@/features/shell/hooks/use-shell-queries';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 export interface CommandCentreShellProps {
@@ -20,8 +19,6 @@ export interface CommandCentreShellProps {
 
 function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreShellProps) {
   const resetForRun = useWorkspaceUiStore((state) => state.resetForRun);
-  const connectionQuery = useConnectionStatus();
-  const liveRun = useLiveRun();
   // A run without page content of its own gets the viewport-height graph workspace; every
   // other shell route (scenarios, reports, admin, after-action) keeps normal page flow.
   const isRunWorkspace = Boolean(runId) && !children;
@@ -30,17 +27,6 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
     resetForRun(runId ?? null);
   }, [runId, resetForRun]);
 
-  const connectionStatus = connectionQuery.data ?? 'connected';
-  const liveHealth = liveRun?.state.connectionHealth;
-  const showDisconnectedBanner =
-    liveRun?.isLiveMode === true
-      ? liveHealth === 'disconnected' ||
-        liveHealth === 'reconnecting' ||
-        liveHealth === 'stale' ||
-        liveHealth === 'gap' ||
-        liveRun.state.isStale
-      : connectionStatus === 'offline' || connectionStatus === 'reconnecting';
-
   return (
     <>
       <CommandPalette />
@@ -48,23 +34,9 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
         <OperationsRail />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <StatusStrip runId={runId} />
+          {/* Zero-height slot: the banner overlays the content instead of displacing it, so a
+              connection-health flip never resizes the graph canvas or the docks. */}
           <ConnectionHealthBanner />
-          {showDisconnectedBanner ? (
-            <div className="px-5 pt-4 xl:px-6">
-              <DisconnectedState
-                data-testid="connection-banner"
-                message={
-                  liveRun?.isLiveMode
-                    ? liveHealth === 'reconnecting'
-                      ? 'Realtime connection lost. Attempting to reconnect and catch up from the last cursor…'
-                      : 'Realtime connection interrupted. Displayed state may be stale until recovery completes.'
-                    : connectionStatus === 'offline'
-                      ? 'Realtime connection offline. Displaying last known fixture data.'
-                      : 'Realtime connection lost. Attempting to reconnect…'
-                }
-              />
-            </div>
-          ) : null}
           <main
             id="command-centre-content"
             className={

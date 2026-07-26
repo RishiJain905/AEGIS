@@ -1,7 +1,7 @@
 'use client';
 
 import { NodeStatus } from '@aegis/contracts-ts';
-import { Alert, Badge } from '@aegis/ui';
+import { Badge } from '@aegis/ui';
 import type { ReactNode } from 'react';
 
 import { readRunLoadout } from '@/features/command-surface';
@@ -93,6 +93,8 @@ export function StatusStrip({ runId }: StatusStripProps) {
         <span className="font-[family-name:var(--aegis-font-display)] text-[0.6875rem] font-semibold uppercase tracking-[0.13em] text-[var(--aegis-text-muted)]">
           Control link
         </span>
+        {/* The at-a-glance connection indicator. Fixed size, so a health flip costs no layout —
+            the explanatory copy lives in the one ConnectionHealthBanner, which overlays. */}
         <Badge
           nodeStatus={
             connectionLabel === 'Live' || connectionLabel === 'Connected'
@@ -135,21 +137,6 @@ export function StatusStrip({ runId }: StatusStripProps) {
         {runId ? <SitrepButton runId={runId} /> : null}
         <OperatorIdentityBadge />
       </div>
-      {!liveRun?.isLiveMode && connectionStatus === 'offline' ? (
-        <Alert variant="warning" title="Connection offline" className="max-w-md">
-          Realtime updates are unavailable. Showing last known fixture data.
-        </Alert>
-      ) : null}
-      {!liveRun?.isLiveMode && connectionStatus === 'reconnecting' ? (
-        <Alert variant="default" title="Reconnecting" className="ml-auto max-w-md">
-          Attempting to restore realtime connection…
-        </Alert>
-      ) : null}
-      {liveRun?.isLiveMode && liveRun.state.isStale ? (
-        <Alert variant="warning" title="State may be stale" className="ml-auto max-w-md">
-          Event delivery is interrupted. Recovery is required before trusting the live view.
-        </Alert>
-      ) : null}
     </div>
   );
 }

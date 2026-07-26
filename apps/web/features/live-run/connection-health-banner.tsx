@@ -1,75 +1,258 @@
 'use client';
 
-import { Alert, Badge } from '@aegis/ui';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ConnectionHealthState } from '@aegis/contracts-ts';
+import { Alert, Badge, cn, getMotionTransition, useReducedMotion } from '@aegis/ui';
 
 import { useLiveRun } from '@/features/live-run/live-run-provider';
+import type { ConnectionStatus } from '@/lib/api';
+import { useConnectionStatus } from '@/features/shell/hooks/use-shell-queries';
 
-const HEALTH_LABELS: Record<string, string> = {
-  connected: 'Live connected',
-  disconnected: 'Disconnected',
-  reconnecting: 'Reconnecting',
-  catching_up: 'Catching up',
-  gap: 'Sequence gap',
-  snapshot_resync: 'Resynchronizing',
-  simulator_paused: 'Simulation paused',
-  locally_paused: 'Updates paused',
-  stale: 'Stale state',
+/**
+ * How long a degraded connection must persist before the operator is told about it. The
+ * transport flips through `catching_up` / `snapshot_resync` constantly during healthy
+ * operation (every catch-up batch, every reveal-driven resync), so anything shorter turns
+ * the banner into a strobe.
+ */
+const APPEAR_DELAY_MS = 700;
+
+/** Once shown, the banner holds for at least this long so recovery cannot make it blink. */
+const MIN_VISIBLE_MS = 1_200;
+
+export interface ConnectionNotice {
+  /** Stable identity for the underlying condition; also exposed for tests/debugging. */
+  key: string;
+  variant: 'default' | 'warning';
+  title: string;
+  detail: string;
+}
+
+/** Also the fallback for any health value this presentation layer does not know yet. */
+const STALE_NOTICE: ConnectionNotice = {
+  key: 'stale',
+  variant: 'warning',
+  title: 'Stale state',
+  detail: 'Event delivery is interrupted. Recover before trusting the live view.',
 };
 
-const HEALTH_VARIANT: Record<string, 'default' | 'warning'> = {
-  connected: 'default',
-  disconnected: 'warning',
-  reconnecting: 'warning',
-  catching_up: 'default',
-  gap: 'warning',
-  snapshot_resync: 'warning',
-  simulator_paused: 'default',
-  locally_paused: 'default',
-  stale: 'warning',
+const LIVE_NOTICES: Record<string, ConnectionNotice> = {
+  [ConnectionHealthState.STALE]: STALE_NOTICE,
+  [ConnectionHealthState.DISCONNECTED]: {
+    key: 'disconnected',
+    variant: 'warning',
+    title: 'Disconnected',
+    detail: 'Displayed state may not reflect the latest simulation progress.',
+  },
+  [ConnectionHealthState.RECONNECTING]: {
+    key: 'reconnecting',
+    variant: 'warning',
+    title: 'Reconnecting',
+    detail: 'Restoring the realtime connection from the last processed cursor.',
+  },
+  [ConnectionHealthState.CATCHING_UP]: {
+    key: 'catching_up',
+    variant: 'default',
+    title: 'Catching up',
+    detail: 'Applying historical events before resuming live delivery.',
+  },
+  [ConnectionHealthState.SNAPSHOT_RESYNC]: {
+    key: 'snapshot_resync',
+    variant: 'warning',
+    title: 'Resynchronizing',
+    detail: 'Loading an authoritative snapshot and replaying missed events.',
+  },
+  [ConnectionHealthState.GAP]: {
+    key: 'gap',
+    variant: 'warning',
+    title: 'Sequence gap',
+    detail: 'Event application is paused until missing sequences are recovered.',
+  },
+  [ConnectionHealthState.SIMULATOR_PAUSED]: {
+    key: 'simulator_paused',
+    variant: 'default',
+    title: 'Simulation paused',
+    detail: 'The board resumes updating when the simulator does.',
+  },
+  [ConnectionHealthState.LOCALLY_PAUSED]: {
+    key: 'locally_paused',
+    variant: 'default',
+    title: 'Updates paused',
+    detail: 'Live updates are held locally. Resume to apply queued events.',
+  },
 };
 
+const FIXTURE_NOTICES: Partial<Record<ConnectionStatus, ConnectionNotice>> = {
+  offline: {
+    key: 'fixture_offline',
+    variant: 'warning',
+    title: 'Connection offline',
+    detail: 'Realtime updates are unavailable. Showing last known fixture data.',
+  },
+  reconnecting: {
+    key: 'fixture_reconnecting',
+    variant: 'default',
+    title: 'Reconnecting',
+    detail: 'Attempting to restore the realtime connection…',
+  },
+};
+
+/**
+ * The single mapping from connection state to operator-facing copy. Live runs are described
+ * by the transport's own health; fixture-backed views fall back to the polled connection
+ * status. Returns `null` when there is nothing worth interrupting the operator about.
+ */
+export function describeConnectionNotice(input: {
+  isLiveMode: boolean;
+  health?: string;
+  isStale?: boolean;
+  connectionStatus: ConnectionStatus;
+}): ConnectionNotice | null {
+  if (input.isLiveMode) {
+    if (input.health !== undefined && input.health !== ConnectionHealthState.CONNECTED) {
+      return LIVE_NOTICES[input.health] ?? STALE_NOTICE;
+    }
+    // Connected but the reducer still flags the projection as stale — worth saying so.
+    return input.isStale === true ? STALE_NOTICE : null;
+  }
+  return FIXTURE_NOTICES[input.connectionStatus] ?? null;
+}
+
+/**
+ * Debounce on the way in, latch on the way out.
+ *
+ * `notice` must be referentially stable while the underlying condition is unchanged. The
+ * appearance timer is armed on the transition from "healthy" to "degraded" and is *not*
+ * restarted when the condition changes shape mid-flight — a link that oscillates between
+ * `reconnecting` and `gap` has still been degraded the whole time, and should be reported.
+ */
+export function useNoticeHysteresis(notice: ConnectionNotice | null): ConnectionNotice | null {
+  const [visible, setVisible] = useState<ConnectionNotice | null>(null);
+  const visibleRef = useRef<ConnectionNotice | null>(null);
+  const shownAtRef = useRef(0);
+  const noticeRef = useRef(notice);
+  noticeRef.current = notice;
+
+  const degraded = notice !== null;
+
+  useEffect(() => {
+    if (degraded) {
+      if (visibleRef.current !== null) {
+        // Already up; this effect run only exists to cancel a pending hide (via cleanup).
+        return;
+      }
+      const timer = window.setTimeout(() => {
+        visibleRef.current = noticeRef.current;
+        shownAtRef.current = Date.now();
+        setVisible(noticeRef.current);
+      }, APPEAR_DELAY_MS);
+      return () => {
+        window.clearTimeout(timer);
+      };
+    }
+    if (visibleRef.current === null) {
+      return;
+    }
+    const remaining = Math.max(0, MIN_VISIBLE_MS - (Date.now() - shownAtRef.current));
+    const timer = window.setTimeout(() => {
+      visibleRef.current = null;
+      setVisible(null);
+    }, remaining);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [degraded]);
+
+  // Swap the copy in place when the condition changes while the banner is already up.
+  useEffect(() => {
+    if (notice !== null && visibleRef.current !== null && visibleRef.current !== notice) {
+      visibleRef.current = notice;
+      setVisible(notice);
+    }
+  }, [notice]);
+
+  return visible;
+}
+
+/**
+ * The one realtime-connection surface in the shell.
+ *
+ * Placement is deliberately layout-neutral: the component occupies a zero-height slot
+ * directly beneath the status strip and hangs its notice into the content area on an
+ * absolutely positioned layer. Connection health flips several times a minute during normal
+ * play, and this shell is a fixed-height cockpit on desktop — anything that takes height here
+ * resizes `<main>`, which resizes the Sigma canvas and both docks, and the whole board judders.
+ * The at-a-glance indicator lives in the status strip's fixed-size connection badge; this
+ * banner only explains what the badge cannot.
+ */
 export function ConnectionHealthBanner() {
   const liveRun = useLiveRun();
-  if (liveRun === null || !liveRun.isLiveMode) {
+  const connectionQuery = useConnectionStatus();
+  const reducedMotion = useReducedMotion();
+
+  const isLiveMode = liveRun?.isLiveMode === true;
+  const health = liveRun?.state.connectionHealth;
+  const isStale = liveRun?.state.isStale;
+  const sequence = liveRun?.state.lastAppliedSequence;
+  const connectionStatus = connectionQuery.data ?? 'connected';
+
+  const notice = useMemo(
+    () =>
+      describeConnectionNotice({
+        isLiveMode,
+        health,
+        isStale,
+        connectionStatus,
+      }),
+    [isLiveMode, health, isStale, connectionStatus],
+  );
+  const shown = useNoticeHysteresis(notice);
+
+  // Entrance is opt-in per appearance so the banner fades in rather than popping over the map.
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    if (shown === null) {
+      setEntered(false);
+      return;
+    }
+    setEntered(true);
+  }, [shown]);
+
+  if (shown === null) {
     return null;
   }
-
-  const health = liveRun.state.connectionHealth;
-  if (health === ConnectionHealthState.CONNECTED) {
-    return null;
-  }
-
-  const label = HEALTH_LABELS[health] ?? health;
-  const variant = HEALTH_VARIANT[health] ?? 'warning';
 
   return (
-    <Alert
-      variant={variant}
-      title={label}
-      className="mx-4 mt-3"
-      data-testid="connection-health-banner"
-    >
-      {health === ConnectionHealthState.DISCONNECTED || health === ConnectionHealthState.STALE
-        ? 'Displayed state may not reflect the latest simulation progress.'
-        : null}
-      {health === ConnectionHealthState.RECONNECTING
-        ? 'Attempting to restore the realtime connection from the last processed cursor.'
-        : null}
-      {health === ConnectionHealthState.CATCHING_UP
-        ? 'Applying historical events before resuming live delivery.'
-        : null}
-      {health === ConnectionHealthState.SNAPSHOT_RESYNC
-        ? 'Loading an authoritative snapshot and replaying missed events.'
-        : null}
-      {health === ConnectionHealthState.GAP
-        ? 'Event application is paused until missing sequences are recovered.'
-        : null}
-      <div className="mt-2 flex items-center gap-2">
-        <Badge>{`Sequence ${String(liveRun.state.lastAppliedSequence)}`}</Badge>
-        {liveRun.state.isStale ? <Badge>Stale</Badge> : null}
+    <div className="relative z-20 h-0" data-testid="connection-health-banner">
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-5 pt-3 xl:px-6">
+        <Alert
+          variant={shown.variant}
+          title={shown.title}
+          role="status"
+          aria-live="polite"
+          data-testid="connection-banner"
+          data-connection-notice={shown.key}
+          className={cn(
+            'pointer-events-auto w-full max-w-md shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl',
+            reducedMotion ? undefined : entered ? 'opacity-100' : 'translate-y-[-4px] opacity-0',
+          )}
+          style={
+            reducedMotion
+              ? undefined
+              : {
+                  transition: getMotionTransition(['opacity', 'transform'], 'fast'),
+                }
+          }
+        >
+          <span className="text-xs leading-4">{shown.detail}</span>
+          {isLiveMode && sequence !== undefined ? (
+            <div className="mt-2 flex items-center gap-2">
+              <Badge>{`Sequence ${String(sequence)}`}</Badge>
+              {isStale === true ? <Badge>Stale</Badge> : null}
+            </div>
+          ) : null}
+        </Alert>
       </div>
-    </Alert>
+    </div>
   );
 }
