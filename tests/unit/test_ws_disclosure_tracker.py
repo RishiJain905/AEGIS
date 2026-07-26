@@ -92,3 +92,63 @@ def test_terminal_run_shows_truth():
     tracker.note_event(_event("sim.run.stopped", {}))
     # Post-run: the live transport, like the snapshot transport, switches to ground truth.
     assert tracker.redact(_status_envelope("compromised")).event.payload["status"] == "compromised"
+
+
+def _technique_envelope(anchor: str = _ASSET):
+    return build_realtime_envelope(
+        _event(
+            "sim.killchain.technique_executed",
+            {
+                "campaignId": "campaign-credentials-relay",
+                "techniqueId": "technique-lateral-identity",
+                "attackTechniqueId": "T1021",
+                "tactic": "lateral_movement",
+                "anchorAssetId": anchor,
+                "status": "compromised",
+            },
+            subject=anchor,
+        )
+    )
+
+
+def test_killchain_marker_for_an_undisclosed_asset_leaks_nothing():
+    tracker = _tracker()
+    redacted = tracker.redact(_technique_envelope())
+    # Campaign, technique and anchor each give away what the player is hunting for.
+    assert redacted.event.payload == {"schemaVersion": 1}
+    # The envelope survives so the client's sequence stays contiguous.
+    assert redacted.event.sequence == 5
+    assert redacted.event.type == "sim.killchain.technique_executed"
+
+
+def test_killchain_marker_passes_through_once_detection_has_disclosed_the_asset():
+    tracker = _tracker()
+    tracker.note_event(_event("alert.created", {"assetId": _ASSET, "title": "x"}))
+    passed = tracker.redact(_technique_envelope())
+    assert passed.event.payload["attackTechniqueId"] == "T1021"
+
+
+def test_killchain_marker_on_an_ungoverned_asset_passes_through():
+    tracker = _tracker()
+    passed = tracker.redact(_technique_envelope(anchor="asset:svc-identity-provider"))
+    assert passed.event.payload["techniqueId"] == "technique-lateral-identity"
+
+
+def test_disruption_marker_is_redacted_by_its_asset_id_field():
+    tracker = _tracker()
+    env = build_realtime_envelope(
+        _event(
+            "sim.killchain.technique_disrupted",
+            {"campaignId": "campaign-credentials-relay", "effect": "foothold_severed",
+             "assetId": _ASSET},
+        )
+    )
+    assert tracker.redact(env).event.payload == {"schemaVersion": 1}
+
+
+def test_the_run_verdict_lifts_the_fog():
+    tracker = _tracker()
+    assert tracker.redact(_technique_envelope()).event.payload == {"schemaVersion": 1}
+    tracker.note_event(_event("sim.run.outcome_resolved", {"outcome": "win"}))
+    # The engagement is decided, so the debrief sees ground truth.
+    assert tracker.redact(_technique_envelope()).event.payload["attackTechniqueId"] == "T1021"

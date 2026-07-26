@@ -3,10 +3,19 @@
 The Redis→gateway path forwards the authoritative (fully truthful) domain-event stream. A
 player with devtools open must never see attacker-caused state in a raw frame before it is
 disclosed, so every operator-bound event passes through :class:`RunDisclosureTracker` at the
-gateway's single enqueue choke point. Only ``sim.asset.status_changed`` for an *undisclosed*
-governed asset is rewritten — its ``status`` is replaced with the baseline so the client
-applies a no-op node delta, keeps its sequence contiguous (no spurious gap/resync), and
-learns nothing. Everything else is forwarded verbatim.
+gateway's single enqueue choke point. Two families are rewritten when they concern an
+*undisclosed* governed asset:
+
+* ``sim.asset.status_changed`` has its ``status`` replaced with the baseline, so the client
+  applies a no-op node delta.
+* ``sim.killchain.*`` — the attacker kill-chain truth markers — have their payload emptied.
+  They name the campaign, the ATT&CK technique and the anchor asset outright, which is
+  exactly what the player is meant to hunt for, so none of it survives redaction.
+
+Both keep the envelope, and therefore the client's sequence contiguity (no spurious
+gap/resync). Everything else is forwarded verbatim. Fog lifts when the run reaches its
+win/lose verdict, the same way it lifts when the run stops: once the engagement is decided
+the transport switches to ground truth for the debrief.
 
 Disclosure is run-level (not per-connection). A tracker is seeded from persisted truth on
 subscribe and updated incrementally as reveal/alert events flow through the fan-out, so an
@@ -31,6 +40,11 @@ _REVEALED = "sim.hidden_condition.revealed"
 _ALERT_PREFIX = "alert."
 _RUN_STOPPED = "sim.run.stopped"
 _RUN_ACTIVE_EVENTS = frozenset({"sim.run.started", "sim.run.resumed"})
+_KILLCHAIN_PREFIX = "sim.killchain."
+_OUTCOME_RESOLVED = "sim.run.outcome_resolved"
+
+# Payload fields a kill-chain event uses to name the asset it concerns, most specific first.
+_KILLCHAIN_ASSET_FIELDS = ("anchorAssetId", "assetId", "entryAssetId")
 
 
 @dataclass
@@ -68,16 +82,42 @@ class RunDisclosureTracker:
             asset_id = event.payload.get("assetId")
             if isinstance(asset_id, str) and asset_id:
                 self.alerted_asset_ids.add(asset_id)
-        elif event.type == _RUN_STOPPED:
+        elif event.type in {_RUN_STOPPED, _OUTCOME_RESOLVED}:
             self.active = False
         elif event.type in _RUN_ACTIVE_EVENTS:
             self.active = True
 
+    def _redact_killchain(
+        self, envelope: RealtimeMessageEnvelopeV1
+    ) -> RealtimeMessageEnvelopeV1:
+        """Strip an attacker kill-chain marker down to nothing while it is still hidden.
+
+        The payload is emptied rather than partially masked: campaign id, technique id and
+        anchor asset each independently give away what the player is hunting, so there is
+        no safe subset to keep. The envelope survives only to hold the sequence number.
+        """
+        event = envelope.event
+        referenced = [
+            value
+            for field in _KILLCHAIN_ASSET_FIELDS
+            if isinstance(value := event.payload.get(field), str) and value
+        ]
+        if not referenced:
+            referenced = [event.subject.id]
+        if all(self.is_disclosed(asset_id) for asset_id in referenced):
+            return envelope
+        redacted_event = event.model_copy(
+            update={"payload": {"schemaVersion": event.payload.get("schemaVersion", 1)}}
+        )
+        return envelope.model_copy(update={"event": redacted_event})
+
     def redact(self, envelope: RealtimeMessageEnvelopeV1) -> RealtimeMessageEnvelopeV1:
-        """Return an operator-safe envelope, rewriting undisclosed status changes only."""
+        """Return an operator-safe envelope, rewriting only what would leak the attacker."""
         if not self.has_hidden_state or not self.active:
             return envelope
         event = envelope.event
+        if event.type.startswith(_KILLCHAIN_PREFIX):
+            return self._redact_killchain(envelope)
         if event.type != _STATUS_CHANGED:
             return envelope
         asset_id = event.payload.get("assetId")
