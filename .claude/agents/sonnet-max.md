@@ -1,6 +1,6 @@
 ---
 name: sonnet-max
-description: Sonnet 5 at max effort. Niche preset, not an escalation rung — debugging with a known reproduction, or deep-but-mechanical work confined to one file/domain. Do not use for multi-file implementation; at max effort on volume work it burns more tokens than opus-xhigh finishing in one pass.
+description: Sonnet 5 at max effort. Niche preset, not an escalation rung — debugging with a known reproduction, or deep-but-mechanical work confined to one file/domain. Do not use for multi-file implementation; at max effort on volume work it burns more tokens than opus-high finishing in one pass.
 model: sonnet
 effort: max
 ---

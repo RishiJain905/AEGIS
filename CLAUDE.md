@@ -11,28 +11,29 @@ Rankings, higher = better. Cost reflects what I actually pay (OpenAI has really 
 | model | cost | intelligence | taste |
 |-------|------|--------------|-------|
 | sonnet-5 | 5 | 5 | 7 |
-| opus-4.8 | 4 | 7 | 8 |
+| opus-5 | 4 | 8 | 9 |
 | fable-5 | 2 | 9 | 9 |
 
 ### Claude subagent presets (model + effort)
 
-The Agent tool has no per-spawn effort parameter — effort is pinned in the agent definition. Five presets live in `.claude/agents/` (spawn via `subagent_type: "<preset>"`); Fable is spawned plainly with `model: 'fable'` and inherits the session's effort:
+The Agent tool has no per-spawn effort parameter — effort is pinned in the agent definition. Six presets live in `.claude/agents/` (spawn via `subagent_type: "<preset>"`); Fable is spawned plainly with `model: 'fable'` and inherits the session's effort:
 
 | preset | model | effort | use for |
 |--------|-------|--------|---------|
 | `sonnet-low` | sonnet-5 | low | Trivial mechanical side tasks with zero design decisions: file sweeps, renames, doc/config tweaks, simple test fixes. |
 | `sonnet-xhigh` | sonnet-5 | xhigh | Default for **compact** well-specified work: single-file/single-feature implementation, test authoring, user-facing UI/copy at taste 7. Also the budget fallback when usage is tight. |
-| `sonnet-max` | sonnet-5 | max | Niche only: debugging with a known repro, or deep-but-mechanical work confined to one file/domain. Not a rung on the escalation ladder — at max effort on multi-file volume it burns more tokens than opus-xhigh finishing in one pass. |
-| `opus-xhigh` | opus-4.8 | xhigh | **Default implementer.** Multi-file features, cross-cutting integration, API design, plan/implementation reviews, subtle debugging. First choice once a task spans files/subsystems, regardless of how clear the spec is. |
-| `opus-max` | opus-4.8 | max | Heaviest delegation: architectural refactors, root-cause hunts that survived an opus-xhigh attempt, high-risk changes to shared pipelines. Last stop before Fable does it personally. |
+| `sonnet-max` | sonnet-5 | max | Niche only: debugging with a known repro, or deep-but-mechanical work confined to one file/domain. Not a rung on the escalation ladder — at max effort on multi-file volume it burns more tokens than opus-high finishing in one pass. |
+| `opus-high` | opus-5 | high | **Default implementer.** Multi-file features, cross-cutting integration, clear-spec design/implementation, frontend/UI and other user-facing design work, plan/implementation reviews, subtle debugging. First choice once a task spans files/subsystems and the spec is settled — including high-taste work, since taste is a model property (opus-5 is taste 9 at every effort tier), not an effort one. |
+| `opus-xhigh` | opus-5 | xhigh | Use when a multi-file/cross-cutting task itself has real ambiguity, an open design decision, high cross-subsystem blast radius, or a prior opus-high attempt missed the bar. opus-high is the default implementer — including frontend/design-heavy work — opus-xhigh is for when the task's own reasoning complexity earns it, not because it needs good taste. |
+| `opus-max` | opus-5 | max | Heaviest delegation: architectural refactors, root-cause hunts that survived an opus-xhigh attempt, high-risk changes to shared pipelines. Last stop before Fable does it personally. |
 | *(fable, no preset)* | fable-5 | inherits session | Open-ended design and judgment calls the orchestrator would otherwise keep; rare — usually the orchestrator IS Fable. |
 
 Routing by complexity — ask three questions: *does the task span more than one file/subsystem?*, *what breaks if it's slightly wrong?*, and *does the task's true complexity sit within this preset's ceiling at its pinned effort?*
-- Route by ceiling, not ladder position: estimate the task's true complexity first and assign the preset whose ceiling comfortably covers it. If a task genuinely demands `opus-max` (architectural refactor, gnarly root-cause, high-risk shared-pipeline change) or Fable (open-ended design, novel judgment), start there on the first pass — never assign a first pass to a preset you expect to fail just because the ladder starts lower.
+- Route by ceiling, not ladder position: estimate the task's true complexity first and assign the preset whose ceiling comfortably covers it. If a task genuinely demands `opus-xhigh` (real ambiguity, open design decision, high judgment) or `opus-max` (architectural refactor, gnarly root-cause, high-risk shared-pipeline change) or Fable (open-ended design, novel judgment), start there on the first pass — never assign a first pass to a preset you expect to fail just because the ladder starts lower.
 - Spec explicit, scope compact, failure caught by the gate → `sonnet-low`/`sonnet-xhigh`.
-- Scope grows to multi-file — even with a crystal-clear spec → `opus-xhigh` directly. Don't ladder through sonnet-max; fewer smart tokens beat more cheap ones (max-effort Sonnet thinking plus extra gate iterations usually out-burns Opus finishing in one pass).
-- Ambiguity, judgment, taste ≥ 8, or cross-subsystem blast radius → `opus-xhigh`; add high-risk on top → `opus-max`.
-- Escalation is one-way and immediate: the same miss or failure twice on a preset → next tier (sonnet-xhigh → opus-xhigh → opus-max → Fable inline), never a retry at the same tier. sonnet-max sits off-ladder as a special-purpose tool, not an escalation step. Escalation corrects misjudged routing; it is not a substitute for honest first-pass ceiling matching.
+- Scope grows to multi-file, or the task needs taste ≥ 8 (including frontend/UI/design work), with a settled spec → `opus-high` directly. Don't ladder through sonnet-max; fewer smart tokens beat more cheap ones (max-effort Sonnet thinking plus extra gate iterations usually out-burns Opus finishing in one pass).
+- Genuine ambiguity, an open design decision, judgment calls, or cross-subsystem blast radius → `opus-xhigh`; add high-risk on top → `opus-max`. High taste or frontend/design polish is *not* on this list — taste doesn't rise with effort (opus-5 is taste 9 at high or xhigh alike), so design-heavy work stays on opus-high unless it separately hits one of these signals. Most delegation here is autonomous — Fable or a subagent makes this call itself from the task's actual shape, not because a human named it — so judge honestly from the work in front of you: don't escalate past opus-high just because a task feels important, touches several files, or needs good design taste, but don't stay on opus-high out of habit when the task genuinely shows real ambiguity, an open decision, or blast radius.
+- Escalation is one-way and immediate: the same miss or failure twice on a preset → next tier (sonnet-xhigh → opus-high → opus-xhigh → opus-max → Fable inline), never a retry at the same tier. sonnet-max sits off-ladder as a special-purpose tool, not an escalation step. Escalation corrects misjudged routing; it is not a substitute for honest first-pass ceiling matching.
 - These presets do not replace Codex routing: bulk/mechanical clear-spec diffs still go to a GPT-5.6 Codex model first; the presets cover work needing Claude judgment/taste, reviews, and the Codex-down fallback.
 - Presets fix only the floor (model, effort, verify-gate discipline); all task-specific steering — scope, approach, constraints, what a prior attempt got wrong, report format — goes in the spawn `prompt`, which layers on top of the preset's system prompt. Steer there; don't create new agent files for one-off specializations.
 
@@ -51,10 +52,10 @@ How to apply:
 - Bulk/mechanical work (clear-spec implementation, data analysis, migrations): use a GPT-5.6 Codex model; the specific model and effort are defined in the delegation section.
 - Anything user-facing (UI, copy, API design) needs taste ≥ 7.
 - When the factor comes down to taste and design always utilize Claude models first with codex models only being used a fallback in that specific scenario. 
-- Reviews of plans/implementations: fable-5 or opus-4.8, optionally a GPT-5.6 Codex model as an extra independent perspective.
+- Reviews of plans/implementations: fable-5 or opus-5, optionally a GPT-5.6 Codex model as an extra independent perspective.
 - Never use Haiku.
 - Mechanics: GPT-5.6 Codex models are accessed from Claude Code through the Codex plugin. For implementation, debugging, investigation, data analysis, or other delegated work, use `/codex:rescue --model <model> --effort <effort> <task>`. Add `--background` for longer-running work, then use `/codex:status` and `/codex:result` to monitor it and retrieve the result. For reviews, use `/codex:review` or `/codex:adversarial-review`.
-- Claude models (sonnet-5, opus-4.8, fable-5) run via the Agent tool — prefer the effort presets above (`subagent_type: "sonnet-xhigh"` etc.) over a bare `model:` parameter, since a bare spawn cannot set effort.
+- Claude models (sonnet-5, opus-5, fable-5) run via the Agent tool — prefer the effort presets above (`subagent_type: "sonnet-xhigh"` etc.) over a bare `model:` parameter, since a bare spawn cannot set effort.
 
 Using GPT-5.6 inside workflows and subagents:
 - The Agent/Workflow `model` parameter only accepts Claude models. To delegate work to a GPT-5.6 Codex model, use the Codex plugin's bundled `codex:codex-rescue` subagent rather than creating a custom Claude wrapper. If a wrapper is absolutely required, spawn a Claude wrapper with `model: 'sonnet', effort: 'low'` and instruct it to write a self-contained Codex prompt. Prefer the plugin whenever possible.
@@ -77,19 +78,57 @@ Understanding which Codex model + effort to use:
 Fallback handling (Codex usage limits / zero credits):
 - **Detection is the wrapper's job — every Codex dispatch must be verified, not assumed.** Immediately after dispatching, the wrapper checks the job result for the limit signatures: (a) an explicit "You've hit your usage limit… try again at HH:MM" error; (b) the instant-fail pattern — `task_complete` within seconds of submission with `last_agent_message: null`, usually alongside a `token_count`/`rate_limits` event showing `has_credits: false` or `balance: "0"` (visible in the newest `~/.codex/sessions/**/rollout-*.jsonl`). A dispatch that produced no repo changes and no agent message did NOT run — treat it as a limit failure, never as success.
 - **The wrapper never performs the fallback itself.** On detecting a limit failure it must NOT spawn subagents, NOT retry Codex, and NOT wait for the reset. It reports straight back to the orchestrating (main) session with: the failure signature it matched, the quoted reset time if present, and the untouched task spec. Then it stops.
-- **The orchestrator owns the reroute.** On receiving that report, the main session spawns the Claude subagent itself using the preset table above (multi-file/cross-cutting → `opus-xhigh`; compact well-specified → `sonnet-xhigh`; architectural/high-risk → `opus-max`), passing the same task spec. This keeps model routing, budget awareness, and gate discipline in one place.
+- **The orchestrator owns the reroute.** On receiving that report, the main session spawns the Claude subagent itself using the preset table above (multi-file/cross-cutting with a settled spec → `opus-high`; compact well-specified → `sonnet-xhigh`; genuinely ambiguous/high-judgment → `opus-xhigh`; architectural/high-risk → `opus-max`), passing the same task spec. This keeps model routing, budget awareness, and gate discipline in one place.
 - **While credits are known-exhausted, skip Codex entirely** for subsequent tasks and route directly to Claude presets until a later dispatch (or the quoted reset time passing) proves Codex is back.
 - The orchestrator should still babysit every dispatch with a working-tree watcher: zero writes within ~8 minutes of a dispatch means inspect the newest Codex rollout file for the instant-fail signature rather than waiting longer.
 
 When Using Plan mode:
-- Inherited / current model the user is using will be the model that is used to create the plan for the task at hand. This will likely be Fable 5 or Opus 4.8
-- Once Fable 5 or Opus 4.8 has thought of a plan, spawn a subagent who will use `model: 'sonnet 5'` and the thinking effort will be based on complexity of task. This sonnet 5 model will create a HTML file using the frontend design skill. This HTML file should outline the entire plan and be presented to me (user).
+- Inherited / current model the user is using will be the model that is used to create the plan for the task at hand. This will likely be Fable 5 or Opus 5
+- Once Fable 5 or Opus 5 has thought of a plan, spawn a subagent who will use `model: 'sonnet 5'` and the thinking effort will be based on complexity of task. This sonnet 5 model will create a HTML file using the frontend design skill. This HTML file should outline the entire plan and be presented to me (user).
 - Instead of the typical MD file that is shown as the plan outline before the user (me) clicks proceed to implement, this HTML file will replace it. Make sure the Artifact HTML created is opened for the user when you are ready to show the plan and HTML file. 
 - The objective is to visualize the plan prior to implementation so that its easier to optimize the plan before any code is written. 
-- All subagents launched in Plan Mode will use `'model: 'sonnet 5'`. Effort level can be your choice based on complexity of task given to the model. This includes `Explore` Agents. The only Exception is the `plan` Agent who can use the `Model: 'Opus 4.8'` as the plan-agent default when specs are detailed and exploration ran first; `Model: 'Fable 5'` for open-ended or high ambigutiy design.
+- All subagents launched in Plan Mode will use `'model: 'sonnet 5'`. Effort level can be your choice based on complexity of task given to the model. This includes `Explore` Agents. The only Exception is the `plan` Agent who can use the `Model: 'Opus 5'` as the plan-agent default when specs are detailed and exploration ran first; `Model: 'Fable 5'` for open-ended or high ambigutiy design.
 
 Built-in agents:
--Built-in agent types (`Explore`, `general-purpose`) are always spawned with an explicit `model:` — default `model: "sonnet"` — and never on Fable 5. Their definitions otherwise resolve their own model (Explore was observed defaulting to Opus 4.8), and an inheriting built-in in a Fable session would burn Fable tokens on survey work. Built-ins are for cheap search/survey only; anything needing more intelligence routes through the presets above or stays inline with the orchestrator.
+-Built-in agent types (`Explore`, `general-purpose`) are always spawned with an explicit `model:` — default `model: "sonnet"` — and never on Fable 5. Their definitions otherwise resolve their own model (Explore was observed defaulting to Opus 5), and an inheriting built-in in a Fable session would burn Fable tokens on survey work. Built-ins are for cheap search/survey only; anything needing more intelligence routes through the presets above or stays inline with the orchestrator.
+
+### claude-in-chrome (browser QA)
+
+The user keeps Chrome open with the app live; every UI change must be **visually
+verified there** — passing tests/typecheck alone never counts as "verified".
+The claude-in-chrome MCP tools drive that Chrome directly.
+
+- **Who drives the browser: a subagent, not the orchestrator.** Chrome QA
+  walkthroughs are screenshot-heavy — delegate them to `opus-high` by
+  default (walkthroughs, multi-step flows, anything involving visual/design
+  judgment like "does this layout actually look right"); drop to
+  `sonnet-xhigh` only for very quick, simple 1–2-item checks (e.g. "confirm
+  the button renders and the dialog opens"). Give the QA agent a concrete
+  checklist: which pages/flows, what to click, what a pass looks like, which
+  regressions to watch for — and have it report findings with screenshots.
+  The orchestrator reads the report and opens Chrome itself only for final
+  spot-checks or when a report is ambiguous.
+- **Mechanics** (for whichever agent drives): load all expected
+  `mcp__claude-in-chrome__*` tools in ONE ToolSearch call; call
+  `tabs_context_mcp` first; prefer `browser_batch` for click/type/screenshot
+  sequences (but keep total waits per batch under ~60s or the call times out).
+  Never reuse tab IDs from another session.
+- **App specifics:** the app runs at `localhost:3000` from the Docker image —
+  confirm the container was rebuilt after web changes or you're verifying
+  stale code (`:3100` is the host dev server when one is running). Auth: use
+  the passwordless dev identities on `/sign-in` (Admin Alpha etc.); sessions
+  die when containers restart, so expect to re-login. Never type real
+  credentials.
+- **Known gotchas:** occluded/background windows can freeze rendering (bring
+  the window forward before judging "stuck"); the user may run ~90% browser
+  zoom, which skews synthetic pointer coordinates — re-screenshot after
+  scrolls and click from fresh coordinates; drags on canvas panels can land
+  as node clicks and open action dialogs — cancel via the dialog's own
+  stand-down/cancel button, never by confirming a state-changing action.
+- **Boundaries:** QA agents observe and exercise reversible UI (navigation,
+  selection, filters, copilot chat on the local model). Class 2/3 operator
+  actions, deletes, and anything needing approval get cancelled, not
+  confirmed, unless the orchestrator's dispatch explicitly says otherwise.
 
 ### Babysitting delegated work (anti-stall rules)
 

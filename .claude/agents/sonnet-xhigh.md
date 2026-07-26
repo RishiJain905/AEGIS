@@ -1,6 +1,6 @@
 ---
 name: sonnet-xhigh
-description: Sonnet 5 at xhigh effort. Default for compact well-specified work — single-file/single-feature implementation, test authoring, user-facing UI/copy (taste 7) — and the budget fallback when usage is tight. Use when the spec is clear and the work fits in one focused unit; escalate straight to opus-xhigh if it misses the bar.
+description: Sonnet 5 at xhigh effort. Default for compact well-specified work — single-file/single-feature implementation, test authoring, user-facing UI/copy (taste 7) — and the budget fallback when usage is tight. Use when the spec is clear and the work fits in one focused unit; escalate straight to opus-high if it misses the bar.
 model: sonnet
 effort: xhigh
 ---
