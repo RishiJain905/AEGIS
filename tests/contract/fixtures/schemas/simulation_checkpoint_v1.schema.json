@@ -44,6 +44,123 @@
       "title": "AssetInstanceSnapshotV1",
       "type": "object"
     },
+    "CampaignRuntimeStateSnapshotV1": {
+      "additionalProperties": false,
+      "description": "Serialized progression of one attacker kill-chain campaign.\n\nEverything the engine needs to resume a campaign mid-flight: where the attacker is\nstanding, what it has established, which scripted reactions have already fired, and\nthe scheduling bookkeeping that keeps exactly one advance in the event queue. Sets are\nserialized as sorted lists so the checkpoint checksum is stable.",
+      "properties": {
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        },
+        "advancePending": {
+          "default": false,
+          "title": "Advancepending",
+          "type": "boolean"
+        },
+        "campaignId": {
+          "minLength": 1,
+          "title": "Campaignid",
+          "type": "string"
+        },
+        "completedTechniqueIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Completedtechniqueids",
+          "type": "array"
+        },
+        "currentFootholdId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currentfootholdid"
+        },
+        "dwellMultiplier": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Dwellmultiplier",
+          "type": "number"
+        },
+        "establishedCapabilities": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Establishedcapabilities",
+          "type": "object"
+        },
+        "establishedFootholds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Establishedfootholds",
+          "type": "array"
+        },
+        "firedReactionIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Firedreactionids",
+          "type": "array"
+        },
+        "haltedAssets": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Haltedassets",
+          "type": "object"
+        },
+        "nextTechniqueIndex": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Nexttechniqueindex",
+          "type": "integer"
+        },
+        "pendingAnchorId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pendinganchorid"
+        },
+        "revokedCapabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Revokedcapabilities",
+          "type": "array"
+        },
+        "scheduleSeq": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Scheduleseq",
+          "type": "integer"
+        },
+        "signalsSuppressed": {
+          "default": false,
+          "title": "Signalssuppressed",
+          "type": "boolean"
+        },
+        "status": {
+          "minLength": 1,
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": ["campaignId", "status", "active"],
+      "title": "CampaignRuntimeStateSnapshotV1",
+      "type": "object"
+    },
     "GeneratorStateSnapshotV1": {
       "additionalProperties": false,
       "properties": {
@@ -169,6 +286,74 @@
       "title": "RelationshipInstanceSnapshotV1",
       "type": "object"
     },
+    "RunOutcomeSnapshotV1": {
+      "additionalProperties": false,
+      "description": "The resolved win/lose verdict for a run, once (and only once) it resolves.",
+      "properties": {
+        "disruptionCost": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Disruptioncost",
+          "type": "number"
+        },
+        "needlessCriticalOutages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Needlesscriticaloutages",
+          "type": "array"
+        },
+        "neutralizedCampaignIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Neutralizedcampaignids",
+          "type": "array"
+        },
+        "outcome": {
+          "minLength": 1,
+          "title": "Outcome",
+          "type": "string"
+        },
+        "peakDisruptionCost": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Peakdisruptioncost",
+          "type": "number"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "resolvedSequence": {
+          "minimum": 0,
+          "title": "Resolvedsequence",
+          "type": "integer"
+        },
+        "resolvedSimTime": {
+          "title": "Resolvedsimtime",
+          "type": "string"
+        },
+        "succeededCampaignIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Succeededcampaignids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "outcome",
+        "reason",
+        "resolvedSimTime",
+        "resolvedSequence",
+        "disruptionCost",
+        "peakDisruptionCost"
+      ],
+      "title": "RunOutcomeSnapshotV1",
+      "type": "object"
+    },
     "ScheduledEventSourceType": {
       "enum": ["scheduled", "generator"],
       "title": "ScheduledEventSourceType",
@@ -278,6 +463,13 @@
           "title": "Assets",
           "type": "array"
         },
+        "campaigns": {
+          "items": {
+            "$ref": "#/$defs/CampaignRuntimeStateSnapshotV1"
+          },
+          "title": "Campaigns",
+          "type": "array"
+        },
         "generators": {
           "items": {
             "$ref": "#/$defs/GeneratorStateSnapshotV1"
@@ -296,6 +488,24 @@
           "minimum": 0,
           "title": "Nextsequence",
           "type": "integer"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RunOutcomeSnapshotV1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "peakDisruptionCost": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Peakdisruptioncost",
+          "type": "number"
         },
         "pendingEvents": {
           "items": {

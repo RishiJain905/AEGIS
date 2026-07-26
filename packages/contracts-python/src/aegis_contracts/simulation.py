@@ -171,6 +171,67 @@ class HiddenConditionStateSnapshotV1(BaseModel):
     trigger_count: int = Field(default=0, alias="triggerCount", ge=0)
 
 
+class CampaignRuntimeStateSnapshotV1(BaseModel):
+    """Serialized progression of one attacker kill-chain campaign.
+
+    Everything the engine needs to resume a campaign mid-flight: where the attacker is
+    standing, what it has established, which scripted reactions have already fired, and
+    the scheduling bookkeeping that keeps exactly one advance in the event queue. Sets are
+    serialized as sorted lists so the checkpoint checksum is stable.
+    """
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    campaign_id: str = Field(alias="campaignId", min_length=1)
+    status: str = Field(min_length=1)
+    active: bool
+    current_foothold_id: AssetId | None = Field(default=None, alias="currentFootholdId")
+    established_footholds: list[AssetId] = Field(
+        default_factory=list, alias="establishedFootholds"
+    )
+    #: capability id -> the asset whose compromise granted it (revoking that asset kills it).
+    established_capabilities: dict[str, str] = Field(
+        default_factory=dict, alias="establishedCapabilities"
+    )
+    revoked_capabilities: list[str] = Field(default_factory=list, alias="revokedCapabilities")
+    completed_technique_ids: list[str] = Field(
+        default_factory=list, alias="completedTechniqueIds"
+    )
+    next_technique_index: int = Field(default=0, alias="nextTechniqueIndex", ge=0)
+    pending_anchor_id: AssetId | None = Field(default=None, alias="pendingAnchorId")
+    fired_reaction_ids: list[str] = Field(default_factory=list, alias="firedReactionIds")
+    schedule_seq: int = Field(default=0, alias="scheduleSeq", ge=0)
+    advance_pending: bool = Field(default=False, alias="advancePending")
+    dwell_multiplier: float = Field(default=1.0, alias="dwellMultiplier", gt=0.0)
+    signals_suppressed: bool = Field(default=False, alias="signalsSuppressed")
+    #: asset id -> the execution-halting status already accounted for on it.
+    halted_assets: dict[str, str] = Field(default_factory=dict, alias="haltedAssets")
+
+
+class RunOutcomeSnapshotV1(BaseModel):
+    """The resolved win/lose verdict for a run, once (and only once) it resolves."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    outcome: str = Field(min_length=1)
+    reason: str = Field(min_length=1)
+    resolved_sim_time: SimTimestamp = Field(alias="resolvedSimTime")
+    resolved_sequence: Sequence = Field(alias="resolvedSequence", ge=1)
+    #: Fraction of the org (criticality-weighted) currently out of service by defender action.
+    disruption_cost: float = Field(alias="disruptionCost", ge=0.0, le=1.0)
+    peak_disruption_cost: float = Field(alias="peakDisruptionCost", ge=0.0, le=1.0)
+    #: Critical assets the attacker never held that the defender took fully out of service.
+    needless_critical_outages: list[AssetId] = Field(
+        default_factory=list, alias="needlessCriticalOutages"
+    )
+    neutralized_campaign_ids: list[str] = Field(
+        default_factory=list, alias="neutralizedCampaignIds"
+    )
+    succeeded_campaign_ids: list[str] = Field(
+        default_factory=list, alias="succeededCampaignIds"
+    )
+
+
 class WorldStateSnapshotV1(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
@@ -188,6 +249,13 @@ class WorldStateSnapshotV1(BaseModel):
     selected_branches: dict[str, str] = Field(default_factory=dict, alias="selectedBranches")
     pending_events: list[ScheduledEventV1] = Field(default_factory=list, alias="pendingEvents")
     rng_state: dict[str, list[int]] = Field(default_factory=dict, alias="rngState")
+    # Phase 2 game loop. Additive with defaults, so checkpoints written before Phase 2
+    # still restore (as a campaign-free, unresolved world) at the same schema version.
+    campaigns: list[CampaignRuntimeStateSnapshotV1] = Field(default_factory=list)
+    peak_disruption_cost: float = Field(
+        default=0.0, alias="peakDisruptionCost", ge=0.0, le=1.0
+    )
+    outcome: RunOutcomeSnapshotV1 | None = None
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> WorldStateSnapshotV1:

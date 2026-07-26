@@ -45,6 +45,10 @@ export const EVENT_TYPE_REGISTRY: Readonly<Record<string, number>> = {
   'sim.killchain.reaction_fired': 1,
   'sim.killchain.exfiltration_completed': 1,
   'sim.killchain.campaign_stalled': 1,
+  // Phase 2 game loop — defender action disrupts the chain, and run resolution.
+  'sim.killchain.technique_disrupted': 1,
+  'sim.killchain.campaign_contained': 1,
+  'sim.run.outcome_resolved': 1,
   'telemetry.authentication.failed': 1,
   'telemetry.authentication.succeeded': 1,
   'telemetry.api.request': 1,

@@ -161,6 +161,47 @@ const hiddenConditionStateSnapshotSchema = z
   })
   .strict();
 
+const campaignRuntimeStateSnapshotSchema = z
+  .object({
+    campaignId: z.string().min(1),
+    status: z.string().min(1),
+    active: z.boolean(),
+    currentFootholdId: authoredIdSchema.nullable().default(null),
+    establishedFootholds: z.array(authoredIdSchema).default([]),
+    establishedCapabilities: z.record(z.string()).default({}),
+    revokedCapabilities: z.array(z.string()).default([]),
+    completedTechniqueIds: z.array(z.string()).default([]),
+    nextTechniqueIndex: z.number().int().min(0).default(0),
+    pendingAnchorId: authoredIdSchema.nullable().default(null),
+    firedReactionIds: z.array(z.string()).default([]),
+    scheduleSeq: z.number().int().min(0).default(0),
+    advancePending: z.boolean().default(false),
+    dwellMultiplier: z.number().positive().default(1),
+    signalsSuppressed: z.boolean().default(false),
+    haltedAssets: z.record(z.string()).default({}),
+  })
+  .strict();
+
+const runOutcomeSnapshotSchema = z
+  .object({
+    outcome: z.enum([
+      'win',
+      'costly_win',
+      'loss_exfiltration',
+      'loss_over_containment',
+      'unresolved',
+    ]),
+    reason: z.string().min(1),
+    resolvedSimTime: simTimestampSchema,
+    resolvedSequence: sequenceSchema.min(1),
+    disruptionCost: z.number().min(0).max(1),
+    peakDisruptionCost: z.number().min(0).max(1),
+    needlessCriticalOutages: z.array(authoredIdSchema).default([]),
+    neutralizedCampaignIds: z.array(z.string()).default([]),
+    succeededCampaignIds: z.array(z.string()).default([]),
+  })
+  .strict();
+
 export const worldStateSnapshotSchema = z
   .object({
     schemaVersion: z.number().int().min(1),
@@ -174,6 +215,11 @@ export const worldStateSnapshotSchema = z
     selectedBranches: z.record(z.string()).default({}),
     pendingEvents: z.array(scheduledEventSchema).default([]),
     rngState: z.record(z.array(z.number().int())).default({}),
+    // Phase 2 game loop: attacker campaign progression + the run's win/lose verdict.
+    // Additive with defaults, so pre-Phase-2 checkpoints still parse at this version.
+    campaigns: z.array(campaignRuntimeStateSnapshotSchema).default([]),
+    peakDisruptionCost: z.number().min(0).max(1).default(0),
+    outcome: runOutcomeSnapshotSchema.nullable().default(null),
   })
   .strict()
   .superRefine((value, ctx) => {
@@ -228,6 +274,8 @@ export const normalizedEventHashSchema = z
 export type RunConfigurationV1 = z.infer<typeof runConfigurationSchema>;
 export type ScheduledEventV1 = z.infer<typeof scheduledEventSchema>;
 export type SimulationCommandV1 = z.infer<typeof simulationCommandSchema>;
+export type CampaignRuntimeStateSnapshotV1 = z.infer<typeof campaignRuntimeStateSnapshotSchema>;
+export type RunOutcomeSnapshotV1 = z.infer<typeof runOutcomeSnapshotSchema>;
 export type WorldStateSnapshotV1 = z.infer<typeof worldStateSnapshotSchema>;
 export type SimulationCheckpointV1 = z.infer<typeof simulationCheckpointSchema>;
 export type NormalizedEventHashV1 = z.infer<typeof normalizedEventHashSchema>;
