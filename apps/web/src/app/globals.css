@@ -1,7 +1,7 @@
 @import '@aegis/ui/styles/tokens.css';
 @import '@aegis/ui/styles/motion.css';
 @import 'tailwindcss';
-@source "../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
 
 @layer base {
