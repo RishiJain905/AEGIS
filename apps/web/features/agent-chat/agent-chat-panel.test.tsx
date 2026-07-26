@@ -3,6 +3,8 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { queryKeys } from '@/lib/api/query-keys';
+
 import { AgentChatPanel } from './agent-chat-panel';
 
 const apiFetch = vi.fn();
@@ -96,11 +98,12 @@ function jsonResponse(body: unknown, ok = true, status = 200): Response {
 
 function renderPanel() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const view = render(
     <QueryClientProvider client={client}>
       <AgentChatPanel runId={RUN_ID} />
     </QueryClientProvider>,
   );
+  return { client, ...view };
 }
 
 describe('AgentChatPanel', () => {
@@ -246,6 +249,70 @@ describe('AgentChatPanel', () => {
         instructions?: string;
       };
       expect(body.instructions).toBe('Now check the file server');
+    });
+  });
+
+  it('does not double-render the submission when a realtime refetch lands mid-flight', async () => {
+    // The live-run-provider's `agent.*` event handler invalidates the session list the
+    // moment the backend creates the task - well before this (inline, potentially slow)
+    // POST resolves. That can land the real "Working…" turn while the mutation is still
+    // pending. The panel must show the submission once, not twice, and the composer must
+    // already be empty (it clears on send, not on response).
+    let getCalls = 0;
+    let resolvePost!: (value: Response) => void;
+    const postPromise = new Promise<Response>((resolve) => {
+      resolvePost = resolve;
+    });
+
+    apiFetch.mockImplementation((_path: string, init?: RequestInit) => {
+      if ((init?.method ?? 'GET') === 'GET') {
+        getCalls += 1;
+        // First load: no sessions yet. Second (simulated realtime-triggered) refetch: the
+        // task already exists and is running, echoing the submitted instructions - as it
+        // would once the backend has committed the row but before the LLM call finishes.
+        const sessions =
+          getCalls === 1
+            ? []
+            : [watchtowerSessionDetail({ taskStatus: 'running' })].map((detail) => ({
+                ...detail,
+                tasks: [{ ...detail.tasks[0], instructions: 'Sweep the run now' }],
+              }));
+        return Promise.resolve(jsonResponse({ sessions }));
+      }
+      return postPromise;
+    });
+
+    const { client } = renderPanel();
+    await screen.findByTestId('agent-chat-panel');
+
+    const composer = screen.getByLabelText<HTMLTextAreaElement>(/Message to WATCHTOWER/);
+    await userEvent.type(composer, 'Sweep the run now');
+    await userEvent.click(screen.getByRole('button', { name: /Send to WATCHTOWER/ }));
+
+    // Composer clears immediately on send, not on response.
+    await waitFor(() => {
+      expect(composer.value).toBe('');
+    });
+    expect(await screen.findByRole('button', { name: /Sending…/ })).toBeInTheDocument();
+
+    // Simulate the realtime handler's invalidation landing while the POST is still pending.
+    await client.invalidateQueries({ queryKey: queryKeys.agentSessions.listForRun(RUN_ID) });
+
+    const panel = screen.getByTestId('agent-chat-panel');
+    await waitFor(() => {
+      expect(within(panel).getAllByText('Sweep the run now')).toHaveLength(1);
+    });
+    // The real turn (now visible via the simulated refetch) shows its own "Working…" -
+    // the optimistic placeholder's working indicator (a distinct testid, separate from the
+    // sr-only aria-live announcement that legitimately always echoes the same words) must
+    // not also be showing.
+    expect(within(panel).getByText('Working…')).toBeInTheDocument();
+    expect(within(panel).queryByTestId('agent-chat-working')).not.toBeInTheDocument();
+    expect(within(panel).queryByTestId('agent-chat-retrying')).not.toBeInTheDocument();
+
+    resolvePost(jsonResponse({ ok: true }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Send to WATCHTOWER/ })).toBeInTheDocument();
     });
   });
 });

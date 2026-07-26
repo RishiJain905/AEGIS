@@ -217,6 +217,10 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
 
   const [role, setRole] = useState<ChatRole>('WATCHTOWER');
   const [draft, setDraft] = useState('');
+  // The instructions just submitted, kept separately from `draft` (which clears the
+  // moment send happens) so the optimistic turn below still has text to show while
+  // the request is in flight.
+  const [pendingInstructions, setPendingInstructions] = useState<string | null>(null);
   const draftRef = useRef<HTMLTextAreaElement>(null);
 
   // Most recent session for the selected role (the active thread).
@@ -231,17 +235,40 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
   const pending = sendMessage.isPending;
   const retrying = sendMessage.isRetrying;
 
+  // The realtime `agent.*` event invalidation (live-run-provider.tsx) refetches
+  // sessions as soon as the backend creates the task — well before this request's
+  // own (inline, potentially slow) response arrives. That can land the real turn,
+  // already showing "Working…", while `pending` is still true. Once that happens,
+  // suppress the optimistic placeholder below so the submission renders once, not
+  // twice.
+  const lastTurn = turns.length > 0 ? turns[turns.length - 1] : undefined;
+  const lastTurnIsInFlight =
+    lastTurn?.task.status === 'queued' || lastTurn?.task.status === 'running';
+  const submissionAlreadyVisible =
+    pending &&
+    pendingInstructions !== null &&
+    lastTurn?.instructions === pendingInstructions &&
+    lastTurnIsInFlight;
+
   const submit = () => {
     const instructions = draft.trim();
     if (!instructions || pending) {
       return;
     }
+    // Clear the composer the moment the operator sends, not when the (possibly
+    // slow, inline-LLM) response comes back — the request is committed either way,
+    // and a failure surfaces through the error alert below, not by handing the
+    // text back.
+    setDraft('');
+    setPendingInstructions(instructions);
     sendMessage.mutate(
       { role, instructions, sessionId: roleSession?.session.id },
       {
         onSuccess: () => {
-          setDraft('');
           draftRef.current?.focus();
+        },
+        onSettled: () => {
+          setPendingInstructions(null);
         },
       },
     );
@@ -310,12 +337,12 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
               {turns.map((turn) => (
                 <TurnView key={turn.taskId} turn={turn} />
               ))}
-              {pending ? (
+              {pending && !submissionAlreadyVisible ? (
                 <li className="flex flex-col gap-2">
-                  {draft.trim() ? (
+                  {pendingInstructions ? (
                     <div className="self-end rounded-[var(--aegis-radius-md)] bg-[var(--aegis-accent-soft)] px-3 py-2">
                       <p className="whitespace-pre-wrap text-sm text-[var(--aegis-text-primary)]">
-                        {draft.trim()}
+                        {pendingInstructions}
                       </p>
                     </div>
                   ) : null}
