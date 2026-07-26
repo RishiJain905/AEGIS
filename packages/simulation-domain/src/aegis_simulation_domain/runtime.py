@@ -8,15 +8,20 @@ from datetime import UTC, datetime, timedelta
 from aegis_contracts import ActorRef, ActorType, DomainEventEnvelopeV1
 from aegis_contracts.killchain import (
     KILLCHAIN_CAMPAIGN_ACTIVATED,
+    KILLCHAIN_CAMPAIGN_CONTAINED,
     KILLCHAIN_CAMPAIGN_STALLED,
     KILLCHAIN_EXFILTRATION_COMPLETED,
     KILLCHAIN_REACTION_FIRED,
+    KILLCHAIN_TECHNIQUE_DISRUPTED,
     KILLCHAIN_TECHNIQUE_EXECUTED,
+    RUN_OUTCOME_RESOLVED,
     AttackTactic,
     CampaignStatus,
+    DisruptionEffect,
 )
 from aegis_contracts.simulation import (
     RunConfigurationV1,
+    RunOutcomeSnapshotV1,
     ScheduledEventSourceType,
     ScheduledEventV1,
     SimulationCheckpointV1,
@@ -39,6 +44,12 @@ from aegis_scenario_sdk.contracts.manifest import (
 )
 
 from aegis_simulation_domain.clock import VirtualClock
+from aegis_simulation_domain.disruption import (
+    DisruptionAssessment,
+    assess_disruption,
+    attacker_held_asset_ids,
+    compute_business_disruption,
+)
 from aegis_simulation_domain.errors import SimulationError, SimulationErrorCode
 from aegis_simulation_domain.event_queue import DeterministicEventQueue
 from aegis_simulation_domain.handlers import execute_plugin
@@ -52,6 +63,7 @@ from aegis_simulation_domain.killchain import (
 )
 from aegis_simulation_domain.normalized_hash import checkpoint_checksum
 from aegis_simulation_domain.random_streams import SeededRandomStreams
+from aegis_simulation_domain.resolution import RunResolution, evaluate_run_outcome
 from aegis_simulation_domain.world_state import CampaignRuntimeState, WorldState
 
 SIMULATION_ENGINE_VERSION = "0.0.0-phase10"
@@ -63,6 +75,37 @@ SIMULATION_ENGINE_VERSION = "0.0.0-phase10"
 # generators (10) so an advance resolves deterministically against same-time telemetry.
 _KILLCHAIN_ADVANCE_PLUGIN = "killchain.advance"
 _KILLCHAIN_ADVANCE_PRIORITY = 5
+
+
+@dataclass(frozen=True)
+class _DisruptionPass:
+    """Events emitted by the disruption pass plus the reading each campaign was given."""
+
+    events: list[DomainEventEnvelopeV1]
+    by_campaign: dict[str, DisruptionAssessment]
+
+
+def _primary_effect(assessment: DisruptionAssessment) -> DisruptionEffect:
+    """The single most decisive thing the defender took away, for event reporting.
+
+    Ordered by how final it is: egress being cut ends the run whatever else is true, a
+    revoked credential cannot be worked around, a severed foothold might still have a
+    fallback, and a severed anchor is the mildest — the attacker can re-aim.
+    """
+    if assessment.egress_blocked:
+        return DisruptionEffect.EGRESS_BLOCKED
+    if assessment.blocking_capabilities:
+        return DisruptionEffect.CAPABILITY_REVOKED
+    if assessment.foothold_severed:
+        return DisruptionEffect.FOOTHOLD_SEVERED
+    return DisruptionEffect.ANCHOR_SEVERED
+
+
+def _pending_tactic(campaign: KillChainCampaignV1, state: CampaignRuntimeState) -> str | None:
+    index = state.next_technique_index
+    if 0 <= index < len(campaign.techniques):
+        return campaign.techniques[index].tactic.value
+    return None
 
 
 @dataclass
@@ -113,7 +156,14 @@ class SimulationRuntime:
         if scheduled is None:
             return []
         events = self._process_scheduled_event(scheduled)
-        events.extend(self._process_killchain_reactions())
+        # Order is load-bearing and deterministic: read what the defender has severed,
+        # give the campaign's authored counter-moves the first chance to answer it, then
+        # fall back / contain whatever is still cut off, then see if the run is decided.
+        assessments = self._process_killchain_disruption()
+        events.extend(assessments.events)
+        events.extend(self._process_killchain_reactions(assessments.by_campaign))
+        events.extend(self._resolve_blocked_campaigns())
+        events.extend(self._evaluate_run_outcome(horizon_reached=self.queue.peek() is None))
         try:
             from aegis_observability.instrumentation import record_simulation_events
 
@@ -155,8 +205,13 @@ class SimulationRuntime:
                 code=SimulationErrorCode.INVALID_STATE,
                 message="Simulation is already stopped",
             )
+        # Stopping is how a run reaches its horizon (the ticker stops a run once the
+        # scenario's step budget is spent), so this is the last chance to put a verdict on
+        # an engagement that neither side closed out.
+        emitted = self._evaluate_run_outcome(horizon_reached=True)
         self.world.status = SimulationRunStatus.STOPPED
-        return [self._lifecycle_event("sim.run.stopped")]
+        emitted.append(self._lifecycle_event("sim.run.stopped"))
+        return emitted
 
     def checkpoint(self, *, created_at: datetime | None = None) -> SimulationCheckpointV1:
         checkpoint_id = derive_checkpoint_id(
@@ -491,12 +546,17 @@ class SimulationRuntime:
         campaign: KillChainCampaignV1,
         index: int,
         base_time: datetime,
+        *,
+        reschedule: bool = False,
     ) -> None:
         """Resolve technique ``index``'s anchor and queue its execution after its dwell.
 
-        Keeps exactly one advance in flight per campaign: if one is already queued this
-        only re-targets it (used by re-anchoring reactions), so the queue never accrues
-        duplicate advances.
+        Keeps exactly one *live* advance per campaign. Without ``reschedule`` an already
+        queued advance is only re-targeted (used by re-anchoring reactions). With it, the
+        campaign's ``schedule_seq`` is bumped so the queued advance is recognised as stale
+        when it pops and a fresh one is enqueued from ``base_time`` — that is how a
+        disrupted technique loses its accrued dwell and has to start over. The queue has
+        no removal, so staleness is tracked by token rather than by deleting entries.
         """
         state.next_technique_index = index
         technique = campaign.techniques[index]
@@ -507,11 +567,12 @@ class SimulationRuntime:
             rng=self.rng,
             stream_key=f"killchain.anchor:{campaign.id}:{index}",
         )
-        if state.advance_pending:
+        if state.advance_pending and not reschedule:
             return
         state.advance_pending = True
         state.schedule_seq += 1
-        sim_time = base_time + timedelta(seconds=technique.dwell_sim_seconds)
+        dwell = technique.dwell_sim_seconds * state.dwell_multiplier
+        sim_time = base_time + timedelta(seconds=dwell)
         self.queue.enqueue(
             ScheduledEventV1(
                 schema_version=SCHEDULED_EVENT_SCHEMA_VERSION,
@@ -521,7 +582,11 @@ class SimulationRuntime:
                 tie_breaker=0,
                 source_type=ScheduledEventSourceType.SCHEDULED,
                 plugin_id=_KILLCHAIN_ADVANCE_PLUGIN,
-                config={"campaignId": campaign.id, "techniqueIndex": index},
+                config={
+                    "campaignId": campaign.id,
+                    "techniqueIndex": index,
+                    "scheduleSeq": state.schedule_seq,
+                },
             )
         )
 
@@ -541,6 +606,11 @@ class SimulationRuntime:
         campaign = find_campaign(self.manifest.campaigns, campaign_id)
         if state is None or campaign is None:
             return []
+        # A superseded advance (its technique was disrupted and rescheduled) still pops
+        # off the queue. Drop it without clearing the flag — the replacement is live.
+        schedule_seq = int(scheduled.config.get("scheduleSeq", state.schedule_seq))
+        if schedule_seq != state.schedule_seq:
+            return []
         state.advance_pending = False
         if not state.active:
             return []
@@ -549,10 +619,29 @@ class SimulationRuntime:
             state.active = False
             return []
         technique = campaign.techniques[index]
+
+        # The defender may have acted between the advance being queued and it coming due.
+        # A technique whose foothold, target, egress or credential has been taken away
+        # does not land: it is abandoned here and the disruption pass that runs later in
+        # this same step decides whether the campaign falls back or is contained. A merely
+        # interrupted technique (service restarting) keeps everything and simply starts
+        # its dwell over.
+        assessment = assess_disruption(campaign=campaign, state=state, world=self.world)
+        if assessment.blocked:
+            return []
+        if assessment.halts_execution:
+            self._schedule_advance(
+                state, campaign, index, self.clock.sim_time, reschedule=True
+            )
+            return []
+
         anchor_id = state.pending_anchor_id
         emitted: list[DomainEventEnvelopeV1] = []
 
-        for signal in technique.signals:
+        # A campaign that has gone quiet stops emitting the telemetry detection feeds on;
+        # from here the operator can only find it by investigating.
+        signals = [] if state.signals_suppressed else technique.signals
+        for signal in signals:
             target = (
                 anchor_id
                 if signal.target == TechniqueSignalTarget.ANCHOR
@@ -609,7 +698,11 @@ class SimulationRuntime:
         if anchor_id is not None:
             state.established_footholds.add(anchor_id)
         for capability in technique.establishes:
-            state.established_capabilities.add(capability)
+            # Anchor the capability to the asset that granted it, so containing that asset
+            # later revokes it without the scenario having to author the linkage.
+            state.established_capabilities[capability] = anchor_id or (
+                state.current_foothold_id or ""
+            )
         if technique.moves_foothold and anchor_id is not None:
             state.current_foothold_id = anchor_id
 
@@ -636,13 +729,76 @@ class SimulationRuntime:
             state.active = False
         return emitted
 
-    def _process_killchain_reactions(self) -> list[DomainEventEnvelopeV1]:
+    def _process_killchain_disruption(self) -> _DisruptionPass:
+        """Read what defender containment has taken from each campaign, and apply it.
+
+        Two effects land here directly because they are consequences, not choices: a
+        capability whose granting asset has been contained is revoked for good, and a
+        technique running on an asset the defender restarted or rolled back loses its
+        accrued dwell and starts over. Everything else (fall back? go quiet? give up?) is
+        left to the campaign's reaction rules and, failing those, to
+        :meth:`_resolve_blocked_campaigns`.
+        """
+        events: list[DomainEventEnvelopeV1] = []
+        by_campaign: dict[str, DisruptionAssessment] = {}
+        for campaign_id in sorted(self.world.campaigns):
+            state = self.world.campaigns[campaign_id]
+            campaign = find_campaign(self.manifest.campaigns, campaign_id)
+            if campaign is None or not state.active:
+                continue
+            assessment = assess_disruption(campaign=campaign, state=state, world=self.world)
+            by_campaign[campaign_id] = assessment
+
+            for capability in assessment.revoked_capabilities:
+                if capability in state.revoked_capabilities:
+                    continue
+                state.revoked_capabilities.add(capability)
+                events.append(
+                    self._disruption_event(
+                        campaign,
+                        state,
+                        effect=DisruptionEffect.CAPABILITY_REVOKED,
+                        asset_id=state.established_capabilities.get(capability),
+                        extra={"capability": capability},
+                    )
+                )
+
+            halted_now = dict(assessment.halted_assets)
+            for asset_id, status in sorted(halted_now.items()):
+                if state.halted_assets.get(asset_id) == status:
+                    continue
+                state.halted_assets[asset_id] = status
+                # The attacker loses its accrued dwell the moment the service goes down,
+                # not when the advance was going to land.
+                self._schedule_advance(
+                    state,
+                    campaign,
+                    state.next_technique_index,
+                    self.clock.sim_time,
+                    reschedule=True,
+                )
+                events.append(
+                    self._disruption_event(
+                        campaign,
+                        state,
+                        effect=DisruptionEffect.DWELL_RESET,
+                        asset_id=asset_id,
+                        extra={"disruptedByStatus": status},
+                    )
+                )
+            for asset_id in [a for a in state.halted_assets if a not in halted_now]:
+                del state.halted_assets[asset_id]
+
+        return _DisruptionPass(events=events, by_campaign=by_campaign)
+
+    def _process_killchain_reactions(
+        self, assessments: dict[str, DisruptionAssessment]
+    ) -> list[DomainEventEnvelopeV1]:
         """Evaluate each active campaign's reaction rules against current world state.
 
         Deterministic and fire-once per rule. In an undisrupted run no precondition holds,
-        so nothing fires and the event stream is exactly the base attacker plan. This is
-        the hook Phase 2 drives from real operator/AI actions; Phase 1 proves it by
-        mutating world state in a test and stepping.
+        so nothing fires and the event stream is exactly the base attacker plan; a
+        defender action is what arms them.
         """
         emitted: list[DomainEventEnvelopeV1] = []
         for campaign_id in sorted(self.world.campaigns):
@@ -652,16 +808,172 @@ class SimulationRuntime:
             campaign = find_campaign(self.manifest.campaigns, campaign_id)
             if campaign is None:
                 continue
+            assessment = assessments.get(campaign_id)
+            if assessment is None:
+                assessment = assess_disruption(
+                    campaign=campaign, state=state, world=self.world
+                )
             for reaction in campaign.reactions:
                 if reaction.id in state.fired_reaction_ids:
                     continue
                 if not precondition_met(
-                    reaction.precondition, world=self.world, state=state
+                    reaction.precondition,
+                    world=self.world,
+                    state=state,
+                    assessment=assessment,
                 ):
                     continue
                 state.fired_reaction_ids.add(reaction.id)
                 emitted.extend(self._apply_counter_move(campaign, state, reaction))
         return emitted
+
+    def _resolve_blocked_campaigns(self) -> list[DomainEventEnvelopeV1]:
+        """Fall back, or admit defeat, for campaigns the defender has cut off.
+
+        Re-assessed *after* reactions so an authored counter-move gets to answer the
+        disruption first. What remains blocked adapts on its own, exactly as the design
+        spec allows: re-establish from another asset the attacker already owns (never a
+        new one — no teleporting), losing the accrued dwell in the process. With no
+        usable foothold left, or with egress cut, or with a required credential revoked
+        and no way around it, the campaign is contained and the defender has won the race.
+        """
+        emitted: list[DomainEventEnvelopeV1] = []
+        for campaign_id in sorted(self.world.campaigns):
+            state = self.world.campaigns[campaign_id]
+            if not state.active:
+                continue
+            campaign = find_campaign(self.manifest.campaigns, campaign_id)
+            if campaign is None:
+                continue
+            assessment = assess_disruption(campaign=campaign, state=state, world=self.world)
+            if not assessment.blocked:
+                continue
+
+            effect = _primary_effect(assessment)
+            emitted.append(
+                self._disruption_event(
+                    campaign,
+                    state,
+                    effect=effect,
+                    asset_id=(
+                        state.pending_anchor_id
+                        if effect == DisruptionEffect.ANCHOR_SEVERED
+                        else state.current_foothold_id
+                    ),
+                    extra={
+                        "blockingCapabilities": list(assessment.blocking_capabilities),
+                    },
+                )
+            )
+
+            recoverable = assessment.foothold_severed and not (
+                assessment.egress_blocked or assessment.blocking_capabilities
+            )
+            fallback = assessment.fallback_foothold_id if recoverable else None
+            if fallback is not None:
+                state.current_foothold_id = fallback
+                self._schedule_advance(
+                    state,
+                    campaign,
+                    state.next_technique_index,
+                    self.clock.sim_time,
+                    reschedule=True,
+                )
+                # The re-anchored technique may still point at a severed asset; if so the
+                # next step's assessment contains the campaign rather than looping.
+                continue
+
+            state.active = False
+            state.status = CampaignStatus.CONTAINED.value
+            emitted.append(
+                self._killchain_event(
+                    KILLCHAIN_CAMPAIGN_CONTAINED,
+                    state.current_foothold_id,
+                    {
+                        "campaignId": campaign.id,
+                        "effect": effect.value,
+                        "completedTechniqueIds": list(state.completed_technique_ids),
+                        "reachedTactic": _pending_tactic(campaign, state),
+                    },
+                )
+            )
+        return emitted
+
+    def _evaluate_run_outcome(self, *, horizon_reached: bool) -> list[DomainEventEnvelopeV1]:
+        """Resolve the run's win/lose verdict, once.
+
+        Only scenarios that author an attacker campaign have a race to resolve, so a
+        campaign-free scenario never produces an outcome event and its event stream is
+        untouched by this phase.
+        """
+        if not self.manifest.campaigns or self.world.outcome is not None:
+            return []
+        disruption = compute_business_disruption(
+            world=self.world,
+            attacker_held_asset_ids=attacker_held_asset_ids(self.world),
+            policy=self.manifest.proportionality,
+        )
+        self.world.peak_disruption_cost = max(self.world.peak_disruption_cost, disruption.cost)
+        resolution = evaluate_run_outcome(
+            world=self.world,
+            disruption=disruption,
+            peak_disruption_cost=self.world.peak_disruption_cost,
+            policy=self.manifest.proportionality,
+            horizon_reached=horizon_reached,
+        )
+        if resolution is None:
+            return []
+        return [self._record_outcome(resolution)]
+
+    def _record_outcome(self, resolution: RunResolution) -> DomainEventEnvelopeV1:
+        outcome = RunOutcomeSnapshotV1(
+            outcome=resolution.outcome.value,
+            reason=resolution.reason.value,
+            resolved_sim_time=self.clock.sim_time,
+            resolved_sequence=self.world.next_sequence,
+            disruption_cost=resolution.disruption_cost,
+            peak_disruption_cost=resolution.peak_disruption_cost,
+            needless_critical_outages=list(resolution.needless_critical_outages),
+            neutralized_campaign_ids=list(resolution.neutralized_campaign_ids),
+            succeeded_campaign_ids=list(resolution.succeeded_campaign_ids),
+        )
+        self.world.outcome = outcome
+        return self._killchain_event(
+            RUN_OUTCOME_RESOLVED,
+            None,
+            outcome.model_dump(mode="json", by_alias=True),
+        )
+
+    @property
+    def run_outcome(self) -> RunOutcomeSnapshotV1 | None:
+        """The run's resolved verdict, or ``None`` while the race is still on."""
+        return self.world.outcome
+
+    def _disruption_event(
+        self,
+        campaign: KillChainCampaignV1,
+        state: CampaignRuntimeState,
+        *,
+        effect: DisruptionEffect,
+        asset_id: str | None,
+        extra: dict[str, object] | None = None,
+    ) -> DomainEventEnvelopeV1:
+        index = state.next_technique_index
+        technique = (
+            campaign.techniques[index] if 0 <= index < len(campaign.techniques) else None
+        )
+        payload: dict[str, object] = {
+            "campaignId": campaign.id,
+            "effect": effect.value,
+            "assetId": asset_id,
+            "techniqueId": technique.id if technique is not None else None,
+            "attackTechniqueId": (
+                technique.attack_technique_id if technique is not None else None
+            ),
+            "tactic": technique.tactic.value if technique is not None else None,
+        }
+        payload.update(extra or {})
+        return self._killchain_event(KILLCHAIN_TECHNIQUE_DISRUPTED, asset_id, payload)
 
     def _apply_counter_move(
         self,
@@ -670,7 +982,9 @@ class SimulationRuntime:
         reaction: ReactionRuleV1,
     ) -> list[DomainEventEnvelopeV1]:
         move = reaction.counter_move
-        available = counter_move_available(move, campaign=campaign, state=state)
+        available = counter_move_available(
+            move, campaign=campaign, state=state, world=self.world
+        )
         emitted: list[DomainEventEnvelopeV1] = []
         outcome = "stalled"
         if not available or move.type == ReactionCounterMoveType.STALL:
@@ -680,22 +994,27 @@ class SimulationRuntime:
             state.current_foothold_id = str(move.asset_id)
             index = state.next_technique_index
             if 0 <= index < len(campaign.techniques):
-                if state.advance_pending:
-                    technique = campaign.techniques[index]
-                    state.pending_anchor_id = resolve_anchor(
-                        technique.anchor,
-                        world=self.world,
-                        foothold_id=state.current_foothold_id,
-                        rng=self.rng,
-                        stream_key=f"killchain.anchor:{campaign.id}:{index}",
-                    )
-                else:
-                    self._schedule_advance(state, campaign, index, self.clock.sim_time)
+                # Re-establishing from a different asset costs the attacker the dwell it
+                # had accrued: it is starting the technique over from the new foothold.
+                self._schedule_advance(
+                    state, campaign, index, self.clock.sim_time, reschedule=True
+                )
             outcome = "pivoted"
+        elif move.type == ReactionCounterMoveType.GO_QUIET:
+            state.dwell_multiplier *= move.dwell_multiplier
+            state.signals_suppressed = state.signals_suppressed or move.suppress_signals
+            index = state.next_technique_index
+            if 0 <= index < len(campaign.techniques):
+                self._schedule_advance(
+                    state, campaign, index, self.clock.sim_time, reschedule=True
+                )
+            outcome = "went_quiet"
         elif move.type == ReactionCounterMoveType.ACTIVATE_TECHNIQUE:
             activate_index = technique_index(campaign, str(move.technique_id))
             if activate_index is not None:
-                self._schedule_advance(state, campaign, activate_index, self.clock.sim_time)
+                self._schedule_advance(
+                    state, campaign, activate_index, self.clock.sim_time, reschedule=True
+                )
                 outcome = "activated_technique"
             else:
                 state.active = False

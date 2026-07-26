@@ -42,6 +42,7 @@ from aegis_scenario_sdk.contracts.manifest import (
     ZoneDefinitionV1,
 )
 from aegis_simulation_domain import SimulationEngine
+from aegis_simulation_domain.disruption import DisruptionAssessment
 from aegis_simulation_domain.killchain import (
     counter_move_available,
     precondition_met,
@@ -404,6 +405,15 @@ def _world_with_edges() -> WorldState:
     return world
 
 
+def _precondition(
+    precondition: ReactionPreconditionV1, world: WorldState, state: CampaignRuntimeState
+) -> bool:
+    """Evaluate a precondition that does not depend on the disruption reading."""
+    return precondition_met(
+        precondition, world=world, state=state, assessment=DisruptionAssessment()
+    )
+
+
 def test_resolve_anchor_by_id_and_asset_type() -> None:
     world = _world_with_edges()
     rng = SeededRandomStreams(1)
@@ -438,15 +448,24 @@ def test_resolve_anchor_along_edge_is_deterministic() -> None:
 
 def test_counter_move_availability() -> None:
     campaign = _stall_manifest().campaigns[0]
+    world = _world_with_edges()
+    world.assets["asset:b"] = AssetState(
+        id="asset:b",
+        asset_type="service",
+        status="normal",
+        risk_score=0.1,
+        criticality=0.4,
+        zone_id="zone",
+    )
     state = CampaignRuntimeState(campaign_id="camp", status="active")
     stall = ReactionCounterMoveV1(type=ReactionCounterMoveType.STALL)
     pivot = ReactionCounterMoveV1(
         type=ReactionCounterMoveType.PIVOT_TO_ASSET, assetId="asset:b"
     )
-    assert counter_move_available(stall, campaign=campaign, state=state) is True
-    assert counter_move_available(pivot, campaign=campaign, state=state) is False
+    assert counter_move_available(stall, campaign=campaign, state=state, world=world) is True
+    assert counter_move_available(pivot, campaign=campaign, state=state, world=world) is False
     state.established_footholds.add("asset:b")
-    assert counter_move_available(pivot, campaign=campaign, state=state) is True
+    assert counter_move_available(pivot, campaign=campaign, state=state, world=world) is True
 
 
 def test_precondition_capability_revoked_requires_capability() -> None:
@@ -459,6 +478,6 @@ def test_precondition_capability_revoked_requires_capability() -> None:
         statuses=["revoked"],
         capability="backup",
     )
-    assert precondition_met(precondition, world=world, state=state) is False
-    state.established_capabilities.add("backup")
-    assert precondition_met(precondition, world=world, state=state) is True
+    assert _precondition(precondition, world, state) is False
+    state.established_capabilities["backup"] = "asset:t1"
+    assert _precondition(precondition, world, state) is True

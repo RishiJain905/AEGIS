@@ -7,9 +7,11 @@ from datetime import datetime, timedelta
 
 from aegis_contracts.simulation import (
     AssetInstanceSnapshotV1,
+    CampaignRuntimeStateSnapshotV1,
     GeneratorStateSnapshotV1,
     HiddenConditionStateSnapshotV1,
     RelationshipInstanceSnapshotV1,
+    RunOutcomeSnapshotV1,
     ScheduledEventSourceType,
     ScheduledEventV1,
     SimulationRunStatus,
@@ -76,11 +78,9 @@ class CampaignRuntimeState:
     action sequence), so a fresh run at the same seed reproduces it exactly and
     ``deepcopy`` (ghost/counterfactual clones) carries it faithfully.
 
-    NOTE (Phase 1 scope): this is intentionally NOT serialized into the cross-language
-    ``WorldStateSnapshotV1``. Checkpoint/restore therefore does not round-trip campaign
-    progression yet — a documented Phase 2 handoff (Phase 2 owns run resolution and the
-    persistence surface). It is unaffected for campaign-free scenarios, so restart
-    recovery of the shipped fixtures is unchanged.
+    As of Phase 2 this round-trips through ``WorldStateSnapshotV1``, so checkpoint
+    save/restore and replay reconstruct a mid-flight campaign exactly — including which
+    reactions have already fired and where the next advance is scheduled.
     """
 
     campaign_id: str
@@ -88,7 +88,12 @@ class CampaignRuntimeState:
     active: bool = True
     current_foothold_id: str | None = None
     established_footholds: set[str] = field(default_factory=set)
-    established_capabilities: set[str] = field(default_factory=set)
+    # capability id -> the asset whose compromise granted it. Containing that asset
+    # (isolate / revoke credentials) kills the capability, which is how credential
+    # revocation cuts credential-dependent techniques.
+    established_capabilities: dict[str, str] = field(default_factory=dict)
+    # Monotonic: once a capability is cut it stays cut, even if the asset is restored.
+    revoked_capabilities: set[str] = field(default_factory=set)
     completed_technique_ids: list[str] = field(default_factory=list)
     # Index of the technique currently scheduled to execute next.
     next_technique_index: int = 0
@@ -96,10 +101,60 @@ class CampaignRuntimeState:
     pending_anchor_id: str | None = None
     fired_reaction_ids: set[str] = field(default_factory=set)
     # Monotonic counter making each scheduled advance's event id unique + deterministic.
+    # It doubles as a staleness token: a queued advance whose ``scheduleSeq`` no longer
+    # matches has been superseded by a reschedule and is skipped.
     schedule_seq: int = 0
     # Whether exactly one advance is already queued (keeps re-anchoring reactions from
     # enqueuing duplicate advances).
     advance_pending: bool = False
+    # Scripted stealth adaptation: every remaining dwell is scaled by this, and suppressed
+    # signals stop the campaign emitting the telemetry detection feeds on.
+    dwell_multiplier: float = 1.0
+    signals_suppressed: bool = False
+    # asset id -> the execution-halting status already accounted for, so a service that
+    # stays "restarting" resets the attacker's dwell once per interruption, not per step.
+    halted_assets: dict[str, str] = field(default_factory=dict)
+
+    def to_snapshot(self) -> CampaignRuntimeStateSnapshotV1:
+        return CampaignRuntimeStateSnapshotV1(
+            campaign_id=self.campaign_id,
+            status=self.status,
+            active=self.active,
+            current_foothold_id=self.current_foothold_id,
+            established_footholds=sorted(self.established_footholds),
+            established_capabilities=dict(sorted(self.established_capabilities.items())),
+            revoked_capabilities=sorted(self.revoked_capabilities),
+            completed_technique_ids=list(self.completed_technique_ids),
+            next_technique_index=self.next_technique_index,
+            pending_anchor_id=self.pending_anchor_id,
+            fired_reaction_ids=sorted(self.fired_reaction_ids),
+            schedule_seq=self.schedule_seq,
+            advance_pending=self.advance_pending,
+            dwell_multiplier=self.dwell_multiplier,
+            signals_suppressed=self.signals_suppressed,
+            halted_assets=dict(sorted(self.halted_assets.items())),
+        )
+
+    @classmethod
+    def from_snapshot(cls, snapshot: CampaignRuntimeStateSnapshotV1) -> CampaignRuntimeState:
+        return cls(
+            campaign_id=snapshot.campaign_id,
+            status=snapshot.status,
+            active=snapshot.active,
+            current_foothold_id=snapshot.current_foothold_id,
+            established_footholds=set(snapshot.established_footholds),
+            established_capabilities=dict(snapshot.established_capabilities),
+            revoked_capabilities=set(snapshot.revoked_capabilities),
+            completed_technique_ids=list(snapshot.completed_technique_ids),
+            next_technique_index=snapshot.next_technique_index,
+            pending_anchor_id=snapshot.pending_anchor_id,
+            fired_reaction_ids=set(snapshot.fired_reaction_ids),
+            schedule_seq=snapshot.schedule_seq,
+            advance_pending=snapshot.advance_pending,
+            dwell_multiplier=snapshot.dwell_multiplier,
+            signals_suppressed=snapshot.signals_suppressed,
+            halted_assets=dict(snapshot.halted_assets),
+        )
 
 
 @dataclass
@@ -111,6 +166,11 @@ class WorldState:
     hidden_conditions: dict[str, HiddenConditionState] = field(default_factory=dict)
     selected_branches: dict[str, str] = field(default_factory=dict)
     campaigns: dict[str, CampaignRuntimeState] = field(default_factory=dict)
+    # High-water mark of the defender's collateral cost; a briefly-catastrophic
+    # over-containment still counts against proportionality after it is lifted.
+    peak_disruption_cost: float = 0.0
+    # The run's win/lose verdict, set exactly once when the race resolves.
+    outcome: RunOutcomeSnapshotV1 | None = None
     next_sequence: int = 1
 
     @classmethod
@@ -268,6 +328,12 @@ class WorldState:
             selected_branches=dict(sorted(self.selected_branches.items())),
             pending_events=queue.to_list(),
             rng_state=rng.to_snapshot(),
+            campaigns=[
+                state.to_snapshot()
+                for _, state in sorted(self.campaigns.items(), key=lambda item: item[0])
+            ],
+            peak_disruption_cost=self.peak_disruption_cost,
+            outcome=self.outcome,
         )
 
     def restore_from_snapshot(self, snapshot: WorldStateSnapshotV1) -> None:
@@ -319,3 +385,9 @@ class WorldState:
             for condition in snapshot.hidden_conditions
         }
         self.selected_branches = dict(snapshot.selected_branches)
+        self.campaigns = {
+            campaign.campaign_id: CampaignRuntimeState.from_snapshot(campaign)
+            for campaign in snapshot.campaigns
+        }
+        self.peak_disruption_cost = snapshot.peak_disruption_cost
+        self.outcome = snapshot.outcome

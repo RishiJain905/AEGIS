@@ -21,6 +21,10 @@ from aegis_scenario_sdk.contracts.manifest import (
     ReactionPreconditionV1,
 )
 
+from aegis_simulation_domain.disruption import (
+    FOOTHOLD_SEVERING_STATUSES,
+    DisruptionAssessment,
+)
 from aegis_simulation_domain.random_streams import SeededRandomStreams
 from aegis_simulation_domain.world_state import CampaignRuntimeState, WorldState
 
@@ -90,8 +94,14 @@ def precondition_met(
     *,
     world: WorldState,
     state: CampaignRuntimeState,
+    assessment: DisruptionAssessment,
 ) -> bool:
-    """Return whether a reaction precondition holds against current world state."""
+    """Return whether a reaction precondition holds against current world state.
+
+    ``assessment`` is the campaign's disruption reading for this step, so the
+    action-driven preconditions agree exactly with the disruption the engine is about to
+    resolve rather than re-deriving it from slightly different rules.
+    """
     statuses = set(precondition.statuses)
     if precondition.type == ReactionPreconditionType.FOOTHOLD_ISOLATED:
         foothold = state.current_foothold_id
@@ -105,14 +115,23 @@ def precondition_met(
         asset = world.assets.get(str(precondition.asset_id))
         return asset is not None and asset.status in statuses
     if precondition.type == ReactionPreconditionType.CAPABILITY_REVOKED:
-        if precondition.capability is None:
+        capability = precondition.capability
+        if capability is None or capability not in state.established_capabilities:
             return False
-        if precondition.capability not in state.established_capabilities:
-            return False
-        if precondition.asset_id is None:
-            return True
-        asset = world.assets.get(str(precondition.asset_id))
+        # Default to the asset that granted the capability: revoking *that* identity is
+        # what kills it. An explicit assetId overrides, for capabilities an author wants
+        # tied to a different control point.
+        source_asset_id = (
+            str(precondition.asset_id)
+            if precondition.asset_id is not None
+            else state.established_capabilities[capability]
+        )
+        asset = world.assets.get(source_asset_id)
         return asset is not None and asset.status in statuses
+    if precondition.type == ReactionPreconditionType.PENDING_ANCHOR_DISRUPTED:
+        return assessment.anchor_severed
+    if precondition.type == ReactionPreconditionType.ALL_FOOTHOLDS_DISRUPTED:
+        return assessment.all_footholds_severed
     return False
 
 
@@ -121,19 +140,26 @@ def counter_move_available(
     *,
     campaign: KillChainCampaignV1,
     state: CampaignRuntimeState,
+    world: WorldState,
 ) -> bool:
     """Whether the attacker still holds the capability a counter-move needs.
 
     A counter may only use something already established in-world. ``stall`` is always
-    "available" (it is the give-up move). ``pivot_to_asset`` needs the target to be an
-    established, non-isolated foothold. ``activate_technique`` needs the referenced
-    technique to exist and any ``requires_capability`` to have been established.
+    "available" (it is the give-up move), and so is ``go_quiet`` — going to ground needs
+    nothing but patience. ``pivot_to_asset`` needs the target to be an established
+    foothold the defender has not severed. ``activate_technique`` needs the referenced
+    technique to exist and any ``requires_capability`` to be established *and not
+    revoked* — a pre-planted backup credential is worthless once the defender has killed
+    the identity that granted it.
     """
-    if move.type == ReactionCounterMoveType.STALL:
+    if move.type in {ReactionCounterMoveType.STALL, ReactionCounterMoveType.GO_QUIET}:
         return True
     if move.type == ReactionCounterMoveType.PIVOT_TO_ASSET:
         target = str(move.asset_id) if move.asset_id else None
-        return target is not None and target in state.established_footholds
+        if target is None or target not in state.established_footholds:
+            return False
+        asset = world.assets.get(target)
+        return asset is not None and asset.status not in FOOTHOLD_SEVERING_STATUSES
     if move.type == ReactionCounterMoveType.ACTIVATE_TECHNIQUE:
         if move.technique_id is None:
             return False
@@ -141,7 +167,10 @@ def counter_move_available(
         if not exists:
             return False
         if move.requires_capability is not None:
-            return move.requires_capability in state.established_capabilities
+            return (
+                move.requires_capability in state.established_capabilities
+                and move.requires_capability not in state.revoked_capabilities
+            )
         return True
     return False
 
