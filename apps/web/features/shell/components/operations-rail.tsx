@@ -247,12 +247,14 @@ export function OperationsRail() {
         </DrawerContent>
       </Drawer>
 
+      {/* Vertical margins match the height inset so the rail is centred in the viewport
+          whether the page scrolls or the run workspace pins it to a fixed height. */}
       <Rail
         label="Operations navigation"
         collapsed={collapsed}
         responsive={false}
         data-testid="operations-rail"
-        className="operations-rail-desktop shrink-0 lg:sticky lg:top-5 lg:ml-5 lg:h-[calc(100vh-2.5rem)] lg:self-start xl:top-6 xl:ml-6 xl:h-[calc(100vh-3rem)]"
+        className="operations-rail-desktop shrink-0 lg:sticky lg:top-5 lg:my-5 lg:ml-5 lg:h-[calc(100vh-2.5rem)] lg:self-start xl:top-6 xl:my-6 xl:ml-6 xl:h-[calc(100vh-3rem)]"
       >
         <RailIdentity collapsed={collapsed} />
         <ThemeToggle collapsed={collapsed} />

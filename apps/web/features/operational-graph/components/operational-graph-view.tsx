@@ -22,6 +22,10 @@ import {
   type GraphVisualState,
 } from '@/features/operational-graph/contracts/graph-visual-state';
 import { useInvestigationDetail } from '@/features/investigation';
+import {
+  AssetContextMenu,
+  type AssetContextTarget,
+} from '@/features/operator-actions/asset-context-menu';
 import { filterNodesBySearch } from '@/features/operational-graph/layout/initial-layout';
 import {
   autoCollapseClusterIds,
@@ -98,28 +102,33 @@ const AccessibleGraphEntityList = memo(function AccessibleGraphEntityList({
     <aside
       aria-label="Accessible graph entity list"
       data-testid="graph-entity-list"
-      className="graph-entity-index max-h-44 overflow-auto rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] p-3"
+      className="graph-entity-index shrink-0 overflow-hidden rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)]"
     >
-      <p className="mb-2 text-xs font-semibold text-[var(--aegis-text-muted)]">
-        Nodes ({nodeIds.length}) · keyboard accessible list
-      </p>
-      <ul className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3">
-        {renderedNodeIds.map((nodeId) => (
-          <li key={nodeId}>
-            <button
-              type="button"
-              className="min-h-10 w-full rounded-[var(--aegis-radius-sm)] px-3 py-2 text-left text-xs text-[var(--aegis-text-secondary)] transition-[background-color,color,box-shadow] hover:bg-[var(--aegis-surface-elevated)] hover:text-[var(--aegis-text-primary)] aria-pressed:bg-[var(--aegis-accent-soft)] aria-pressed:text-[var(--aegis-text-primary)]"
-              aria-pressed={selectedEntityId === nodeId}
-              data-testid={`graph-entity-${nodeId}`}
-              onClick={() => {
-                onNodeClick(nodeId);
-              }}
-            >
-              {nodeLabels.get(nodeId) ?? nodeId}
-            </button>
-          </li>
-        ))}
-      </ul>
+      {/* A disclosure rather than an always-open panel: the canvas is the play surface and
+          this list was eating a fifth of its height. It stays one keystroke from the
+          canvas for keyboard and screen-reader operators. */}
+      <details>
+        <summary className="cursor-pointer list-none px-3 py-1.5 text-[11px] font-semibold text-[var(--aegis-text-muted)] transition-colors hover:text-[var(--aegis-text-primary)]">
+          Node index ({nodeIds.length}) · keyboard accessible list
+        </summary>
+        <ul className="grid max-h-40 gap-1 overflow-auto px-3 pb-3 sm:grid-cols-2 xl:grid-cols-3">
+          {renderedNodeIds.map((nodeId) => (
+            <li key={nodeId}>
+              <button
+                type="button"
+                className="min-h-10 w-full rounded-[var(--aegis-radius-sm)] px-3 py-2 text-left text-xs text-[var(--aegis-text-secondary)] transition-[background-color,color,box-shadow] hover:bg-[var(--aegis-surface-elevated)] hover:text-[var(--aegis-text-primary)] aria-pressed:bg-[var(--aegis-accent-soft)] aria-pressed:text-[var(--aegis-text-primary)]"
+                aria-pressed={selectedEntityId === nodeId}
+                data-testid={`graph-entity-${nodeId}`}
+                onClick={() => {
+                  onNodeClick(nodeId);
+                }}
+              >
+                {nodeLabels.get(nodeId) ?? nodeId}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </details>
     </aside>
   );
 });
@@ -203,6 +212,7 @@ function buildVisualStateWithPositions(
 
 export function OperationalGraphView({
   snapshot,
+  runId,
   incidentId,
   graphStore,
   graphRevision = 0,
@@ -219,6 +229,8 @@ export function OperationalGraphView({
   const positionsRef = useRef<Record<string, { x: number; y: number }>>({});
   const workerPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
   const [adapterReady, setAdapterReady] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const [contextTarget, setContextTarget] = useState<AssetContextTarget | null>(null);
   const [layoutStatus, setLayoutStatus] = useState<GraphVisualState['layoutStatus']>(
     LayoutStatus.IDLE,
   );
@@ -530,6 +542,30 @@ export function OperationalGraphView({
     [setSelectedEntityId, pathModeActive, collapsedClusterIds, setCollapsedClusterIds],
   );
 
+  const handleNodeRightClick = useCallback(
+    (nodeId: string, position: { x: number; y: number }) => {
+      const presentationGraph = adapterRef.current?.getPresentationGraph();
+      const isCluster =
+        presentationGraph?.hasNode(nodeId) === true &&
+        presentationGraph.getNodeAttribute(nodeId, 'presentationClusterId') !== undefined;
+      if (isCluster) {
+        // Clusters are a rendering device, not an asset the operator can command.
+        return;
+      }
+      // Right-click also selects, so the stage command bar and the inspector follow the
+      // node the operator is acting on.
+      setSelectedEntityId(nodeId);
+      useGraphVisualStore.getState().setSelection(nodeId, null);
+      setContextTarget({
+        nodeId,
+        label: nodeLabels.get(nodeId) ?? nodeId,
+        x: position.x,
+        y: position.y,
+      });
+    },
+    [nodeLabels, setSelectedEntityId],
+  );
+
   useEffect(() => {
     return () => {
       layoutCoordinatorRef.current?.dispose();
@@ -603,123 +639,168 @@ export function OperationalGraphView({
 
   return (
     <div
-      className="flex min-h-[28rem] flex-col gap-3"
+      className="flex min-h-0 flex-1 flex-col gap-2"
       data-testid="operational-graph-view"
       data-layout-status={layoutStatus}
       data-lod-tier={lodTier}
       data-node-count={filteredNodeIds.length}
     >
-      <div className="graph-command-bar flex flex-col gap-3 lg:flex-row lg:items-center">
-        <GraphSearchInput value={searchQuery} onChange={setSearchQuery} className="lg:max-w-sm" />
-        <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
-          <Badge variant="outline" className="font-mono uppercase tracking-[0.12em]">
-            {layoutStatus}
-          </Badge>
-          <span className="font-mono text-[11px] text-[var(--aegis-text-muted)]">
-            {String(filteredNodeIds.length)} nodes · LOD {lodTier}
-          </span>
-        </div>
-        <GraphCameraControls
-          onFit={() => adapterRef.current?.fitGraph()}
-          onZoomIn={() => adapterRef.current?.zoomIn()}
-          onZoomOut={() => adapterRef.current?.zoomOut()}
-          onReset={() => adapterRef.current?.resetCamera()}
-        />
-      </div>
-
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
-        <div className="graph-control-deck grid gap-x-5 gap-y-2.5 lg:grid-cols-2">
-          <div>
-            <p className="graph-control-label">Data layers</p>
-            <GraphLayerControls
-              layers={LAYER_OPTIONS}
-              enabledLayers={filterSet.enabledLayers}
-              onToggle={handleLayerToggle}
-            />
-          </div>
-          <div>
-            <p className="graph-control-label">Signal overlays</p>
-            <GraphOverlayToggle toggles={overlayToggles} onToggle={toggleOverlay} />
-          </div>
-          <div>
-            <p className="graph-control-label">Investigation focus</p>
-            <GraphIsolationControls
-              isolationActive={isolationActive}
-              onIsolate={handleIsolate}
-              onRestore={handleRestore}
-              disabled={!selection.primaryNodeId && !selectedEntityId}
-            />
-          </div>
-          <div>
-            <p className="graph-control-label">Analysis actions</p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={pathModeActive ? 'default' : 'outline'}
-                size="sm"
-                data-testid="graph-path-mode"
-                aria-pressed={pathModeActive}
-                onClick={() => {
-                  setPathModeActive(!pathModeActive);
-                }}
-                className="text-xs"
-              >
-                {pathModeActive ? 'Path mode (select 2 nodes)' : 'Trace path'}
-              </Button>
-              <Button
-                variant={collapsedClusterIds.length > 0 ? 'default' : 'outline'}
-                size="sm"
-                data-testid="graph-collapse-clusters"
-                aria-pressed={collapsedClusterIds.length > 0}
-                onClick={() => {
-                  if (collapsedClusterIds.length > 0) {
-                    setCollapsedClusterIds([]);
-                    return;
-                  }
-                  const filtered = store.applyFilters(
-                    useGraphVisualStore.getState().visualState.filterSet as GraphFilterSet,
-                  );
-                  const autoCollapsed = autoCollapseClusterIds(
-                    store
-                      .exportSnapshot()
-                      .nodes.filter((node) => filtered.visibleNodeIds.includes(node.id)),
-                    3,
-                  );
-                  setCollapsedClusterIds(autoCollapsed);
-                }}
-                className="text-xs"
-              >
-                {collapsedClusterIds.length > 0
-                  ? 'Expand collapsed clusters'
-                  : 'Collapse dense clusters'}
-              </Button>
-            </div>
-          </div>
-        </div>
-        <GraphLegend items={LEGEND_ITEMS} />
-      </div>
-
+      {/*
+        Controls float over the canvas rather than stacking above it. The graph is the play
+        surface and every row of chrome above it was cropping the map; as overlays the same
+        controls cost no vertical space, and the deeper view options live behind one toggle
+        so the default state is almost pure canvas.
+      */}
       <div
-        className="operational-graph-frame relative min-h-[28rem] flex-1 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-base)]"
+        className="operational-graph-frame relative min-h-[20rem] flex-1 overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-base)]"
         data-reduced-motion={reducedMotion ? 'true' : 'false'}
       >
-        <div
-          className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2"
-          aria-hidden="true"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--aegis-accent-cyan)] shadow-[0_0_10px_var(--aegis-accent-cyan)]" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--aegis-text-muted)]">
-            Analysis plane · drag to pan · scroll to zoom
-          </span>
-        </div>
         <SigmaCanvas
           className="absolute inset-0"
           onAdapterReady={handleAdapterReady}
           onNodeClick={handleNodeClick}
+          onNodeRightClick={handleNodeRightClick}
           onStageClick={() => {
             setSelectedEntityId(null);
             useGraphVisualStore.getState().setSelection(null, null);
+            setContextTarget(null);
           }}
           onNodeHover={setHoveredNodeId}
+        />
+
+        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-wrap items-start justify-between gap-2">
+          <div className="graph-command-bar pointer-events-auto flex items-center gap-2">
+            <GraphSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              className="w-48 sm:w-60"
+            />
+            <Badge variant="outline" className="font-mono uppercase tracking-[0.12em]">
+              {layoutStatus}
+            </Badge>
+          </div>
+          <div className="graph-command-bar pointer-events-auto flex flex-wrap items-center gap-2">
+            <Button
+              variant={controlsOpen ? 'default' : 'outline'}
+              size="sm"
+              className="text-xs"
+              data-testid="graph-controls-toggle"
+              aria-expanded={controlsOpen}
+              aria-controls={controlsOpen ? 'graph-view-options' : undefined}
+              onClick={() => {
+                setControlsOpen((open) => !open);
+              }}
+            >
+              View options
+            </Button>
+            <GraphCameraControls
+              onFit={() => adapterRef.current?.fitGraph()}
+              onZoomIn={() => adapterRef.current?.zoomIn()}
+              onZoomOut={() => adapterRef.current?.zoomOut()}
+              onReset={() => adapterRef.current?.resetCamera()}
+            />
+          </div>
+        </div>
+
+        {controlsOpen ? (
+          <div
+            id="graph-view-options"
+            data-testid="graph-view-options"
+            className="absolute right-3 top-16 z-20 flex max-h-[calc(100%-5.5rem)] w-[21rem] max-w-[calc(100%-1.5rem)] flex-col gap-3 overflow-y-auto rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-strong)] p-3 shadow-[var(--aegis-shadow-dialog)]"
+            // Inline background for the same reason the popover primitives use one: the
+            // arbitrary-value surface utility has been observed dropped from production CSS.
+            style={{ backgroundColor: 'var(--aegis-surface-overlay)' }}
+          >
+            <div>
+              <p className="graph-control-label">Data layers</p>
+              <GraphLayerControls
+                layers={LAYER_OPTIONS}
+                enabledLayers={filterSet.enabledLayers}
+                onToggle={handleLayerToggle}
+              />
+            </div>
+            <div>
+              <p className="graph-control-label">Signal overlays</p>
+              <GraphOverlayToggle toggles={overlayToggles} onToggle={toggleOverlay} />
+            </div>
+            <div>
+              <p className="graph-control-label">Investigation focus</p>
+              <GraphIsolationControls
+                isolationActive={isolationActive}
+                onIsolate={handleIsolate}
+                onRestore={handleRestore}
+                disabled={!selection.primaryNodeId && !selectedEntityId}
+              />
+            </div>
+            <div>
+              <p className="graph-control-label">Analysis actions</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={pathModeActive ? 'default' : 'outline'}
+                  size="sm"
+                  data-testid="graph-path-mode"
+                  aria-pressed={pathModeActive}
+                  onClick={() => {
+                    setPathModeActive(!pathModeActive);
+                  }}
+                  className="text-xs"
+                >
+                  {pathModeActive ? 'Path mode (select 2 nodes)' : 'Trace path'}
+                </Button>
+                <Button
+                  variant={collapsedClusterIds.length > 0 ? 'default' : 'outline'}
+                  size="sm"
+                  data-testid="graph-collapse-clusters"
+                  aria-pressed={collapsedClusterIds.length > 0}
+                  onClick={() => {
+                    if (collapsedClusterIds.length > 0) {
+                      setCollapsedClusterIds([]);
+                      return;
+                    }
+                    const filtered = store.applyFilters(
+                      useGraphVisualStore.getState().visualState.filterSet as GraphFilterSet,
+                    );
+                    const autoCollapsed = autoCollapseClusterIds(
+                      store
+                        .exportSnapshot()
+                        .nodes.filter((node) => filtered.visibleNodeIds.includes(node.id)),
+                      3,
+                    );
+                    setCollapsedClusterIds(autoCollapsed);
+                  }}
+                  className="text-xs"
+                >
+                  {collapsedClusterIds.length > 0
+                    ? 'Expand collapsed clusters'
+                    : 'Collapse dense clusters'}
+                </Button>
+              </div>
+            </div>
+            <GraphLegend items={LEGEND_ITEMS} />
+          </div>
+        ) : null}
+
+        <div
+          className="pointer-events-none absolute bottom-3 left-3 z-10 flex flex-wrap items-center gap-x-3 gap-y-1"
+          aria-hidden="true"
+        >
+          <span className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--aegis-accent-cyan)] shadow-[0_0_10px_var(--aegis-accent-cyan)]" />
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--aegis-text-muted)]">
+              Analysis plane · drag to pan · right-click a node to command it
+            </span>
+          </span>
+          <span className="font-mono text-[10px] text-[var(--aegis-text-muted)]">
+            {String(filteredNodeIds.length)} nodes · LOD {lodTier}
+          </span>
+        </div>
+
+        <AssetContextMenu
+          runId={runId}
+          target={contextTarget}
+          onDismiss={() => {
+            setContextTarget(null);
+          }}
         />
       </div>
 

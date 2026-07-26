@@ -1,11 +1,17 @@
 export { AssetActionMenu } from './asset-action-menu';
 export type { AssetActionMenuProps } from './asset-action-menu';
 export { AssetDetailDrawer } from './asset-detail-drawer';
-export { AssetCommandSection } from './asset-command-section';
+export { AssetCommandBar } from './asset-command-bar';
+export type { AssetCommandBarProps } from './asset-command-bar';
+export { AssetContextMenu } from './asset-context-menu';
+export type { AssetContextMenuProps, AssetContextTarget } from './asset-context-menu';
+export { CommandMenuItems } from './command-menu-items';
 export { ActionConsequencesDialog } from './action-consequences-dialog';
 export { BlastRadiusSummary } from './blast-radius-summary';
 export { useBlastRadius } from './use-blast-radius';
 export { ActionResultToast } from './action-result-toast';
 export type { ActionResult } from './action-result-toast';
+export { useAssetActionRunner } from './use-asset-action-runner';
+export { useAssetCommands } from './use-asset-commands';
 export { useSelectedAsset } from './use-selected-asset';
 export type { SelectedAsset } from './use-selected-asset';

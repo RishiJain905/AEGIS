@@ -188,9 +188,10 @@ export function OpsFeedPanel({ runId }: OpsFeedPanelProps) {
       description="The room’s live heartbeat — findings, detections, and actions as they land."
       density="compact"
       data-testid="ops-feed-panel"
+      className="min-h-0 flex-1"
     >
       <div
-        className="flex max-h-[26rem] min-h-[8rem] flex-col gap-2 overflow-y-auto pr-1"
+        className="flex h-full min-h-[8rem] flex-col gap-2 overflow-y-auto pr-1"
         aria-live="polite"
         aria-busy={feedQuery.isPending}
       >

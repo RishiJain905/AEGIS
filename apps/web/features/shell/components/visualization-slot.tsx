@@ -2,7 +2,16 @@
 
 import dynamic from 'next/dynamic';
 
-import { Alert, Badge, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
+import {
+  Alert,
+  Badge,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  Panel,
+  cn,
+  typographyTokens,
+} from '@aegis/ui';
 
 import { GraphViewModeToggle, useCinematicGraphStore } from '@/features/cinematic-graph';
 import { GraphViewMode } from '@/features/cinematic-graph/contracts';
@@ -19,7 +28,7 @@ const OperationalGraphView = dynamic(
     ssr: false,
     loading: () => (
       <div
-        className="flex min-h-[16rem] items-center justify-center text-sm text-[var(--aegis-text-secondary)]"
+        className="flex min-h-[16rem] flex-1 items-center justify-center text-sm text-[var(--aegis-text-secondary)]"
         data-testid="operational-graph-loading"
       >
         Initializing graph renderer…
@@ -37,7 +46,7 @@ const CinematicGraphView = dynamic(
     ssr: false,
     loading: () => (
       <div
-        className="flex min-h-[16rem] items-center justify-center text-sm text-[var(--aegis-text-secondary)]"
+        className="flex min-h-[16rem] flex-1 items-center justify-center text-sm text-[var(--aegis-text-secondary)]"
         data-testid="cinematic-graph-loading"
       >
         Initializing 3D semantic renderer…
@@ -51,33 +60,48 @@ interface VisualizationSlotProps {
   incidentId?: string;
 }
 
-function GraphPanelChrome({
+/**
+ * The stage header: one line, because everything it used to say in three was chrome
+ * competing with the map for height. The 2D/3D switch lives here rather than inside either
+ * renderer so it stays in the same place across modes.
+ */
+function StageFrame({
   title,
-  description,
+  hint,
+  scroll = false,
   children,
 }: {
   title: string;
-  description?: string;
+  hint: string;
+  /** 3D is a fixed-height presentation; let it scroll instead of squashing the stage. */
+  scroll?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <Panel
-      title={title}
-      description={description}
-      density="compact"
+    <section
+      aria-label={title}
       data-testid="visualization-slot"
+      className="flex min-h-0 flex-1 flex-col gap-2"
     >
-      <div className="mb-4 flex flex-col gap-3 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-elevated)] p-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h2 className={cn(typographyTokens.displayMd, 'text-[var(--aegis-text-primary)]')}>
+          {title}
+        </h2>
+        <p className="hidden truncate text-xs text-[var(--aegis-text-muted)] lg:block">{hint}</p>
+        <div className="ml-auto flex items-center gap-2">
           <Badge variant="outline">GraphStore synced</Badge>
-          <p className="text-xs leading-5 text-[var(--aegis-text-secondary)]">
-            2D analysis is authoritative; 3D is the read-only semantic presentation.
-          </p>
+          <GraphViewModeToggle />
         </div>
-        <GraphViewModeToggle />
       </div>
-      {children}
-    </Panel>
+      <div
+        className={cn(
+          'flex min-h-0 flex-1 flex-col',
+          scroll ? 'overflow-y-auto' : 'overflow-hidden',
+        )}
+      >
+        {children}
+      </div>
+    </section>
   );
 }
 
@@ -87,19 +111,21 @@ export function VisualizationSlot({ runId, incidentId }: VisualizationSlotProps)
     enabled: liveRun?.isLiveMode !== true,
   });
   const viewMode = useCinematicGraphStore((s) => s.viewMode);
+  const isThreeD = viewMode === GraphViewMode.THREE_D;
 
   if (liveRun?.isLiveMode && liveRun.bootstrapSnapshot) {
     return (
-      <GraphPanelChrome
-        title={viewMode === GraphViewMode.THREE_D ? 'Semantic 3D graph' : 'Operational graph'}
-        description={
-          viewMode === GraphViewMode.THREE_D
-            ? 'Three.js semantic presentation of live command-centre graph state'
-            : 'Live Sigma.js operational investigation graph'
+      <StageFrame
+        title={isThreeD ? 'Semantic 3D graph' : 'Operational graph'}
+        hint={
+          isThreeD
+            ? 'Read-only semantic presentation of live command-centre state'
+            : 'Live analysis plane — authoritative for investigation'
         }
+        scroll={isThreeD}
       >
         <RevealAnnouncer nodes={liveRun.bootstrapSnapshot.nodes} revision={liveRun.graphRevision} />
-        {viewMode === GraphViewMode.THREE_D ? (
+        {isThreeD ? (
           <CinematicGraphView
             runId={runId}
             snapshot={liveRun.bootstrapSnapshot}
@@ -116,13 +142,13 @@ export function VisualizationSlot({ runId, incidentId }: VisualizationSlotProps)
             graphRevision={liveRun.graphRevision}
           />
         )}
-      </GraphPanelChrome>
+      </StageFrame>
     );
   }
 
   if (graphQuery.isPending) {
     return (
-      <Panel title="Operational graph" data-testid="visualization-slot">
+      <Panel title="Operational graph" data-testid="visualization-slot" className="flex-1">
         <LoadingState message="Loading graph projection…" />
       </Panel>
     );
@@ -130,7 +156,7 @@ export function VisualizationSlot({ runId, incidentId }: VisualizationSlotProps)
 
   if (graphQuery.isError) {
     return (
-      <Panel title="Operational graph" data-testid="visualization-slot">
+      <Panel title="Operational graph" data-testid="visualization-slot" className="flex-1">
         <ErrorState
           message="Unable to load graph projection."
           onRetry={() => void graphQuery.refetch()}
@@ -143,7 +169,7 @@ export function VisualizationSlot({ runId, incidentId }: VisualizationSlotProps)
 
   if (!snapshot) {
     return (
-      <Panel title="Operational graph" data-testid="visualization-slot">
+      <Panel title="Operational graph" data-testid="visualization-slot" className="flex-1">
         {partial ? (
           <Alert
             variant="warning"
@@ -163,19 +189,20 @@ export function VisualizationSlot({ runId, incidentId }: VisualizationSlotProps)
   }
 
   return (
-    <GraphPanelChrome
-      title={viewMode === GraphViewMode.THREE_D ? 'Semantic 3D graph' : 'Operational graph'}
-      description={
-        viewMode === GraphViewMode.THREE_D
-          ? 'Three.js semantic presentation over the same GraphStore as Sigma.js'
-          : 'Sigma.js operational investigation graph'
+    <StageFrame
+      title={isThreeD ? 'Semantic 3D graph' : 'Operational graph'}
+      hint={
+        isThreeD
+          ? 'Read-only semantic presentation over the same GraphStore'
+          : 'Analysis plane — authoritative for investigation'
       }
+      scroll={isThreeD}
     >
-      {viewMode === GraphViewMode.THREE_D ? (
+      {isThreeD ? (
         <CinematicGraphView runId={runId} snapshot={snapshot} />
       ) : (
         <OperationalGraphView runId={runId} incidentId={incidentId} snapshot={snapshot} />
       )}
-    </GraphPanelChrome>
+    </StageFrame>
   );
 }

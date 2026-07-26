@@ -1,15 +1,6 @@
 'use client';
 
-import {
-  Badge,
-  Button,
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  Panel,
-  cn,
-  typographyTokens,
-} from '@aegis/ui';
+import { Badge, EmptyState, ErrorState, LoadingState, Panel } from '@aegis/ui';
 
 import {
   GraphEntityInspector,
@@ -18,7 +9,6 @@ import {
   InspectorMonoValue,
 } from '@/features/inspector';
 import { InvestigationPanel } from '@/features/investigation';
-import { AssetCommandSection } from '@/features/operator-actions';
 import { ProposalsPanel } from '@/features/proposals/proposals-panel';
 import { ReportsPanel } from '@/features/reports/reports-panel';
 import { RiskExplanationPanel } from '@/features/risk';
@@ -36,11 +26,13 @@ interface InspectorPanelProps {
   incidentId?: string;
 }
 
+/**
+ * Evidence and context for the current selection. It is dock content now, not a panel with
+ * its own chrome: the run workspace's right dock owns the frame, header and collapse, and
+ * commanding the selected asset moved out to the stage command bar where the operator is
+ * already looking.
+ */
 export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
-  const collapsed = useWorkspaceUiStore(
-    (state) => state.panelPreferences.regions.inspector?.collapsed ?? false,
-  );
-  const togglePanelCollapsed = useWorkspaceUiStore((state) => state.togglePanelCollapsed);
   const selectedEntityId = useWorkspaceUiStore((state) => state.workspace.selectedEntityId);
   const setSelectedEntityId = useWorkspaceUiStore((state) => state.setSelectedEntityId);
 
@@ -49,24 +41,6 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
   const alertsQuery = useRunAlerts(runId ?? '');
   const riskScoresQuery = useRunRiskScores(runId ?? '');
   const graphQuery = useRunGraph(runId ?? '');
-
-  if (collapsed) {
-    return (
-      <div className="flex w-14 shrink-0 flex-col items-center rounded-[var(--aegis-radius-xl)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_80%,transparent)] p-2 shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl">
-        <Button
-          variant="ghost"
-          size="sm"
-          data-testid="expand-inspector"
-          onClick={() => {
-            togglePanelCollapsed('inspector');
-          }}
-          aria-label="Expand inspector"
-        >
-          ‹
-        </Button>
-      </div>
-    );
-  }
 
   const isLoading =
     (incidentId && incidentQuery.isPending) ||
@@ -89,34 +63,8 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
   const selectedAlert = alertsQuery.data?.find((alert) => alert.assetId === selectedEntityId);
 
   return (
-    <aside
-      className="flex w-full shrink-0 flex-col overflow-hidden rounded-[var(--aegis-radius-xl)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_80%,transparent)] shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl lg:w-80 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:w-96"
-      data-testid="inspector-panel"
-      aria-label="Inspector"
-    >
-      <div className="flex items-center justify-between border-b border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-raised)_55%,transparent)] px-5 py-4">
-        <div>
-          <p className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-text-muted)]')}>
-            Context channel
-          </p>
-          <h2 className={cn(typographyTokens.displayMd, 'text-[var(--aegis-text-primary)]')}>
-            Inspector
-          </h2>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          data-testid="collapse-inspector"
-          onClick={() => {
-            togglePanelCollapsed('inspector');
-          }}
-          aria-label="Collapse inspector"
-        >
-          ›
-        </Button>
-      </div>
-
-      <div className="flex-1 overflow-auto p-5">
+    <div className="flex min-w-0 flex-col" data-testid="inspector-panel">
+      <div>
         {isLoading ? <LoadingState message="Loading inspector data…" /> : null}
         {isError ? (
           <ErrorState
@@ -140,10 +88,6 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
                 riskScore={selectedRiskScore}
               />
             ) : null}
-
-            {/* Operator direct actions on the selected asset (renders nothing when no asset
-                is selected). Class 2/3 open a confirm-with-consequences dialog. */}
-            {runId ? <AssetCommandSection runId={runId} /> : null}
 
             <RiskExplanationPanel
               riskScore={selectedRiskScore}
@@ -301,6 +245,6 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
           </div>
         ) : null}
       </div>
-    </aside>
+    </div>
   );
 }

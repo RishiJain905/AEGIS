@@ -24,6 +24,10 @@ export const panelRegionSchema = z.enum([
   'inspector',
   'timeline',
   'visualization',
+  // Run-workspace side docks. `leftDock` holds the operator channel (copilot, evidence
+  // search, hypotheses); `rightDock` holds the context channel (inspector, ops feed).
+  'leftDock',
+  'rightDock',
 ]);
 
 export const panelRegionPreferenceSchema = z
@@ -52,10 +56,14 @@ export const defaultPanelPreferences: PanelPreferences = {
   schemaVersion: PANEL_PREFERENCES_SCHEMA_VERSION,
   theme: DEFAULT_THEME_PREFERENCE,
   regions: {
-    operationsRail: { docked: true, collapsed: false, width: null },
+    // The run workspace is a play surface: navigation starts out of the way so the
+    // graph owns the viewport. Operators can pin the rail open (⌘B) and it persists.
+    operationsRail: { docked: true, collapsed: true, width: null },
     inspector: { docked: true, collapsed: false, width: 360 },
     timeline: { docked: true, collapsed: false, width: null },
     visualization: { docked: true, collapsed: false, width: null },
+    leftDock: { docked: true, collapsed: false, width: 300 },
+    rightDock: { docked: true, collapsed: false, width: 336 },
   },
 };
 
@@ -64,5 +72,11 @@ export function parsePanelPreferences(data: unknown): PanelPreferences {
   if (!parsed.success) {
     return defaultPanelPreferences;
   }
-  return parsed.data;
+  // Preferences persisted before a region existed omit its key entirely, and the
+  // collapse actions no-op on an unknown region. Backfill from the defaults so a
+  // newly-added dock is controllable for operators with stored preferences.
+  return {
+    ...parsed.data,
+    regions: { ...defaultPanelPreferences.regions, ...parsed.data.regions },
+  };
 }

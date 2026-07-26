@@ -262,8 +262,9 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
       density="compact"
       data-tutorial-id="agent-chat"
       data-testid="agent-chat-panel"
+      className="min-h-0 flex-1"
     >
-      <div className="flex flex-col gap-3">
+      <div className="flex h-full min-h-0 flex-col gap-3">
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Agent role">
           {CHAT_ROLES.map((candidate) => {
             const selected = candidate === role;
@@ -290,7 +291,7 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
         <p className="text-xs text-[var(--aegis-text-muted)]">{ROLE_BLURB[role]}</p>
 
         <div
-          className="flex max-h-[26rem] min-h-[8rem] flex-col gap-3 overflow-y-auto pr-1"
+          className="flex min-h-[8rem] flex-1 flex-col gap-3 overflow-y-auto pr-1"
           aria-live="polite"
           aria-busy={pending}
         >
