@@ -78,6 +78,36 @@ export function drawShape(
   context.closePath();
 }
 
+// Pills size themselves to the measured text, so ordinary asset names never
+// truncate. This cap is a safety net for pathologically long labels only —
+// well beyond "Communications Gateway" (the longest name in the default
+// scenario roster) — so it should not fire in normal use.
+const MAX_LABEL_TEXT_WIDTH = 260;
+
+/** Trims `label` with a trailing ellipsis until it fits `maxWidth` at the
+ * context's current font. Returns the original label untouched when it
+ * already fits. */
+function fitLabelText(
+  context: CanvasRenderingContext2D,
+  label: string,
+  maxWidth: number,
+): { text: string; width: number } {
+  const fullWidth = context.measureText(label).width;
+  if (fullWidth <= maxWidth) {
+    return { text: label, width: Math.ceil(fullWidth) };
+  }
+
+  let truncated = label;
+  while (truncated.length > 1) {
+    truncated = truncated.slice(0, -1);
+    const candidate = `${truncated}…`;
+    if (context.measureText(candidate).width <= maxWidth) {
+      return { text: candidate, width: Math.ceil(context.measureText(candidate).width) };
+    }
+  }
+  return { text: `${truncated}…`, width: Math.ceil(context.measureText(`${truncated}…`).width) };
+}
+
 export const drawAegisNodeLabel: NodeLabelDrawingFunction = (context, rawData, settings) => {
   if (!rawData.label) {
     return;
@@ -87,27 +117,29 @@ export const drawAegisNodeLabel: NodeLabelDrawingFunction = (context, rawData, s
   const fontSize = settings.labelSize;
   context.save();
   context.font = `${settings.labelWeight} ${String(fontSize)}px ${settings.labelFont}`;
-  const textWidth = Math.ceil(context.measureText(rawData.label).width);
-  const markerSize = 3.5;
-  const height = fontSize + 10;
-  const left = rawData.x + rawData.size + 7;
+  const { text, width: textWidth } = fitLabelText(context, rawData.label, MAX_LABEL_TEXT_WIDTH);
+  const markerSize = 4;
+  const textStartOffset = 23;
+  const rightPadding = 15;
+  const height = fontSize + 15;
+  const left = rawData.x + rawData.size + 8;
   const top = rawData.y - height / 2;
-  const width = textWidth + 28;
+  const width = textWidth + textStartOffset + rightPadding;
 
-  roundedRect(context, left, top, width, height, 5);
+  roundedRect(context, left, top, width, height, 6);
   context.fillStyle = 'rgba(12, 12, 17, 0.88)';
   context.fill();
   context.strokeStyle = data.selected ? 'rgba(242, 202, 107, 0.75)' : 'rgba(150, 148, 158, 0.28)';
   context.lineWidth = 1;
   context.stroke();
 
-  drawShape(context, data.shape ?? 'circle', left + 10, rawData.y, markerSize);
+  drawShape(context, data.shape ?? 'circle', left + 11, rawData.y, markerSize);
   context.fillStyle = rawData.color;
   context.fill();
 
   context.fillStyle = data.selected ? '#faf7ef' : '#cdced4';
   context.textBaseline = 'middle';
-  context.fillText(rawData.label, left + 19, rawData.y + 0.5);
+  context.fillText(text, left + textStartOffset, rawData.y + 0.5);
   context.restore();
 };
 

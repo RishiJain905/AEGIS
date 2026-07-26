@@ -150,12 +150,15 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       defaultNodeColor: '#8b8e96',
       defaultEdgeColor: '#55555f',
       labelFont: '"JetBrains Mono", "Cascadia Mono", "Segoe UI", sans-serif',
-      labelSize: 11,
+      labelSize: 12,
       labelWeight: '600',
       labelColor: { color: '#cdced4' },
       labelRenderedSizeThreshold: 9,
       labelDensity: 0.72,
-      labelGridCellSize: 140,
+      // Wide enough for the pill-style labels (marker + full asset name) to
+      // pick non-overlapping cells in dense zone sectors; the stock Sigma
+      // default (100) was sized for short plain-text labels, not these.
+      labelGridCellSize: 190,
       stagePadding: 52,
       hideLabelsOnMove: false,
       hideEdgesOnMove: false,

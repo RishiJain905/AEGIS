@@ -50,8 +50,12 @@ export const defaultLodPolicy: LodPolicy = {
       labelMode: LabelMode.ALL,
       clusterCollapseThreshold: Number.POSITIVE_INFINITY,
       edgeOpacityFloor: 0.4,
-      labelRenderedSizeThreshold: 6,
-      labelDensity: 0.5,
+      // Tuned to favor fewer, fully-legible labels over many colliding ones
+      // in the small/dense zone-sector layouts this tier covers (e.g. the
+      // ~38-node default scenario): a higher rendered-size threshold and
+      // lower density mean fewer node labels compete for space at once.
+      labelRenderedSizeThreshold: 8,
+      labelDensity: 0.4,
       renderEdgeLabels: false,
     },
     {
