@@ -37,7 +37,7 @@ describe('computeLabelPillLayout', () => {
     expect(layout?.left).toBeLessThan((layout?.left ?? 0) + (layout?.width ?? 0));
   });
 
-  it('flips to the node\'s left when the right anchor would clip the canvas edge', () => {
+  it("flips to the node's left when the right anchor would clip the canvas edge", () => {
     const context = fakeContext();
     // right anchor would be left=1968, width=62 -> right edge 2030 > canvasWidth 2000.
     const layout = computeLabelPillLayout(

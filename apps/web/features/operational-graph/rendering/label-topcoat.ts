@@ -1,6 +1,10 @@
 import type Sigma from 'sigma';
 
-import { computeLabelPillLayout, paintLabelPill, type LabelPillLayout } from './aegis-canvas-renderers';
+import {
+  computeLabelPillLayout,
+  paintLabelPill,
+  type LabelPillLayout,
+} from './aegis-canvas-renderers';
 
 interface LabelSourceData {
   label?: string;
@@ -135,7 +139,10 @@ export class LabelTopcoat {
     context.clearRect(0, 0, width, height);
 
     const settings = this.sigma.getSettings();
-    const layouts = new Map<string, { layout: LabelPillLayout; data: LabelSourceData; y: number }>();
+    const layouts = new Map<
+      string,
+      { layout: LabelPillLayout; data: LabelSourceData; y: number }
+    >();
     const candidates: LabelCandidate[] = [];
 
     for (const nodeId of this.sigma.getNodeDisplayedLabels()) {
@@ -150,7 +157,12 @@ export class LabelTopcoat {
       // - graphToViewport would re-normalize already-normalized coordinates.
       const { x, y } = this.sigma.framedGraphToViewport(raw);
       const size = this.sigma.scaleSize(raw.size);
-      const layout = computeLabelPillLayout(context, { x, y, size, label: raw.label }, settings, width);
+      const layout = computeLabelPillLayout(
+        context,
+        { x, y, size, label: raw.label },
+        settings,
+        width,
+      );
       if (!layout) {
         continue;
       }

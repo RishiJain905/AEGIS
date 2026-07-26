@@ -65,7 +65,9 @@ describe('labelPriority', () => {
   });
 
   it('falls back to node size when nothing is emphasized', () => {
-    expect(labelPriority({ ...base, size: 20 })).toBeGreaterThan(labelPriority({ ...base, size: 5 }));
+    expect(labelPriority({ ...base, size: 20 })).toBeGreaterThan(
+      labelPriority({ ...base, size: 5 }),
+    );
   });
 
   it('keeps the size fallback well below every emphasis tier', () => {
