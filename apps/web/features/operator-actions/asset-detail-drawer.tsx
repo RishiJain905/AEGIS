@@ -87,7 +87,12 @@ export function AssetDetailDrawer({
             <p className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
               Direct action
             </p>
-            <AssetActionMenu runId={runId} assetId={node.id} assetLabel={node.label} />
+            <AssetActionMenu
+              runId={runId}
+              assetId={node.id}
+              assetLabel={node.label}
+              assetType={node.assetType}
+            />
             <p className="text-[10px] leading-4 text-[var(--aegis-text-muted)]">
               Routed through the same policy pipeline as agent proposals. Class 2/3 actions ask you
               to confirm the consequences.

@@ -10,6 +10,11 @@ export interface AssetActionMenuProps {
   runId: string;
   assetId: string;
   assetLabel: string;
+  /**
+   * The asset's class, which decides the verb list. Omitting it falls back to the full
+   * catalogue — only correct when the caller genuinely cannot tell what it is acting on.
+   */
+  assetType?: string | null;
   /** Optional incident anchor; the service resolves a run-scoped incident when omitted. */
   incidentId?: string | null;
   /** Render as a compact icon-ish trigger (graph selection) vs a full-width button (drawer). */
@@ -28,12 +33,13 @@ export function AssetActionMenu({
   runId,
   assetId,
   assetLabel,
+  assetType,
   incidentId,
   variant = 'block',
   label = 'Operator actions',
   disabled,
 }: AssetActionMenuProps) {
-  const commands = useAssetCommands(assetId);
+  const commands = useAssetCommands(assetType);
   const runner = useAssetActionRunner({
     runId,
     assetId,

@@ -57,13 +57,18 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function renderMenu() {
+function renderMenu(assetType?: string) {
   // The consequences dialog fetches a blast-radius preview via TanStack Query; the confirm-
   // gating behaviour under test needs a client in context (the query itself is not asserted).
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <AssetActionMenu runId="run_x" assetId="asset:vpn-gw" assetLabel="VPN Gateway" />
+      <AssetActionMenu
+        runId="run_x"
+        assetId="asset:vpn-gw"
+        assetLabel="VPN Gateway"
+        assetType={assetType}
+      />
     </QueryClientProvider>,
   );
 }
@@ -100,5 +105,27 @@ describe('AssetActionMenu confirm gating', () => {
     await user.click(screen.getByTestId('action-item-restart_service'));
     expect(await screen.findByTestId('action-consequences-dialog')).toBeInTheDocument();
     expect(mutate).not.toHaveBeenCalled();
+  });
+});
+
+describe('AssetActionMenu asset-class catalogue', () => {
+  it('narrows the verb list to what fits the asset class', () => {
+    renderMenu('identity');
+
+    // A service principal is disabled and re-credentialled; it is not restarted or rolled back.
+    expect(screen.getByTestId('action-item-revoke_credentials')).toHaveTextContent(
+      'Disable account & revoke credentials',
+    );
+    expect(screen.queryByTestId('action-item-isolate')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('action-item-restart_service')).not.toBeInTheDocument();
+  });
+
+  it('offers the full catalogue when the caller cannot tell what it is acting on', () => {
+    renderMenu();
+
+    // Withholding containment from an operator mid-incident is the worse failure; policy
+    // still adjudicates whatever they pick.
+    expect(screen.getByTestId('action-item-isolate')).toBeInTheDocument();
+    expect(screen.getByTestId('action-item-rollback_deployment')).toBeInTheDocument();
   });
 });

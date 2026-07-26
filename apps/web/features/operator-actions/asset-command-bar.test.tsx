@@ -73,21 +73,31 @@ function renderBar() {
   );
 }
 
-const VPN_GATEWAY: SelectedAsset = {
-  node: {
-    schemaVersion: 1,
-    id: 'asset:vpn-gw',
-    entityType: 'asset',
-    assetType: 'device',
-    label: 'VPN Gateway',
-    riskScore: 0.4,
-    criticality: 0.8,
-    status: 'suspicious',
-    revision: 1,
+function asset(overrides: Partial<SelectedAsset['node']>): SelectedAsset {
+  return {
+    node: {
+      schemaVersion: 1,
+      id: 'asset:vpn-gw',
+      entityType: 'asset',
+      assetType: 'device',
+      label: 'VPN Gateway',
+      riskScore: 0.4,
+      criticality: 0.8,
+      status: 'suspicious',
+      revision: 1,
+      disclosed: true,
+      ...overrides,
+    },
     disclosed: true,
-  },
-  disclosed: true,
-};
+  };
+}
+
+const VPN_GATEWAY = asset({});
+const CUSTOMER_DATABASE = asset({
+  id: 'asset:database-customer-pii',
+  assetType: 'database',
+  label: 'Customer PII Database',
+});
 
 describe('AssetCommandBar', () => {
   it('prompts for a selection instead of disappearing when nothing is selected', () => {
@@ -133,6 +143,44 @@ describe('AssetCommandBar', () => {
     // Quick buttons cover the head of the catalogue; the menu still lists all of it,
     // including the commands that did not fit.
     expect(screen.getByTestId('command-bar-all-actions')).toBeInTheDocument();
-    expect(screen.getByTestId('action-item-rollback_deployment')).toBeInTheDocument();
+    expect(screen.getByTestId('action-item-restart_service')).toBeInTheDocument();
+  });
+
+  it('offers the verbs that fit the selected asset class, not one list for everything', () => {
+    selected = VPN_GATEWAY;
+    const { unmount } = renderBar();
+
+    // An endpoint: isolate the host, kill the process on it.
+    expect(screen.getByTestId('command-bar-action-isolate')).toHaveTextContent('Isolate host');
+    expect(screen.getByTestId('action-item-restart_service')).toHaveTextContent(
+      'Kill malicious process',
+    );
+    expect(screen.queryByTestId('action-item-rollback_deployment')).not.toBeInTheDocument();
+    unmount();
+
+    // A datastore: lock it down and rotate its logins. It is not a deployment, so nothing
+    // in the critical tier applies and the tier's heading drops out with it.
+    selected = CUSTOMER_DATABASE;
+    renderBar();
+
+    expect(screen.getByTestId('command-bar-action-restrict_access')).toBeInTheDocument();
+    expect(screen.getByTestId('action-item-revoke_credentials')).toHaveTextContent(
+      'Rotate database credentials',
+    );
+    expect(screen.queryByTestId('action-item-restart_service')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('action-item-rollback_deployment')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Critical · needs confirm/)).not.toBeInTheDocument();
+  });
+
+  it('confirms the action under the same name the operator clicked', async () => {
+    const user = userEvent.setup();
+    selected = VPN_GATEWAY;
+    renderBar();
+
+    await user.click(screen.getByTestId('action-item-restart_service'));
+
+    const dialog = await screen.findByTestId('action-consequences-dialog');
+    expect(dialog).toHaveTextContent('Kill malicious process');
+    expect(dialog).not.toHaveTextContent('Restart service');
   });
 });

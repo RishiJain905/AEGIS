@@ -271,6 +271,15 @@ export function OperationalGraphView({
     return map;
   }, [snapshot.nodes]);
 
+  // Asset class per node, so a right-click can offer the verbs that fit what was clicked.
+  const nodeAssetTypes = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const node of snapshot.nodes) {
+      map.set(node.id, node.assetType);
+    }
+    return map;
+  }, [snapshot.nodes]);
+
   const evidenceSet = useMemo(() => new Set(evidenceNodeIds ?? []), [evidenceNodeIds]);
   // Without an explicit incident projection, approximate incident scope from
   // node security status — the same derivation replay uses.
@@ -559,11 +568,12 @@ export function OperationalGraphView({
       setContextTarget({
         nodeId,
         label: nodeLabels.get(nodeId) ?? nodeId,
+        assetType: nodeAssetTypes.get(nodeId) ?? null,
         x: position.x,
         y: position.y,
       });
     },
-    [nodeLabels, setSelectedEntityId],
+    [nodeAssetTypes, nodeLabels, setSelectedEntityId],
   );
 
   useEffect(() => {

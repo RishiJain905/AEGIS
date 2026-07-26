@@ -3,10 +3,9 @@
 import { useState, type ReactNode } from 'react';
 
 import {
-  commandMeta,
   requiresConfirmation,
   useSubmitOperatorAction,
-  type ScenarioCommandTemplate,
+  type CommandMeta,
 } from '@/features/command-surface';
 
 import { ActionConsequencesDialog } from './action-consequences-dialog';
@@ -21,14 +20,20 @@ export interface AssetActionRunnerOptions {
 }
 
 export interface AssetActionRunner {
-  /** Invoke a command: Class 0/1 execute immediately, Class 2/3 open the confirm dialog. */
-  select: (command: ScenarioCommandTemplate) => void;
+  /**
+   * Invoke a command: Class 0/1 execute immediately, Class 2/3 open the confirm dialog.
+   *
+   * Takes the resolved {@link CommandMeta} rather than the bare identifier so the dialog and
+   * the result toast use the same asset-specific wording the operator clicked — a menu that
+   * says "Kill malicious process" must not confirm "Restart service".
+   */
+  select: (command: CommandMeta) => void;
   isPending: boolean;
   /** Confirm dialog and result toast. Render once inside the surface that owns the runner. */
   overlays: ReactNode;
 }
 
-type PendingConfirm = { command: ScenarioCommandTemplate } | null;
+type PendingConfirm = { meta: CommandMeta } | null;
 
 /**
  * Shared execution path behind every operator-action surface (graph context menu, stage
@@ -50,11 +55,10 @@ export function useAssetActionRunner({
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [toast, setToast] = useState<ActionResult | null>(null);
 
-  const runAction = (command: ScenarioCommandTemplate, confirmReason: string, confirm: boolean) => {
-    const meta = commandMeta(command);
+  const runAction = (meta: CommandMeta, confirmReason: string, confirm: boolean) => {
     submit.mutate(
       {
-        command,
+        command: meta.command,
         targetAssetId: assetId,
         reason: confirmReason,
         confirm,
@@ -86,15 +90,14 @@ export function useAssetActionRunner({
     );
   };
 
-  const select = (command: ScenarioCommandTemplate) => {
-    const meta = commandMeta(command);
+  const select = (meta: CommandMeta) => {
     if (requiresConfirmation(meta.actionClass)) {
       setReason('');
       setDialogError(null);
-      setPendingConfirm({ command });
+      setPendingConfirm({ meta });
       return;
     }
-    runAction(command, `Operator ${meta.label.toLowerCase()} on ${assetLabel}.`, false);
+    runAction(meta, `Operator action — ${meta.label} on ${assetLabel}.`, false);
   };
 
   const overlays = (
@@ -103,7 +106,7 @@ export function useAssetActionRunner({
         <ActionConsequencesDialog
           open
           runId={runId}
-          command={pendingConfirm.command}
+          command={pendingConfirm.meta}
           assetLabel={assetLabel}
           assetId={assetId}
           reason={reason}
@@ -111,7 +114,7 @@ export function useAssetActionRunner({
           submitting={submit.isPending}
           errorMessage={dialogError}
           onConfirm={() => {
-            runAction(pendingConfirm.command, reason.trim(), true);
+            runAction(pendingConfirm.meta, reason.trim(), true);
           }}
           onCancel={() => {
             setPendingConfirm(null);

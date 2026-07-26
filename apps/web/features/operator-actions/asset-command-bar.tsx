@@ -105,7 +105,7 @@ function SelectedAssetCommandBar({
   onOpenDrawer,
   children,
 }: SelectedAssetCommandBarProps) {
-  const commands = useAssetCommands(assetId);
+  const commands = useAssetCommands(assetType);
   const runner = useAssetActionRunner({ runId, assetId, assetLabel });
   const quickActions = commands.slice(0, QUICK_ACTION_LIMIT);
 
@@ -147,7 +147,7 @@ function SelectedAssetCommandBar({
             data-testid={`command-bar-action-${command.command}`}
             title={command.summary}
             onClick={() => {
-              runner.select(command.command);
+              runner.select(command);
             }}
             className={cn(
               'text-xs',

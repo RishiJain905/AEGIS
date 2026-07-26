@@ -17,6 +17,8 @@ import { useAssetCommands } from './use-asset-commands';
 export interface AssetContextTarget {
   nodeId: string;
   label: string;
+  /** The node's asset class, so the right-click menu offers the same verbs the bar does. */
+  assetType: string | null;
   /** Pointer position in pixels, relative to the positioned graph frame. */
   x: number;
   y: number;
@@ -72,7 +74,7 @@ function AssetContextMenuBody({
   open: boolean;
   onDismiss: () => void;
 }) {
-  const commands = useAssetCommands(anchor.nodeId);
+  const commands = useAssetCommands(anchor.assetType);
   const runner = useAssetActionRunner({
     runId,
     assetId: anchor.nodeId,

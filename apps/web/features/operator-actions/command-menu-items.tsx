@@ -4,7 +4,7 @@ import { Fragment } from 'react';
 
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@aegis/ui';
 
-import type { ActionClass, CommandMeta, ScenarioCommandTemplate } from '@/features/command-surface';
+import type { ActionClass, CommandMeta } from '@/features/command-surface';
 
 /**
  * Tier headings, in menu order. The menu is built by walking these tiers over whatever
@@ -19,7 +19,7 @@ const TIERS: readonly { classes: readonly ActionClass[]; label: string }[] = [
 
 export interface CommandMenuItemsProps {
   commands: readonly CommandMeta[];
-  onSelect: (command: ScenarioCommandTemplate) => void;
+  onSelect: (command: CommandMeta) => void;
 }
 
 /** The grouped command list shared by the inspector dropdown and the graph context menu. */
@@ -39,7 +39,7 @@ export function CommandMenuItems({ commands, onSelect }: CommandMenuItemsProps) 
             <DropdownMenuItem
               key={command.command}
               onSelect={() => {
-                onSelect(command.command);
+                onSelect(command);
               }}
               data-testid={`action-item-${command.command}`}
             >

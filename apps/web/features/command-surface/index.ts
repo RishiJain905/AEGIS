@@ -1,4 +1,5 @@
 export * from './contracts';
+export { assetCommandCatalogue, ASSET_KINDS, type AssetKind } from './asset-command-catalogue';
 export { useRunFeed } from './use-run-feed';
 export type { UseRunFeedOptions } from './use-run-feed';
 export {

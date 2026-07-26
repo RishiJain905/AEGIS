@@ -12,11 +12,7 @@ import {
   DialogTitle,
 } from '@aegis/ui';
 
-import {
-  ACTION_CLASS_LABEL,
-  commandMeta,
-  type ScenarioCommandTemplate,
-} from '@/features/command-surface';
+import { ACTION_CLASS_LABEL, type CommandMeta } from '@/features/command-surface';
 
 import { BlastRadiusSummary } from './blast-radius-summary';
 import { useBlastRadius } from './use-blast-radius';
@@ -24,7 +20,8 @@ import { useBlastRadius } from './use-blast-radius';
 export interface ActionConsequencesDialogProps {
   open: boolean;
   runId: string;
-  command: ScenarioCommandTemplate;
+  /** The command as offered on *this* asset — label and consequence copy may be class-specific. */
+  command: CommandMeta;
   assetLabel: string;
   assetId: string;
   reason: string;
@@ -43,7 +40,7 @@ export interface ActionConsequencesDialogProps {
 export function ActionConsequencesDialog({
   open,
   runId,
-  command,
+  command: meta,
   assetLabel,
   assetId,
   reason,
@@ -53,9 +50,8 @@ export function ActionConsequencesDialog({
   onConfirm,
   onCancel,
 }: ActionConsequencesDialogProps) {
-  const meta = commandMeta(command);
   const critical = meta.actionClass === 'class_3';
-  const blastRadius = useBlastRadius(runId, command, assetId, { enabled: open });
+  const blastRadius = useBlastRadius(runId, meta.command, assetId, { enabled: open });
 
   return (
     <Dialog
