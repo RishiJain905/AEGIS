@@ -41,6 +41,23 @@ describe('workspace ui store', () => {
     expect(useWorkspaceUiStore.getState().activeRunId).toBe('run_a');
   });
 
+  it('closes the open case file when the run changes', () => {
+    useWorkspaceUiStore.getState().setSelectedIncidentId('incident:inc_1');
+    expect(useWorkspaceUiStore.getState().workspace.selectedIncidentId).toBe('incident:inc_1');
+
+    useWorkspaceUiStore.getState().resetForRun('run_c');
+    expect(useWorkspaceUiStore.getState().workspace.selectedIncidentId).toBeNull();
+  });
+
+  it('keeps the graph pointer and the open case independent', () => {
+    useWorkspaceUiStore.getState().setSelectedIncidentId('incident:inc_1');
+    useWorkspaceUiStore.getState().setSelectedEntityId('asset:svc-api-gateway');
+
+    // Inspecting an asset while working a case must not close the case.
+    expect(useWorkspaceUiStore.getState().workspace.selectedIncidentId).toBe('incident:inc_1');
+    expect(useWorkspaceUiStore.getState().workspace.selectedEntityId).toBe('asset:svc-api-gateway');
+  });
+
   it('resets graph visual state when run changes', async () => {
     const { useGraphVisualStore } = await import(
       '@/features/operational-graph/stores/graph-visual-store'

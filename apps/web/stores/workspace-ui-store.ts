@@ -22,6 +22,30 @@ interface WorkspaceUiState {
   panelPreferences: PanelPreferences;
   activeRunId: string | null;
   mobileRailOpen: boolean;
+  /**
+   * Whether the operational graph's view-options panel is open. Mirrored out of the graph
+   * view's local state so observers outside the canvas (the guided walkthrough) can tell the
+   * panel is open without sniffing the DOM. Ephemeral — never persisted.
+   */
+  graphViewOptionsOpen: boolean;
+  /**
+   * Selection model — two selections, deliberately orthogonal, and they cannot disagree
+   * because they name different kinds of thing:
+   *
+   * - `selectedEntityId` is the **graph pointer**. It only ever holds a graph node id
+   *   (`asset:…` or a cluster), because assets and clusters are the only node kinds the
+   *   graph snapshot contains. It answers "what am I looking at" and drives the entity
+   *   inspector, the risk explanation, incident context and the asset command bar.
+   * - `selectedIncidentId` is the **open case file**. It answers "what am I working" and
+   *   drives the investigation record, BASTION proposals, the WARDEN decision and the
+   *   approval gate in the run cockpit's right dock.
+   *
+   * So: clicking an asset moves the pointer and leaves the open case alone; clicking an
+   * incident opens a case and leaves the pointer alone. Incidents are not graph nodes, so
+   * "an incident selected on the graph" cannot arise — never put an incident id into
+   * `selectedEntityId` (it used to happen, and only produced a pointer that matched no
+   * node). Both are cleared together by `resetForRun` when the run changes.
+   */
   setSelectedEntityId: (entityId: string | null) => void;
   setSelectedIncidentId: (incidentId: string | null) => void;
   setCommandPaletteOpen: (open: boolean) => void;
@@ -32,6 +56,7 @@ interface WorkspaceUiState {
   setPanelCollapsed: (region: PanelRegion, collapsed: boolean) => void;
   setTheme: (theme: ThemePreference) => void;
   setMobileRailOpen: (open: boolean) => void;
+  setGraphViewOptionsOpen: (open: boolean) => void;
   resetForRun: (runId: string | null) => void;
 }
 
@@ -42,6 +67,7 @@ export const useWorkspaceUiStore = create<WorkspaceUiState>()(
       panelPreferences: defaultPanelPreferences,
       activeRunId: null,
       mobileRailOpen: false,
+      graphViewOptionsOpen: false,
 
       setSelectedEntityId: (entityId) => {
         set((state) => ({
@@ -119,6 +145,13 @@ export const useWorkspaceUiStore = create<WorkspaceUiState>()(
 
       setMobileRailOpen: (open) => {
         set({ mobileRailOpen: open });
+      },
+
+      setGraphViewOptionsOpen: (open) => {
+        if (get().graphViewOptionsOpen === open) {
+          return;
+        }
+        set({ graphViewOptionsOpen: open });
       },
 
       resetForRun: (runId) => {
