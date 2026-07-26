@@ -12,13 +12,18 @@ export const TooltipTrigger = TooltipPrimitive.Trigger;
 export const TooltipContent = forwardRef<
   HTMLDivElement,
   ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, style, sideOffset = 4, ...props }, ref) => (
   <TooltipPrimitive.Portal>
     <TooltipPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      // Inline style, not the bg-[var(--aegis-surface-overlay)] Tailwind
+      // class: that exact class was observed missing from the compiled
+      // stylesheet in a production build (see dropdown-menu.tsx), leaving
+      // the popover transparent. Inline style can't be purged.
+      style={{ backgroundColor: 'var(--aegis-surface-overlay)', ...style }}
       className={cn(
-        'z-50 max-w-xs overflow-hidden rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-strong)] bg-[var(--aegis-surface-overlay)] px-3 py-2 text-xs leading-5 text-[var(--aegis-text-primary)] shadow-[var(--aegis-shadow-dialog)]',
+        'z-50 max-w-xs overflow-hidden rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-strong)] px-3 py-2 text-xs leading-5 text-[var(--aegis-text-primary)] shadow-[var(--aegis-shadow-dialog)]',
         className,
       )}
       {...props}
