@@ -81,10 +81,19 @@ function hasInFlightTask(details: AgentSessionDetailV1[] | undefined): boolean {
  * bias-guard checks) come back too, and the operator sees sessions they never started
  * plus a permanent "Working…" from tasks that aren't theirs. Consumers that genuinely
  * want autonomous activity (the hypothesis ledger's bias-guard findings) omit it.
+ *
+ * `options.enabled` lets an observer stand the query down entirely (the guided walkthrough
+ * only watches agent activity while a beat is waiting on it). Defaults to on, so existing
+ * callers are unaffected.
  */
-export function useRunAgentSessions(runId: string, origin?: AutonomyInitiatorV1) {
+export function useRunAgentSessions(
+  runId: string,
+  origin?: AutonomyInitiatorV1,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: queryKeys.agentSessions.listForRun(runId, origin),
+    enabled: Boolean(runId) && (options?.enabled ?? true),
     queryFn: async ({ signal }): Promise<AgentSessionDetailV1[]> => {
       const query = origin ? `?origin=${origin}` : '';
       const response = await apiFetch(`/api/v1/runs/${runId}/agent-sessions${query}`, { signal });

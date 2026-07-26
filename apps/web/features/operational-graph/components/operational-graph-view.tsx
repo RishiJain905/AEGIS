@@ -263,6 +263,17 @@ export function OperationalGraphView({
   const setSelectedEntityId = useWorkspaceUiStore((s) => s.setSelectedEntityId);
   const selectedEntityId = useWorkspaceUiStore((s) => s.workspace.selectedEntityId);
 
+  // Mirror the view-options disclosure into the workspace store. The panel itself stays local
+  // state; observers outside the canvas (the guided walkthrough) read the store flag instead
+  // of querying the DOM for the panel element.
+  const setGraphViewOptionsOpen = useWorkspaceUiStore((s) => s.setGraphViewOptionsOpen);
+  useEffect(() => {
+    setGraphViewOptionsOpen(controlsOpen);
+    return () => {
+      setGraphViewOptionsOpen(false);
+    };
+  }, [controlsOpen, setGraphViewOptionsOpen]);
+
   const nodeLabels = useMemo(() => {
     const map = new Map<string, string>();
     for (const node of snapshot.nodes) {

@@ -74,6 +74,7 @@ export function ApprovalControls({
     <div
       className="mt-3 space-y-3 border-t border-[var(--aegis-border-subtle)] pt-3"
       data-testid={`approval-controls-${proposal.id}`}
+      data-tutorial-id="approval-gate"
     >
       <p className="text-xs font-medium text-[var(--aegis-text-primary)]">
         Human approval required — decisions are enforced by the backend, not this UI.

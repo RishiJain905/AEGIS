@@ -1,170 +1,301 @@
 /**
- * Pure state machine for the Synthetic Training guided walkthrough.
+ * Pure state machine for the guided walkthrough.
  *
- * The tutorial is driven by REAL run evidence — not timers. Each step declares the
- * observable fact that satisfies its objective; the machine derives the active step
- * from a snapshot of that evidence plus a monotonic `floor` (the furthest step ever
- * reached, persisted so a reload resumes rather than restarts).
+ * The walkthrough is chapters of beats (see `tutorial-contract`). This module owns the
+ * rules for where the operator is, how they move, and when live run evidence checks an
+ * objective off. It is deliberately free of React and browser APIs so every rule below is
+ * directly unit-testable.
  *
- * Two advancement modes are intentionally different:
- *  - Ambient steps (telemetry flowing, first alert, run complete) advance only when
- *    their own evidence appears, so a fresh run walks through them at the pace of the
- *    simulation instead of leaping past coaching the operator has not read yet.
- *  - User milestones (opened an incident, tasked an agent, resolved a proposal) also
- *    pull the walkthrough forward via skip-ahead, so an operator who races ahead of the
- *    script is never shown a step whose goal they have already met.
+ * Three invariants shape everything here:
  *
- * Kept free of React and browser APIs so it can be unit-tested directly.
+ *  - **Soft gating.** An unmet objective never blocks `goNext`. Several objectives can only
+ *    be satisfied once the simulation produces them, which takes minutes; a hard gate would
+ *    strand the operator. The objective stays visible and self-completes when evidence lands.
+ *  - **Monotonic `reached`.** `cursor` is where the operator is; `reached` is the furthest
+ *    beat ever visited. Back moves the cursor and never lowers `reached`, so stepping back to
+ *    re-read a beat can't cost progress, and a reload resumes rather than restarts.
+ *  - **Completion is keyed by beat id.** Editing, reordering or inserting content changes
+ *    indices; ids are stable, so stored progress survives content edits.
+ *
+ * Every mutator returns the *same object identity* when nothing changed, so callers can skip
+ * redundant localStorage writes and re-renders.
  */
 
-export const TUTORIAL_STEP_IDS = [
-  'welcome',
-  'watch',
-  'first-blood',
-  'open-incident',
-  'task-copilot',
-  'containment',
-  'endgame',
-  'debrief',
-] as const;
-
-export type TutorialStepId = (typeof TUTORIAL_STEP_IDS)[number];
-
-export const STEP_COUNT = TUTORIAL_STEP_IDS.length;
-const LAST_INDEX = STEP_COUNT - 1;
+import type {
+  ResolvedBeat,
+  TutorialBeat,
+  TutorialChapter,
+  TutorialEvidence,
+  TutorialEvidenceKey,
+  TutorialProgress,
+} from './tutorial-contract';
 
 /**
- * A snapshot of everything the walkthrough can observe about a live run. Every field is
- * a plain boolean so the machine stays pure and trivially testable; the React layer maps
- * TanStack query results and route state onto this shape.
+ * Expand chapters into the flat, positioned beat list the overlay renders from. The result
+ * is the machine's index space: every cursor in `TutorialProgress` indexes into it.
  */
-export interface TutorialEvidence {
-  /** Operator clicked "Begin walkthrough" (manual gate on the welcome step). */
-  welcomeAcknowledged: boolean;
-  /** New simulation events have flowed since the operator arrived (the ops floor is live). */
-  telemetryFlowing: boolean;
-  /** At least one alert has been raised on the run. */
-  alertRaised: boolean;
-  /** The operator has opened/selected an incident. */
-  incidentOpened: boolean;
-  /** At least one agent task/artifact exists for the engaged incident. */
-  agentTaskCreated: boolean;
-  /** A response proposal has been approved or rejected. */
-  containmentResolved: boolean;
-  /** The run has finished (completed or stopped). */
-  runComplete: boolean;
-}
+export function flattenChapters(chapters: readonly TutorialChapter[]): ResolvedBeat[] {
+  const chapterCount = chapters.length;
+  const resolved: ResolvedBeat[] = [];
+  let index = 0;
 
-export const EMPTY_EVIDENCE: TutorialEvidence = {
-  welcomeAcknowledged: false,
-  telemetryFlowing: false,
-  alertRaised: false,
-  incidentOpened: false,
-  agentTaskCreated: false,
-  containmentResolved: false,
-  runComplete: false,
-};
+  chapters.forEach((chapter, chapterIndex) => {
+    const beatCount = chapter.beats.length;
+    chapter.beats.forEach((beat, beatIndex) => {
+      resolved.push({
+        beat,
+        chapter,
+        index,
+        beatNumber: beatIndex + 1,
+        beatCount,
+        chapterNumber: chapterIndex + 1,
+        chapterCount,
+      });
+      index += 1;
+    });
+  });
 
-export interface TutorialProgress {
-  /** Monotonic furthest-reached step index, persisted across reloads. */
-  reached: number;
-  /** Whether the operator has acknowledged the welcome step. */
-  welcomeAcknowledged: boolean;
-  /** Whether the operator dismissed the whole walkthrough (skip / finished). */
-  dismissed: boolean;
-}
-
-export const INITIAL_PROGRESS: TutorialProgress = {
-  reached: 0,
-  welcomeAcknowledged: false,
-  dismissed: false,
-};
-
-/** Whether step `index`'s own objective evidence is present. */
-function stepSatisfied(index: number, evidence: TutorialEvidence): boolean {
-  switch (index) {
-    case 0:
-      return evidence.welcomeAcknowledged;
-    case 1:
-      return evidence.telemetryFlowing;
-    case 2:
-      return evidence.alertRaised;
-    case 3:
-      return evidence.incidentOpened;
-    case 4:
-      return evidence.agentTaskCreated;
-    case 5:
-      return evidence.containmentResolved;
-    case 6:
-      return evidence.runComplete;
-    default:
-      // Debrief is terminal — it never auto-completes; it is dismissed instead.
-      return false;
-  }
-}
-
-/** User-driven and terminal milestones that justify skipping the walkthrough forward. */
-const SKIP_AHEAD_MILESTONES: ReadonlyArray<{
-  index: number;
-  reached: (evidence: TutorialEvidence) => boolean;
-}> = [
-  { index: 3, reached: (e) => e.incidentOpened },
-  { index: 4, reached: (e) => e.agentTaskCreated },
-  { index: 5, reached: (e) => e.containmentResolved },
-  { index: 6, reached: (e) => e.runComplete },
-];
-
-function skipAheadFloor(evidence: TutorialEvidence, current: number): number {
-  let floor = current;
-  for (const milestone of SKIP_AHEAD_MILESTONES) {
-    if (milestone.reached(evidence)) {
-      floor = Math.max(floor, milestone.index + 1);
-    }
-  }
-  return floor;
+  return resolved;
 }
 
 /**
- * Resolve the currently active step index from evidence and the persisted floor.
+ * Whether a beat's objective is met by the current evidence.
  *
- * The result never drops below `floor` (progress is monotonic) and never exceeds the
- * terminal debrief step.
+ * A beat with no objective (`learn`) has nothing to satisfy and answers `false` — there is no
+ * objective, so no objective is satisfied. Callers only read this for `do` beats; keeping it
+ * false is what stops auto-advance from ever running through a `learn` beat.
  */
-export function computeActiveStep(evidence: TutorialEvidence, floor: number): number {
-  let step = Math.max(0, Math.min(floor, LAST_INDEX));
-
-  // Welcome is a hard manual gate: hold here until acknowledged, unless the operator has
-  // already raced past it into a user milestone.
-  if (step === 0 && !evidence.welcomeAcknowledged) {
-    return Math.min(skipAheadFloor(evidence, 0), LAST_INDEX);
+export function isObjectiveSatisfied(beat: TutorialBeat, evidence: TutorialEvidence): boolean {
+  const key = beat.objective?.evidence;
+  if (!key) {
+    return false;
   }
-  if (step === 0) {
-    step = 1;
-  }
-
-  // Advance through any steps whose own evidence is already present (an already-met goal
-  // is never shown), then honour skip-ahead milestones so we never trail the operator.
-  while (step < LAST_INDEX && stepSatisfied(step, evidence)) {
-    step += 1;
-  }
-  step = Math.max(step, skipAheadFloor(evidence, step));
-
-  return Math.min(step, LAST_INDEX);
+  return evidence[key];
 }
 
-/** Whether `index` is the terminal debrief step. */
-export function isDebriefStep(index: number): boolean {
-  return index >= LAST_INDEX;
+function clampIndex(value: number, beats: readonly ResolvedBeat[]): number {
+  if (beats.length === 0) {
+    return 0;
+  }
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(Math.trunc(value), beats.length - 1));
 }
 
 /**
- * Fold a fresh active-step computation into persisted progress, keeping `reached`
- * monotonic. Returns the same object identity when nothing changed so callers can skip
- * redundant writes/renders.
+ * Force a progress record into range for the given beat list, keeping `reached` at or ahead
+ * of `cursor`. Content can shrink between sessions, so stored indices are never trusted.
  */
-export function advanceProgress(progress: TutorialProgress, activeStep: number): TutorialProgress {
-  if (activeStep <= progress.reached) {
+export function clampProgress(
+  progress: TutorialProgress,
+  beats: readonly ResolvedBeat[],
+): TutorialProgress {
+  const cursor = clampIndex(progress.cursor, beats);
+  const reached = Math.max(cursor, clampIndex(progress.reached, beats));
+  if (cursor === progress.cursor && reached === progress.reached) {
     return progress;
   }
-  return { ...progress, reached: activeStep };
+  return { ...progress, cursor, reached };
+}
+
+/** Move the cursor, raising `reached` monotonically. Identity-preserving when static. */
+function withCursor(
+  progress: TutorialProgress,
+  nextCursor: number,
+  beats: readonly ResolvedBeat[],
+): TutorialProgress {
+  const cursor = clampIndex(nextCursor, beats);
+  const reached = Math.max(cursor, clampIndex(progress.reached, beats));
+  if (cursor === progress.cursor && reached === progress.reached) {
+    return progress;
+  }
+  return { ...progress, cursor, reached };
+}
+
+/** The beat the operator is currently on, or `null` when there is no content. */
+export function resolveCurrentBeat(
+  progress: TutorialProgress,
+  beats: readonly ResolvedBeat[],
+): ResolvedBeat | null {
+  if (beats.length === 0) {
+    return null;
+  }
+  return beats[clampIndex(progress.cursor, beats)] ?? null;
+}
+
+/**
+ * Fold a fresh evidence snapshot into progress.
+ *
+ * Two separate effects:
+ *  1. Every satisfied objective is recorded in `completedBeatIds`. Recording is independent of
+ *     where the cursor is — an objective is a fact about the run, not about the operator's
+ *     position — and is idempotent.
+ *  2. The current beat auto-advances iff its objective is *newly* satisfied by this snapshot
+ *     and the beat opted in with `advanceOnSatisfied`. "Newly" matters: arriving on a beat
+ *     whose objective was checked off earlier must not bounce the operator straight past the
+ *     copy explaining what they did. Exactly one step per snapshot, and a `learn` beat can
+ *     never satisfy its objective, so an auto-advance run always stops at the next thing the
+ *     operator has to read.
+ */
+export function applyEvidence(
+  progress: TutorialProgress,
+  evidence: TutorialEvidence,
+  beats: readonly ResolvedBeat[],
+): TutorialProgress {
+  if (beats.length === 0) {
+    return progress;
+  }
+
+  const completed = new Set(progress.completedBeatIds);
+  const newlyCompleted: string[] = [];
+  for (const resolved of beats) {
+    const { id } = resolved.beat;
+    if (completed.has(id)) {
+      continue;
+    }
+    if (isObjectiveSatisfied(resolved.beat, evidence)) {
+      completed.add(id);
+      newlyCompleted.push(id);
+    }
+  }
+
+  if (newlyCompleted.length === 0) {
+    return clampProgress(progress, beats);
+  }
+
+  const current = beats[clampIndex(progress.cursor, beats)];
+  const advance =
+    current !== undefined &&
+    current.beat.objective?.advanceOnSatisfied === true &&
+    newlyCompleted.includes(current.beat.id);
+
+  const withCompletions: TutorialProgress = {
+    ...progress,
+    completedBeatIds: [...progress.completedBeatIds, ...newlyCompleted],
+  };
+
+  const cursor = advance ? clampIndex(progress.cursor, beats) + 1 : withCompletions.cursor;
+  return withCursor(withCompletions, cursor, beats);
+}
+
+/**
+ * Advance one beat. Soft-gated: an outstanding objective never blocks this, and the beat the
+ * operator leaves keeps its objective live so it can still self-complete later.
+ */
+export function goNext(
+  progress: TutorialProgress,
+  beats: readonly ResolvedBeat[],
+): TutorialProgress {
+  return withCursor(progress, clampIndex(progress.cursor, beats) + 1, beats);
+}
+
+/**
+ * Step back one beat. `reached` is untouched, so going back to re-read something never costs
+ * the operator the ability to return to where they were.
+ */
+export function goBack(progress: TutorialProgress): TutorialProgress {
+  const cursor = Math.max(0, Math.trunc(progress.cursor) - 1);
+  if (cursor === progress.cursor) {
+    return progress;
+  }
+  return { ...progress, cursor };
+}
+
+/**
+ * Jump to the first beat of the next chapter. On the final chapter this lands on its last
+ * beat rather than dropping out of the walkthrough — leaving is `onDismiss`, not this.
+ */
+export function skipChapter(
+  progress: TutorialProgress,
+  beats: readonly ResolvedBeat[],
+): TutorialProgress {
+  const current = beats[clampIndex(progress.cursor, beats)];
+  if (!current) {
+    return progress;
+  }
+  const target = beats.find(
+    (candidate) => candidate.index > current.index && candidate.chapter.id !== current.chapter.id,
+  );
+  return withCursor(progress, target ? target.index : beats.length - 1, beats);
+}
+
+/**
+ * Jump to the first beat of a named chapter. An unknown id is a no-op — the chapter menu is
+ * rendered from the same content, but stored/deep-linked ids can outlive a content edit.
+ */
+export function jumpToChapter(
+  progress: TutorialProgress,
+  chapterId: string,
+  beats: readonly ResolvedBeat[],
+): TutorialProgress {
+  const target = beats.find((candidate) => candidate.chapter.id === chapterId);
+  if (!target) {
+    return progress;
+  }
+  return withCursor(progress, target.index, beats);
+}
+
+/** Set the minimized flag, preserving identity when it already holds. */
+export function setMinimized(progress: TutorialProgress, minimized: boolean): TutorialProgress {
+  if (progress.minimized === minimized) {
+    return progress;
+  }
+  return { ...progress, minimized };
+}
+
+/** Set the dismissed flag. Dismissal never clears progress — it is a reopenable door. */
+export function setDismissed(progress: TutorialProgress, dismissed: boolean): TutorialProgress {
+  if (progress.dismissed === dismissed) {
+    return progress;
+  }
+  return { ...progress, dismissed };
+}
+
+/**
+ * The evidence keys still worth observing: objectives on beats the operator has actually
+ * reached that are not yet checked off.
+ *
+ * This is the polling budget. The React layer only runs the queries backing these keys, so a
+ * walkthrough sitting on chapter one costs one query rather than five, and a finished
+ * walkthrough costs none. Objectives beyond `reached` are excluded deliberately — evidence
+ * that lands before the operator gets there is picked up the moment they arrive.
+ */
+export function pendingObjectiveKeys(
+  progress: TutorialProgress,
+  beats: readonly ResolvedBeat[],
+): TutorialEvidenceKey[] {
+  if (beats.length === 0) {
+    return [];
+  }
+  const completed = new Set(progress.completedBeatIds);
+  const reached = Math.max(clampIndex(progress.cursor, beats), clampIndex(progress.reached, beats));
+  const keys = new Set<TutorialEvidenceKey>();
+  for (const resolved of beats) {
+    if (resolved.index > reached) {
+      break;
+    }
+    const key = resolved.beat.objective?.evidence;
+    if (key && !completed.has(resolved.beat.id)) {
+      keys.add(key);
+    }
+  }
+  return [...keys];
+}
+
+/**
+ * Whether the walkthrough has run its course: the operator has seen the last beat and no
+ * objective they passed is still outstanding. Used to stand the evidence polling down.
+ */
+export function isWalkthroughComplete(
+  progress: TutorialProgress,
+  beats: readonly ResolvedBeat[],
+): boolean {
+  if (beats.length === 0) {
+    return true;
+  }
+  if (clampIndex(progress.reached, beats) < beats.length - 1) {
+    return false;
+  }
+  return pendingObjectiveKeys(progress, beats).length === 0;
 }

@@ -3,114 +3,492 @@ import { describe, expect, it } from 'vitest';
 import {
   EMPTY_EVIDENCE,
   INITIAL_PROGRESS,
-  STEP_COUNT,
-  advanceProgress,
-  computeActiveStep,
-  isDebriefStep,
+  TUTORIAL_PROGRESS_VERSION,
+  type TutorialBeat,
+  type TutorialChapter,
   type TutorialEvidence,
+  type TutorialProgress,
+} from './tutorial-contract';
+import {
+  applyEvidence,
+  clampProgress,
+  flattenChapters,
+  goBack,
+  goNext,
+  isObjectiveSatisfied,
+  isWalkthroughComplete,
+  jumpToChapter,
+  pendingObjectiveKeys,
+  resolveCurrentBeat,
+  setDismissed,
+  setMinimized,
+  skipChapter,
 } from './tutorial-machine';
+
+/**
+ * The machine is content-agnostic, so these tests run on a fixture rather than the real
+ * walkthrough: the rules under test must hold for any chapter/beat arrangement, and a copy
+ * edit in `tutorial-content` must never turn this suite red.
+ *
+ * Fixture shape (indices in brackets):
+ *   ch-one   [0] welcome (learn)
+ *            [1] watch   (do · telemetryFlowing · auto-advance)
+ *            [2] alert   (do · alertRaised)
+ *   ch-two   [3] brief   (learn)
+ *            [4] open    (do · incidentOpened · auto-advance)
+ *   ch-tour  [5] report  (do · reportReady)
+ */
+const CHAPTERS: readonly TutorialChapter[] = [
+  {
+    id: 'ch-one',
+    title: 'Chapter one',
+    summary: 'First',
+    section: 'cockpit',
+    beats: [
+      {
+        id: 'welcome',
+        kind: 'learn',
+        title: 'Welcome',
+        body: [],
+        anchors: [],
+        pointerLabel: 'shell',
+        primaryAction: 'begin',
+      },
+      {
+        id: 'watch',
+        kind: 'do',
+        title: 'Watch',
+        body: [],
+        anchors: [],
+        pointerLabel: 'timeline',
+        objective: {
+          evidence: 'telemetryFlowing',
+          pending: 'Wait for telemetry',
+          done: 'Telemetry is flowing',
+          advanceOnSatisfied: true,
+        },
+      },
+      {
+        id: 'alert',
+        kind: 'do',
+        title: 'Alert',
+        body: [],
+        anchors: [],
+        pointerLabel: 'alerts',
+        objective: { evidence: 'alertRaised', pending: 'Wait for an alert', done: 'Alert raised' },
+      },
+    ],
+  },
+  {
+    id: 'ch-two',
+    title: 'Chapter two',
+    summary: 'Second',
+    section: 'cockpit',
+    beats: [
+      {
+        id: 'brief',
+        kind: 'learn',
+        title: 'Brief',
+        body: [],
+        anchors: [],
+        pointerLabel: 'incidents',
+      },
+      {
+        id: 'open',
+        kind: 'do',
+        title: 'Open',
+        body: [],
+        anchors: [],
+        pointerLabel: 'incidents',
+        objective: {
+          evidence: 'incidentOpened',
+          pending: 'Open an incident',
+          done: 'Incident open',
+          advanceOnSatisfied: true,
+        },
+      },
+    ],
+  },
+  {
+    id: 'ch-tour',
+    title: 'Tour',
+    summary: 'Third',
+    section: 'tour',
+    beats: [
+      {
+        id: 'report',
+        kind: 'do',
+        title: 'Report',
+        body: [],
+        anchors: [],
+        pointerLabel: 'reports',
+        objective: { evidence: 'reportReady', pending: 'Wait for it', done: 'Ready' },
+      },
+    ],
+  },
+];
+
+const BEATS = flattenChapters(CHAPTERS);
+
+const WELCOME = 0;
+const WATCH = 1;
+const ALERT = 2;
+const BRIEF = 3;
+const OPEN = 4;
+const REPORT = 5;
+
+function progressAt(overrides: Partial<TutorialProgress> = {}): TutorialProgress {
+  return { ...INITIAL_PROGRESS, completedBeatIds: [], ...overrides };
+}
+
+function beatAt(index: number): TutorialBeat {
+  const resolved = BEATS[index];
+  if (!resolved) {
+    throw new Error(`fixture has no beat at index ${String(index)}`);
+  }
+  return resolved.beat;
+}
 
 function evidence(overrides: Partial<TutorialEvidence>): TutorialEvidence {
   return { ...EMPTY_EVIDENCE, ...overrides };
 }
 
-const WELCOME = 0;
-const WATCH = 1;
-const FIRST_BLOOD = 2;
-const OPEN_INCIDENT = 3;
-const TASK_COPILOT = 4;
-const CONTAINMENT = 5;
-const ENDGAME = 6;
-const DEBRIEF = 7;
+describe('flattenChapters', () => {
+  it('numbers beats within their chapter and indexes them across the walkthrough', () => {
+    expect(BEATS).toHaveLength(6);
+    expect(BEATS.map((resolved) => resolved.beat.id)).toEqual([
+      'welcome',
+      'watch',
+      'alert',
+      'brief',
+      'open',
+      'report',
+    ]);
 
-describe('tutorial-machine · computeActiveStep', () => {
-  it('holds on the welcome step until it is acknowledged', () => {
-    expect(computeActiveStep(EMPTY_EVIDENCE, 0)).toBe(WELCOME);
-    expect(computeActiveStep(evidence({ telemetryFlowing: true }), 0)).toBe(WELCOME);
-  });
-
-  it('advances through the ambient steps as their own evidence arrives', () => {
-    expect(computeActiveStep(evidence({ welcomeAcknowledged: true }), 0)).toBe(WATCH);
-    expect(
-      computeActiveStep(evidence({ welcomeAcknowledged: true, telemetryFlowing: true }), 0),
-    ).toBe(FIRST_BLOOD);
-    expect(
-      computeActiveStep(
-        evidence({ welcomeAcknowledged: true, telemetryFlowing: true, alertRaised: true }),
-        0,
-      ),
-    ).toBe(OPEN_INCIDENT);
-  });
-
-  it('does not leap past the watch step from ambient telemetry before welcome is acknowledged', () => {
-    // Telemetry and an alert are present, but the operator has not begun: they stay on
-    // welcome rather than being skipped past the coaching.
-    expect(computeActiveStep(evidence({ telemetryFlowing: true, alertRaised: true }), 0)).toBe(
-      WELCOME,
-    );
-  });
-
-  it('walks the full happy path one user milestone at a time', () => {
-    const base = { welcomeAcknowledged: true, telemetryFlowing: true, alertRaised: true };
-    expect(computeActiveStep(evidence({ ...base, incidentOpened: true }), 0)).toBe(TASK_COPILOT);
-    expect(
-      computeActiveStep(evidence({ ...base, incidentOpened: true, agentTaskCreated: true }), 0),
-    ).toBe(CONTAINMENT);
-    expect(
-      computeActiveStep(
-        evidence({
-          ...base,
-          incidentOpened: true,
-          agentTaskCreated: true,
-          containmentResolved: true,
-        }),
-        0,
-      ),
-    ).toBe(ENDGAME);
-  });
-
-  it('advances endgame to the debrief only when the run completes', () => {
-    const done = evidence({
-      welcomeAcknowledged: true,
-      telemetryFlowing: true,
-      alertRaised: true,
-      incidentOpened: true,
-      agentTaskCreated: true,
-      containmentResolved: true,
+    expect(BEATS[OPEN]).toMatchObject({
+      index: OPEN,
+      beatNumber: 2,
+      beatCount: 2,
+      chapterNumber: 2,
+      chapterCount: 3,
     });
-    expect(computeActiveStep(done, 0)).toBe(ENDGAME);
-    expect(computeActiveStep({ ...done, runComplete: true }, 0)).toBe(DEBRIEF);
+    expect(BEATS[OPEN]?.chapter.id).toBe('ch-two');
   });
 
-  it('supports skip-ahead: a satisfied user milestone pulls the walkthrough forward', () => {
-    // The operator opened an incident and tasked an agent while the overlay was still on
-    // an early step; the machine jumps to the step after the furthest milestone.
-    expect(computeActiveStep(evidence({ incidentOpened: true, agentTaskCreated: true }), 0)).toBe(
-      CONTAINMENT,
-    );
-  });
-
-  it('never regresses below the persisted floor', () => {
-    // Evidence has receded (e.g. a poll returned empty) but the floor holds the step.
-    expect(computeActiveStep(EMPTY_EVIDENCE, CONTAINMENT)).toBe(CONTAINMENT);
-  });
-
-  it('clamps to the terminal debrief step', () => {
-    expect(computeActiveStep(evidence({ runComplete: true }), STEP_COUNT + 5)).toBe(DEBRIEF);
-    expect(isDebriefStep(DEBRIEF)).toBe(true);
-    expect(isDebriefStep(ENDGAME)).toBe(false);
+  it('returns an empty list for empty content', () => {
+    expect(flattenChapters([])).toEqual([]);
   });
 });
 
-describe('tutorial-machine · advanceProgress', () => {
-  it('raises the floor monotonically and preserves object identity when unchanged', () => {
-    const raised = advanceProgress(INITIAL_PROGRESS, OPEN_INCIDENT);
-    expect(raised.reached).toBe(OPEN_INCIDENT);
+describe('isObjectiveSatisfied', () => {
+  it('reads the beat objective out of the evidence snapshot', () => {
+    const beat = beatAt(ALERT);
+    expect(isObjectiveSatisfied(beat, EMPTY_EVIDENCE)).toBe(false);
+    expect(isObjectiveSatisfied(beat, evidence({ alertRaised: true }))).toBe(true);
+  });
 
-    const noChange = advanceProgress(raised, WATCH);
-    expect(noChange).toBe(raised);
+  it('is never satisfied for a learn beat, which has no objective', () => {
+    const learn = beatAt(WELCOME);
+    expect(
+      isObjectiveSatisfied(learn, evidence({ telemetryFlowing: true, alertRaised: true })),
+    ).toBe(false);
+  });
+});
 
-    const higher = advanceProgress(raised, ENDGAME);
-    expect(higher.reached).toBe(ENDGAME);
+describe('goNext · soft gating', () => {
+  it('advances even though the current objective is unmet', () => {
+    const start = progressAt({ cursor: WATCH, reached: WATCH });
+    const next = goNext(start, BEATS);
+    expect(next.cursor).toBe(ALERT);
+    expect(next.completedBeatIds).toEqual([]);
+  });
+
+  it('clamps at the final beat and preserves identity there', () => {
+    const end = progressAt({ cursor: REPORT, reached: REPORT });
+    expect(goNext(end, BEATS)).toBe(end);
+  });
+
+  it('raises reached monotonically', () => {
+    let progress = progressAt();
+    progress = goNext(progress, BEATS);
+    progress = goNext(progress, BEATS);
+    expect(progress).toMatchObject({ cursor: ALERT, reached: ALERT });
+  });
+});
+
+describe('goBack', () => {
+  it('moves the cursor without lowering reached', () => {
+    const start = progressAt({ cursor: OPEN, reached: OPEN });
+    const back = goBack(goBack(start));
+    expect(back).toMatchObject({ cursor: ALERT, reached: OPEN });
+  });
+
+  it('stops at the first beat and preserves identity there', () => {
+    const start = progressAt();
+    expect(goBack(start)).toBe(start);
+  });
+
+  it('lets the operator return to where they were after stepping back', () => {
+    const start = progressAt({ cursor: OPEN, reached: OPEN });
+    const forward = goNext(goBack(start), BEATS);
+    expect(forward).toMatchObject({ cursor: OPEN, reached: OPEN });
+  });
+});
+
+describe('skipChapter', () => {
+  it('lands on the first beat of the next chapter', () => {
+    const start = progressAt({ cursor: WATCH, reached: WATCH });
+    expect(skipChapter(start, BEATS)).toMatchObject({ cursor: BRIEF, reached: BRIEF });
+  });
+
+  it('skips from anywhere in a chapter, not just its first beat', () => {
+    const start = progressAt({ cursor: BRIEF, reached: BRIEF });
+    expect(skipChapter(start, BEATS).cursor).toBe(REPORT);
+  });
+
+  it('lands on the last beat when there is no next chapter', () => {
+    const start = progressAt({ cursor: REPORT, reached: REPORT });
+    expect(skipChapter(start, BEATS)).toBe(start);
+  });
+});
+
+describe('jumpToChapter', () => {
+  it('moves to the first beat of the named chapter and raises reached', () => {
+    const jumped = jumpToChapter(progressAt(), 'ch-tour', BEATS);
+    expect(jumped).toMatchObject({ cursor: REPORT, reached: REPORT });
+  });
+
+  it('jumping backwards keeps the furthest-reached beat', () => {
+    const start = progressAt({ cursor: REPORT, reached: REPORT });
+    expect(jumpToChapter(start, 'ch-one', BEATS)).toMatchObject({
+      cursor: WELCOME,
+      reached: REPORT,
+    });
+  });
+
+  it('ignores an unknown chapter id', () => {
+    const start = progressAt({ cursor: ALERT, reached: ALERT });
+    expect(jumpToChapter(start, 'ch-removed-by-a-content-edit', BEATS)).toBe(start);
+  });
+});
+
+describe('applyEvidence · completion', () => {
+  it('records satisfied objectives by beat id', () => {
+    const applied = applyEvidence(progressAt(), evidence({ alertRaised: true }), BEATS);
+    expect(applied.completedBeatIds).toEqual(['alert']);
+  });
+
+  it('records objectives regardless of where the cursor is', () => {
+    const applied = applyEvidence(
+      progressAt(),
+      evidence({ alertRaised: true, reportReady: true }),
+      BEATS,
+    );
+    expect(applied.completedBeatIds).toEqual(['alert', 'report']);
+  });
+
+  it('is idempotent and preserves identity when nothing is new', () => {
+    const once = applyEvidence(progressAt(), evidence({ alertRaised: true }), BEATS);
+    expect(applyEvidence(once, evidence({ alertRaised: true }), BEATS)).toBe(once);
+  });
+
+  it('preserves identity when no evidence is present at all', () => {
+    const start = progressAt({ cursor: ALERT, reached: ALERT });
+    expect(applyEvidence(start, EMPTY_EVIDENCE, BEATS)).toBe(start);
+  });
+
+  it('never un-records a completion when evidence recedes', () => {
+    const done = applyEvidence(progressAt(), evidence({ alertRaised: true }), BEATS);
+    expect(applyEvidence(done, EMPTY_EVIDENCE, BEATS).completedBeatIds).toEqual(['alert']);
+  });
+});
+
+describe('applyEvidence · auto-advance', () => {
+  it('advances when the current beat opted in and its objective is newly satisfied', () => {
+    const start = progressAt({ cursor: WATCH, reached: WATCH });
+    const applied = applyEvidence(start, evidence({ telemetryFlowing: true }), BEATS);
+    expect(applied).toMatchObject({ cursor: ALERT, reached: ALERT });
+    expect(applied.completedBeatIds).toEqual(['watch']);
+  });
+
+  it('holds the operator on a beat that did not opt in', () => {
+    const start = progressAt({ cursor: ALERT, reached: ALERT });
+    const applied = applyEvidence(start, evidence({ alertRaised: true }), BEATS);
+    expect(applied.cursor).toBe(ALERT);
+    expect(applied.completedBeatIds).toEqual(['alert']);
+  });
+
+  it('does not advance a beat whose objective was already checked off before arrival', () => {
+    // The operator raced ahead: telemetry was recorded while they were still on welcome.
+    const early = applyEvidence(progressAt(), evidence({ telemetryFlowing: true }), BEATS);
+    expect(early.cursor).toBe(WELCOME);
+
+    const arrived = goNext(early, BEATS);
+    expect(arrived.cursor).toBe(WATCH);
+    // Arriving on the already-satisfied beat must not bounce them straight off it.
+    expect(applyEvidence(arrived, evidence({ telemetryFlowing: true }), BEATS)).toBe(arrived);
+  });
+
+  it('does not skip past a beat the operator has not seen', () => {
+    // Every objective in the fixture is satisfied at once while the cursor sits on `watch`.
+    const start = progressAt({ cursor: WATCH, reached: WATCH });
+    const applied = applyEvidence(
+      start,
+      evidence({
+        telemetryFlowing: true,
+        alertRaised: true,
+        incidentOpened: true,
+        reportReady: true,
+      }),
+      BEATS,
+    );
+    // One step only: the operator still has to read the alert beat.
+    expect(applied.cursor).toBe(ALERT);
+  });
+
+  it('cannot advance through a learn beat', () => {
+    const start = progressAt({ cursor: BRIEF, reached: BRIEF });
+    const applied = applyEvidence(start, evidence({ incidentOpened: true }), BEATS);
+    expect(applied.cursor).toBe(BRIEF);
+  });
+
+  it('stops at the final beat', () => {
+    const start = progressAt({ cursor: OPEN, reached: OPEN });
+    const applied = applyEvidence(start, evidence({ incidentOpened: true }), BEATS);
+    expect(applied.cursor).toBe(REPORT);
+    expect(applyEvidence(applied, evidence({ reportReady: true }), BEATS).cursor).toBe(REPORT);
+  });
+});
+
+describe('clampProgress', () => {
+  it('pulls an out-of-range cursor back into the walkthrough', () => {
+    const stale = progressAt({ cursor: 99, reached: 99 });
+    expect(clampProgress(stale, BEATS)).toMatchObject({ cursor: REPORT, reached: REPORT });
+  });
+
+  it('rejects negative and non-finite indices', () => {
+    expect(clampProgress(progressAt({ cursor: -4, reached: -4 }), BEATS)).toMatchObject({
+      cursor: 0,
+      reached: 0,
+    });
+    expect(
+      clampProgress(progressAt({ cursor: Number.NaN, reached: Number.NaN }), BEATS).cursor,
+    ).toBe(0);
+  });
+
+  it('keeps reached at or ahead of the cursor', () => {
+    expect(clampProgress(progressAt({ cursor: OPEN, reached: 0 }), BEATS).reached).toBe(OPEN);
+  });
+
+  it('preserves identity when already in range', () => {
+    const clean = progressAt({ cursor: ALERT, reached: ALERT });
+    expect(clampProgress(clean, BEATS)).toBe(clean);
+  });
+});
+
+describe('resolveCurrentBeat', () => {
+  it('resolves the cursor, clamping stale indices', () => {
+    expect(resolveCurrentBeat(progressAt({ cursor: BRIEF }), BEATS)?.beat.id).toBe('brief');
+    expect(resolveCurrentBeat(progressAt({ cursor: 99 }), BEATS)?.beat.id).toBe('report');
+  });
+
+  it('returns null when there is no content', () => {
+    expect(resolveCurrentBeat(progressAt(), [])).toBeNull();
+  });
+});
+
+describe('pendingObjectiveKeys', () => {
+  it('is empty at the start — nothing reached has an outstanding objective', () => {
+    expect(pendingObjectiveKeys(progressAt(), BEATS)).toEqual([]);
+  });
+
+  it('only reports objectives the operator has actually reached', () => {
+    expect(pendingObjectiveKeys(progressAt({ cursor: WATCH, reached: WATCH }), BEATS)).toEqual([
+      'telemetryFlowing',
+    ]);
+    expect(pendingObjectiveKeys(progressAt({ cursor: ALERT, reached: ALERT }), BEATS)).toEqual([
+      'telemetryFlowing',
+      'alertRaised',
+    ]);
+  });
+
+  it('drops an objective once it is completed', () => {
+    const progress = progressAt({ cursor: ALERT, reached: ALERT, completedBeatIds: ['watch'] });
+    expect(pendingObjectiveKeys(progress, BEATS)).toEqual(['alertRaised']);
+  });
+
+  it('still reports an outstanding objective the operator stepped back past', () => {
+    const progress = progressAt({ cursor: WELCOME, reached: REPORT, completedBeatIds: [] });
+    expect(pendingObjectiveKeys(progress, BEATS)).toEqual([
+      'telemetryFlowing',
+      'alertRaised',
+      'incidentOpened',
+      'reportReady',
+    ]);
+  });
+});
+
+describe('isWalkthroughComplete', () => {
+  it('is false while beats remain unseen', () => {
+    expect(isWalkthroughComplete(progressAt({ cursor: OPEN, reached: OPEN }), BEATS)).toBe(false);
+  });
+
+  it('is false when a seen objective is still outstanding', () => {
+    expect(isWalkthroughComplete(progressAt({ cursor: REPORT, reached: REPORT }), BEATS)).toBe(
+      false,
+    );
+  });
+
+  it('is true once every beat is seen and every objective is checked off', () => {
+    const progress = progressAt({
+      cursor: REPORT,
+      reached: REPORT,
+      completedBeatIds: ['watch', 'alert', 'open', 'report'],
+    });
+    expect(isWalkthroughComplete(progress, BEATS)).toBe(true);
+  });
+});
+
+describe('flag setters', () => {
+  it('toggle without disturbing anything else, preserving identity when unchanged', () => {
+    const start = progressAt({ cursor: ALERT, reached: ALERT, completedBeatIds: ['watch'] });
+
+    const minimized = setMinimized(start, true);
+    expect(minimized).toMatchObject({
+      minimized: true,
+      cursor: ALERT,
+      completedBeatIds: ['watch'],
+    });
+    expect(setMinimized(minimized, true)).toBe(minimized);
+
+    const dismissed = setDismissed(start, true);
+    // Dismissal is a reopenable door: the cursor and completions survive it.
+    expect(dismissed).toMatchObject({
+      dismissed: true,
+      cursor: ALERT,
+      reached: ALERT,
+      completedBeatIds: ['watch'],
+    });
+    expect(setDismissed(dismissed, true)).toBe(dismissed);
+    expect(setDismissed(dismissed, false).dismissed).toBe(false);
+  });
+});
+
+describe('empty content', () => {
+  it('leaves progress untouched rather than producing an out-of-range cursor', () => {
+    const start = progressAt();
+    expect(goNext(start, [])).toBe(start);
+    expect(skipChapter(start, [])).toBe(start);
+    expect(jumpToChapter(start, 'ch-one', [])).toBe(start);
+    expect(applyEvidence(start, evidence({ alertRaised: true }), [])).toBe(start);
+    expect(pendingObjectiveKeys(start, [])).toEqual([]);
+    expect(isWalkthroughComplete(start, [])).toBe(true);
+  });
+});
+
+describe('stored progress contract', () => {
+  it('starts at the version the storage layer gates on', () => {
+    expect(INITIAL_PROGRESS.version).toBe(TUTORIAL_PROGRESS_VERSION);
+    expect(INITIAL_PROGRESS).toMatchObject({ cursor: 0, reached: 0, dismissed: false });
   });
 });

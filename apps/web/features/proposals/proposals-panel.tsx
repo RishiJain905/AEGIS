@@ -126,7 +126,11 @@ function ProposalCard({
         </div>
       ) : null}
       {latestDecision ? (
-        <div className="mt-3" data-testid={`policy-result-${proposal.id}`}>
+        <div
+          className="mt-3"
+          data-testid={`policy-result-${proposal.id}`}
+          data-tutorial-id="warden-decision"
+        >
           <Alert
             variant={policyOutcomeVariant(latestDecision.outcome)}
             title={`WARDEN: ${latestDecision.outcome}`}
