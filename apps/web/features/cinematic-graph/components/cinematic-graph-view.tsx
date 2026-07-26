@@ -68,6 +68,14 @@ export interface CinematicGraphViewProps {
   evidenceNodeIds?: string[];
   /** Node ids in incident scope; defaults to status-derived membership. */
   incidentNodeIds?: string[];
+  /**
+   * Live run event sequence, when this theater is mounted over a live run. The scene's
+   * own sequence is the *graph projection's* — it only advances when a graph-mutating
+   * event lands, which in practice is rare, so on its own it reads as "nothing is
+   * arriving" during an active run. Omitted for replay, where the projection sequence
+   * is the meaningful one.
+   */
+  liveSequence?: number;
 }
 
 function useGraphStoreInstance(snapshot: GraphSnapshotV1, externalStore?: GraphStore): GraphStore {
@@ -107,15 +115,26 @@ export function CinematicGraphView({
   graphRevision = 0,
   evidenceNodeIds = EMPTY_NODE_IDS,
   incidentNodeIds,
+  liveSequence,
 }: CinematicGraphViewProps) {
   const store = useGraphStoreInstance(snapshot, graphStore);
   // Same status-derived incident approximation the 2D view and replay use, so
-  // the Incident overlay stays consistent across renderers.
+  // the Incident overlay stays consistent across renderers. Read from the store
+  // rather than the mount-time bootstrap snapshot: the store carries applied
+  // deltas, so membership tracks status changes instead of freezing at whatever
+  // the snapshot said when the panel was opened. Keyed on graphRevision, so this
+  // re-derives once per graph change — not once per event envelope.
   const effectiveIncidentNodeIds = useMemo(() => {
     if (incidentNodeIds) {
       return incidentNodeIds;
     }
-    return snapshot.nodes
+    let nodes = snapshot.nodes;
+    try {
+      nodes = store.exportSnapshot().nodes;
+    } catch {
+      // Store has no snapshot loaded yet; the bootstrap nodes are the best available.
+    }
+    return nodes
       .filter(
         (node) =>
           node.status === 'under_investigation' ||
@@ -123,7 +142,7 @@ export function CinematicGraphView({
           node.status === 'contained',
       )
       .map((node) => node.id);
-  }, [incidentNodeIds, snapshot.nodes]);
+  }, [incidentNodeIds, snapshot.nodes, store, graphRevision]);
   const adapterRef = useRef<SemanticSceneAdapter | null>(null);
   const framedSceneKeyRef = useRef<string | null>(null);
   const [projection, setProjection] = useState<SceneProjection | null>(null);
@@ -421,7 +440,7 @@ export function CinematicGraphView({
     <div className="flex min-h-[16rem] flex-col gap-3" data-testid="cinematic-graph-view">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--aegis-text-secondary)]">
         <p data-testid="cinematic-graph-meta">
-          Ops theater · sequence {String(projection.sequence)} · revision{' '}
+          Ops theater · event {String(liveSequence ?? projection.sequence)} · graph revision{' '}
           {String(projection.revision)} · {String(projection.zones.length)} sectors ·{' '}
           {String(projection.nodeCount)} nodes / {String(projection.edgeCount)} edges · tier{' '}
           {qualityTier}

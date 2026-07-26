@@ -105,6 +105,7 @@ export function VisualizationSlot({ runId, incidentId }: VisualizationSlotProps)
             snapshot={liveRun.bootstrapSnapshot}
             graphStore={liveRun.graphStore}
             graphRevision={liveRun.graphRevision}
+            liveSequence={liveRun.state.lastAppliedSequence}
           />
         ) : (
           <OperationalGraphView
