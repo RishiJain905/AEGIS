@@ -21,6 +21,18 @@ const TIMELINE_EVENT_PREFIXES = [
   'report.',
 ];
 
+/**
+ * Run lifecycle event -> the run status it puts the run into. `resumed` maps back to
+ * `running`: "resumed" is a transition, not a state, and the run record/replay projector
+ * both settle on `running`, so mapping it literally left the header reading "resumed".
+ */
+const RUN_STATUS_BY_LIFECYCLE_EVENT: Record<string, string> = {
+  'sim.run.started': 'running',
+  'sim.run.resumed': 'running',
+  'sim.run.paused': 'paused',
+  'sim.run.stopped': 'stopped',
+};
+
 function timelineStatusForEvent(eventType: string, payload: Record<string, unknown>): string {
   if (eventType === 'sim.asset.status_changed') {
     return typeof payload.status === 'string' ? payload.status : 'suspicious';
@@ -210,9 +222,8 @@ export function projectDomainEventToActions(
   }
 
   if (event.type.startsWith('sim.run.')) {
-    const lifecycle = event.type.replace('sim.run.', '');
     const runStatus =
-      lifecycle === 'started' ? 'running' : lifecycle === 'stopped' ? 'stopped' : lifecycle;
+      RUN_STATUS_BY_LIFECYCLE_EVENT[event.type] ?? event.type.replace('sim.run.', '');
     actions.push({
       type: 'update_run_status',
       runStatus,

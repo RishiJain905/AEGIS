@@ -51,7 +51,15 @@ export function runReplicatedReducer(
         isStale: action.isStale ?? state.isStale,
       };
     case 'update_run_status':
-      if (action.sequence <= state.lastAppliedSequence) {
+      // Strictly-older only. This action rides *alongside* the other actions for the
+      // same event (and alongside the bootstrap's `load_graph_snapshot`), so it
+      // routinely arrives at a sequence already claimed by a sibling action. Rejecting
+      // `<=` here froze the header on the initial "created"/epoch sim time: the
+      // bootstrap dispatches `load_graph_snapshot` first, and whenever the snapshot's
+      // sequence equalled the run's last event sequence the status update that followed
+      // was discarded. Re-applying at the current sequence is idempotent — duplicate and
+      // out-of-order events are already filtered by the projector.
+      if (action.sequence < state.lastAppliedSequence) {
         return state;
       }
       if (state.connectionHealth === ConnectionHealthState.GAP) {

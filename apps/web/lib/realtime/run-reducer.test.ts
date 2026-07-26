@@ -58,6 +58,109 @@ describe('runReplicatedReducer', () => {
     expect(state.runStatus).toBe('running');
   });
 
+  it('applies the bootstrap run status dispatched after the snapshot at the same sequence', () => {
+    // Bootstrap order is snapshot-then-status, and a freshly checkpointed run has a
+    // snapshot sequence equal to its last event sequence. The status update must survive
+    // that tie, or the header stays on "created" for the whole run.
+    let state = createInitialRunReplicatedState(baseEvent.runId);
+    state = runReplicatedReducer(state, {
+      type: 'load_graph_snapshot',
+      snapshot: {
+        schemaVersion: 1,
+        runId: baseEvent.runId,
+        sequence: 361,
+        revision: 12,
+        nodes: [],
+        edges: [],
+        clusters: [],
+        capturedAt: '2026-01-01T00:06:01.000Z',
+      },
+    });
+    state = runReplicatedReducer(state, {
+      type: 'update_run_status',
+      runStatus: 'running',
+      simTime: '2026-01-01T00:06:01.000Z',
+      sequence: 361,
+    });
+
+    expect(state.runStatus).toBe('running');
+    expect(state.simTime).toBe('2026-01-01T00:06:01.000Z');
+    expect(state.lastAppliedSequence).toBe(361);
+  });
+
+  it('advances sim time on a non-lifecycle event applied at the current sequence', () => {
+    // The provider republishes the run status on every applied event so SIM TIME tracks
+    // the backend clock; that dispatch lands at a sequence a sibling action just claimed.
+    let state = createInitialRunReplicatedState(baseEvent.runId);
+    state = runReplicatedReducer(state, {
+      type: 'append_timeline_entry',
+      entry: {
+        schemaVersion: 1,
+        sequence: 7,
+        eventId: 'evt_telemetry',
+        eventType: 'telemetry.api.request',
+        label: 'API request',
+        timestamp: '2026-01-01T00:03:30.000Z',
+        status: 'normal',
+      },
+    });
+    state = runReplicatedReducer(state, {
+      type: 'update_run_status',
+      runStatus: 'running',
+      simTime: '2026-01-01T00:03:30.000Z',
+      sequence: 7,
+    });
+
+    expect(state.simTime).toBe('2026-01-01T00:03:30.000Z');
+    expect(state.runStatus).toBe('running');
+  });
+
+  it('still rejects a run status update from a strictly older sequence', () => {
+    let state = createInitialRunReplicatedState(baseEvent.runId);
+    state = runReplicatedReducer(state, {
+      type: 'update_run_status',
+      runStatus: 'running',
+      simTime: '2026-01-01T00:05:00.000Z',
+      sequence: 20,
+    });
+    state = runReplicatedReducer(state, {
+      type: 'update_run_status',
+      runStatus: 'created',
+      simTime: '2026-01-01T00:00:00.000Z',
+      sequence: 19,
+    });
+
+    expect(state.runStatus).toBe('running');
+    expect(state.simTime).toBe('2026-01-01T00:05:00.000Z');
+    expect(state.lastAppliedSequence).toBe(20);
+  });
+
+  it('treats a resumed run as running and clears the simulator-paused health', () => {
+    let state = createInitialRunReplicatedState(baseEvent.runId);
+    for (const type of ['sim.run.paused', 'sim.run.resumed'] as const) {
+      const event: DomainEventEnvelopeV1 = {
+        ...baseEvent,
+        eventId: `evt_${type}`,
+        sequence: type === 'sim.run.paused' ? 1 : 2,
+        type,
+      };
+      for (const action of projectDomainEventToActions(event, {
+        lastAppliedSequence: state.lastAppliedSequence,
+        seenEventIds: new Set(state.seenEventIds),
+        knownNodes: new Map(),
+      })) {
+        state = runReplicatedReducer(state, action);
+      }
+      if (type === 'sim.run.paused') {
+        expect(state.runStatus).toBe('paused');
+        expect(state.connectionHealth).toBe(ConnectionHealthState.SIMULATOR_PAUSED);
+      }
+    }
+
+    expect(state.runStatus).toBe('running');
+    expect(state.connectionHealth).toBe(ConnectionHealthState.CONNECTED);
+  });
+
   it('marks gap and stops applying until recovery', () => {
     let state = createInitialRunReplicatedState(baseEvent.runId);
     state = runReplicatedReducer(state, {

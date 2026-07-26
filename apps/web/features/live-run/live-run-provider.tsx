@@ -92,6 +92,11 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
   // lifecycle effect does not tear down and re-subscribe on every delta.
   const lastAppliedSequenceRef = useRef(0);
   const seenEventIdsRef = useRef<Set<string>>(new Set());
+  // Latest known run status, mirrored synchronously so every applied event can carry the
+  // run's sim clock into the reducer without the (stable, dependency-free) apply callback
+  // having to read reducer state. Seeded from the bootstrap/resync run record and advanced
+  // by the projector's own `sim.run.*` lifecycle mapping — no second copy of that mapping.
+  const runStatusRef = useRef('created');
   const locallyPausedRef = useRef(false);
   // Fog-of-war reveal convergence: a disclosure flip (hidden-condition reveal, or an alert
   // landing on a previously-undisclosed asset) means the server will now serve the asset's
@@ -155,6 +160,9 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       if (action.type === 'noop_duplicate') {
         continue;
       }
+      if (action.type === 'update_run_status') {
+        runStatusRef.current = action.runStatus;
+      }
       applied = true;
       if (action.type === 'apply_graph_delta') {
         graphStoreRef.current.applyDelta(action.delta);
@@ -176,6 +184,17 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
           Array.from(seenEventIdsRef.current).slice(-SEEN_EVENT_ID_LIMIT),
         );
       }
+      // Carry the run's sim clock forward on every applied event. `sim.run.*` lifecycle
+      // events are the only ones the projector turns into a status update, and they fire
+      // once per transition — so without this the header's SIM TIME froze at whatever the
+      // bootstrap reported while the backend advanced. `dispatch` is stable, so this adds
+      // no dependency to the callback and cannot cause a WebSocket resubscribe.
+      dispatch({
+        type: 'update_run_status',
+        runStatus: runStatusRef.current,
+        simTime: event.simTime,
+        sequence: event.sequence,
+      });
     }
 
     // A client-detected gap must recover by resyncing the authoritative snapshot.
@@ -283,6 +302,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       // Reset the synchronous dedup mirrors to the snapshot's authoritative
       // sequence before replaying missed events on top of it.
       lastAppliedSequenceRef.current = bootstrap.lastAppliedSequence;
+      runStatusRef.current = bootstrap.run.status;
       connectionHealthRef.current = ConnectionHealthState.CATCHING_UP;
       dispatch({
         type: 'load_graph_snapshot',
@@ -292,6 +312,15 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         type: 'set_connection_health',
         connectionHealth: ConnectionHealthState.CATCHING_UP,
         isStale: false,
+      });
+      // A resync reloads authoritative state; the run record it carries is the freshest
+      // status/sim-time we have, so republish it rather than leaving the header on
+      // whatever the interrupted live stream last managed to apply.
+      dispatch({
+        type: 'update_run_status',
+        runStatus: bootstrap.run.status,
+        simTime: bootstrap.run.simTime,
+        sequence: bootstrap.lastAppliedSequence,
       });
 
       const cursor = loadStoredCursor(runId);
@@ -346,6 +375,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
           bootstrapPayload.graphSnapshot.nodes.map((node) => [node.id, node]),
         );
         lastAppliedSequenceRef.current = bootstrapPayload.lastAppliedSequence;
+        runStatusRef.current = bootstrapPayload.run.status;
         setBootstrapSnapshot(bootstrapPayload.graphSnapshot);
         setGraphRevision((value) => value + 1);
         dispatch({
