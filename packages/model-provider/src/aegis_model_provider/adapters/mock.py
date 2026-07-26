@@ -43,6 +43,11 @@ _ORACLE_FIXTURE_PATH = (
     / "fixtures/model-responses/oracle/oracle-multi-hypothesis-v1.json"
 )
 
+# Opening delimiter of the block the agent runtime uses to feed tool output back
+# into a conversation. Duplicated as a literal rather than imported: this package
+# is a shared library and must not depend on a service.
+_TOOL_RESULTS_MARKER = "<AEGIS_TOOL_RESULTS"
+
 
 def _load_oracle_mock_payload(fingerprint: str) -> dict[str, object]:
     payload: dict[str, object] = json.loads(_ORACLE_FIXTURE_PATH.read_text(encoding="utf-8"))
@@ -89,6 +94,16 @@ class MockProvider:
                 if message.role.value == "user"
             ),
             "",
+        )
+        # The runtime's tool loop hands tool output back and calls again. A fake
+        # that asked for the same tools forever would spin to the iteration cap on
+        # every task, so the second leg of the scripted sequence is: once results
+        # are present, conclude. This is what lets an offline test script
+        # `toolRequest(s) -> (executor runs tools) -> final answer` without a
+        # provider, and it keeps every existing mock-backed task at exactly one
+        # round of tool calls.
+        has_tool_results = any(
+            _TOOL_RESULTS_MARKER in message.content for message in request.messages
         )
         structured_data = None
         content = None
@@ -223,6 +238,14 @@ class MockProvider:
                 content = json.dumps(structured_data)
         else:
             content = f"Mock completion for request {fingerprint}"
+
+        if has_tool_results and structured_data is not None and "toolRequests" in structured_data:
+            # Second leg of the scripted sequence: the tools were run, so answer.
+            # Clearing the array cannot violate the schema — no agent output schema
+            # constrains toolRequests to be non-empty — and it is the signal the
+            # loop terminates on.
+            structured_data["toolRequests"] = []
+            content = json.dumps(structured_data)
 
         usage = with_estimated_cost(
             model_id=request.model_config_ref.model_id,

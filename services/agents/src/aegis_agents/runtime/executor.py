@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -29,16 +30,31 @@ from aegis_agents.runtime.registry import (
 from aegis_agents.runtime.run_state import summarize_run_state
 from aegis_agents.runtime.session_service import AgentSessionService, _run_sim_time
 from aegis_agents.runtime.state_machine import can_transition
+from aegis_agents.runtime.tool_loop import (
+    DEFAULT_TOOL_LOOP_MAX_ITERATIONS,
+    MAX_TOOL_REQUESTS_PER_ITERATION,
+    ToolRequest,
+    bounded_results_payload,
+    classify_tool_requests,
+    describe_available_tools,
+    parse_tool_requests,
+    summarize_deferred_request,
+    summarize_tool_result,
+)
 from aegis_agents.security.scenario_content import (
+    MAX_SCENARIO_CONTENT_BYTES,
+    build_available_tools_message,
     build_commander_intent_message,
     build_operator_directive_message,
     build_run_state_message,
     build_scenario_data_message,
     build_session_history_message,
+    build_tool_budget_exhausted_message,
+    build_tool_results_message,
 )
 from aegis_agents.tools.executor import ToolExecutor
-from aegis_agents.tools.handlers import ToolExecutionContext
-from aegis_agents.tools.registry import ToolRegistry
+from aegis_agents.tools.handlers import TOOL_HANDLERS, ToolExecutionContext
+from aegis_agents.tools.registry import DEFAULT_TOOL_REGISTRY, ToolRegistry
 from aegis_contracts import AgentSessionState
 from aegis_contracts.agent_runtime import (
     AgentArtifactType,
@@ -100,6 +116,40 @@ AGENT_STEP_OUTPUT_SCHEMA: dict[str, Any] = {
 
 DEFAULT_TASK_TIMEOUT_SECONDS = 30.0
 
+# Wall-clock the loop reserves out of the task timeout for the persist phase, so
+# a task that spends its whole budget investigating still has room to write its
+# results. Persist is short local DB work; this is deliberately generous.
+LOOP_PERSIST_HEADROOM_SECONDS = 5.0
+
+# Minimum time remaining before the loop is willing to start ANOTHER round. Below
+# this there is not enough runway for a tool round plus the model call that would
+# consume it, so the loop concludes with the answer it already holds rather than
+# risking a timeout that would discard the whole turn.
+MIN_LOOP_ITERATION_SECONDS = 15.0
+
+
+@dataclass
+class _LoopOutcome:
+    """What the multi-turn tool loop produced for the persist phase.
+
+    ``response``/``request`` are the LAST usable pair — the model's final answer
+    when the loop concluded normally, or the newest answer it managed to produce
+    before a mid-loop failure. ``pending_tool_requests`` are the requests the loop
+    did NOT run: state-changing ones (which belong to the proposal/approval
+    pipeline) and anything left over when the loop stopped. The persist phase
+    executes those exactly as it executed every tool request before the loop
+    existed, so proposals still reach the approval gate.
+    """
+
+    response: Any
+    request: GenerationRequestV1
+    pending_tool_requests: list[dict[str, Any]]
+    executed_tool_count: int
+    iterations: int
+    extra_tokens: int = 0
+    extra_latency_ms: int = 0
+    extra_cost_usd: float = 0.0
+
 
 @dataclass
 class _PreparedTask:
@@ -133,12 +183,15 @@ class TaskExecutor:
         registry: AgentDefinitionRegistry | None = None,
         tool_registry: ToolRegistry | None = None,
         timeout_seconds: float = DEFAULT_TASK_TIMEOUT_SECONDS,
+        tool_loop_max_iterations: int = DEFAULT_TOOL_LOOP_MAX_ITERATIONS,
     ) -> None:
         self._generation = generation
         self._registry = registry or DEFAULT_AGENT_REGISTRY
-        self._tool_executor = ToolExecutor(registry=tool_registry)
+        self._tool_registry = tool_registry or DEFAULT_TOOL_REGISTRY
+        self._tool_executor = ToolExecutor(registry=self._tool_registry)
         self._sessions = AgentSessionService(registry=self._registry)
         self._timeout_seconds = timeout_seconds
+        self._tool_loop_max_iterations = max(0, tool_loop_max_iterations)
         self._cancelled: set[str] = set()
 
     def request_cancel(self, task_id: str) -> None:
@@ -154,15 +207,22 @@ class TaskExecutor:
            then COMMIT. Appending an event acquires the per-run
            ``pg_advisory_xact_lock`` (see ``PostgresEventRepository.next_sequence``);
            committing here releases it immediately.
-        2. **Generation** — call the model with NO transaction open, so the
-           advisory lock is free. This is the fix: the tick engine appends step
-           events under the *same* per-run advisory lock, so a transaction held
-           across a 60-120s model call froze the whole run. The generation facade
-           is built with ``session=None`` (in-memory artifact repo) and never
-           touches ``uow``'s session, so no transaction spans ``generate()``.
-        3. **Persist** — grounding validation, tool execution, artifact + result
-           events, mark the task terminal, then COMMIT (re-acquiring the advisory
-           lock only for the few milliseconds those short writes take).
+        2. **Generation (the bounded tool loop)** — call the model with NO
+           transaction open, so the advisory lock is free. This is the fix: the
+           tick engine appends step events under the *same* per-run advisory lock,
+           so a transaction held across a 60-120s model call froze the whole run.
+           The generation facade is built with ``session=None`` (in-memory
+           artifact repo) and never touches ``uow``'s session, so no transaction
+           spans ``generate()``. When the model asks for read-only tools, this
+           phase runs them and calls the model again with their results — see
+           :meth:`_run_tool_loop`. Each tool round commits its own short
+           transaction, so the invariant holds unchanged: no transaction is ever
+           open while a model is thinking.
+        3. **Persist** — grounding validation, execution of the tool requests the
+           loop deliberately did NOT run (state-changing ones, which reach the
+           policy/approval pipeline exactly as before), artifact + result events,
+           mark the task terminal, then COMMIT (re-acquiring the advisory lock
+           only for the few milliseconds those short writes take).
 
         ``uow`` stays caller-supplied — the API routes and the worker create it,
         and the SCRIBE routes create the task in the *same* uow before calling
@@ -173,8 +233,6 @@ class TaskExecutor:
         is re-raised: the interactive routes suppress it, the worker
         logs-and-continues.
         """
-        import time
-
         started = time.perf_counter()
         agent_name = "unknown"
         status = "ok"
@@ -187,16 +245,15 @@ class TaskExecutor:
                 return
             agent_name = prepared.agent_name
 
-            # Phase 2: the model call, with NO open transaction / advisory lock.
-            # Only the generation call is time-boxed: it is the minutes-long step,
-            # and bounding it via cancellation while a transaction were open would
-            # risk poisoning the connection. Tool execution in phase 3 is local,
-            # fast DB work.
+            # Phase 2: the model calls, with NO open transaction / advisory lock
+            # held across any of them. The loop may run read-only tools between
+            # calls; each of those commits its own short transaction before the
+            # next model call, so the per-run advisory lock is never held while a
+            # model is thinking. Only generation is time-boxed: it is the
+            # minutes-long step, and bounding it via cancellation while a
+            # transaction were open would risk poisoning the connection.
             try:
-                response = await asyncio.wait_for(
-                    self._generation.generate(prepared.request),
-                    timeout=self._timeout_seconds,
-                )
+                outcome = await self._run_tool_loop(uow, prepared)
             except TimeoutError as exc:
                 await self._fail_and_commit(
                     uow,
@@ -227,7 +284,7 @@ class TaskExecutor:
 
             # Phase 3: persist results / tool calls / completion in a short txn.
             try:
-                await self._persist_result(uow, prepared, response)
+                await self._persist_result(uow, prepared, outcome)
                 await uow.commit()
             except AgentRuntimeError as exc:
                 await self._fail_and_commit(uow, prepared, code=exc.code, message=exc.message)
@@ -259,6 +316,301 @@ class TaskExecutor:
                 )
             except Exception:  # noqa: BLE001
                 pass
+
+    async def _run_tool_loop(
+        self,
+        uow: PostgresUnitOfWork,
+        prepared: _PreparedTask,
+    ) -> _LoopOutcome:
+        """Phase 2: generate, run read-only tools, feed results back, repeat.
+
+        Control flow, and every way out of it:
+
+        * Generate. If the answer carries no tool requests, that IS the answer —
+          identical to the pre-loop single-shot path.
+        * Otherwise split the requests by the registry's tool class. READ-class
+          requests run now; everything else is deferred to the persist phase,
+          which routes proposals through policy and human approval. The loop can
+          only ever hand a READ-class request to the tool executor, so it is
+          structurally incapable of executing a state change.
+        * Append the (bounded) results and generate again.
+
+        Termination, in the order checked:
+
+        (a) the model asks for no tools, or asks only for tools already run with
+            identical arguments — it has nothing new to learn, so it concludes;
+        (b) the iteration cap is reached — the loop spends one final model call,
+            preceded by an explicit "your budget is exhausted, answer now" note,
+            so a capped task still produces a conclusion rather than silence;
+        (c) too little of the task's time budget remains for another round plus
+            the model call that would consume it — the leftover requests fall
+            through to the persist phase, which is exactly the old behavior.
+
+        Failure is soft after the first call: a provider error, timeout, or
+        budget exhaustion mid-loop keeps the newest good response and proceeds to
+        persist. The loop can only improve a turn; it must never destroy one that
+        already has a usable answer. The FIRST generation is different — a
+        failure there leaves nothing to persist, so it propagates and fails the
+        task exactly as it did before.
+        """
+        deadline = time.monotonic() + self._timeout_seconds
+        request = prepared.request
+        response = await asyncio.wait_for(
+            self._generation.generate(request),
+            timeout=self._timeout_seconds,
+        )
+        outcome = _LoopOutcome(
+            response=response,
+            request=request,
+            pending_tool_requests=[],
+            executed_tool_count=0,
+            iterations=0,
+        )
+        if self._tool_loop_max_iterations < 1:
+            outcome.pending_tool_requests = [
+                item.as_payload() for item in parse_tool_requests(self._safe_structured(response))
+            ]
+            return outcome
+
+        messages = list(request.messages)
+        executed: set[str] = set()
+        pending: list[ToolRequest] = []
+        pending_keys: set[str] = set()
+        budget = prepared.budget
+
+        def defer(items: list[ToolRequest]) -> None:
+            for item in items:
+                if item.key in executed or item.key in pending_keys:
+                    continue
+                pending_keys.add(item.key)
+                pending.append(item)
+
+        while True:
+            requests = parse_tool_requests(self._safe_structured(response))
+            if not requests:
+                break
+            runnable, deferred = classify_tool_requests(requests, registry=self._tool_registry)
+            defer(deferred)
+            fresh = [item for item in runnable if item.key not in executed][
+                :MAX_TOOL_REQUESTS_PER_ITERATION
+            ]
+            if not fresh:
+                # Every read the model asked for has already been answered this
+                # task. Running it again would return the same rows, so the only
+                # useful move is to let the answer we have stand.
+                break
+            if outcome.iterations >= self._tool_loop_max_iterations:
+                break
+            if time.monotonic() + MIN_LOOP_ITERATION_SECONDS >= deadline:
+                # Out of runway. Hand the reads back to the persist phase so they
+                # are still recorded, matching pre-loop single-shot behavior.
+                defer(runnable)
+                break
+            if prepared.task.id in self._cancelled:
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.TASK_CANCELLED,
+                    message="Agent task cancelled",
+                    trace_id=prepared.task.trace_id,
+                )
+
+            results = await self._execute_loop_tools(
+                uow,
+                prepared,
+                fresh,
+                iteration=outcome.iterations + 1,
+            )
+            for item in fresh:
+                executed.add(item.key)
+            outcome.executed_tool_count += len(fresh)
+            outcome.iterations += 1
+
+            results.extend(summarize_deferred_request(item) for item in deferred)
+            exhausted = outcome.iterations >= self._tool_loop_max_iterations
+            messages = [
+                *messages,
+                build_tool_results_message(
+                    bounded_results_payload(results, max_bytes=MAX_SCENARIO_CONTENT_BYTES),
+                    rounds_remaining=self._tool_loop_max_iterations - outcome.iterations,
+                ),
+            ]
+            if exhausted:
+                messages = [*messages, build_tool_budget_exhausted_message()]
+
+            follow_up = request.model_copy(
+                update={"request_id": new_runtime_id("gen"), "messages": messages}
+            )
+            remaining = deadline - time.monotonic() - LOOP_PERSIST_HEADROOM_SECONDS
+            try:
+                check_budget(budget, trace_id=prepared.task.trace_id)
+                next_response = await asyncio.wait_for(
+                    self._generation.generate(follow_up),
+                    timeout=max(1.0, remaining),
+                )
+                if next_response.error is not None:
+                    raise AgentRuntimeError(
+                        code=AgentRuntimeErrorCode.PROVIDER_FAILURE,
+                        message=next_response.error.message,
+                        trace_id=prepared.task.trace_id,
+                    )
+            except Exception:  # noqa: BLE001 - timeout, provider error, or budget
+                # Fail soft: keep the last good answer. The tools we ran are
+                # already committed, so the trail survives even though the model
+                # never got to reason over this round's results.
+                break
+
+            # Bank the usage of the answer being superseded. The persist phase adds
+            # the surviving response's own usage, so the two together are the true
+            # cost of the task and nothing is counted twice.
+            superseded = response.response if response.response else None
+            superseded_usage = superseded.usage if superseded else None
+            outcome.extra_tokens += superseded_usage.total_tokens if superseded_usage else 0
+            outcome.extra_latency_ms += superseded.latency_ms if superseded else 0
+            outcome.extra_cost_usd += (
+                superseded_usage.estimated_cost_usd
+                if superseded_usage and superseded_usage.estimated_cost_usd
+                else 0.0
+            )
+            budget = apply_usage(
+                budget,
+                tokens=superseded_usage.total_tokens if superseded_usage else 0,
+                latency_ms=superseded.latency_ms if superseded else 0,
+                cost_usd=(
+                    superseded_usage.estimated_cost_usd
+                    if superseded_usage and superseded_usage.estimated_cost_usd
+                    else 0.0
+                ),
+            )
+            request = follow_up
+            response = next_response
+            outcome.request = follow_up
+            outcome.response = next_response
+            if exhausted:
+                break
+
+        # Anything the final answer still asks for and the loop never ran goes to
+        # the persist phase, which handles it exactly as the single-shot runtime
+        # always did.
+        defer(parse_tool_requests(self._safe_structured(outcome.response)))
+        outcome.pending_tool_requests = [item.as_payload() for item in pending]
+        return outcome
+
+    async def _execute_loop_tools(
+        self,
+        uow: PostgresUnitOfWork,
+        prepared: _PreparedTask,
+        requests: list[ToolRequest],
+        *,
+        iteration: int,
+    ) -> list[dict[str, Any]]:
+        """Run one round of read-only tools, each in its own short transaction.
+
+        Every invocation commits before the next model call, so the per-run
+        advisory lock taken by the tool-invoked event append is held for
+        milliseconds and never spans generation.
+
+        An in-loop tool failure never fails the task, for any scope. The strict
+        incident-scoped contract — a failed tool fails the task — still governs
+        the tools the model asks for in its FINAL answer, which the persist phase
+        runs. Inside the loop the calls are exploratory: telling the model its
+        query was rejected and letting it adapt is the whole point, and the failed
+        attempt is still persisted as an audit row.
+        """
+        ctx = ToolExecutionContext(
+            uow=uow,
+            session_id=prepared.session.id,
+            task_id=prepared.task.id,
+            incident_id=prepared.task.incident_id or "",
+            run_id=prepared.run_id,
+            trace_id=prepared.task.trace_id,
+            visible_evidence_ids=prepared.visible_ids,
+        )
+        results: list[dict[str, Any]] = []
+        for request in requests:
+            output: dict[str, Any] | None = None
+            error_message: str | None = None
+            try:
+                invocation = await self._tool_executor.invoke(
+                    uow=uow,
+                    definition=prepared.definition,
+                    ctx=ctx,
+                    tool_name=request.name,
+                    payload=request.arguments,
+                    loop_iteration=iteration,
+                )
+                status = invocation.status.value
+                output = invocation.output_payload
+            except AgentRuntimeError as exc:
+                # The executor already wrote the rejected/failed audit row and
+                # left the session usable, so it commits with the event below.
+                status = (
+                    ToolInvocationStatus.REJECTED.value
+                    if exc.code == AgentRuntimeErrorCode.TOOL_UNAUTHORIZED
+                    else ToolInvocationStatus.FAILED.value
+                )
+                error_message = exc.message
+            except Exception as exc:  # noqa: BLE001 - a handler raising anything else
+                # No audit row was written and the transaction may be poisoned
+                # (a handler can raise mid-flush), so discard it before writing
+                # the event that records the attempt.
+                await uow.rollback()
+                status = ToolInvocationStatus.FAILED.value
+                error_message = str(exc)
+            await self._append_tool_event(uow, prepared, tool_name=request.name, status=status)
+            await uow.commit()
+            results.append(
+                summarize_tool_result(
+                    request=request,
+                    status=status,
+                    output=output,
+                    error_message=error_message,
+                )
+            )
+        return results
+
+    async def _append_tool_event(
+        self,
+        uow: PostgresUnitOfWork,
+        prepared: _PreparedTask,
+        *,
+        tool_name: str,
+        status: str,
+    ) -> None:
+        next_sequence = await uow.events.next_sequence(prepared.run_id)
+        await uow.append_event(
+            build_tool_invoked_event(
+                event_id=new_runtime_id("evt"),
+                run_id=prepared.run_id,
+                sequence=next_sequence,
+                session_id=prepared.session.id,
+                task_id=prepared.task.id,
+                trace_id=prepared.task.trace_id,
+                tool_name=tool_name,
+                status=status,
+                sim_time=await _run_sim_time(uow, prepared.run_id),
+            )
+        )
+
+    @staticmethod
+    def _safe_structured(response: Any) -> dict[str, Any] | None:
+        """Best-effort structured payload, for loop control only.
+
+        The persist phase owns the strict reading (and raises PROVIDER_FAILURE on
+        a response with nothing usable). Here a missing or malformed payload just
+        means "no tool requests", so a bad response reaches that strict path
+        instead of exploding inside the loop.
+        """
+        if response is None or getattr(response, "error", None) is not None:
+            return None
+        inner = getattr(response, "response", None)
+        if inner is None:
+            return None
+        structured = inner.structured_data
+        if structured is None and inner.content:
+            try:
+                structured = json.loads(inner.content)
+            except (TypeError, ValueError):
+                return None
+        return structured if isinstance(structured, dict) else None
 
     async def _claim_and_prepare(
         self,
@@ -491,14 +843,23 @@ class TaskExecutor:
         if run_scoped:
             # No incident yet: frame the turn around the live run and the operator's
             # directive, and pin the compact output shape for the chat.
+            #
+            # The tool paragraph is what makes the loop reachable. The snapshot is
+            # bounded by construction, so a question about anything it does not
+            # carry (event search, graph paths, risk scores) is answerable only if
+            # the agent knows it may ask for a tool and get the results back.
             user_prompt = (
                 f"Act as {session.role.value} for the current live run. Address the "
                 "operator's directive using the AEGIS_RUN_STATE snapshot below, which "
                 "lists the run's alerts, incidents, and evidence as they stand now. "
                 "Answer from that snapshot; do not report that something is absent "
-                "unless its list there is empty. Return grounded structured output: a "
-                "concise rationale, a confidence in [0,1], evidence citations for any "
-                "factual claim, and any tool requests you need."
+                "unless its list there is empty. If answering needs data the snapshot "
+                "does not carry, request read-only tools from AEGIS_AVAILABLE_TOOLS: "
+                "they run immediately and their results come back to you for a "
+                "follow-up turn, so investigate first and answer once you have what "
+                "you need. When you can answer, return an empty toolRequests array. "
+                "Return grounded structured output: a concise rationale, a confidence "
+                "in [0,1], and evidence citations for any factual claim."
             )
 
         # Scenario-data grounding: an incident title when incident-scoped, or a
@@ -551,6 +912,21 @@ class TaskExecutor:
         ]
         if run_state_message is not None:
             messages.append(run_state_message)
+        if run_scoped:
+            # Scoped to run-scoped turns for the same reason the run-state snapshot
+            # is: incident-scoped turns are the strict, fixture-replayable audit
+            # path, and their request fingerprints key recorded provider responses.
+            # Those roles get their tool requests from role-shaped output schemas
+            # instead — and now, thanks to the loop, actually see the results.
+            messages.append(
+                build_available_tools_message(
+                    describe_available_tools(
+                        self._tool_registry.model_visible_tools(session.role),
+                        allowed_tools=definition.allowed_tools,
+                        executable_tools=TOOL_HANDLERS.keys(),
+                    )
+                )
+            )
         # Commander's intent (run-wide operator priorities) steers WHAT every role
         # prioritises for the whole engagement — applied to all roles, run-scoped and
         # incident-scoped alike. Untrusted, non-authoritative free text, delimited like
@@ -594,14 +970,21 @@ class TaskExecutor:
         self,
         uow: PostgresUnitOfWork,
         prepared: _PreparedTask,
-        response: Any,
+        outcome: _LoopOutcome,
     ) -> None:
         """Phase 3: validate grounding, run tools, and persist the terminal state.
 
         All writes land in a short transaction the caller commits. The advisory
         lock is only re-taken by the event appends here, and only for the few
         milliseconds each short write holds it — never across the model call.
+
+        The tools run here are the ones the loop deliberately left alone:
+        state-changing requests, which must go through policy and human approval,
+        plus anything left over when the loop stopped early. Read-only tools the
+        loop already ran are not re-run — their results are what the model just
+        reasoned over.
         """
+        response = outcome.response
         task = prepared.task
         # Advance a LOCAL copy of the session; ``prepared.session`` stays at
         # GATHERING so a failure can be recorded against the committed state.
@@ -612,7 +995,7 @@ class TaskExecutor:
         role_handler = prepared.role_handler
         run_scoped = prepared.run_scoped
         definition = prepared.definition
-        request = prepared.request
+        request = outcome.request
 
         if response.error is not None:
             raise AgentRuntimeError(
@@ -634,12 +1017,15 @@ class TaskExecutor:
                 trace_id=task.trace_id,
             )
 
+        # Every model call the task made counts against the session budget, not
+        # just the last one, or a looping task would under-report its true cost.
         usage = response.response.usage
         budget = apply_usage(
             budget,
-            tokens=usage.total_tokens if usage else 0,
-            latency_ms=response.response.latency_ms,
-            cost_usd=usage.estimated_cost_usd if usage and usage.estimated_cost_usd else 0.0,
+            tokens=(usage.total_tokens if usage else 0) + outcome.extra_tokens,
+            latency_ms=response.response.latency_ms + outcome.extra_latency_ms,
+            cost_usd=(usage.estimated_cost_usd if usage and usage.estimated_cost_usd else 0.0)
+            + outcome.extra_cost_usd,
         )
         await uow.agent_sessions.update(session, budget=budget)
 
@@ -713,8 +1099,12 @@ class TaskExecutor:
             trace_id=task.trace_id,
             visible_evidence_ids=visible_ids,
         )
-        tool_requests = structured.get("toolRequests", [])
-        if not tool_requests and definition.provider_id == "mock":
+        # The mock provider's role fallback only applies to a task that asked for
+        # nothing at all. A task whose loop already ran tools has a real trail, and
+        # synthesizing more would double-record it.
+        tool_requests = outcome.pending_tool_requests
+        no_tool_activity = not tool_requests and outcome.executed_tool_count == 0
+        if no_tool_activity and definition.provider_id == "mock":
             if role_handler is not None and session.role.value == "WATCHTOWER":
                 tool_requests = [{"name": "list_alerts", "arguments": {}}]
             elif role_handler is not None and session.role.value == "TRACE":

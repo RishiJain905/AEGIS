@@ -252,6 +252,13 @@ class ToolInvocationV1(BaseModel):
     output_payload: dict[str, Any] | None = Field(default=None, alias="output")
     error_code: str | None = Field(default=None, alias="errorCode")
     error_message: str | None = Field(default=None, alias="errorMessage")
+    # Which round of the agent's multi-turn tool loop ran this call: 1 for the
+    # first investigation round, 2 for the round that followed those results, and
+    # so on. ``None`` means the call was not part of the loop — it came from the
+    # model's final answer and ran once, after it, as every call did before the
+    # loop existed. The dossier reads this to render the investigation trail in
+    # the order the agent actually walked it.
+    loop_iteration: int | None = Field(default=None, alias="loopIteration", ge=1)
     created_at: UtcTimestamp = Field(alias="createdAt")
 
     @model_validator(mode="after")

@@ -55,6 +55,19 @@
       "title": "Input",
       "type": "object"
     },
+    "loopIteration": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Loopiteration"
+    },
     "output": {
       "anyOf": [
         {

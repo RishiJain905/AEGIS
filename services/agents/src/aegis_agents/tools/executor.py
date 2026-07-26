@@ -33,7 +33,14 @@ class ToolExecutor:
         ctx: ToolExecutionContext,
         tool_name: str,
         payload: dict[str, Any],
+        loop_iteration: int | None = None,
     ) -> ToolInvocationV1:
+        """Run one allowlisted tool and persist an audit row for the attempt.
+
+        ``loop_iteration`` records which round of the agent's multi-turn tool loop
+        asked for this call (``None`` for a call that came from the model's final
+        answer). It is audit metadata only — it never influences authorization.
+        """
         started = time.perf_counter()
         now = datetime.now(UTC)
         invocation_id = new_runtime_id("tiv")
@@ -76,6 +83,7 @@ class ToolExecutor:
                 duration_ms=duration_ms,
                 input_payload=payload,
                 output_payload=output,
+                loop_iteration=loop_iteration,
                 created_at=now,
             )
         except AgentRuntimeError as exc:
@@ -98,6 +106,7 @@ class ToolExecutor:
                 output_payload=None,
                 error_code=exc.code.value,
                 error_message=exc.message,
+                loop_iteration=loop_iteration,
                 created_at=now,
             )
             await uow.tool_invocations.add(invocation)

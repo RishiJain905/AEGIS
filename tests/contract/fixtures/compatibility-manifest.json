@@ -37,7 +37,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_session_detail_v1.schema.json",
-      "sha256": "6016d4a697f748b24bb5ce2585e5d54f458fa67c5f3ca85e8e7bb05fa240028c"
+      "sha256": "8e9f9edd2fe0b0e44e7546527960b72f30e7b667d5b2c6750744037fd26ffcd1"
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_session_v1.schema.json",
@@ -737,7 +737,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/tool_invocation_v1.schema.json",
-      "sha256": "185563a6db060df7bbe5b2cbcc5800d89c72e78116c01652476211c326e0003e"
+      "sha256": "e2133fc04039316ed3a204973e713010376fcf01bf236cd8d0d67977ff8fb414"
     },
     {
       "path": "tests/contract/fixtures/schemas/tool_result_v1.schema.json",

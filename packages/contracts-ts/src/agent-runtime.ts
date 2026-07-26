@@ -195,6 +195,12 @@ export const toolInvocationSchema = z
     output: z.record(z.unknown()).nullable().optional(),
     errorCode: z.string().nullable().optional(),
     errorMessage: z.string().nullable().optional(),
+    /**
+     * Which round of the agent's multi-turn tool loop ran this call (1-based).
+     * Null/absent means it was not part of the loop: it came from the model's
+     * final answer and ran once, after it.
+     */
+    loopIteration: z.number().int().min(1).nullable().optional(),
     createdAt: utcTimestampSchema,
   })
   .strict();
