@@ -164,6 +164,11 @@ export default function ScenariosPage() {
         seed: scenarioSeed(scenarioId),
         loadout,
         commanderIntent,
+        // The tutorial's pinned seed derives one run id for the lifetime of the database,
+        // so without this a relaunch resumes the first training run — long since finished,
+        // which drops the operator straight into the debrief. Ask the server to destroy and
+        // rebuild it instead. Silent Relay is seedless and never reaches that server path.
+        restartExisting: isTutorial,
       })
       .then((result) => {
         // Arm the guided walkthrough immediately so the coach mark is live the moment the
@@ -311,6 +316,10 @@ export default function ScenariosPage() {
                 const isTutorial = presentation.kind === 'tutorial';
                 const latestRun = latestOwnedRun(scenarioId, runsQuery.data as RunSummary[]);
                 const isDemoRun = latestRun?.ownerUserId === DEMO_OWNER_USER_ID;
+                // The tutorial's run id is pinned by its seed, so launching it again does
+                // not add a run — it replaces the one that exists. Say so on the button
+                // rather than promising a "new run" that overwrites the operator's last one.
+                const isRestart = isTutorial && latestRun !== undefined;
                 return (
                   <li key={scenarioId}>
                     <article
@@ -375,26 +384,38 @@ export default function ScenariosPage() {
                           ) : null}
                         </div>
                       </div>
-                      <div className="flex flex-none flex-wrap items-center gap-2.5">
-                        <Button
-                          data-testid={`start-run-${scenarioId}`}
-                          disabled={createRun.isPending}
-                          onClick={() => {
-                            startRun(scenarioId);
-                          }}
-                        >
-                          Start new run
-                        </Button>
-                        {latestRun ? (
+                      <div className="flex flex-none flex-col gap-2 sm:items-end">
+                        <div className="flex flex-wrap items-center gap-2.5">
                           <Button
-                            variant="secondary"
-                            data-testid={`resume-run-${scenarioId}`}
+                            data-testid={`start-run-${scenarioId}`}
+                            disabled={createRun.isPending}
                             onClick={() => {
-                              openLatestRun(latestRun);
+                              startRun(scenarioId);
                             }}
                           >
-                            {isDemoRun ? 'Open demo run' : 'Resume latest run'} ({latestRun.status})
+                            {isRestart ? 'Restart training run' : 'Start new run'}
                           </Button>
+                          {latestRun ? (
+                            <Button
+                              variant="secondary"
+                              data-testid={`resume-run-${scenarioId}`}
+                              onClick={() => {
+                                openLatestRun(latestRun);
+                              }}
+                            >
+                              {isDemoRun ? 'Open demo run' : 'Resume latest run'} (
+                              {latestRun.status})
+                            </Button>
+                          ) : null}
+                        </div>
+                        {isRestart ? (
+                          <p
+                            data-testid={`restart-note-${scenarioId}`}
+                            className="max-w-[19rem] text-[0.6875rem] leading-4 text-[var(--aegis-text-faint)] sm:text-right"
+                          >
+                            Replaces the existing training run and starts the walkthrough from the
+                            top.
+                          </p>
                         ) : null}
                       </div>
                     </article>

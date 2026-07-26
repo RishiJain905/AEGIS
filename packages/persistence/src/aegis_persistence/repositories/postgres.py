@@ -29,7 +29,7 @@ from aegis_contracts import (
     SimulationCheckpointV1,
     ToolInvocationV1,
 )
-from sqlalchemy import CursorResult, select, text, update
+from sqlalchemy import CursorResult, delete, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -230,6 +230,38 @@ class PostgresRunRepository:
                 expected_revision=expected_revision,
             )
         return run
+
+    async def delete(self, run_id: str) -> bool:
+        """Delete a run row; returns False when it was already gone.
+
+        Every run-scoped table (events + their outbox rows, alerts, incidents, evidence,
+        graph snapshots, checkpoints, agent sessions/tasks/artifacts, executed actions,
+        risk scores, reports, scores, ...) declares ``ON DELETE CASCADE`` on its ``run_id``
+        foreign key, so the database removes the run's entire history as part of this
+        statement — no migration and no hand-rolled delete order are involved.
+
+        The per-run ``pg_advisory_xact_lock`` is taken first and held for the remainder of
+        the caller's transaction, exactly as :meth:`PostgresEventRepository.next_sequence`
+        does. That makes the delete atomic with respect to any other writer on the run (the
+        tick engine appending stepped events, an approval executing an action): they block
+        until this transaction commits and then observe the run as gone or recreated, never
+        half-deleted. Deleting through the ORM (rather than a Core ``DELETE``) also evicts
+        the row from the session's identity map, so recreating the same primary key inside
+        this transaction does not collide with a stale persistent instance.
+        """
+        bind = self._session.bind
+        dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
+        if dialect_name == "postgresql":
+            await self._session.execute(
+                text("SELECT pg_advisory_xact_lock(:lock_key)"),
+                {"lock_key": _advisory_lock_key(run_id)},
+            )
+        row = await self._session.get(RunRow, run_id)
+        if row is None:
+            return False
+        await self._session.delete(row)
+        await self._session.flush()
+        return True
 
 
 class PostgresGraphSnapshotRepository:
@@ -496,6 +528,26 @@ class PostgresIdempotencyRepository:
                 idempotency_key=record.idempotency_key,
             ) from exc
         return record
+
+    async def delete_by_response_ref(self, *, scope: str, response_ref: str) -> int:
+        """Delete every record in ``scope`` that resolved to ``response_ref``; returns count.
+
+        ``idempotency_records`` carries no foreign key (it is a generic command-dedup table),
+        so records for a deleted entity do not cascade away. A run reset uses this to drop
+        the destroyed run's simulation-command records: some command ids are derived rather
+        than random (the START fallback is ``cmd-start-{seed}-{run_id}``, and both parts are
+        reproduced exactly by a reset-and-replay), so a surviving record would make the
+        recreated run's own START look like a duplicate and silently leave it unstarted.
+        """
+        cursor_result = await self._session.execute(
+            delete(IdempotencyRecordRow).where(
+                IdempotencyRecordRow.scope == scope,
+                IdempotencyRecordRow.response_ref == response_ref,
+            )
+        )
+        assert isinstance(cursor_result, CursorResult)
+        await self._session.flush()
+        return int(cursor_result.rowcount)
 
 
 class PostgresObjectRepository:

@@ -110,6 +110,9 @@ class SimulationTicker:
         if self._task is not None:
             return
         self._stopping.clear()
+        # A ``restartExisting`` relaunch destroys a run and recreates it under the same
+        # derived id, so every cache below keyed by that id has to be dropped with it.
+        self._command_service.add_run_reset_listener(self._forget_run_state)
         self._task = asyncio.create_task(self._run_loop(), name="aegis-sim-ticker")
         logger.info(
             "Simulation tick engine started (interval=%ss, steps/tick=%s, horizon=%ss)",
@@ -120,6 +123,9 @@ class SimulationTicker:
 
     async def stop(self) -> None:
         self._stopping.set()
+        # The command service is a process-wide singleton that outlives this ticker (tests
+        # build several apps against it), so a stopped ticker must not stay subscribed.
+        self._command_service.remove_run_reset_listener(self._forget_run_state)
         if self._task is None:
             return
         try:
@@ -373,6 +379,24 @@ class SimulationTicker:
         async with self._uow_factory() as uow:
             alerts = await uow.alerts.list_by_run(run_id)
         return frozenset(alert.asset_id for alert in alerts if alert.asset_id)
+
+    def _forget_run_state(self, run_id: str) -> None:
+        """Drop every per-run in-process cache when that run is reset and recreated.
+
+        The fresh run reuses the destroyed run's id and restarts its sequence stream at 0.
+        A surviving detection cursor (the old run's high-water sequence) would therefore
+        suppress detection until the new run overtook it — no alerts, no incidents, a dead
+        tutorial. Threat-tempo first-seen stamps carry the old run's sim-time and would skew
+        the tempo scalar; the failure counter would carry a doomed run's strikes onto a
+        healthy one. All three are cheap to rebuild: an absent cursor simply triggers one
+        idempotent full re-scan.
+
+        Called synchronously by :class:`RunCommandService` while it holds the run's lock, so
+        it cannot race a tick on the same run.
+        """
+        self._detection_cursors.pop(run_id, None)
+        self._consecutive_failures.pop(run_id, None)
+        self._reset_tempo_state(run_id)
 
     def _reset_tempo_state(self, run_id: str) -> None:
         self._command_service.clear_threat_tempo(run_id)

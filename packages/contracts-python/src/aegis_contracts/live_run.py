@@ -186,6 +186,13 @@ class RunCreateRequestV1(BaseModel):
     commander_intent: str | None = Field(
         default=None, alias="commanderIntent", max_length=280
     )
+    # Reset-and-replay for pinned-seed scenarios. Run ids are derived from
+    # (seed, scenarioVersionId), so a pinned seed resolves to exactly one run id for the
+    # lifetime of a database: relaunching returns the run created the first time, which by
+    # then is finished. When this flag is set the server destroys that run (owner-or-admin
+    # only) and creates it again from scratch, so "start a new run" genuinely starts one.
+    # Additive optional field (schemaVersion stays 1); omitted keeps the resume behaviour.
+    restart_existing: bool = Field(default=False, alias="restartExisting")
 
     @field_validator("schema_version")
     @classmethod

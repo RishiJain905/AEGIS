@@ -116,6 +116,13 @@ export function useCreateRun() {
       seed?: number;
       loadout?: CreateRunLoadout;
       commanderIntent?: string;
+      /**
+       * Pinned-seed scenarios derive one run id per (seed, scenarioVersion) forever, so
+       * relaunching one otherwise resumes the run created the first time. Set this to have
+       * the server destroy that run and build it again from scratch. Only meaningful for a
+       * pinned seed; seedless launches always get a brand-new run id.
+       */
+      restartExisting?: boolean;
     }) => {
       const response = await apiFetch('/api/v1/runs', {
         method: 'POST',
@@ -134,6 +141,8 @@ export function useCreateRun() {
           ...(input.commanderIntent !== undefined
             ? { commanderIntent: input.commanderIntent }
             : {}),
+          // Omit entirely unless restarting, so every other caller keeps today's behaviour.
+          ...(input.restartExisting ? { restartExisting: true } : {}),
         }),
       });
       if (!response.ok) {

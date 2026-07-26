@@ -605,7 +605,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_create_request_v1.schema.json",
-      "sha256": "279dbb67292c9dcf901d39ec40d0b52ba0fdf31723e2eb931e66dba7d7859cd0"
+      "sha256": "a37fad3425ea10ac360b6d57071f04d611747ac1c6c27a956e436797fd01ccca"
     },
     {
       "path": "tests/contract/fixtures/schemas/run_feed_entry_v1.schema.json",

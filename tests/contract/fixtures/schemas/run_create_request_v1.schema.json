@@ -61,6 +61,11 @@
       ],
       "default": null
     },
+    "restartExisting": {
+      "default": false,
+      "title": "Restartexisting",
+      "type": "boolean"
+    },
     "runId": {
       "anyOf": [
         {

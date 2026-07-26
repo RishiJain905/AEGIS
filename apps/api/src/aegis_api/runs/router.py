@@ -225,8 +225,17 @@ async def create_run(
     session_maker = get_db_session_maker()
     try:
         async with PostgresUnitOfWork(session_maker, settings=request.app.state.settings) as uow:
+            # ``restartExisting`` can destroy an existing run, so the service needs the
+            # actor's admin status as well as their id: admins may restart any run, an
+            # ordinary operator only their own. The Idempotency-Key short-circuit inside
+            # create_run runs before that decision, so a double-clicked launch replays the
+            # first response instead of resetting the run a second time.
             return await _run_service.create_run(
-                uow, body, idempotency_key=idempotency_key, owner_user_id=actor.user_id
+                uow,
+                body,
+                idempotency_key=idempotency_key,
+                owner_user_id=actor.user_id,
+                requester_is_admin=actor_is_admin(actor),
             )
     except SimulationError as exc:
         return _simulation_error_response(exc)

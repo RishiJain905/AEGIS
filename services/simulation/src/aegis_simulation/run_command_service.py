@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import secrets
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -14,6 +16,7 @@ from aegis_contracts import (
     IdempotencyMetadataV1,
     RunCommandResponseV1,
     RunCreateRequestV1,
+    RunV1,
     SimulationCheckpointV1,
     SimulationCommandType,
     SnapshotBootstrapPayloadV1,
@@ -127,6 +130,30 @@ def _normalize_commander_intent(intent: str | None) -> str | None:
     return trimmed or None
 
 
+def may_reset_run(
+    run: RunV1,
+    *,
+    requester_user_id: str | None,
+    requester_is_admin: bool,
+) -> bool:
+    """Owner-or-admin gate for destroying an existing run on a ``restartExisting`` relaunch.
+
+    Deliberately mirrors the API's ``has_run_access`` (ADR 0034 / AEGIS-OITB-008) rather
+    than importing it — services must not depend on ``apps/api``. Admins always pass; a
+    non-admin passes only when the run has an owner and it is them. A null-owner run
+    (legacy or seeded demo data) is admin-only, so an ordinary operator relaunching a
+    pinned-seed scenario can never destroy someone else's history: they get today's
+    behaviour (the existing run, returned unchanged) instead.
+    """
+    if requester_is_admin:
+        return True
+    return (
+        requester_user_id is not None
+        and run.owner_user_id is not None
+        and run.owner_user_id == requester_user_id
+    )
+
+
 @dataclass
 class RunCommandService:
     workspace_root: Path
@@ -144,6 +171,22 @@ class RunCommandService:
     # Manifests are immutable per scenario version; cache to avoid re-reading the package
     # from disk on every disclosure resolution.
     _manifest_cache: dict[str, ScenarioManifestV1] = field(default_factory=dict)
+    # In-process observers notified when a run's durable state is destroyed by a
+    # reset-and-replay relaunch. The reset recreates the run under the *same* derived id,
+    # so anything else keyed by run id (the tick engine's detection cursor, threat-tempo
+    # stamps, failure counter) must be dropped or the fresh run inherits the old one's
+    # bookkeeping. Callbacks are synchronous and must not raise.
+    _reset_listeners: list[Callable[[str], None]] = field(default_factory=list)
+
+    def add_run_reset_listener(self, listener: Callable[[str], None]) -> None:
+        """Register a callback invoked with a run id just before that run is destroyed."""
+        if listener not in self._reset_listeners:
+            self._reset_listeners.append(listener)
+
+    def remove_run_reset_listener(self, listener: Callable[[str], None]) -> None:
+        """Deregister a reset listener; a listener that was never added is ignored."""
+        with contextlib.suppress(ValueError):
+            self._reset_listeners.remove(listener)
 
     def set_threat_tempo(self, run_id: str, value: float) -> None:
         self._threat_tempo[run_id] = max(0.0, min(1.0, value))
@@ -240,6 +283,7 @@ class RunCommandService:
         *,
         idempotency_key: str | None = None,
         owner_user_id: str | None = None,
+        requester_is_admin: bool = False,
     ) -> RunCommandResponseV1:
         if idempotency_key is not None:
             existing = await uow.idempotency.get(
@@ -274,9 +318,9 @@ class RunCommandService:
         # Deterministic run ids: the run id is derived from (seed, scenario_version_id), so a
         # pinned-seed scenario (the guided tutorial launches at seed 1000) resolves to the same
         # run id on every launch. Re-launching would otherwise collide on the runs primary key
-        # and 500. Detect the existing run and return it (resume the deterministic run) instead
-        # of crashing — the frontend then navigates straight into it. Seedless scenarios draw a
-        # fresh random seed and never take this path.
+        # and 500. Detect the existing run and either return it (resume the deterministic run)
+        # or, when the caller asked to restart, destroy and recreate it. Seedless scenarios
+        # draw a fresh random seed and never take this path.
         if request.seed is not None and request.run_id is None:
             manifest_for_guard = SimulationEngine.load_manifest(package_dir)
             derived_run_id = derive_run_id(
@@ -285,26 +329,105 @@ class RunCommandService:
             )
             existing_run = await uow.runs.get_by_id(derived_run_id)
             if existing_run is not None:
-                return RunCommandResponseV1(
-                    schema_version=RUN_COMMAND_RESPONSE_SCHEMA_VERSION,
-                    run=existing_run,
-                    events_emitted=0,
-                    idempotency=(
-                        IdempotencyMetadataV1(
-                            schema_version=1,
-                            idempotency_key=idempotency_key,
-                            replayed=True,
-                        )
-                        if idempotency_key
-                        else None
-                    ),
+                may_restart = request.restart_existing and may_reset_run(
+                    existing_run,
+                    requester_user_id=owner_user_id,
+                    requester_is_admin=requester_is_admin,
                 )
+                if not may_restart:
+                    return RunCommandResponseV1(
+                        schema_version=RUN_COMMAND_RESPONSE_SCHEMA_VERSION,
+                        run=existing_run,
+                        events_emitted=0,
+                        idempotency=(
+                            IdempotencyMetadataV1(
+                                schema_version=1,
+                                idempotency_key=idempotency_key,
+                                replayed=True,
+                            )
+                            if idempotency_key
+                            else None
+                        ),
+                    )
+                # Reset-and-replay. Minting a fresh run id is not an option: event, trace and
+                # checkpoint ids are derived from (run_seed, sequence) rather than run id, so
+                # two live runs on the same pinned seed would collide on the global
+                # ``domain_events.event_id`` primary key. Deleting the run instead frees those
+                # ids, and the run is then recreated under the same derived id below.
+                #
+                # The per-run lock is held across the delete AND the recreation so the tick
+                # engine — the single writer for run state, which serializes on the same lock
+                # — can neither be mid-tick on the run we are destroying nor repopulate the
+                # runtime cache we just evicted. Inside it the delete additionally takes the
+                # run's Postgres advisory lock for the rest of this transaction, blocking any
+                # out-of-process writer until the reset commits as one unit.
+                async with self.lock_for(derived_run_id):
+                    await self._reset_run(uow, derived_run_id)
+                    return await self._create_and_start_run(
+                        uow,
+                        package_dir,
+                        request=request,
+                        seed=request.seed,
+                        idempotency_key=idempotency_key,
+                        owner_user_id=owner_user_id,
+                    )
 
         # Server-side RNG: an omitted seed draws a fresh cryptographically random seed
         # that is then persisted like any other, so the run remains fully deterministic
         # for its (now concrete) seed. A supplied seed is used verbatim.
         seed = request.seed if request.seed is not None else draw_random_seed()
+        return await self._create_and_start_run(
+            uow,
+            package_dir,
+            request=request,
+            seed=seed,
+            idempotency_key=idempotency_key,
+            owner_user_id=owner_user_id,
+        )
 
+    async def _reset_run(self, uow: PostgresUnitOfWork, run_id: str) -> None:
+        """Destroy a run's durable and in-memory state so its id can be reused.
+
+        Migration-free: every run-scoped table declares ``ON DELETE CASCADE`` on its
+        ``run_id`` foreign key, so deleting the ``runs`` row takes the events (and their
+        outbox rows), alerts, incidents, evidence, graph snapshots, checkpoints, agent
+        sessions, executed actions, scores and reports with it in one statement, inside the
+        caller's transaction. In-process state keyed by the run id is dropped first, because
+        the recreated run reuses that id and must not inherit it.
+
+        ``idempotency_records`` is the one exception — a generic command-dedup table with no
+        foreign key — so the destroyed run's simulation-command records are removed
+        explicitly. Without that, a derived command id (the START fallback
+        ``cmd-start-{seed}-{run_id}``, identical across a reset) would read as a duplicate
+        and leave the recreated run persisted but never started.
+
+        Called with the run's per-run lock held (see :meth:`create_run`).
+        """
+        self.evict(run_id)
+        self.clear_threat_tempo(run_id)
+        for listener in list(self._reset_listeners):
+            listener(run_id)
+        deleted = await uow.runs.delete(run_id)
+        await uow.idempotency.delete_by_response_ref(
+            scope=SIMULATION_COMMAND_SCOPE,
+            response_ref=run_id,
+        )
+        if not deleted:
+            # Another writer removed the run between the guard read and here. The id is free
+            # either way, so creation can proceed; log it rather than failing the relaunch.
+            logger.info("Run %s was already gone when the reset ran", run_id)
+
+    async def _create_and_start_run(
+        self,
+        uow: PostgresUnitOfWork,
+        package_dir: Path,
+        *,
+        request: RunCreateRequestV1,
+        seed: int,
+        idempotency_key: str | None,
+        owner_user_id: str | None,
+    ) -> RunCommandResponseV1:
+        """Persist a new run at ``seed``, START it, and project its initial graph snapshot."""
         service = SimulationApplicationService(uow)
         runtime, manifest = await service.create_run_from_package(
             package_dir,

@@ -35,13 +35,28 @@ const SILENT_RELAY = {
   name: 'Operation Silent Relay',
 };
 
-function scenariosSuccess() {
+const TRAINING = {
+  id: 'scenario:synthetic-training',
+  name: 'Synthetic Training',
+};
+
+function scenariosSuccess(data: { id: string; name: string }[] = [SILENT_RELAY]) {
   return {
     isPending: false,
     isError: false,
     isSuccess: true,
-    data: [SILENT_RELAY],
+    data,
     refetch: vi.fn(),
+  };
+}
+
+function trainingRun(status = 'stopped') {
+  return {
+    id: 'run_training_1',
+    scenarioVersionId: 'scenario-version:1.0.0-synthetic-training',
+    status,
+    startedAt: '2026-06-30T02:00:00.000Z',
+    ownerUserId: 'user:operator-alpha',
   };
 }
 
@@ -92,6 +107,8 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
         scenarioPackagePath: 'scenarios/operation-silent-relay',
         seed: undefined,
         loadout: { schemaVersion: 1, biasGuard: true, threatTempo: true, roe: 'investigate' },
+        // Seedless: a fresh run id every launch, so there is never anything to restart.
+        restartExisting: false,
       });
     });
     await waitFor(() => {
@@ -144,6 +161,72 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
     });
     await waitFor(() => {
       expect(push).toHaveBeenCalledWith('/runs/run_paused_1');
+    });
+  });
+});
+
+// The tutorial pins seed 1000, so its run id is derived once and reused forever: relaunching
+// replaces the existing training run rather than adding one. The card has to say that, and
+// the request has to ask the server for it.
+describe('ScenariosPage tutorial relaunch', () => {
+  beforeEach(() => {
+    push.mockReset();
+    mutateAsync.mockReset();
+    resumeRun.mockReset();
+    resumeRun.mockResolvedValue(undefined);
+    useScenarios.mockReturnValue(scenariosSuccess([TRAINING]));
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('offers a plain start with no existing training run', () => {
+    useRuns.mockReturnValue(runsResult([]));
+
+    render(<ScenariosPage />);
+
+    expect(screen.getByTestId('start-run-scenario:synthetic-training')).toHaveTextContent(
+      'Start new run',
+    );
+    expect(
+      screen.queryByTestId('restart-note-scenario:synthetic-training'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('reframes the launch as a restart once a training run exists', () => {
+    useRuns.mockReturnValue(runsResult([trainingRun()]));
+
+    render(<ScenariosPage />);
+
+    expect(screen.getByTestId('start-run-scenario:synthetic-training')).toHaveTextContent(
+      'Restart training run',
+    );
+    expect(screen.getByTestId('restart-note-scenario:synthetic-training')).toHaveTextContent(
+      'Replaces the existing training run',
+    );
+  });
+
+  it('launches the tutorial directly with restartExisting set', async () => {
+    useRuns.mockReturnValue(runsResult([trainingRun()]));
+    mutateAsync.mockResolvedValue({ run: { id: 'run_training_1' } });
+
+    render(<ScenariosPage />);
+
+    // The tutorial skips the loadout step and launches straight into the walkthrough.
+    fireEvent.click(screen.getByTestId('start-run-scenario:synthetic-training'));
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledWith({
+        scenarioPackagePath: 'scenarios/synthetic-training',
+        seed: 1000,
+        loadout: undefined,
+        commanderIntent: undefined,
+        restartExisting: true,
+      });
+    });
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith('/runs/run_training_1');
     });
   });
 });

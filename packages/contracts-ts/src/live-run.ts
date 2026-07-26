@@ -191,6 +191,13 @@ export const runCreateRequestSchema = z
     // text). Bounded to a single directive line. Additive optional field (schemaVersion
     // stays 1); persisted on the run.
     commanderIntent: z.string().max(280).nullable().optional(),
+    // Reset-and-replay for pinned-seed scenarios. Run ids are derived from
+    // (seed, scenarioVersionId), so a pinned seed resolves to exactly one run id for the
+    // lifetime of a database: relaunching returns the run created the first time, which by
+    // then is finished. When set the server destroys that run (owner-or-admin only) and
+    // creates it again from scratch. Additive optional field (schemaVersion stays 1);
+    // omitted keeps the resume behaviour.
+    restartExisting: z.boolean().optional(),
   })
   .strict()
   .superRefine((value, ctx) => {
