@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -13,6 +14,7 @@ from aegis_contracts import (
     IdempotencyMetadataV1,
     RunCommandResponseV1,
     RunCreateRequestV1,
+    SimulationCheckpointV1,
     SimulationCommandType,
     SnapshotBootstrapPayloadV1,
 )
@@ -41,6 +43,8 @@ from aegis_simulation.graph_projection import (
     redact_snapshot_for_disclosure,
 )
 
+logger = logging.getLogger(__name__)
+
 SCENARIO_PACKAGE_BY_VERSION: dict[str, str] = {
     # Runs created via an explicit scenarioPackagePath derive their version id from the
     # manifest version (1.0.0), so the bare id must stay restorable too.
@@ -68,6 +72,16 @@ _LIFECYCLE_REPLAY: dict[str, str] = {
     "sim.run.resumed": "resume",
     "sim.run.stopped": "stop",
 }
+
+# A checkpoint this build cannot read: either an engine-version bump or a checksum that no
+# longer matches because the world-state snapshot model gained fields since it was written.
+# Neither means the run is lost — the event stream rebuilds it — so both fall back to replay.
+_UNREADABLE_CHECKPOINT_CODES: frozenset[SimulationErrorCode] = frozenset(
+    {
+        SimulationErrorCode.CHECKPOINT_INCOMPATIBLE,
+        SimulationErrorCode.CHECKPOINT_CHECKSUM_INVALID,
+    }
+)
 
 # World-mutating effect events an EXECUTE command can emit. These carry executed-action
 # state (e.g. an approved containment isolating an asset) that stepping never reproduces.
@@ -383,13 +397,19 @@ class RunCommandService:
         )
         emitted = await service.execute_command(runtime, command)
 
-        if command_type in {
+        # Only an emitting command gets a snapshot, and it is stamped with the sequence it
+        # just claimed. A command that emitted nothing (a STEP whose scheduled work was a
+        # gated branch, or a kill-chain advance the defender already disrupted) has not
+        # advanced the event stream, so there is no new sequence to project onto: stamping
+        # such a snapshot with ``next_sequence - 1`` would re-use the sequence the previous
+        # emitting command already snapshotted and collide on
+        # ``uq_graph_snapshots_run_sequence``, failing the whole tick.
+        if emitted and command_type in {
             SimulationCommandType.STEP,
             SimulationCommandType.START,
             SimulationCommandType.RESUME,
         }:
-            last_sequence = emitted[-1].sequence if emitted else runtime.world.next_sequence - 1
-            snapshot = build_graph_snapshot_from_runtime(runtime, sequence=last_sequence)
+            snapshot = build_graph_snapshot_from_runtime(runtime, sequence=emitted[-1].sequence)
             await PostgresGraphSnapshotRepository(uow.session).add(snapshot)
 
         await self._persist_runtime_checkpoint(uow, runtime)
@@ -495,19 +515,19 @@ class RunCommandService:
         sim_events = [event for event in db_events if _is_sim_event(event)]
 
         checkpoint = await uow.checkpoints.get_latest_for_run(run_id)
-        if checkpoint is not None:
+        if checkpoint is not None and self._checkpoint_is_usable(runtime, checkpoint):
             # Restore authoritative status/RNG/clock/world/queue from the checkpoint, then
             # re-apply only the events that were appended after it (e.g. an approved
             # containment executed by the approvals service, which does not checkpoint).
-            runtime.restore(checkpoint)
             pending = [
                 event for event in sim_events if event.sequence >= runtime.world.next_sequence
             ]
             self._replay_events(runtime, pending)
         else:
-            # Legacy run created before checkpointing existed: deterministically replay the
-            # full recorded operation stream from a fresh runtime. Reproduces lifecycle
-            # transitions and executed-action effects rather than advancing by event count.
+            # No checkpoint (legacy run created before checkpointing existed) or one this
+            # build can no longer read: deterministically replay the full recorded operation
+            # stream from a fresh runtime. Reproduces lifecycle transitions and
+            # executed-action effects rather than advancing by event count.
             self._replay_events(runtime, sim_events)
 
         # Keep sequence monotonic across mixed sim + approval/agent event streams.
@@ -515,6 +535,38 @@ class RunCommandService:
 
         self.runtime_cache[run_id] = RuntimeCacheEntry(runtime=runtime, package_dir=package_dir)
         return runtime
+
+    @staticmethod
+    def _checkpoint_is_usable(
+        runtime: SimulationRuntime, checkpoint: SimulationCheckpointV1
+    ) -> bool:
+        """Restore ``checkpoint`` into ``runtime``; return False if this build cannot read it.
+
+        The checksum is taken over the *whole* ``WorldStateSnapshotV1`` dump, so any additive
+        field on that model (Phase 2 added campaign progression, run outcome and peak
+        disruption cost) makes every checkpoint written by an earlier build recompute to a
+        different digest and fail validation. That is not corruption: the event stream is the
+        source of truth and can rebuild the runtime exactly, so an unreadable checkpoint is
+        downgraded to a full deterministic replay instead of wedging the run forever. The next
+        command writes a checkpoint in the current shape, so a run self-heals after one replay.
+
+        Both rejections are raised before ``restore`` mutates anything, so the caller's runtime
+        is still pristine when this returns False.
+        """
+        try:
+            runtime.restore(checkpoint)
+        except SimulationError as exc:
+            if exc.code not in _UNREADABLE_CHECKPOINT_CODES:
+                raise
+            logger.warning(
+                "Checkpoint %s for run %s is unreadable by this build (%s); rebuilding the "
+                "runtime by replaying the event stream instead",
+                checkpoint.id,
+                runtime.run_id,
+                exc.code.value,
+            )
+            return False
+        return True
 
     @staticmethod
     async def _sync_next_sequence(

@@ -30,6 +30,7 @@ from aegis_contracts import (
     ToolInvocationV1,
 )
 from sqlalchemy import CursorResult, select, text, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -236,17 +237,31 @@ class PostgresGraphSnapshotRepository:
         self._session = session
 
     async def add(self, snapshot: GraphSnapshotV1) -> GraphSnapshotV1:
+        """Write the projection row for ``(run_id, sequence)``, replacing any existing one.
+
+        A graph snapshot is a derived projection of the authoritative event stream, so the
+        row for a given sequence is a pure function of that sequence: a runtime rebuilt from
+        the checkpoint plus events re-derives byte-identical graph state. Upserting rather
+        than inserting means such a re-derivation converges instead of failing its whole
+        command transaction on ``uq_graph_snapshots_run_sequence`` on every retry forever.
+        """
         from datetime import UTC, datetime
 
         payload = domain_to_payload(snapshot)
-        row = GraphSnapshotRow(
-            run_id=snapshot.run_id,
-            sequence=snapshot.sequence,
-            payload=payload,
-            created_at=datetime.now(tz=UTC),
+        created_at = datetime.now(tz=UTC)
+        await self._session.execute(
+            pg_insert(GraphSnapshotRow)
+            .values(
+                run_id=snapshot.run_id,
+                sequence=snapshot.sequence,
+                payload=payload,
+                created_at=created_at,
+            )
+            .on_conflict_do_update(
+                constraint="uq_graph_snapshots_run_sequence",
+                set_={"payload": payload, "created_at": created_at},
+            )
         )
-        self._session.add(row)
-        await self._session.flush()
         return snapshot
 
     async def get_latest_for_run(self, run_id: str) -> GraphSnapshotV1 | None:

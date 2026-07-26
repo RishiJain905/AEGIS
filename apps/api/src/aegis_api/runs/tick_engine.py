@@ -17,6 +17,12 @@ Every run is isolated: a failure on one run is logged, its cached runtime evicte
 next cycle re-restores clean state), and the remaining runs still advance. Pausing or
 stopping a run (manually) is respected because status is re-checked under the lock before
 each step and RUNNING runs are re-discovered from the database each cycle (restart-safe).
+
+Eviction only helps when the next attempt can succeed. A run whose state the engine simply
+cannot advance would otherwise fail identically on every cycle for as long as the process
+lives, so consecutive failures are counted per run and a run that trips
+``AEGIS_SIM_TICK_FAILURE_THRESHOLD`` is quarantined: taken to a terminal status, which
+removes it from the RUNNING set the ticker rediscovers each cycle, and reported at ERROR.
 """
 
 from __future__ import annotations
@@ -50,6 +56,7 @@ from aegis_api.runs.lifecycle import finalize_stopped_run
 logger = logging.getLogger(__name__)
 
 _RUNNING = SimulationRunStatus.RUNNING.value
+_STOPPED = SimulationRunStatus.STOPPED.value
 # Full run history is loaded for detection each cycle with new events; the feature engine
 # aggregates events into sim-time windows, so a partial (sequence-windowed) slice would
 # split windows and corrupt feature vectors. Re-persistence is idempotent (alert dedup),
@@ -91,6 +98,10 @@ class SimulationTicker:
         # cadence); ``alerted`` is refreshed whenever detection runs.
         self._tempo_governing: dict[str, dict[str, GovernedAsset]] = {}
         self._tempo_first_triggered_at: dict[str, dict[str, datetime]] = {}
+        # Circuit breaker: consecutive failed ticks per run, cleared by any successful
+        # advance. Only lives for the process — a restart gets a fresh budget, which is the
+        # behaviour we want, since a restart is also the most likely thing to have fixed it.
+        self._consecutive_failures: dict[str, int] = {}
 
     async def start(self) -> None:
         if not self._settings.AEGIS_SIM_TICK_ENABLED:
@@ -139,10 +150,9 @@ class SimulationTicker:
             try:
                 completed = await self._advance_run(run.id)
             except Exception:  # noqa: BLE001 — isolate per-run failures
-                logger.warning("Tick failed for run %s; evicting cached runtime", run.id)
-                logger.debug("Tick failure detail for run %s", run.id, exc_info=True)
-                self._command_service.evict(run.id)
+                await self._record_tick_failure(run.id)
                 continue
+            self._consecutive_failures.pop(run.id, None)
             try:
                 await self._run_detection(run.id)
             except Exception:  # noqa: BLE001 — detection must never kill the ticker
@@ -158,6 +168,75 @@ class SimulationTicker:
                     run_id=run.id,
                     settings=self._settings,
                 )
+
+    async def _record_tick_failure(self, run_id: str) -> None:
+        """Log and evict after a failed tick, quarantining the run once it stops recovering."""
+        failures = self._consecutive_failures.get(run_id, 0) + 1
+        self._consecutive_failures[run_id] = failures
+        logger.warning(
+            "Tick failed for run %s (%d consecutive); evicting cached runtime",
+            run_id,
+            failures,
+        )
+        logger.debug("Tick failure detail for run %s", run_id, exc_info=True)
+        self._command_service.evict(run_id)
+        if failures < self._settings.AEGIS_SIM_TICK_FAILURE_THRESHOLD:
+            return
+        logger.error(
+            "Run %s failed %d consecutive ticks; quarantining it so the shared tick loop "
+            "stops retrying a run it cannot advance",
+            run_id,
+            failures,
+        )
+        try:
+            await self._quarantine_run(run_id)
+        except Exception:  # noqa: BLE001 — quarantine must never kill the tick loop
+            # Leave the counter standing so the very next failure retries the quarantine
+            # rather than waiting out another full threshold.
+            logger.exception("Failed to quarantine run %s", run_id)
+            return
+        self._consecutive_failures.pop(run_id, None)
+
+    async def _quarantine_run(self, run_id: str) -> None:
+        """Take a run the engine cannot advance to a terminal status.
+
+        Tries the real lifecycle STOP first, so a quarantined run ends up indistinguishable
+        from a manually stopped one (``sim.run.stopped`` emitted, faithful final checkpoint).
+        That path needs a working runtime, which is precisely what is in doubt here, so a
+        failure falls back to writing the terminal status straight onto the run row — status
+        is what ``list_running`` filters on, so that is what actually ends the retry loop.
+        """
+        async with self._command_service.lock_for(run_id):
+            try:
+                async with self._uow_factory() as uow:
+                    await self._command_service.execute_lifecycle_command(
+                        uow,
+                        run_id,
+                        SimulationCommandType.STOP,
+                        idempotency_key=self._stop_key(run_id),
+                    )
+            except Exception:  # noqa: BLE001 — fall back to the durable status write
+                logger.warning(
+                    "Lifecycle STOP unavailable for quarantined run %s; forcing terminal "
+                    "status directly",
+                    run_id,
+                    exc_info=True,
+                )
+                self._command_service.evict(run_id)
+                async with self._uow_factory() as uow:
+                    await self._force_stopped_status(uow, run_id)
+        self._reset_tempo_state(run_id)
+        self._detection_cursors.pop(run_id, None)
+
+    @staticmethod
+    async def _force_stopped_status(uow: PostgresUnitOfWork, run_id: str) -> None:
+        run = await uow.runs.get_by_id(run_id)
+        if run is None or run.status == _STOPPED:
+            return
+        await uow.runs.update_with_revision(
+            run.model_copy(update={"status": _STOPPED, "revision": run.revision + 1}),
+            expected_revision=run.revision,
+        )
 
     async def _advance_run(self, run_id: str) -> bool:
         """Step a run up to the horizon. Returns True if the ticker STOPped it (completion).

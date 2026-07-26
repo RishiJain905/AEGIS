@@ -98,6 +98,11 @@ class AegisSettings(BaseSettings):
     # reveals by <=720s). Distinct from golden-seeds `simulationSteps`, which is test
     # metadata for the fixed-step determinism harness, not a live horizon.
     AEGIS_SIM_MAX_SIM_SECONDS: int = Field(default=1500, ge=1)
+    # Circuit breaker: consecutive failed ticks a single run may take before the tick engine
+    # quarantines it (stops it) instead of retrying it forever on the shared loop. Counted
+    # in-process and cleared by any successful advance, so it only trips on a run that is
+    # genuinely stuck rather than one hitting transient contention.
+    AEGIS_SIM_TICK_FAILURE_THRESHOLD: int = Field(default=3, ge=1)
     # Fog of war — threat-tempo saturation window (sim-seconds). An undisclosed, triggered
     # hidden condition reaches full ambient pressure after dwelling undetected this long.
     AEGIS_THREAT_TEMPO_SATURATION_SIM_SECONDS: float = Field(default=600.0, gt=0.0)

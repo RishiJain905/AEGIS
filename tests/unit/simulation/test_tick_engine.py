@@ -25,6 +25,9 @@ def _settings(**overrides: object) -> SimpleNamespace:
         "AEGIS_SIM_TICK_INTERVAL_SECONDS": 0.01,
         "AEGIS_SIM_STEPS_PER_TICK": 1,
         "AEGIS_SIM_MAX_SIM_SECONDS": 25,
+        # High enough that isolation/eviction tests never trip the quarantine path; the
+        # breaker has its own dedicated tests.
+        "AEGIS_SIM_TICK_FAILURE_THRESHOLD": 1_000,
     }
     base.update(overrides)
     return SimpleNamespace(**base)
