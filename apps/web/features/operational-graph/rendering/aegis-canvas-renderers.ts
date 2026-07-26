@@ -108,39 +108,137 @@ function fitLabelText(
   return { text: `${truncated}…`, width: Math.ceil(context.measureText(`${truncated}…`).width) };
 }
 
-export const drawAegisNodeLabel: NodeLabelDrawingFunction = (context, rawData, settings) => {
+export interface LabelPillLayout {
+  text: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  markerX: number;
+  textX: number;
+}
+
+const LABEL_MARKER_SIZE = 4;
+const LABEL_TEXT_START_OFFSET = 23;
+const LABEL_OUTER_PADDING = 15;
+const LABEL_NODE_GAP = 8;
+const LABEL_CORNER_RADIUS = 6;
+
+/** Pure geometry for a node's label pill: measures the (possibly-truncated)
+ * text, then anchors the pill to the right of the node by default, flipping
+ * to the left when that would run the pill past `canvasWidth` (the right
+ * edge of the analysis-plane canvas). Falls back to clamping on-screen for
+ * the rare case neither side fits cleanly (a very narrow viewport, or a node
+ * sitting hard against an edge). Returns null for unlabeled nodes. Does not
+ * paint anything — collision-aware selection happens one layer up
+ * (label-topcoat.ts), across every candidate at once, before anything is
+ * painted with `paintLabelPill`. */
+export function computeLabelPillLayout(
+  context: CanvasRenderingContext2D,
+  rawData: { x: number; y: number; size: number; label?: string | null },
+  settings: { labelSize: number; labelWeight: string; labelFont: string },
+  canvasWidth: number,
+): LabelPillLayout | null {
   if (!rawData.label) {
-    return;
+    return null;
   }
 
-  const data = rawData as typeof rawData & AegisNodeCanvasData;
   const fontSize = settings.labelSize;
   context.save();
   context.font = `${settings.labelWeight} ${String(fontSize)}px ${settings.labelFont}`;
   const { text, width: textWidth } = fitLabelText(context, rawData.label, MAX_LABEL_TEXT_WIDTH);
-  const markerSize = 4;
-  const textStartOffset = 23;
-  const rightPadding = 15;
-  const height = fontSize + 15;
-  const left = rawData.x + rawData.size + 8;
-  const top = rawData.y - height / 2;
-  const width = textWidth + textStartOffset + rightPadding;
+  context.restore();
 
-  roundedRect(context, left, top, width, height, 6);
+  const height = fontSize + 15;
+  const width = textWidth + LABEL_TEXT_START_OFFSET + LABEL_OUTER_PADDING;
+  const top = rawData.y - height / 2;
+
+  const rightAnchorLeft = rawData.x + rawData.size + LABEL_NODE_GAP;
+  if (rightAnchorLeft + width <= canvasWidth) {
+    return {
+      text,
+      left: rightAnchorLeft,
+      top,
+      width,
+      height,
+      markerX: rightAnchorLeft + 11,
+      textX: rightAnchorLeft + LABEL_TEXT_START_OFFSET,
+    };
+  }
+
+  // Right-anchored would clip the canvas edge — flip to the node's left: the
+  // marker stays adjacent to the node (now the pill's right edge), text
+  // extends away from it to the left, mirroring the right-anchor layout.
+  const leftAnchorRight = rawData.x - rawData.size - LABEL_NODE_GAP;
+  const leftAnchorLeft = leftAnchorRight - width;
+  if (leftAnchorLeft >= 0) {
+    return {
+      text,
+      left: leftAnchorLeft,
+      top,
+      width,
+      height,
+      markerX: leftAnchorRight - 11,
+      textX: leftAnchorLeft + LABEL_OUTER_PADDING,
+    };
+  }
+
+  // Neither side fits cleanly — clamp on-screen rather than let the pill run
+  // off either edge.
+  const clampedLeft = Math.max(0, Math.min(rightAnchorLeft, canvasWidth - width));
+  return {
+    text,
+    left: clampedLeft,
+    top,
+    width,
+    height,
+    markerX: clampedLeft + 11,
+    textX: clampedLeft + LABEL_TEXT_START_OFFSET,
+  };
+}
+
+/** Paints a pill already positioned by `computeLabelPillLayout`. Split out so
+ * collision-aware callers can compute every candidate's layout first, decide
+ * which ones to keep, and only then pay for the actual drawing. */
+export function paintLabelPill(
+  context: CanvasRenderingContext2D,
+  layout: LabelPillLayout,
+  rawData: { y: number; color: string } & Pick<AegisNodeCanvasData, 'shape' | 'selected'>,
+): void {
+  context.save();
+  roundedRect(context, layout.left, layout.top, layout.width, layout.height, LABEL_CORNER_RADIUS);
   context.fillStyle = 'rgba(12, 12, 17, 0.88)';
   context.fill();
-  context.strokeStyle = data.selected ? 'rgba(242, 202, 107, 0.75)' : 'rgba(150, 148, 158, 0.28)';
+  context.strokeStyle = rawData.selected
+    ? 'rgba(242, 202, 107, 0.75)'
+    : 'rgba(150, 148, 158, 0.28)';
   context.lineWidth = 1;
   context.stroke();
 
-  drawShape(context, data.shape ?? 'circle', left + 11, rawData.y, markerSize);
+  drawShape(context, rawData.shape ?? 'circle', layout.markerX, rawData.y, LABEL_MARKER_SIZE);
   context.fillStyle = rawData.color;
   context.fill();
 
-  context.fillStyle = data.selected ? '#faf7ef' : '#cdced4';
+  context.fillStyle = rawData.selected ? '#faf7ef' : '#cdced4';
   context.textBaseline = 'middle';
-  context.fillText(text, left + textStartOffset, rawData.y + 0.5);
+  context.fillText(layout.text, layout.textX, rawData.y + 0.5);
   context.restore();
+}
+
+// Registered as Sigma's `defaultDrawNodeLabel` type-wise only — the live
+// settings point it at a no-op (see sigma-operational-graph-adapter.ts).
+// LabelTopcoat is the sole label painter, so every label goes through the
+// same collision-aware, edge-aware placement in one pass instead of Sigma's
+// per-node draw call (which has no visibility into canvas width or its
+// sibling labels). Kept here, using the same layout/paint helpers, for
+// anything that still wants a standalone single-label renderer (tests,
+// Storybook) without pulling in the whole topcoat machinery.
+export const drawAegisNodeLabel: NodeLabelDrawingFunction = (context, rawData, settings) => {
+  const layout = computeLabelPillLayout(context, rawData, settings, Number.POSITIVE_INFINITY);
+  if (!layout) {
+    return;
+  }
+  paintLabelPill(context, layout, rawData as typeof rawData & AegisNodeCanvasData);
 };
 
 export const drawAegisNodeHover: NodeHoverDrawingFunction = (context, rawData) => {

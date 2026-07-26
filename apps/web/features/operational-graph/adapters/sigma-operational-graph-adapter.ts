@@ -28,7 +28,7 @@ import {
 import { EdgeActivityTracker, edgeFlowPhase } from '../semantic/edge-activity';
 import { detectRevealTransitions, type NodeRevealState } from '../semantic/reveal-detection';
 import { zoneLabelFromClusterId, UNZONED_CLUSTER_ID } from '../layout/zone-layout';
-import { drawAegisNodeHover, drawAegisNodeLabel } from '../rendering/aegis-canvas-renderers';
+import { drawAegisNodeHover } from '../rendering/aegis-canvas-renderers';
 import { rollupZoneThreat, ZoneOverlay, type ZoneRenderState } from '../rendering/zone-overlay';
 import { SignalOverlay, type NodeSignal, type SignalStatus } from '../rendering/signal-overlay';
 import { LabelTopcoat } from '../rendering/label-topcoat';
@@ -164,7 +164,14 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       stagePadding: 52,
       hideLabelsOnMove: false,
       hideEdgesOnMove: false,
-      defaultDrawNodeLabel: drawAegisNodeLabel,
+      // Sigma's own 'labels' canvas still decides *which* nodes get a label
+      // (density/grid/forceLabel selection — read via getNodeDisplayedLabels),
+      // but paints nothing: LabelTopcoat is the sole label painter, so every
+      // label goes through the same collision-aware, edge-aware placement in
+      // one pass instead of Sigma drawing an uncollided version underneath
+      // that would show through whenever the topcoat skips a lower-priority
+      // label for overlapping a higher-priority one.
+      defaultDrawNodeLabel: () => undefined,
       defaultDrawNodeHover: drawAegisNodeHover,
       minEdgeThickness: 0.75,
       minCameraRatio: 0.06,
