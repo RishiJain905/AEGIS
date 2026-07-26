@@ -19,7 +19,12 @@ import {
   Pill,
   SectionLabel,
 } from '@/features/reports/report-ui';
-import { useAfterActionReport, useReportVersions } from '@/features/reports/use-report-queries';
+import {
+  isReportEligibleRunStatus,
+  useAfterActionReport,
+  useReportVersions,
+  useRunStatusForReports,
+} from '@/features/reports/use-report-queries';
 
 export interface ReportsWorkspaceProps {
   runId: string;
@@ -322,8 +327,13 @@ function ArchivedVersionDetail({ version }: { version: ReportVersionV1 }) {
 /* ------------------------------------------------------------------ */
 
 export function ReportsWorkspace({ runId }: ReportsWorkspaceProps) {
-  const reportQuery = useAfterActionReport(runId);
-  const versionsQuery = useReportVersions(runId);
+  const runStatusQuery = useRunStatusForReports(runId);
+  const reportEligible = isReportEligibleRunStatus(runStatusQuery.data?.status);
+  // Disabled (not just "not yet fetched") until the run is actually eligible,
+  // so a still-running run never fires the report/version requests at all -
+  // they would 404 on every single load otherwise.
+  const reportQuery = useAfterActionReport(runId, { enabled: reportEligible });
+  const versionsQuery = useReportVersions(runId, { enabled: reportEligible });
 
   const report = reportQuery.data;
   const versions = useMemo(() => {
@@ -354,7 +364,11 @@ export function ReportsWorkspace({ runId }: ReportsWorkspaceProps) {
     }
   }, [report]);
 
-  if (reportQuery.isError) {
+  if (runStatusQuery.isPending) {
+    return <LoadingState message="Loading reports" />;
+  }
+
+  if (!reportEligible || reportQuery.isError) {
     return (
       <EmptyState
         title="After-action report not ready"
