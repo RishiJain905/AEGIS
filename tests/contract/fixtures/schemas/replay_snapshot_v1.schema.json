@@ -138,6 +138,10 @@
           "default": null,
           "title": "Incidentid"
         },
+        "origin": {
+          "$ref": "#/$defs/AutonomyInitiatorV1",
+          "default": "operator"
+        },
         "role": {
           "$ref": "#/$defs/AgentRole"
         },
@@ -229,6 +233,12 @@
     "AssetType": {
       "enum": ["service", "device", "user", "identity", "database", "control", "ai_model"],
       "title": "AssetType",
+      "type": "string"
+    },
+    "AutonomyInitiatorV1": {
+      "description": "Who originated an agent task or session, so the UI can distinguish autonomous\ninitiative from operator tasking.",
+      "enum": ["operator", "autonomy"],
+      "title": "AutonomyInitiatorV1",
       "type": "string"
     },
     "EntityType": {

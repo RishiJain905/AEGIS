@@ -505,11 +505,11 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_snapshot_v1.schema.json",
-      "sha256": "289a3214c378bf0dfdf0283cbb6cfd0145f980496635e4dd3a5a0061cc9c9f34"
+      "sha256": "f57db04896a2a71e9f93ad20e0373143eba2f3ee917a3a0b23150e0e206cb1bd"
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_state_v1.schema.json",
-      "sha256": "3c0303e2a53e080c742e0bfe05aaec7e49bc1f5155c4ab232f19c1274542685b"
+      "sha256": "32bdcefef337714d5c8b9f5df6fe928d633d4864b1805fc5b8162d34922829da"
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_view_state_v1.schema.json",
