@@ -198,7 +198,9 @@ export function computeZoneLayout(
   const ringCount = ringBuckets.length;
   if (ringCount === 1) {
     ringRadius = centerBucket
-      ? (radiusById.get(centerBucket.id) ?? 0) + (radiusById.get(ringBuckets[0]?.id ?? '') ?? 0) + CENTER_GAP
+      ? (radiusById.get(centerBucket.id) ?? 0) +
+        (radiusById.get(ringBuckets[0]?.id ?? '') ?? 0) +
+        CENTER_GAP
       : 0;
   } else if (ringCount > 1) {
     const halfChord = Math.sin(Math.PI / ringCount);
@@ -244,11 +246,7 @@ export function computeZoneLayout(
 
   ringBuckets.forEach((bucket, index) => {
     const angle = -Math.PI / 2 + (index / Math.max(ringCount, 1)) * Math.PI * 2;
-    placeZone(
-      bucket,
-      { x: Math.cos(angle) * ringRadius, z: Math.sin(angle) * ringRadius },
-      angle,
-    );
+    placeZone(bucket, { x: Math.cos(angle) * ringRadius, z: Math.sin(angle) * ringRadius }, angle);
   });
   if (centerBucket) {
     placeZone(centerBucket, { x: 0, z: 0 }, 0);

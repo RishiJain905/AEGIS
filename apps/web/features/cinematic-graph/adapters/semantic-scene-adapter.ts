@@ -82,10 +82,7 @@ export class SemanticSceneAdapterImpl implements SemanticSceneAdapter {
     // Bastion-ring layout: platform-per-cluster placement derived purely from
     // canonical node/cluster data. 2D drag positions intentionally do not
     // leak in — the 3D theater has its own intrinsic architecture.
-    const { positions, zones: zonePlacements } = computeZoneLayout(
-      visibleNodes,
-      snapshot.clusters,
-    );
+    const { positions, zones: zonePlacements } = computeZoneLayout(visibleNodes, snapshot.clusters);
 
     const evidenceNodeIds = options.evidenceNodeIds ?? new Set<string>();
     const incidentNodeIds = options.incidentNodeIds ?? new Set<string>();

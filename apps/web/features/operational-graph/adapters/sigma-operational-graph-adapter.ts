@@ -491,7 +491,10 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
   private updateOverlays(snapshot: GraphSnapshotV1, renderNodeIds: string[]): void {
     const renderSet = new Set(renderNodeIds);
 
-    const { revealedNodeIds, nextState } = detectRevealTransitions(this.revealState, snapshot.nodes);
+    const { revealedNodeIds, nextState } = detectRevealTransitions(
+      this.revealState,
+      snapshot.nodes,
+    );
     this.revealState = nextState;
     this.lastRevealedNodeIds = revealedNodeIds.filter((nodeId) => renderSet.has(nodeId));
 

@@ -4,11 +4,7 @@ import type { GraphNodeV1 } from '@aegis/contracts-ts';
 
 import { detectRevealTransitions } from '@/features/operational-graph/semantic/reveal-detection';
 
-function makeNode(
-  id: string,
-  status: GraphNodeV1['status'],
-  disclosed?: boolean,
-): GraphNodeV1 {
+function makeNode(id: string, status: GraphNodeV1['status'], disclosed?: boolean): GraphNodeV1 {
   return {
     schemaVersion: 1,
     id,

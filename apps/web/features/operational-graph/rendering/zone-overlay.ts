@@ -222,11 +222,7 @@ export class ZoneOverlay {
       context.fillStyle = style.dot;
       context.fill();
       context.fillStyle = style.label;
-      context.fillText(
-        `${zone.label} · ${String(zone.memberIds.length)}`,
-        labelX + 11,
-        labelY,
-      );
+      context.fillText(`${zone.label} · ${String(zone.memberIds.length)}`, labelX + 11, labelY);
       context.restore();
     }
   }

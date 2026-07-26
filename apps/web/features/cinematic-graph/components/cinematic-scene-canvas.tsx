@@ -288,13 +288,7 @@ function circlePoints(radius: number, y: number, segments = 64): THREE.Vector3[]
   return points;
 }
 
-function ZoneRim({
-  zone,
-  reducedMotion,
-}: {
-  zone: SceneZone;
-  reducedMotion: boolean;
-}) {
+function ZoneRim({ zone, reducedMotion }: { zone: SceneZone; reducedMotion: boolean }) {
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const baseOpacity = ALERT_RIM_OPACITY[zone.alertLevel];
   const pulses = !reducedMotion && zone.alertLevel === 'critical';
@@ -791,16 +785,18 @@ function ThreatSigils({
       {/* Ember light for the fiercest breaches — capped so a mass compromise
           cannot melt the GPU with dynamic lights. */}
       {profile.glow
-        ? compromised.slice(0, 4).map((node) => (
-            <pointLight
-              key={`ember-${node.id}`}
-              position={[node.position.x, node.position.y + 26, node.position.z]}
-              intensity={7_000}
-              distance={210}
-              decay={2}
-              color={resolveThreeColor(STATUS_TINTS['compromised'] ?? '#ff7078').color}
-            />
-          ))
+        ? compromised
+            .slice(0, 4)
+            .map((node) => (
+              <pointLight
+                key={`ember-${node.id}`}
+                position={[node.position.x, node.position.y + 26, node.position.z]}
+                intensity={7_000}
+                distance={210}
+                decay={2}
+                color={resolveThreeColor(STATUS_TINTS['compromised'] ?? '#ff7078').color}
+              />
+            ))
         : null}
     </group>
   );
@@ -858,9 +854,12 @@ function RevealPulses({ nodes, reducedMotion }: { nodes: SceneNode[]; reducedMot
       }
       if (spawned.length > 0) {
         setPulses((current) => [...current, ...spawned].slice(-12));
-        const timer = setTimeout(() => {
-          setPulses((current) => current.filter((pulse) => !spawned.includes(pulse)));
-        }, REVEAL_SECONDS * 1000 + 400);
+        const timer = setTimeout(
+          () => {
+            setPulses((current) => current.filter((pulse) => !spawned.includes(pulse)));
+          },
+          REVEAL_SECONDS * 1000 + 400,
+        );
         previousRef.current = next;
         return () => {
           clearTimeout(timer);
@@ -1119,9 +1118,7 @@ function SceneAtmosphere({ zones }: { zones: SceneZone[] }) {
       return 640;
     }
     return (
-      Math.max(
-        ...zones.map((zone) => Math.hypot(zone.center.x, zone.center.z) + zone.radius),
-      ) + 150
+      Math.max(...zones.map((zone) => Math.hypot(zone.center.x, zone.center.z) + zone.radius)) + 150
     );
   }, [zones]);
 
@@ -1246,11 +1243,7 @@ export function CinematicSceneCanvas({
         />
         <ambientLight intensity={0.32} />
         <hemisphereLight
-          args={[
-            resolveThreeColor('#3d4c66').color,
-            resolveThreeColor('#05070c').color,
-            0.9,
-          ]}
+          args={[resolveThreeColor('#3d4c66').color, resolveThreeColor('#05070c').color, 0.9]}
         />
         <directionalLight
           position={[420, 700, 260]}
@@ -1269,7 +1262,12 @@ export function CinematicSceneCanvas({
         <SceneEdges edges={edges} nodes={nodes} profile={profile} flowProfile={flowProfile} />
         <NodePylons nodes={nodes} />
         <RiskAndSelectionAccents nodes={nodes} profile={profile} />
-        <NodeCity nodes={nodes} profile={profile} onSelect={onSelectNode} onHover={setHoveredNodeId} />
+        <NodeCity
+          nodes={nodes}
+          profile={profile}
+          onSelect={onSelectNode}
+          onHover={setHoveredNodeId}
+        />
         <ThreatSigils nodes={nodes} profile={profile} reducedMotion={reducedMotion} />
         <RevealPulses nodes={nodes} reducedMotion={reducedMotion} />
         <SceneLabels nodes={nodes} hoveredNodeId={hoveredNodeId} />

@@ -34,8 +34,7 @@ export function detectRevealTransitions(
     }
     const fogLifted = !before.disclosed && disclosed && node.status !== 'normal';
     const escalated =
-      before.status === 'normal' &&
-      (node.status === 'compromised' || node.status === 'suspicious');
+      before.status === 'normal' && (node.status === 'compromised' || node.status === 'suspicious');
     if (fogLifted || escalated) {
       revealedNodeIds.push(node.id);
     }

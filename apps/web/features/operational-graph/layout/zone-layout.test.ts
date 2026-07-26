@@ -37,11 +37,7 @@ function silentRelayShapedNodes(): GraphNodeV1[] {
   ];
   return zones.flatMap((zone, zoneIndex) =>
     Array.from({ length: 5 }, (_, nodeIndex) =>
-      makeNode(
-        `asset:z${String(zoneIndex)}-n${String(nodeIndex)}`,
-        zone,
-        0.9 - nodeIndex * 0.1,
-      ),
+      makeNode(`asset:z${String(zoneIndex)}-n${String(nodeIndex)}`, zone, 0.9 - nodeIndex * 0.1),
     ),
   );
 }

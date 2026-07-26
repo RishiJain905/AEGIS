@@ -17,10 +17,7 @@ export type EdgeArcKind = 'intra' | 'inter';
 const INTRA_SEGMENTS = 10;
 const INTER_SEGMENTS = 22;
 
-export function edgeArcKind(
-  sourceZoneId: string | null,
-  targetZoneId: string | null,
-): EdgeArcKind {
+export function edgeArcKind(sourceZoneId: string | null, targetZoneId: string | null): EdgeArcKind {
   if (sourceZoneId !== null && sourceZoneId === targetZoneId) {
     return 'intra';
   }

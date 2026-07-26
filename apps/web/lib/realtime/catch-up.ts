@@ -12,10 +12,9 @@ export async function fetchRunEvents(
     from_sequence: String(fromSequence),
     limit: '500',
   });
-  const response = await apiFetch(
-    `/api/v1/realtime/runs/${runId}/events?${params.toString()}`,
-    { signal },
-  );
+  const response = await apiFetch(`/api/v1/realtime/runs/${runId}/events?${params.toString()}`, {
+    signal,
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch run events: ${String(response.status)}`);
   }
