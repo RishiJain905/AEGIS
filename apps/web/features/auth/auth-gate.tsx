@@ -13,20 +13,24 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const isPublic = PUBLIC_PATHS.has(pathname);
 
+  // Only a definitive "you are not signed in" answer from the server may
+  // redirect. A failed request (429, 5xx, network blip) leaves the session
+  // unknown — bouncing on that logged operators out on every rate-limited
+  // refresh.
+  const isSignedOut = auth.sessionStatus === 'unauthenticated';
+
   useEffect(() => {
-    if (auth.isLoading || isPublic) {
+    if (isPublic || !isSignedOut) {
       return;
     }
-    if (!auth.isAuthenticated) {
-      router.replace('/sign-in');
-    }
-  }, [auth.isAuthenticated, auth.isLoading, isPublic, router]);
+    router.replace('/sign-in');
+  }, [isSignedOut, isPublic, router]);
 
   if (isPublic) {
     return children;
   }
 
-  if (auth.isLoading) {
+  if (auth.sessionStatus === 'loading') {
     return (
       <div
         className="flex min-h-screen items-center justify-center"
@@ -37,7 +41,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!auth.isAuthenticated) {
+  if (isSignedOut) {
     return (
       <div
         className="flex min-h-screen items-center justify-center"
@@ -48,5 +52,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     );
   }
 
+  // 'authenticated' or 'unknown' — when the session state is unknown, keep the
+  // app rendered rather than tearing it down over a transient failure.
   return children;
 }

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
 
 import {
+  ContractValidationError,
   authSessionResponseSchema,
   parseContract,
   type AuthSessionResponseV1,
@@ -11,15 +12,54 @@ import {
   type PermissionV1,
 } from '@aegis/contracts-ts';
 
+import { ApiClientError } from '@/lib/api';
 import { apiFetchJson, setMemoryCsrfToken } from '@/lib/api/auth-fetch';
 
 const AUTH_SESSION_KEY = ['auth', 'session'] as const;
+const MAX_SESSION_RETRIES = 4;
+
+/**
+ * Whether the session is known to be signed in, known to be signed out, or
+ * simply unknown because the request never produced an answer. Only a definite
+ * `unauthenticated` may bounce an operator to the sign-in page — a 429 or a
+ * network blip must not.
+ */
+export type SessionStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'unknown';
+
+/** A 401/403 is the server's answer, not a failed request. */
+function isUnauthorizedError(error: unknown): boolean {
+  return error instanceof ApiClientError && (error.status === 401 || error.status === 403);
+}
+
+function shouldRetrySession(failureCount: number, error: unknown): boolean {
+  if (failureCount >= MAX_SESSION_RETRIES) {
+    return false;
+  }
+  if (error instanceof ContractValidationError) {
+    // A schema mismatch is deterministic; retrying only burns rate limit.
+    return false;
+  }
+  if (error instanceof ApiClientError) {
+    if (isUnauthorizedError(error)) {
+      return false;
+    }
+    return error.status === 429 || error.status >= 500;
+  }
+  // No response reached us at all (network/CORS/abort): the session state is
+  // unknown, so keep trying rather than declaring the operator signed out.
+  return true;
+}
+
+function sessionRetryDelayMs(attemptIndex: number): number {
+  return Math.min(30_000, 500 * 2 ** attemptIndex);
+}
 
 interface AuthContextValue {
   session: AuthSessionResponseV1 | undefined;
   actor: AuthenticatedActorV1 | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  sessionStatus: SessionStatus;
   hasPermission: (permission: PermissionV1) => boolean;
   hasRole: (role: string) => boolean;
   refresh: () => Promise<void>;
@@ -53,7 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: AUTH_SESSION_KEY,
     queryFn: fetchSession,
     staleTime: 30_000,
-    retry: false,
+    retry: shouldRetrySession,
+    retryDelay: sessionRetryDelayMs,
   });
 
   const logoutMutation = useMutation({
@@ -120,6 +161,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const actor = sessionQuery.data?.actor ?? null;
+  const isAuthenticated = Boolean(sessionQuery.data?.authenticated && actor);
+
+  const sessionStatus = ((): SessionStatus => {
+    // A previously loaded session outranks a failed refetch.
+    if (sessionQuery.data) {
+      return isAuthenticated ? 'authenticated' : 'unauthenticated';
+    }
+    if (isUnauthorizedError(sessionQuery.error)) {
+      return 'unauthenticated';
+    }
+    if (sessionQuery.isLoading) {
+      return 'loading';
+    }
+    return sessionQuery.isError ? 'unknown' : 'loading';
+  })();
 
   const hasPermission = useCallback(
     (permission: PermissionV1) => {
@@ -146,7 +202,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session: sessionQuery.data,
       actor,
       isLoading: sessionQuery.isLoading,
-      isAuthenticated: Boolean(sessionQuery.data?.authenticated && actor),
+      isAuthenticated,
+      sessionStatus,
       hasPermission,
       hasRole,
       refresh: async () => {
@@ -167,6 +224,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }),
     [
       actor,
+      isAuthenticated,
+      sessionStatus,
       hasPermission,
       hasRole,
       logoutMutation,

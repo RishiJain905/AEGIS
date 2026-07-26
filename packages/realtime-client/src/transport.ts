@@ -21,6 +21,21 @@ export interface RealtimeTransportOptions {
   token?: string;
   autoReconnect?: boolean;
   reconnectBackoff?: ReconnectBackoffOptions;
+  /**
+   * How long a connection must survive after `hello_ack` before it counts as
+   * stable and the reconnect backoff counter is reset. Resetting on the
+   * handshake alone pins a flapping endpoint at the minimum delay forever.
+   */
+  stableConnectionMs?: number;
+  /**
+   * Resolves a fresh auth token for every connection attempt. Required for
+   * credentials that expire: the WebSocket ticket is single-shot with a
+   * 5-minute TTL, so replaying the token captured at construction time makes
+   * every reconnect after that window fail with `SESSION_EXPIRED` forever.
+   * Takes precedence over `token`; a rejection or an empty result fails the
+   * attempt and falls through to the normal backoff.
+   */
+  getToken?: () => Promise<string | null>;
   WebSocketImpl?: typeof WebSocket;
 }
 
@@ -29,12 +44,29 @@ export type RealtimeTransportEventMap = {
   event: RealtimeMessageEnvelopeV1;
   error: { code: string; message: string };
   snapshot_required: WebSocketSnapshotRequiredPayloadV1;
-  resync_complete: { runId: string; toSequence: number; eventsDelivered: number };
+  resync_complete: {
+    runId: string;
+    toSequence: number;
+    eventsDelivered: number;
+  };
   warning: { code: string; message: string };
 };
 
 type EventKey = keyof RealtimeTransportEventMap;
 type EventHandler<K extends EventKey> = (payload: RealtimeTransportEventMap[K]) => void;
+
+/** `WebSocket.OPEN`, inlined so the transport does not depend on a global. */
+const WEBSOCKET_OPEN = 1;
+
+/** A connection has to hold this long past `hello_ack` before backoff resets. */
+const DEFAULT_STABLE_CONNECTION_MS = 10_000;
+
+/**
+ * Ceiling on the backoff exponent. `computeReconnectDelayMs` already clamps to
+ * `maxDelayMs`; capping the counter keeps the exponent finite so a permanently
+ * broken endpoint settles at the maximum delay instead of overflowing.
+ */
+const MAX_RECONNECT_ATTEMPT = 12;
 
 function newTraceId(): string {
   const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -66,6 +98,7 @@ export class RealtimeTransport {
   private state: RealtimeConnectionState = 'disconnected';
   private reconnectAttempt = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private stabilityTimer: ReturnType<typeof setTimeout> | null = null;
   private intentionalClose = false;
   private cursors = new Map<string, SubscriptionCursor>();
   private seenEventIds = new Set<string>();
@@ -89,12 +122,19 @@ export class RealtimeTransport {
 
   async connect(): Promise<void> {
     this.intentionalClose = false;
-    await this.openSocket(false);
+    try {
+      await this.openSocket(false);
+    } catch {
+      // A failed initial connection is reported through `connection_state`; it
+      // must never reject into the caller's render/effect path.
+      this.handleOpenFailure();
+    }
   }
 
   disconnect(): void {
     this.intentionalClose = true;
     this.clearReconnectTimer();
+    this.clearStabilityTimer();
     this.socket?.close();
     this.socket = null;
     this.setState('closed');
@@ -103,7 +143,7 @@ export class RealtimeTransport {
   subscribe(cursor: SubscriptionCursor): void {
     const key = `${cursor.runId}:${cursor.channel}`;
     this.cursors.set(key, { ...cursor });
-    if (this.socket?.readyState === WebSocket.OPEN) {
+    if (this.socket?.readyState === WEBSOCKET_OPEN) {
       this.sendFrame('subscribe', {
         runId: cursor.runId,
         channel: cursor.channel,
@@ -112,18 +152,60 @@ export class RealtimeTransport {
     }
   }
 
+  /**
+   * Resolve the credential for a single attempt. Throwing here is the same
+   * class of failure as a socket that will not open: the caller routes it into
+   * `handleOpenFailure`, so a temporarily unreachable ticket endpoint keeps
+   * retrying on the backoff instead of wedging the transport.
+   */
+  private async resolveAuthToken(): Promise<string | null> {
+    const provider = this.options.getToken;
+    if (!provider) {
+      return this.options.token ?? null;
+    }
+    const token = await provider();
+    if (!token) {
+      throw new Error('Realtime auth token provider returned no token');
+    }
+    return token;
+  }
+
   private async openSocket(isReconnect: boolean): Promise<void> {
     this.setState(isReconnect ? 'reconnecting' : 'connecting');
+    // Resolved before the socket exists so a credential failure never leaves a
+    // half-open connection behind.
+    const authToken = await this.resolveAuthToken();
+    if (this.intentionalClose) {
+      // Torn down while the credential was in flight; opening now would leak a
+      // socket nobody owns.
+      return;
+    }
     const WebSocketImpl = this.options.WebSocketImpl ?? WebSocket;
     const socket = new WebSocketImpl(this.options.url);
     this.socket = socket;
 
     await new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const settleResolve = (): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve();
+      };
+      const settleReject = (error: Error): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        reject(error);
+      };
+
       socket.onopen = () => {
         this.sendRaw(
           this.buildFrame('hello', {
             protocolVersion: PROTOCOL_VERSION_V1,
-            authToken: this.options.token ?? null,
+            authToken,
           }),
         );
       };
@@ -131,23 +213,30 @@ export class RealtimeTransport {
       socket.onmessage = (event) => {
         try {
           const frame = parseContract(websocketFrameSchema, JSON.parse(String(event.data)));
-          this.handleFrame(frame, resolve);
+          this.handleFrame(frame, settleResolve);
         } catch (error) {
-          reject(error instanceof Error ? error : new Error(String(error)));
+          settleReject(error instanceof Error ? error : new Error(String(error)));
         }
       };
 
       socket.onerror = () => {
-        reject(new Error('WebSocket connection failed'));
+        settleReject(new Error('WebSocket connection failed'));
       };
 
       socket.onclose = () => {
-        this.socket = null;
+        this.clearStabilityTimer();
+        if (this.socket === socket) {
+          this.socket = null;
+        }
         if (this.intentionalClose) {
           this.setState('closed');
+          settleResolve();
           return;
         }
         this.scheduleReconnect();
+        // Always settle: a socket that dies before `hello_ack` used to leave
+        // this promise (and therefore `connect()`) pending forever.
+        settleResolve();
       };
     });
   }
@@ -155,8 +244,8 @@ export class RealtimeTransport {
   private handleFrame(frame: WebSocketFrameV1, onConnected: () => void): void {
     switch (frame.messageType) {
       case 'hello_ack':
-        this.reconnectAttempt = 0;
         this.setState('connected');
+        this.startStabilityTimer();
         onConnected();
         for (const cursor of this.cursors.values()) {
           this.sendFrame('subscribe', {
@@ -220,7 +309,10 @@ export class RealtimeTransport {
       }
       case 'warning': {
         const warningPayload = parseContract(websocketWarningPayloadSchema, frame.payload);
-        this.emit('warning', { code: warningPayload.code, message: warningPayload.message });
+        this.emit('warning', {
+          code: warningPayload.code,
+          message: warningPayload.message,
+        });
         return;
       }
       default:
@@ -228,18 +320,62 @@ export class RealtimeTransport {
     }
   }
 
+  /**
+   * Reset the backoff only once a connection has proven itself. A handshake
+   * that succeeds and then drops a moment later is not a healthy connection —
+   * treating it as one pins the delay at the floor and turns a flapping
+   * endpoint into a request storm.
+   */
+  private startStabilityTimer(): void {
+    this.clearStabilityTimer();
+    const stableAfterMs = this.options.stableConnectionMs ?? DEFAULT_STABLE_CONNECTION_MS;
+    if (stableAfterMs <= 0) {
+      this.reconnectAttempt = 0;
+      return;
+    }
+    this.stabilityTimer = setTimeout(() => {
+      this.stabilityTimer = null;
+      this.reconnectAttempt = 0;
+    }, stableAfterMs);
+  }
+
+  /**
+   * Recover from an `openSocket` rejection. If the socket is still around (an
+   * unparseable frame rather than a dead connection) close it first so exactly
+   * one retry is scheduled, from `onclose`.
+   */
+  private handleOpenFailure(): void {
+    const socket = this.socket;
+    if (socket) {
+      socket.close();
+      return;
+    }
+    this.scheduleReconnect();
+  }
+
   private scheduleReconnect(): void {
-    if (!this.options.autoReconnect || this.intentionalClose) {
+    if (this.intentionalClose) {
+      // disconnect() already published 'closed'; a late failure from an
+      // in-flight attempt must not resurrect the connection or the state.
+      return;
+    }
+    if (!this.options.autoReconnect) {
       this.setState('disconnected');
       return;
     }
-    this.reconnectAttempt += 1;
+    if (this.reconnectTimer !== null) {
+      // A retry is already pending for this connection cycle. Sockets commonly
+      // report `error` and `close` for the same failure; only one of those may
+      // advance the attempt counter.
+      return;
+    }
+    this.reconnectAttempt = Math.min(this.reconnectAttempt + 1, MAX_RECONNECT_ATTEMPT);
     const delay = computeReconnectDelayMs(this.reconnectAttempt, this.options.reconnectBackoff);
     this.setState('reconnecting');
-    this.clearReconnectTimer();
     this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
       void this.openSocket(true).catch(() => {
-        this.scheduleReconnect();
+        this.handleOpenFailure();
       });
     }, delay);
   }
@@ -248,6 +384,13 @@ export class RealtimeTransport {
     if (this.reconnectTimer !== null) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
+    }
+  }
+
+  private clearStabilityTimer(): void {
+    if (this.stabilityTimer !== null) {
+      clearTimeout(this.stabilityTimer);
+      this.stabilityTimer = null;
     }
   }
 
@@ -272,7 +415,7 @@ export class RealtimeTransport {
   }
 
   private sendRaw(raw: string): void {
-    if (this.socket?.readyState === WebSocket.OPEN) {
+    if (this.socket?.readyState === WEBSOCKET_OPEN) {
       this.socket.send(raw);
     }
   }

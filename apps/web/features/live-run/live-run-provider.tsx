@@ -428,10 +428,22 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         return;
       }
 
+      // WebSocket tickets are single-shot and expire after 5 minutes, so every
+      // attempt has to mint its own. The pre-flight ticket above (which is what
+      // surfaces an initial failure as DISCONNECTED) is spent on the first
+      // attempt; reconnects fetch a fresh one.
+      let preflightTicket: string | null = ticket;
       const transport = new RealtimeTransport({
         url: getWsUrl(),
-        token: ticket,
         autoReconnect: true,
+        getToken: async () => {
+          if (preflightTicket !== null) {
+            const spent = preflightTicket;
+            preflightTicket = null;
+            return spent;
+          }
+          return fetchWsTicket();
+        },
       });
       transportRef.current = transport;
 
