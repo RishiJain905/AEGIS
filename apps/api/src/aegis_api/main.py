@@ -27,6 +27,7 @@ from aegis_api.db.session import get_db_session_maker, init_db, shutdown_db
 from aegis_api.detection.observability import router as detection_observability_router
 from aegis_api.detection.router import router as detection_router
 from aegis_api.directives.router import router as directives_router
+from aegis_api.errors import UnhandledErrorMiddleware
 from aegis_api.features.observability import router as feature_observability_router
 from aegis_api.features.router import router as features_router
 from aegis_api.ghost.router import router as ghost_router
@@ -123,6 +124,11 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.state.settings = resolved_settings
     app.state.gateway = gateway
 
+    # Added first, so it ends up innermost: `add_middleware` prepends, and this has to sit
+    # *below* CORS for an unhandled 500 to come back out through the CORS layer and pick up
+    # its Access-Control-Allow-Origin header. Without that the browser drops the response and
+    # the operator sees a network error instead of the failure.
+    app.add_middleware(UnhandledErrorMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=resolved_settings.cors_allowed_origins,
