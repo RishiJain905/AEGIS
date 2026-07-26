@@ -31,6 +31,7 @@ import { zoneLabelFromClusterId, UNZONED_CLUSTER_ID } from '../layout/zone-layou
 import { drawAegisNodeHover, drawAegisNodeLabel } from '../rendering/aegis-canvas-renderers';
 import { rollupZoneThreat, ZoneOverlay, type ZoneRenderState } from '../rendering/zone-overlay';
 import { SignalOverlay, type NodeSignal, type SignalStatus } from '../rendering/signal-overlay';
+import { LabelTopcoat } from '../rendering/label-topcoat';
 import {
   AliveEdgeArrowProgram,
   AliveEdgeLineProgram,
@@ -124,6 +125,7 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
   private flowFrameHandle: number | null = null;
   private zoneOverlay: ZoneOverlay | null = null;
   private signalOverlay: SignalOverlay | null = null;
+  private labelTopcoat: LabelTopcoat | null = null;
   private revealState: Map<string, NodeRevealState> | null = null;
   private lastRevealedNodeIds: string[] = [];
 
@@ -176,11 +178,13 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
       },
     });
     // Overlay layers (zone hulls under edges, status/reveal signals under
-    // nodes). Guarded so renderer test doubles without the layer API still
-    // exercise the adapter's projection logic.
+    // nodes, label topcoat above everything). Guarded so renderer test
+    // doubles without the layer API still exercise the adapter's
+    // projection logic.
     if (typeof this.sigma.createCanvas === 'function') {
       this.zoneOverlay = new ZoneOverlay(this.sigma, this.graph);
       this.signalOverlay = new SignalOverlay(this.sigma, this.graph, this.reducedMotion);
+      this.labelTopcoat = new LabelTopcoat(this.sigma);
     }
     this.syncFlowDriver();
     return this.sigma;
@@ -604,6 +608,8 @@ export class SigmaOperationalGraphAdapter implements OperationalGraphAdapter {
     this.zoneOverlay = null;
     this.signalOverlay?.dispose();
     this.signalOverlay = null;
+    this.labelTopcoat?.dispose();
+    this.labelTopcoat = null;
     this.revealState = null;
     this.lastRevealedNodeIds = [];
     if (this.sigma) {

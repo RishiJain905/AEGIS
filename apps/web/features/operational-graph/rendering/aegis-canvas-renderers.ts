@@ -143,7 +143,7 @@ export const drawAegisNodeLabel: NodeLabelDrawingFunction = (context, rawData, s
   context.restore();
 };
 
-export const drawAegisNodeHover: NodeHoverDrawingFunction = (context, rawData, settings) => {
+export const drawAegisNodeHover: NodeHoverDrawingFunction = (context, rawData) => {
   const data = rawData as typeof rawData & AegisNodeCanvasData;
   const radius = rawData.size + 4;
   const riskEmphasized = data.riskBand === 'high' || data.riskBand === 'critical';
@@ -219,7 +219,10 @@ export const drawAegisNodeHover: NodeHoverDrawingFunction = (context, rawData, s
   }
   context.restore();
 
-  if (data.showHoverLabel || data.selected || data.hovered) {
-    drawAegisNodeLabel(context, rawData, settings);
-  }
+  // Labels are no longer drawn from here: this hover pass runs on Sigma's
+  // 'hovers'/'hoverNodes' layers, which sit above the 'labels' canvas and
+  // (for hoverNodes) get a full WebGL node-body redraw on top of any
+  // overlapping label text. LabelTopcoat repaints every currently-displayed
+  // label on a canvas above all of that instead, so labels always win
+  // regardless of which nodes Sigma or this function draws on top of.
 };
