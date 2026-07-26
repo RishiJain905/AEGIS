@@ -26,11 +26,13 @@ from aegis_agents.runtime.registry import (
     AgentDefinitionRegistry,
     build_definition,
 )
+from aegis_agents.runtime.run_state import summarize_run_state
 from aegis_agents.runtime.session_service import AgentSessionService, _run_sim_time
 from aegis_agents.runtime.state_machine import can_transition
 from aegis_agents.security.scenario_content import (
     build_commander_intent_message,
     build_operator_directive_message,
+    build_run_state_message,
     build_scenario_data_message,
     build_session_history_message,
 )
@@ -491,23 +493,43 @@ class TaskExecutor:
             # directive, and pin the compact output shape for the chat.
             user_prompt = (
                 f"Act as {session.role.value} for the current live run. Address the "
-                "operator's directive using the run's alerts, telemetry, and evidence. "
-                "Return grounded structured output: a concise rationale, a confidence "
-                "in [0,1], evidence citations for any factual claim, and any tool "
-                "requests you need."
+                "operator's directive using the AEGIS_RUN_STATE snapshot below, which "
+                "lists the run's alerts, incidents, and evidence as they stand now. "
+                "Answer from that snapshot; do not report that something is absent "
+                "unless its list there is empty. Return grounded structured output: a "
+                "concise rationale, a confidence in [0,1], evidence citations for any "
+                "factual claim, and any tool requests you need."
             )
 
         # Scenario-data grounding: an incident title when incident-scoped, or a
-        # run-scoped note (no incident opened yet) so the agent knows to sweep
-        # run-level telemetry rather than assume an incident context exists.
+        # pointer to the run-state snapshot when run-scoped.
+        #
+        # This block used to be the ONLY grounding a run-scoped turn received, and
+        # it asserted "No incident has been opened yet" with no run data attached.
+        # Since generation is single-shot (model tool requests run after the reply
+        # and never feed back), an operator asking "summarise the current alerts"
+        # got a context whose one concrete statement was an assertion of absence,
+        # and correctly answered that there was nothing to triage while the run had
+        # live alerts. The snapshot below is what actually grounds the turn.
+        run_state_message = None
         if run_scoped:
+            alerts = await uow.alerts.list_by_run(run_id)
+            incidents = await uow.incidents.list_by_run(run_id)
+            run_state_message = build_run_state_message(
+                summarize_run_state(
+                    run_id=run_id,
+                    alerts=alerts,
+                    incidents=incidents,
+                    evidence=evidence,
+                )
+            )
             scenario_data = build_scenario_data_message(
                 {
                     "scope": "run",
                     "runId": run_id,
                     "note": (
-                        "No incident has been opened yet. Work from run-level "
-                        "alerts, telemetry, and evidence."
+                        "The AEGIS_RUN_STATE block below is the authoritative "
+                        "snapshot of this run. Ground every claim in it."
                     ),
                 }
             )
@@ -527,6 +549,8 @@ class TaskExecutor:
             ),
             scenario_data,
         ]
+        if run_state_message is not None:
+            messages.append(run_state_message)
         # Commander's intent (run-wide operator priorities) steers WHAT every role
         # prioritises for the whole engagement — applied to all roles, run-scoped and
         # incident-scoped alike. Untrusted, non-authoritative free text, delimited like
