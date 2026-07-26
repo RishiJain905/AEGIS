@@ -27,7 +27,13 @@ export const queryKeys = {
   },
   agentSessions: {
     detail: (sessionId: string) => ['agent-sessions', sessionId] as const,
-    listForRun: (runId: string) => ['runs', runId, 'agent-sessions'] as const,
+    // The origin filter is an optional suffix on the unfiltered key, so invalidating
+    // `listForRun(runId)` — what the realtime `agent.*` handler does — prefix-matches
+    // and refreshes the filtered variants too.
+    listForRun: (runId: string, origin?: string) =>
+      origin === undefined
+        ? (['runs', runId, 'agent-sessions'] as const)
+        : (['runs', runId, 'agent-sessions', origin] as const),
   },
   connection: {
     status: ['connection', 'status'] as const,

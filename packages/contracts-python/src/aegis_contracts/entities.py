@@ -99,8 +99,8 @@ class RulesOfEngagementV1(StrEnum):
 
 
 class AutonomyInitiatorV1(StrEnum):
-    """Who originated an agent task, so the UI can distinguish autonomous initiative
-    from operator tasking."""
+    """Who originated an agent task or session, so the UI can distinguish autonomous
+    initiative from operator tasking."""
 
     OPERATOR = "operator"
     AUTONOMY = "autonomy"
@@ -359,6 +359,13 @@ class AgentSessionV1(BaseModel):
     incident_id: IncidentId | None = Field(default=None, alias="incidentId")
     role: AgentRole
     state: AgentSessionState
+    # Who opened the thread. Operator sessions are the copilot/console conversations a
+    # human started; autonomy sessions are the background triage threads the agent-runtime
+    # worker opens on its own (WATCHTOWER sweeps, bias-guard checks). Server-determined at
+    # creation from the call site — deliberately NOT part of the create request, so a
+    # client cannot claim to be either one. Defaults to operator so sessions persisted
+    # before this field existed read back as operator threads.
+    origin: AutonomyInitiatorV1 = Field(default=AutonomyInitiatorV1.OPERATOR)
     trace_id: TraceId = Field(alias="traceId")
     created_at: UtcTimestamp = Field(alias="createdAt")
     updated_at: UtcTimestamp = Field(alias="updatedAt")

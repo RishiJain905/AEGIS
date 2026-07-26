@@ -8,6 +8,7 @@ import {
   agentSessionDetailSchema,
   parseContract,
   type AgentSessionDetailV1,
+  type AutonomyInitiatorV1,
 } from '@aegis/contracts-ts';
 
 import { apiFetch } from '@/lib/api/auth-fetch';
@@ -72,12 +73,21 @@ function hasInFlightTask(details: AgentSessionDetailV1[] | undefined): boolean {
   );
 }
 
-/** Fetch every agent session anchored to a run (restores all chat threads). */
-export function useRunAgentSessions(runId: string) {
+/**
+ * Fetch the agent sessions anchored to a run (restores the chat threads).
+ *
+ * Pass `origin: 'operator'` for anything showing the operator's own conversations —
+ * otherwise the autonomy worker's background triage threads (WATCHTOWER sweeps,
+ * bias-guard checks) come back too, and the operator sees sessions they never started
+ * plus a permanent "Working…" from tasks that aren't theirs. Consumers that genuinely
+ * want autonomous activity (the hypothesis ledger's bias-guard findings) omit it.
+ */
+export function useRunAgentSessions(runId: string, origin?: AutonomyInitiatorV1) {
   return useQuery({
-    queryKey: queryKeys.agentSessions.listForRun(runId),
+    queryKey: queryKeys.agentSessions.listForRun(runId, origin),
     queryFn: async ({ signal }): Promise<AgentSessionDetailV1[]> => {
-      const response = await apiFetch(`/api/v1/runs/${runId}/agent-sessions`, { signal });
+      const query = origin ? `?origin=${origin}` : '';
+      const response = await apiFetch(`/api/v1/runs/${runId}/agent-sessions${query}`, { signal });
       if (!response.ok) {
         throw new ApiClientError({
           code: 'HTTP_ERROR',

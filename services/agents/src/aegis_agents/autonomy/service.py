@@ -275,6 +275,10 @@ class AutonomyTriageService:
                 trace_id=new_runtime_id("trc"),
                 enqueue_initial_task=False,
             ),
+            # Background triage the worker opened on its own initiative. Marking the
+            # session (not just its tasks) keeps these threads out of the operator's
+            # copilot, which otherwise showed conversations nobody started.
+            origin=AutonomyInitiatorV1.AUTONOMY,
         )
         self._session_ids[key] = session.id
         return session.id

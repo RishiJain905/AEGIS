@@ -12,7 +12,7 @@ from aegis_agents.runtime.events import (
 from aegis_agents.runtime.ids import new_agent_session_id, new_runtime_id, new_transition_id
 from aegis_agents.runtime.registry import DEFAULT_AGENT_REGISTRY, AgentDefinitionRegistry
 from aegis_agents.runtime.state_machine import assert_transition
-from aegis_contracts import AgentSessionState, AgentSessionV1
+from aegis_contracts import AgentSessionState, AgentSessionV1, AutonomyInitiatorV1
 from aegis_contracts.agent_runtime import (
     AgentSessionDetailV1,
     AgentStateTransitionV1,
@@ -47,6 +47,7 @@ class AgentSessionService:
         *,
         incident_id: str,
         request: CreateAgentSessionRequestV1,
+        origin: AutonomyInitiatorV1 = AutonomyInitiatorV1.OPERATOR,
     ) -> AgentSessionV1:
         """Create an incident-scoped session (run_id derived from the incident)."""
         incident = await uow.incidents.get_by_id(incident_id)
@@ -61,6 +62,7 @@ class AgentSessionService:
             run_id=incident.run_id,
             incident_id=incident_id,
             request=request,
+            origin=origin,
         )
 
     async def create_run_session(
@@ -69,6 +71,7 @@ class AgentSessionService:
         *,
         run_id: str,
         request: CreateAgentSessionRequestV1,
+        origin: AutonomyInitiatorV1 = AutonomyInitiatorV1.OPERATOR,
     ) -> AgentSessionV1:
         """Create a run-scoped session (no incident yet). See ADR 0035.
 
@@ -77,7 +80,7 @@ class AgentSessionService:
         which resolve+authorize the run before invoking service logic.
         """
         return await self._create(
-            uow, run_id=run_id, incident_id=None, request=request
+            uow, run_id=run_id, incident_id=None, request=request, origin=origin
         )
 
     async def _create(
@@ -87,6 +90,7 @@ class AgentSessionService:
         run_id: str,
         incident_id: str | None,
         request: CreateAgentSessionRequestV1,
+        origin: AutonomyInitiatorV1 = AutonomyInitiatorV1.OPERATOR,
     ) -> AgentSessionV1:
         definition = self._registry.get(request.role)
         if request.provider_id:
@@ -99,6 +103,7 @@ class AgentSessionService:
             incident_id=incident_id,
             role=request.role,
             state=AgentSessionState.QUEUED,
+            origin=origin,
             trace_id=request.trace_id,
             created_at=now,
             updated_at=now,
@@ -136,10 +141,21 @@ class AgentSessionService:
         )
 
     async def list_details_for_run(
-        self, uow: PostgresUnitOfWork, run_id: str
+        self,
+        uow: PostgresUnitOfWork,
+        run_id: str,
+        *,
+        origin: AutonomyInitiatorV1 | None = None,
     ) -> list[AgentSessionDetailV1]:
-        """Full detail for every session anchored to ``run_id`` (chat restore)."""
+        """Full detail for every session anchored to ``run_id`` (chat restore).
+
+        ``origin`` narrows the list to operator threads or to autonomy-worker threads.
+        Filtering happens before hydration: a detail costs five extra queries, and an
+        active run accumulates far more autonomy triage sessions than operator ones.
+        """
         sessions = await uow.agent_sessions.list_for_run(run_id)
+        if origin is not None:
+            sessions = [session for session in sessions if session.origin == origin]
         return [await self.get_detail(uow, session.id) for session in sessions]
 
     async def transition(

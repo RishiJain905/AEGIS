@@ -304,6 +304,10 @@ export const agentSessionSchema = z
       'failed',
       'cancelled',
     ]),
+    // Who opened the thread: an operator (copilot/console) or the autonomy worker's own
+    // background triage. Server-determined at creation, not client-supplied. Defaults to
+    // operator so sessions persisted before this field existed read back as operator ones.
+    origin: autonomyInitiatorSchema.default('operator'),
     traceId: traceIdSchema,
     createdAt: utcTimestampSchema,
     updatedAt: utcTimestampSchema,

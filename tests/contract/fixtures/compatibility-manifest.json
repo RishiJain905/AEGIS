@@ -37,11 +37,11 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_session_detail_v1.schema.json",
-      "sha256": "a2351f5f8beeedb1d86ba957be5746aa8d2248c923edf7353a5561293f907c79"
+      "sha256": "6016d4a697f748b24bb5ce2585e5d54f458fa67c5f3ca85e8e7bb05fa240028c"
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_session_v1.schema.json",
-      "sha256": "c45bac8fd1daf97eabbc4cb133e916e17cca3f01fb2b90f81c0cc95d75e8f265"
+      "sha256": "31286b41ec3780c7ffc2a28259c7efe81f42960b4b4e56146400a21dc1688d12"
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_state_transition_v1.schema.json",
@@ -49,7 +49,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/agent_task_v1.schema.json",
-      "sha256": "9f390966c4baf96a4dff9accd52f8fa9d3a645b945620a7c08c00e71d95dd513"
+      "sha256": "22e5b2388767219032526833a9b37784adadbb9d8e9d2e0f6eddee3e526e8e06"
     },
     {
       "path": "tests/contract/fixtures/schemas/alert_v1.schema.json",
@@ -170,7 +170,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/create_agent_task_request_v1.schema.json",
-      "sha256": "b8e31148f041e5b085e6ace6128c353ce01c828f3edbbfc511a14431d14899f3"
+      "sha256": "6c25757e4ec57105bb1999755ed25a1ce9351a87b54d9925d23b8f674482b6a9"
     },
     {
       "path": "tests/contract/fixtures/schemas/create_directive_request_v1.schema.json",
@@ -680,7 +680,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/simulation_checkpoint_v1.schema.json",
-      "sha256": "0f33f6ef799c88b48f95d21c6f739a76073e12b50217514ce105979cd0b99bcb"
+      "sha256": "7410c1e608b3aef70ac27da8835c420040cc31924070165ce0136633c8e6f483"
     },
     {
       "path": "tests/contract/fixtures/schemas/simulation_command_v1.schema.json",
@@ -782,7 +782,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/world_state_snapshot_v1.schema.json",
-      "sha256": "e586b0c87b215855064b43b8ff47305262d8150b233d30b71942310835c886e0"
+      "sha256": "b99ff6cea70c77ed8e7fce88230d3735ee2e830708cd48c49b44e4d12da0e09c"
     },
     {
       "path": "tests/contract/fixtures/valid/action_proposal_v1.json",

@@ -15,7 +15,7 @@ from aegis_agents.tools.registry import DEFAULT_TOOL_REGISTRY
 from aegis_api.auth.deps import require_actor, require_permission
 from aegis_api.auth.run_authz import require_run_access
 from aegis_api.db.session import get_db_session_maker
-from aegis_contracts import AuthenticatedActorV1, PermissionV1
+from aegis_contracts import AuthenticatedActorV1, AutonomyInitiatorV1, PermissionV1
 from aegis_contracts.agent_runtime import (
     AgentSessionDetailV1,
     CreateAgentSessionRequestV1,
@@ -158,12 +158,18 @@ async def create_run_agent_session(
 async def list_run_agent_sessions(
     run_id: str,
     actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
+    origin: AutonomyInitiatorV1 | None = None,
 ) -> dict[str, object]:
-    """List every agent session anchored to ``run_id`` (restores chat threads)."""
+    """List the agent sessions anchored to ``run_id`` (restores chat threads).
+
+    ``?origin=operator`` returns only the threads a human started — what the copilot
+    renders. Omitting it returns every session including the autonomy worker's own
+    background triage, which the hypothesis ledger needs for bias-guard findings.
+    """
     sessions = AgentSessionService()
     async with PostgresUnitOfWork(get_db_session_maker()) as uow:
         await require_run_access(uow, run_id, actor)
-        details = await sessions.list_details_for_run(uow, run_id)
+        details = await sessions.list_details_for_run(uow, run_id, origin=origin)
     return {
         "sessions": [detail.model_dump(by_alias=True, mode="json") for detail in details]
     }

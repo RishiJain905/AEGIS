@@ -11,6 +11,7 @@ import os
 
 import pytest
 from aegis_agents.autonomy import AutonomyBudget, AutonomyTriageService
+from aegis_agents.runtime.session_service import AgentSessionService
 from aegis_contracts import AgentTaskStatus, AutonomyInitiatorV1, RulesOfEngagementV1
 from aegis_persistence.engine import create_engine, get_session_maker
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
@@ -56,6 +57,19 @@ async def test_new_alert_enqueues_autonomy_watchtower_task() -> None:
         assert task.initiator == AutonomyInitiatorV1.AUTONOMY
         assert task.status == AgentTaskStatus.QUEUED
         assert task.instructions is not None and "NO_CHANGE" in task.instructions
+
+        # The session itself is marked autonomy too, not just its tasks — that is what
+        # keeps this background thread out of the operator's copilot.
+        session = await uow.agent_sessions.get_by_id(service._session_ids[(run_id, "WATCHTOWER")])
+        assert session is not None
+        assert session.origin == AutonomyInitiatorV1.AUTONOMY
+
+        operator_only = await AgentSessionService().list_details_for_run(
+            uow, run_id, origin=AutonomyInitiatorV1.OPERATOR
+        )
+        assert all(detail.session.id != session.id for detail in operator_only)
+        unfiltered = await AgentSessionService().list_details_for_run(uow, run_id)
+        assert any(detail.session.id == session.id for detail in unfiltered)
 
 
 @pytest.mark.asyncio

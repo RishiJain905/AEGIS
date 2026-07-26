@@ -144,6 +144,10 @@
           "default": null,
           "title": "Incidentid"
         },
+        "origin": {
+          "$ref": "#/$defs/AutonomyInitiatorV1",
+          "default": "operator"
+        },
         "role": {
           "$ref": "#/$defs/AgentRole"
         },
@@ -397,7 +401,7 @@
       "type": "string"
     },
     "AutonomyInitiatorV1": {
-      "description": "Who originated an agent task, so the UI can distinguish autonomous initiative\nfrom operator tasking.",
+      "description": "Who originated an agent task or session, so the UI can distinguish autonomous\ninitiative from operator tasking.",
       "enum": ["operator", "autonomy"],
       "title": "AutonomyInitiatorV1",
       "type": "string"

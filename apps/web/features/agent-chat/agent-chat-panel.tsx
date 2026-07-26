@@ -209,7 +209,9 @@ export interface AgentChatPanelProps {
 }
 
 export function AgentChatPanel({ runId }: AgentChatPanelProps) {
-  const sessionsQuery = useRunAgentSessions(runId);
+  // Operator threads only — the autonomy worker's background triage sessions are not
+  // this conversation and must not appear in it.
+  const sessionsQuery = useRunAgentSessions(runId, 'operator');
   const sendMessage = useSendAgentMessage(runId);
   const reducedMotion = useReducedMotion();
 

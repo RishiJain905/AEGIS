@@ -77,7 +77,9 @@ export function useSitrepHistory(runId: string): {
   isLoading: boolean;
   isError: boolean;
 } {
-  const query = useRunAgentSessions(runId);
+  // SITREPs are operator-requested SCRIBE turns; share the copilot's operator-scoped
+  // query rather than pulling every autonomy triage session along with them.
+  const query = useRunAgentSessions(runId, 'operator');
 
   const sitreps = useMemo<Sitrep[]>(() => {
     const sessions: AgentSessionDetailV1[] = query.data ?? [];
@@ -172,7 +174,7 @@ async function appendScribeTask(
  */
 export function useRequestSitrep(runId: string) {
   const queryClient = useQueryClient();
-  const sessions = useRunAgentSessions(runId);
+  const sessions = useRunAgentSessions(runId, 'operator');
 
   return useMutation<boolean, ApiClientError>({
     mutationFn: async (): Promise<boolean> => {

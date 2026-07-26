@@ -92,6 +92,9 @@ export function useHypothesisLedger(runId: string): {
   isError: boolean;
 } {
   const hypotheses = useConsoleHypotheses(runId);
+  // Unfiltered on purpose: bias-guard challenges come from the autonomy worker's own
+  // ORACLE sessions, so narrowing this to operator threads would empty the ledger's
+  // CHALLENGED badges.
   const sessions = useRunAgentSessions(runId);
 
   const ledger = useMemo(

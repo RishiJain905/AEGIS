@@ -125,6 +125,24 @@ describe('AgentChatPanel', () => {
     expect(within(panel).getByText('evidence:evd_001')).toBeInTheDocument();
   });
 
+  it('asks only for operator-origin sessions', async () => {
+    // The autonomy worker opens its own run-scoped WATCHTOWER sessions for background
+    // triage. Without this filter the copilot rendered those as the operator's own
+    // conversation — threads nobody started, stuck on "Working…" — and, worse, sent
+    // follow-up messages into the newest one, which was usually an autonomy session.
+    apiFetch.mockResolvedValue(jsonResponse({ sessions: [watchtowerSessionDetail()] }));
+
+    renderPanel();
+    await screen.findByTestId('agent-chat-panel');
+
+    await waitFor(() => {
+      const getCall = apiFetch.mock.calls.find(
+        ([, init]) => ((init as RequestInit | undefined)?.method ?? 'GET') === 'GET',
+      );
+      expect(getCall?.[0]).toBe(`/api/v1/runs/${RUN_ID}/agent-sessions?origin=operator`);
+    });
+  });
+
   it('renders a failed turn honestly', async () => {
     apiFetch.mockResolvedValue(
       jsonResponse({
@@ -181,7 +199,9 @@ describe('AgentChatPanel', () => {
       if ((init?.method ?? 'GET') === 'GET') {
         calls += 1;
         const status = calls >= 2 ? 'completed' : 'running';
-        return Promise.resolve(jsonResponse({ sessions: [watchtowerSessionDetail({ taskStatus: status })] }));
+        return Promise.resolve(
+          jsonResponse({ sessions: [watchtowerSessionDetail({ taskStatus: status })] }),
+        );
       }
       return Promise.resolve(jsonResponse(watchtowerSessionDetail()));
     });
