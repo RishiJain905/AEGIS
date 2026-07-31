@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Button, cn, typographyTokens } from '@aegis/ui';
 
 import type { TutorialChapter } from '../tutorial-contract';
+import type { ObjectiveAuditEntry } from '../tutorial-machine';
 
 /** Where a chapter sits relative to the operator's furthest progress. */
 export type ChapterProgressState = 'complete' | 'current' | 'started' | 'upcoming';
@@ -18,6 +19,13 @@ interface ChapterEntry {
   state: ChapterProgressState;
   /** How many of the chapter's beats the operator has reached. */
   beatsVisited: number;
+  /**
+   * Whether a beat the operator has actually reached in this chapter has an objective that
+   * is still `skipped` or `unmet` — see BUG-006's "unresolved marker in the chapter list".
+   * Never true for `upcoming` chapters: an objective nobody has reached yet is not unresolved,
+   * it just hasn't come up.
+   */
+  hasUnresolvedObjective: boolean;
 }
 
 export interface ChapterMenuProps {
@@ -26,6 +34,8 @@ export interface ChapterMenuProps {
   activeChapterId: string;
   /** Furthest absolute beat index ever visited (`TutorialProgress.reached`). */
   reached: number;
+  /** Every objective's disposition, from `objectiveAudit` — see `tutorial-machine.ts`. */
+  objectiveAudit: readonly ObjectiveAuditEntry[];
   /** DOM id, so the opening control can point `aria-controls` at the list. */
   id: string;
   onSelect: (chapterId: string) => void;
@@ -81,6 +91,7 @@ function buildEntries(
   chapters: readonly TutorialChapter[],
   activeChapterId: string,
   reached: number,
+  objectiveAudit: readonly ObjectiveAuditEntry[],
 ): ChapterEntry[] {
   let startIndex = 0;
   return chapters.map((chapter, position) => {
@@ -96,12 +107,16 @@ function buildEntries(
           : reached >= start
             ? 'started'
             : 'upcoming';
+    const hasUnresolvedObjective = objectiveAudit.some(
+      (entry) => entry.chapterId === chapter.id && entry.status !== 'met' && entry.index <= reached,
+    );
     return {
       chapter,
       number: position + 1,
       startIndex: start,
       state,
       beatsVisited: Math.min(Math.max(reached - start + 1, 0), length),
+      hasUnresolvedObjective,
     };
   });
 }
@@ -123,6 +138,7 @@ export function ChapterMenu({
   chapters,
   activeChapterId,
   reached,
+  objectiveAudit,
   id,
   onSelect,
   onClose,
@@ -131,8 +147,8 @@ export function ChapterMenu({
   const headingId = `${id}-heading`;
 
   const entries = useMemo(
-    () => buildEntries(chapters, activeChapterId, reached),
-    [chapters, activeChapterId, reached],
+    () => buildEntries(chapters, activeChapterId, reached, objectiveAudit),
+    [chapters, activeChapterId, reached, objectiveAudit],
   );
 
   const options = useCallback((): HTMLButtonElement[] => {
@@ -277,13 +293,24 @@ export function ChapterMenu({
                         {String(entry.number).padStart(2, '0')}
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                        <span
-                          className={cn(
-                            typographyTokens.bodyMd,
-                            'font-medium text-[var(--aegis-text-primary)]',
-                          )}
-                        >
-                          {entry.chapter.title}
+                        <span className="flex items-center gap-1.5">
+                          <span
+                            className={cn(
+                              typographyTokens.bodyMd,
+                              'font-medium text-[var(--aegis-text-primary)]',
+                            )}
+                          >
+                            {entry.chapter.title}
+                          </span>
+                          {entry.hasUnresolvedObjective ? (
+                            <span
+                              data-testid={`tutorial-chapter-unresolved-${entry.chapter.id}`}
+                              title="Has a skipped or unmet objective"
+                              className="inline-flex size-1.5 shrink-0 rounded-full bg-[var(--aegis-status-suspicious)]"
+                            >
+                              <span className="sr-only">Has a skipped or unmet objective</span>
+                            </span>
+                          ) : null}
                         </span>
                         <span
                           className={cn(typographyTokens.bodySm, 'text-[var(--aegis-text-muted)]')}

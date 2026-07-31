@@ -23,6 +23,7 @@ function progress(overrides: Partial<TutorialProgress> = {}): TutorialProgress {
     cursor: 3,
     reached: 5,
     completedBeatIds: ['beat:one', 'beat:two'],
+    skippedBeatIds: [],
     minimized: false,
     dismissed: false,
     clockHeld: false,
@@ -49,6 +50,7 @@ describe('tutorial-storage · progress', () => {
       cursor: 0,
       reached: 0,
       completedBeatIds: [],
+      skippedBeatIds: [],
       minimized: false,
       dismissed: false,
       clockHeld: false,
@@ -83,6 +85,7 @@ describe('tutorial-storage · progress', () => {
         cursor: -12,
         reached: 'nonsense',
         completedBeatIds: ['beat:one', 'beat:one', 42, null],
+        skippedBeatIds: ['beat:two', 'beat:two', false],
         minimized: 'yes',
         dismissed: 1,
         clockHeld: 'true',
@@ -93,6 +96,7 @@ describe('tutorial-storage · progress', () => {
       cursor: 0,
       reached: 0,
       completedBeatIds: ['beat:one'],
+      skippedBeatIds: ['beat:two'],
       minimized: false,
       dismissed: false,
       clockHeld: false,
@@ -100,9 +104,9 @@ describe('tutorial-storage · progress', () => {
   });
 
   it('upgrades a v2 record rather than restarting the operator mid-run', () => {
-    // v3 only added `clockHeld`, whose value for a record written before the field existed is
-    // exactly its default — so unlike v1, this upgrade is lossless and discarding it would
-    // cost a mid-run operator their whole walkthrough.
+    // v3 added `clockHeld` and v4 added `skippedBeatIds`; the value of each for a record
+    // written before it existed is exactly its default — so unlike v1, this upgrade is
+    // lossless and discarding it would cost a mid-run operator their whole walkthrough.
     window.localStorage.setItem(
       `aegis:tutorial:progress:${RUN_A}`,
       JSON.stringify({
@@ -119,9 +123,35 @@ describe('tutorial-storage · progress', () => {
       cursor: 11,
       reached: 14,
       completedBeatIds: ['beat:one'],
+      skippedBeatIds: [],
       minimized: false,
       dismissed: false,
       clockHeld: false,
+    });
+  });
+
+  it('upgrades a v3 record, defaulting the not-yet-existing skippedBeatIds to empty', () => {
+    window.localStorage.setItem(
+      `aegis:tutorial:progress:${RUN_A}`,
+      JSON.stringify({
+        version: 3,
+        cursor: 6,
+        reached: 9,
+        completedBeatIds: ['beat:one'],
+        minimized: false,
+        dismissed: false,
+        clockHeld: true,
+      }),
+    );
+    expect(loadProgress(RUN_A)).toEqual({
+      version: TUTORIAL_PROGRESS_VERSION,
+      cursor: 6,
+      reached: 9,
+      completedBeatIds: ['beat:one'],
+      skippedBeatIds: [],
+      minimized: false,
+      dismissed: false,
+      clockHeld: true,
     });
   });
 

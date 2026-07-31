@@ -48,7 +48,7 @@ const RUN_STATUS_KEYS: readonly TutorialEvidenceKey[] = [
   // Report readiness is gated on the run being terminal, so it needs the status too.
   'reportReady',
 ];
-const ALERT_KEYS: readonly TutorialEvidenceKey[] = ['alertRaised'];
+const ALERT_KEYS: readonly TutorialEvidenceKey[] = ['alertRaised', 'alertExplanationOpened'];
 const INVESTIGATION_KEYS: readonly TutorialEvidenceKey[] = [
   'operatorActionExecuted',
   'containmentActionExecuted',
@@ -130,6 +130,7 @@ export function useTutorialEvidence(
   const selectedEntityId = useWorkspaceUiStore((state) => state.workspace.selectedEntityId);
   const selectedIncidentId = useWorkspaceUiStore((state) => state.workspace.selectedIncidentId);
   const graphOptionsOpened = useWorkspaceUiStore((state) => state.graphViewOptionsOpen);
+  const explanationOpenedFlag = useWorkspaceUiStore((state) => state.alertExplanationOpened);
 
   const needsRunStatus = enabled && needsAny(pendingKeys, RUN_STATUS_KEYS);
   const needsAlerts = enabled && needsAny(pendingKeys, ALERT_KEYS);
@@ -254,6 +255,10 @@ export function useTutorialEvidence(
   const agentReplyReceived = sessions?.some((session) => session.artifacts.length > 0) ?? false;
 
   const alertRaised = (alertsQuery.data?.length ?? 0) > 0;
+  // BUG-005: an alert being visible is not the same as its explanation having been read.
+  // Gated on `alertRaised` too, so opening a stale/other disclosure before any alert exists
+  // can never satisfy this.
+  const alertExplanationOpened = alertRaised && explanationOpenedFlag;
   const reportReady = reportEligible && reportQuery.isSuccess;
 
   const evidence: TutorialEvidence = useMemo(() => {
@@ -266,6 +271,7 @@ export function useTutorialEvidence(
       assetSelected,
       graphOptionsOpened,
       alertRaised,
+      alertExplanationOpened,
       incidentOpened,
       operatorActionExecuted,
       containmentActionExecuted,
@@ -282,6 +288,7 @@ export function useTutorialEvidence(
     assetSelected,
     graphOptionsOpened,
     alertRaised,
+    alertExplanationOpened,
     incidentOpened,
     operatorActionExecuted,
     containmentActionExecuted,

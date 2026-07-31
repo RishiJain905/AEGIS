@@ -13,10 +13,11 @@
  * Stored progress is version-tagged, and an older record is only ever read when the upgrade to
  * the current shape is provably lossless. v1 was not: it had no cursor and a differently-shaped
  * completion model, and reading it as if it were the current shape is how you get a walkthrough
- * that opens mid-way through a chapter the operator has never seen — so v1 is discarded. v2 is,
- * because v3 only adds `clockHeld`, whose correct value for a record written before the field
- * existed is exactly its default. Discarding v2 would restart the walkthrough of every operator
- * mid-run, which is a worse outcome than the one the version tag exists to prevent.
+ * that opens mid-way through a chapter the operator has never seen — so v1 is discarded. v2 and
+ * v3 are, because v3 only added `clockHeld` and v4 only adds `skippedBeatIds`, and the correct
+ * value of a field for a record written before it existed is exactly its default (`false` and
+ * `[]` respectively). Discarding v2/v3 would restart the walkthrough of every operator mid-run,
+ * which is a worse outcome than the one the version tag exists to prevent.
  */
 
 import {
@@ -64,7 +65,7 @@ function progressKey(runId: string): string {
 }
 
 function freshProgress(): TutorialProgress {
-  return { ...INITIAL_PROGRESS, completedBeatIds: [] };
+  return { ...INITIAL_PROGRESS, completedBeatIds: [], skippedBeatIds: [] };
 }
 
 function nonNegativeInt(value: unknown): number {
@@ -85,10 +86,11 @@ function beatIds(value: unknown): string[] {
 }
 
 /**
- * Schema versions this reader accepts. v3 is current; v2 differs only by the absence of
- * `clockHeld`, which defaults to `false` below — the same value it would have had.
+ * Schema versions this reader accepts. v4 is current; v2 and v3 differ only by the absence of
+ * `clockHeld` and `skippedBeatIds`, which default below to exactly the values they would have
+ * had.
  */
-const READABLE_PROGRESS_VERSIONS: ReadonlySet<number> = new Set([2, TUTORIAL_PROGRESS_VERSION]);
+const READABLE_PROGRESS_VERSIONS: ReadonlySet<number> = new Set([2, 3, TUTORIAL_PROGRESS_VERSION]);
 
 /**
  * Read progress for a run. Returns a fresh record for an unknown run, unreadable storage,
@@ -120,6 +122,8 @@ export function loadProgress(runId: string): TutorialProgress {
       cursor,
       reached: Math.max(cursor, nonNegativeInt(parsed.reached)),
       completedBeatIds: beatIds(parsed.completedBeatIds),
+      // Absent on a v2/v3 record, which is indistinguishable from "nothing skipped yet".
+      skippedBeatIds: beatIds(parsed.skippedBeatIds),
       minimized: parsed.minimized === true,
       dismissed: parsed.dismissed === true,
       // Absent on a v2 record, which is indistinguishable from "has not been held".

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
-import { useRunCommands } from '@/features/live-run/use-run-commands';
+import { useCreateRun, useRunCommands } from '@/features/live-run/use-run-commands';
 
 import {
   applyEvidence,
@@ -15,15 +15,18 @@ import {
   isObjectiveSatisfied,
   isWalkthroughComplete,
   jumpToChapter,
+  objectiveAudit,
   pendingObjectiveKeys,
   resolveCurrentBeat,
   setDismissed,
   setMinimized,
   skipChapter,
+  skipObjective,
 } from '../tutorial-machine';
 import { TUTORIAL_CHAPTERS } from '../tutorial-content';
 import type { TutorialEvidence, TutorialEvidenceKey, TutorialProgress } from '../tutorial-contract';
 import {
+  armTutorial,
   clearActiveTutorialRunId,
   getActiveTutorialRunId,
   getArmToken,
@@ -42,6 +45,16 @@ import {
 } from '../tutorial-run-clock';
 import { useTutorialEvidence } from '../use-tutorial-evidence';
 import { CoachMarkOverlay } from './coach-mark-overlay';
+
+/**
+ * The training scenario's launch parameters, duplicated from the catalogue's
+ * `SCENARIO_LAUNCH_CONFIG` on purpose: that table lives inside the scenarios route, and the
+ * walkthrough must not import a page to start a run. The pinned seed is what makes every
+ * training run tell the same story, so the two copies have to agree — see
+ * `apps/web/src/app/(shell)/scenarios/page.tsx`.
+ */
+const TRAINING_PACKAGE_PATH = 'scenarios/synthetic-training';
+const TRAINING_SEED = 1000;
 
 // A run belongs to the guided tutorial when its scenario-version id carries this marker
 // (e.g. `scenario-version:1.0.0-synthetic-training`). Matching the marker rather than a
@@ -153,6 +166,9 @@ export function TutorialController() {
   const progress =
     scoped && scoped.runId === runId && scoped.armToken === armToken ? scoped.progress : null;
   const isTraining = trainingRunId != null && trainingRunId === runId;
+  // Computed early — ahead of the callbacks below — purely so `handleSkipObjective` can close
+  // over it without a forward reference.
+  const resolved = progress ? resolveCurrentBeat(progress, beats) : null;
 
   const pendingKeys = useMemo(
     () => (progress ? pendingObjectiveKeys(progress, beats) : NO_PENDING_KEYS),
@@ -237,6 +253,7 @@ export function TutorialController() {
   // arrive — the walkthrough presses Pause sim for them once, near the end, and says so on the
   // card. `shouldHoldRunClock` owns every clause of that decision; this is only the wiring.
   const { pause } = useRunCommands(runId ?? '');
+  const createRun = useCreateRun();
   const pauseRun = pause.mutate;
   // Which walkthrough the hold was issued for, so a restart (same run id, new arm token) gets
   // its own hold and a re-render never issues a second one.
@@ -292,6 +309,16 @@ export function TutorialController() {
     commit((prev) => skipChapter(prev, beats));
   }, [commit, beats]);
 
+  // Records an explicit "Skip objective" for whichever beat is on screen right now — see
+  // BUG-006. The overlay only ever offers this control for a `skippable` objective that is
+  // neither satisfied nor already skipped, so no requirement check is needed here.
+  const handleSkipObjective = useCallback(() => {
+    if (!resolved) {
+      return;
+    }
+    commit((prev) => skipObjective(prev, resolved.beat.id));
+  }, [commit, resolved]);
+
   const handleJumpToChapter = useCallback(
     (chapterId: string) => {
       commit((prev) => jumpToChapter(prev, chapterId, beats));
@@ -321,8 +348,31 @@ export function TutorialController() {
     router.push('/scenarios');
   }, [commit, router]);
 
+  // Recovery for a walkthrough attached to a run that has already finished. The overlay
+  // used to teach live controls against a stopped run — pause, resume, containment, the
+  // finalization objective — with nothing on offer but prose explaining why none of it
+  // worked. Build a fresh training run and re-arm the walkthrough on that one instead.
+  const handleRestartTraining = useCallback(() => {
+    void createRun
+      .mutateAsync({
+        scenarioPackagePath: TRAINING_PACKAGE_PATH,
+        seed: TRAINING_SEED,
+        // The pinned seed derives one run id forever, so the finished run has to be torn
+        // down and rebuilt rather than resumed.
+        restartExisting: true,
+      })
+      .then((result) => {
+        armTutorial(result.run.id);
+        router.push(`/runs/${result.run.id}`);
+      })
+      .catch(() => {
+        // The launch surface owns the explanation (a pinned-seed run owned by another
+        // operator answers 409). Leave the walkthrough as it is and send them there.
+        router.push('/scenarios');
+      });
+  }, [createRun, router]);
+
   const onTutorialSurface = pathname ? TUTORIAL_SURFACE_PATTERN.test(pathname) : false;
-  const resolved = progress ? resolveCurrentBeat(progress, beats) : null;
 
   // The run's lifecycle, told in the walkthrough's own voice: why it is paused, or why a
   // finished run has stranded the step the operator is on. Folded into the beat rather than
@@ -334,6 +384,13 @@ export function TutorialController() {
   const displayed = useMemo(
     () => (resolved ? withRunClockNotice(resolved, notice) : null),
     [resolved, notice],
+  );
+
+  // Computed unconditionally, ahead of the early-return guard below, per the rules of hooks —
+  // feeds the chapter menu's unresolved marker and the final beat's completion summary.
+  const auditEntries = useMemo(
+    () => (progress ? objectiveAudit(progress, beats, evidence) : []),
+    [progress, beats, evidence],
   );
 
   if (
@@ -350,6 +407,7 @@ export function TutorialController() {
   const objectiveSatisfied =
     progress.completedBeatIds.includes(resolved.beat.id) ||
     isObjectiveSatisfied(resolved.beat, evidence);
+  const objectiveSkipped = progress.skippedBeatIds.includes(resolved.beat.id);
 
   return (
     <CoachMarkOverlay
@@ -358,15 +416,22 @@ export function TutorialController() {
       evidence={evidence}
       progress={progress}
       objectiveSatisfied={objectiveSatisfied}
+      objectiveSkipped={objectiveSkipped}
+      objectiveAudit={auditEntries}
       onNext={handleNext}
       onBack={handleBack}
       onSkipChapter={handleSkipChapter}
       onJumpToChapter={handleJumpToChapter}
+      onSkipObjective={handleSkipObjective}
       onMinimize={handleMinimize}
       onRestore={handleRestore}
       onDismiss={handleDismiss}
       onBegin={handleNext}
       onLaunchNext={handleLaunchNext}
+      // Offered only once the run has actually ended, so a healthy walkthrough never grows
+      // a second, competing launch button.
+      onRestartTraining={notice === 'ended' ? handleRestartTraining : undefined}
+      restartTrainingPending={createRun.isPending}
     />
   );
 }

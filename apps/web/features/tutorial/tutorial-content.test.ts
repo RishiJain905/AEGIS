@@ -64,6 +64,20 @@ describe('tutorial content', () => {
     }
   });
 
+  it('declares a valid requirement on every objective, with a skipReason on every skippable one', () => {
+    const valid = new Set(['required', 'optional', 'skippable']);
+    for (const beat of allBeats()) {
+      const objective = beat.objective;
+      if (!objective) {
+        continue;
+      }
+      expect(valid.has(objective.requirement), beat.id).toBe(true);
+      if (objective.requirement === 'skippable') {
+        expect(objective.skipReason?.trim().length ?? 0, beat.id).toBeGreaterThan(0);
+      }
+    }
+  });
+
   it('uses each evidence key at most once as an objective', () => {
     const used = allBeats()
       .map((beat) => beat.objective?.evidence)

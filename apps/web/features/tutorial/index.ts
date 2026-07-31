@@ -25,6 +25,7 @@ export {
   type TutorialEvidence,
   type TutorialEvidenceKey,
   type TutorialObjective,
+  type TutorialObjectiveRequirement,
   type TutorialProgress,
   type TutorialSurface,
 } from './tutorial-contract';
@@ -40,9 +41,13 @@ export {
   isObjectiveSatisfied,
   isWalkthroughComplete,
   jumpToChapter,
+  objectiveAudit,
+  objectiveBlockReason,
   pendingObjectiveKeys,
   resolveCurrentBeat,
   setDismissed,
   setMinimized,
   skipChapter,
+  skipObjective,
+  type ObjectiveAuditEntry,
 } from './tutorial-machine';

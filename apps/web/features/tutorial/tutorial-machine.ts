@@ -8,14 +8,18 @@
  *
  * Three invariants shape everything here:
  *
- *  - **Soft gating.** An unmet objective never blocks `goNext`. Several objectives can only
- *    be satisfied once the simulation produces them, which takes minutes; a hard gate would
- *    strand the operator. The objective stays visible and self-completes when evidence lands.
+ *  - **`goNext` is an unconditional mover.** It never reads objectives and never refuses to
+ *    advance — the machine's pure movement primitive has no opinion on gating. Whether the
+ *    operator is *allowed* to call it right now is a separate question, answered by
+ *    {@link objectiveBlockReason} and enforced by the caller (the overlay disables `Next` and
+ *    intercepts its own keyboard shortcuts). This split keeps "where the cursor goes" and
+ *    "should it be allowed to go there yet" independently testable.
  *  - **Monotonic `reached`.** `cursor` is where the operator is; `reached` is the furthest
  *    beat ever visited. Back moves the cursor and never lowers `reached`, so stepping back to
  *    re-read a beat can't cost progress, and a reload resumes rather than restarts.
  *  - **Completion is keyed by beat id.** Editing, reordering or inserting content changes
- *    indices; ids are stable, so stored progress survives content edits.
+ *    indices; ids are stable, so stored progress survives content edits — and the same is
+ *    true of `skippedBeatIds`, which records an explicit "Skip objective" the same way.
  *
  * Every mutator returns the *same object identity* when nothing changed, so callers can skip
  * redundant localStorage writes and re-renders.
@@ -27,6 +31,7 @@ import type {
   TutorialChapter,
   TutorialEvidence,
   TutorialEvidenceKey,
+  TutorialObjectiveRequirement,
   TutorialProgress,
 } from './tutorial-contract';
 
@@ -180,14 +185,69 @@ export function applyEvidence(
 }
 
 /**
- * Advance one beat. Soft-gated: an outstanding objective never blocks this, and the beat the
- * operator leaves keeps its objective live so it can still self-complete later.
+ * Advance one beat. This mover has no opinion on gating — see the module doc — so the beat
+ * the operator leaves keeps its objective live and can still self-complete later. Callers that
+ * must respect a beat's declared requirement check {@link objectiveBlockReason} first.
  */
 export function goNext(
   progress: TutorialProgress,
   beats: readonly ResolvedBeat[],
 ): TutorialProgress {
   return withCursor(progress, clampIndex(progress.cursor, beats) + 1, beats);
+}
+
+/**
+ * Whether a beat's objective is resolved: satisfied by evidence (persisted or live) or, for a
+ * `skippable` objective, explicitly skipped. Shared by the gate check and the audit below so
+ * the two can never disagree about what counts as "done with this beat".
+ */
+function isObjectiveResolved(
+  beat: TutorialBeat,
+  progress: TutorialProgress,
+  evidence: TutorialEvidence,
+): boolean {
+  if (progress.completedBeatIds.includes(beat.id) || isObjectiveSatisfied(beat, evidence)) {
+    return true;
+  }
+  return progress.skippedBeatIds.includes(beat.id);
+}
+
+/**
+ * Why `Next` should be refused for this beat right now, or `null` if it should not be.
+ *
+ * `learn` beats and `optional` objectives never block. A `required` or `skippable` objective
+ * blocks until it is resolved (see {@link isObjectiveResolved}) — the difference between the
+ * two is only in *how* it can be resolved: a `required` objective only by its evidence
+ * landing, a `skippable` one also by an explicit skip. The returned string is the objective's
+ * own `pending` copy, so the caller has a ready-made reason to display.
+ */
+export function objectiveBlockReason(
+  beat: TutorialBeat,
+  progress: TutorialProgress,
+  evidence: TutorialEvidence,
+): string | null {
+  const objective = beat.objective;
+  if (!objective || objective.requirement === 'optional') {
+    return null;
+  }
+  if (isObjectiveResolved(beat, progress, evidence)) {
+    return null;
+  }
+  return objective.pending;
+}
+
+/**
+ * Record that the operator explicitly skipped a beat's `skippable` objective. Idempotent —
+ * skipping twice is a no-op that preserves identity, same as every other mutator here.
+ *
+ * Skipping never touches `completedBeatIds`: a skipped objective was never met, and the two
+ * lists staying disjoint in practice is exactly what lets the audit below tell the two apart.
+ */
+export function skipObjective(progress: TutorialProgress, beatId: string): TutorialProgress {
+  if (progress.skippedBeatIds.includes(beatId)) {
+    return progress;
+  }
+  return { ...progress, skippedBeatIds: [...progress.skippedBeatIds, beatId] };
 }
 
 /**
@@ -298,4 +358,52 @@ export function isWalkthroughComplete(
     return false;
   }
   return pendingObjectiveKeys(progress, beats).length === 0;
+}
+
+/** One objective's final disposition, as reported by {@link objectiveAudit}. */
+export interface ObjectiveAuditEntry {
+  beatId: string;
+  beatTitle: string;
+  chapterId: string;
+  chapterTitle: string;
+  /** Absolute index of the beat, for filtering against `reached`. */
+  index: number;
+  requirement: TutorialObjectiveRequirement;
+  status: 'met' | 'skipped' | 'unmet';
+}
+
+/**
+ * Every `do` beat's objective, in walkthrough order, with how it was actually resolved.
+ *
+ * This is the honest accounting BUG-006 asks for: a `required` or `skippable` objective that
+ * was never satisfied and never explicitly skipped — which can only happen by jumping or
+ * skipping past its *chapter*, since `Next` itself refuses to — still shows up here as
+ * `unmet` rather than silently reading as complete. Feeds the completion summary and the
+ * chapter menu's unresolved marker from one shared source of truth.
+ */
+export function objectiveAudit(
+  progress: TutorialProgress,
+  beats: readonly ResolvedBeat[],
+  evidence: TutorialEvidence,
+): ObjectiveAuditEntry[] {
+  const entries: ObjectiveAuditEntry[] = [];
+  for (const resolved of beats) {
+    const { beat, chapter } = resolved;
+    const objective = beat.objective;
+    if (!objective) {
+      continue;
+    }
+    const met = progress.completedBeatIds.includes(beat.id) || isObjectiveSatisfied(beat, evidence);
+    const skipped = !met && progress.skippedBeatIds.includes(beat.id);
+    entries.push({
+      beatId: beat.id,
+      beatTitle: beat.title,
+      chapterId: chapter.id,
+      chapterTitle: chapter.title,
+      index: resolved.index,
+      requirement: objective.requirement,
+      status: met ? 'met' : skipped ? 'skipped' : 'unmet',
+    });
+  }
+  return entries;
 }

@@ -15,6 +15,7 @@ import {
   type TutorialChapter,
   type TutorialProgress,
 } from '../tutorial-contract';
+import type { ObjectiveAuditEntry } from '../tutorial-machine';
 
 const CHAPTERS: TutorialChapter[] = [
   {
@@ -43,6 +44,7 @@ const CHAPTERS: TutorialChapter[] = [
           evidence: 'assetSelected',
           pending: 'Select any asset on the graph.',
           done: 'Asset selected — the inspector is now live.',
+          requirement: 'required',
         },
       },
     ],
@@ -64,6 +66,8 @@ const CHAPTERS: TutorialChapter[] = [
           evidence: 'proposalRaised',
           pending: 'Wait for a response proposal to land.',
           done: 'A proposal is waiting on your decision.',
+          requirement: 'skippable',
+          skipReason: 'Needs an open incident and a responsive model.',
         },
       },
     ],
@@ -117,6 +121,8 @@ function renderOverlay(
   options: {
     beatId?: string;
     objectiveSatisfied?: boolean;
+    objectiveSkipped?: boolean;
+    objectiveAudit?: readonly ObjectiveAuditEntry[];
     progress?: Partial<TutorialProgress>;
   } = {},
 ) {
@@ -125,6 +131,7 @@ function renderOverlay(
     onBack: vi.fn(),
     onSkipChapter: vi.fn(),
     onJumpToChapter: vi.fn(),
+    onSkipObjective: vi.fn(),
     onMinimize: vi.fn(),
     onRestore: vi.fn(),
     onDismiss: vi.fn(),
@@ -138,6 +145,8 @@ function renderOverlay(
       evidence={EMPTY_EVIDENCE}
       progress={{ ...INITIAL_PROGRESS, reached: 1, ...options.progress }}
       objectiveSatisfied={options.objectiveSatisfied ?? false}
+      objectiveSkipped={options.objectiveSkipped ?? false}
+      objectiveAudit={options.objectiveAudit ?? []}
       {...handlers}
     />,
   );
@@ -224,29 +233,58 @@ describe('CoachMarkOverlay', () => {
     expect(intersectionArea(placed, spotlightRect(anchorRect))).toBe(0);
   });
 
-  describe('soft gating', () => {
-    it('keeps Next enabled while an objective is outstanding', () => {
+  describe('objective gating', () => {
+    it('disables Next with a visible reason while a required objective is outstanding', () => {
       const handlers = renderOverlay({
         beatId: 'beat:select-asset',
         objectiveSatisfied: false,
       });
       const next = screen.getByTestId('tutorial-next');
-      expect(next).toBeEnabled();
+      expect(next).toBeDisabled();
       expect(screen.getByTestId('tutorial-objective')).toHaveAttribute('data-state', 'pending');
       expect(screen.getByTestId('tutorial-advance-hint')).toHaveTextContent(
         'Select any asset on the graph.',
       );
+      expect(screen.getByTestId('tutorial-next-blocked-reason')).toHaveTextContent(
+        'Complete the objective above to continue.',
+      );
       fireEvent.click(next);
-      expect(handlers.onNext).toHaveBeenCalledTimes(1);
+      expect(handlers.onNext).not.toHaveBeenCalled();
     });
 
-    it('swaps to the completed objective copy once the evidence lands', () => {
+    it('swaps to the completed objective copy once the evidence lands, and enables Next', () => {
       renderOverlay({ beatId: 'beat:select-asset', objectiveSatisfied: true });
       expect(screen.getByTestId('tutorial-objective')).toHaveAttribute('data-state', 'done');
       expect(screen.getByTestId('tutorial-advance-hint')).toHaveTextContent(
         'Asset selected — the inspector is now live.',
       );
       expect(screen.getByRole('status')).toHaveTextContent('Objective met');
+      expect(screen.getByTestId('tutorial-next')).toBeEnabled();
+      expect(screen.queryByTestId('tutorial-next-blocked-reason')).not.toBeInTheDocument();
+    });
+
+    it('offers Skip objective for a skippable objective, and unblocks Next once skipped', () => {
+      const handlers = renderOverlay({ beatId: 'beat:proposal' });
+      expect(screen.getByTestId('tutorial-next')).toBeDisabled();
+      expect(screen.getByTestId('tutorial-next-blocked-reason')).toHaveTextContent(
+        'Complete the objective above, or skip it, to continue.',
+      );
+
+      const skip = screen.getByTestId('tutorial-skip-objective');
+      expect(skip).toHaveTextContent('Skip objective');
+      fireEvent.click(skip);
+      expect(handlers.onSkipObjective).toHaveBeenCalledTimes(1);
+      cleanup();
+
+      renderOverlay({ beatId: 'beat:proposal', objectiveSkipped: true });
+      expect(screen.getByTestId('tutorial-objective')).toHaveAttribute('data-state', 'skipped');
+      expect(screen.queryByTestId('tutorial-skip-objective')).not.toBeInTheDocument();
+      expect(screen.getByTestId('tutorial-next')).toBeEnabled();
+    });
+
+    it('never offers a skip affordance for a required objective', () => {
+      renderOverlay({ beatId: 'beat:select-asset' });
+      expect(screen.queryByTestId('tutorial-skip-objective')).not.toBeInTheDocument();
     });
 
     it('disables Back only on the very first beat', () => {
@@ -254,11 +292,50 @@ describe('CoachMarkOverlay', () => {
       expect(screen.getByTestId('tutorial-back')).toBeDisabled();
       cleanup();
 
-      const handlers = renderOverlay({ beatId: 'beat:select-asset' });
+      const handlers = renderOverlay({ beatId: 'beat:select-asset', objectiveSatisfied: true });
       const back = screen.getByTestId('tutorial-back');
       expect(back).toBeEnabled();
       fireEvent.click(back);
       expect(handlers.onBack).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('completion summary', () => {
+    it('reports every objective met when the audit is clean', () => {
+      renderOverlay({ beatId: 'beat:after-action', objectiveAudit: [] });
+      expect(screen.getByTestId('tutorial-completion-summary')).toHaveTextContent(
+        'Every objective was met this run.',
+      );
+    });
+
+    it('lists skipped and unmet objectives honestly', () => {
+      renderOverlay({
+        beatId: 'beat:after-action',
+        objectiveAudit: [
+          {
+            beatId: 'beat:select-asset',
+            beatTitle: 'Pick an asset off the map',
+            chapterId: 'chapter:orientation',
+            chapterTitle: 'Orientation',
+            index: 1,
+            requirement: 'required',
+            status: 'unmet',
+          },
+          {
+            beatId: 'beat:proposal',
+            beatTitle: 'Read the proposal',
+            chapterId: 'chapter:containment',
+            chapterTitle: 'Containment',
+            index: 2,
+            requirement: 'skippable',
+            status: 'skipped',
+          },
+        ],
+      });
+      const summary = screen.getByTestId('tutorial-completion-summary');
+      expect(summary).toHaveTextContent('2 objectives skipped or unmet');
+      expect(summary).toHaveTextContent('Pick an asset off the map');
+      expect(summary).toHaveTextContent('Read the proposal');
     });
   });
 
@@ -374,7 +451,9 @@ describe('CoachMarkOverlay', () => {
     });
 
     it('advances on ArrowRight and Enter, and steps back on ArrowLeft', () => {
-      const handlers = renderOverlay({ beatId: 'beat:select-asset' });
+      // The objective is satisfied here — this test is about the keyboard shortcuts, not
+      // about gating, which has its own coverage in `describe('objective gating')` above.
+      const handlers = renderOverlay({ beatId: 'beat:select-asset', objectiveSatisfied: true });
       const card = screen.getByTestId('tutorial-coach-mark');
 
       fireEvent.keyDown(card, { key: 'ArrowRight' });

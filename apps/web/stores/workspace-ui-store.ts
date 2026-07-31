@@ -17,10 +17,29 @@ import {
   type ThemePreference,
 } from '@/features/shell/contracts/panel-preferences';
 
+/**
+ * The run the operator is working, remembered across surfaces and reloads.
+ *
+ * Distinct from `activeRunId`, which is the *workspace reset key*: mounting a shell
+ * without a run calls `resetForRun(null)` and clears it, so it goes null the moment the
+ * operator opens Incidents or Reports. The rail's run-scoped destinations need the
+ * opposite lifetime — they have to keep pointing at the run you came from — so they read
+ * this instead.
+ *
+ * `userId` is stored with it because it is persisted: without the check, signing in as a
+ * different identity would inherit the previous operator's run id and navigate straight
+ * into a 403 workspace.
+ */
+export interface RunContext {
+  runId: string;
+  userId: string;
+}
+
 interface WorkspaceUiState {
   workspace: OperatorWorkspaceState;
   panelPreferences: PanelPreferences;
   activeRunId: string | null;
+  runContext: RunContext | null;
   mobileRailOpen: boolean;
   /**
    * Whether the operational graph's view-options panel is open. Mirrored out of the graph
@@ -28,6 +47,20 @@ interface WorkspaceUiState {
    * panel is open without sniffing the DOM. Ephemeral — never persisted.
    */
   graphViewOptionsOpen: boolean;
+  /**
+   * Whether the operator has opened an alert's Explanation disclosure. Mirrors
+   * `graphViewOptionsOpen`'s pattern: the alerts panel calls `setAlertExplanationOpened(true)`
+   * when a card's Explanation section opens, so the guided walkthrough (BUG-005) can require
+   * the real disclosure interaction rather than merely an alert existing. Ephemeral — never
+   * persisted, and never reset to `false` on collapse — the objective only cares that it
+   * happened once.
+   *
+   * NOTE for the alerts-panel owner: this flag exists so the tutorial's "read the
+   * explanation" objective (see `features/tutorial/tutorial-content.ts`, beat
+   * `alert-anatomy`) can complete correctly. Please wire `setAlertExplanationOpened(true)`
+   * into wherever the alert card's Explanation disclosure toggles open.
+   */
+  alertExplanationOpened: boolean;
   /**
    * Selection model — two selections, deliberately orthogonal, and they cannot disagree
    * because they name different kinds of thing:
@@ -57,7 +90,23 @@ interface WorkspaceUiState {
   setTheme: (theme: ThemePreference) => void;
   setMobileRailOpen: (open: boolean) => void;
   setGraphViewOptionsOpen: (open: boolean) => void;
+  setAlertExplanationOpened: (open: boolean) => void;
   resetForRun: (runId: string | null) => void;
+  /** Remember the run the operator entered. Never cleared by `resetForRun(null)`. */
+  rememberRunContext: (context: RunContext) => void;
+  /** Forget it — on sign-out, or when the stored identity is not the current one. */
+  clearRunContext: () => void;
+}
+
+function parseRunContext(value: unknown): RunContext | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const candidate = value as Partial<RunContext>;
+  if (typeof candidate.runId !== 'string' || typeof candidate.userId !== 'string') {
+    return null;
+  }
+  return { runId: candidate.runId, userId: candidate.userId };
 }
 
 export const useWorkspaceUiStore = create<WorkspaceUiState>()(
@@ -66,8 +115,10 @@ export const useWorkspaceUiStore = create<WorkspaceUiState>()(
       workspace: defaultOperatorWorkspaceState,
       panelPreferences: defaultPanelPreferences,
       activeRunId: null,
+      runContext: null,
       mobileRailOpen: false,
       graphViewOptionsOpen: false,
+      alertExplanationOpened: false,
 
       setSelectedEntityId: (entityId) => {
         set((state) => ({
@@ -154,6 +205,13 @@ export const useWorkspaceUiStore = create<WorkspaceUiState>()(
         set({ graphViewOptionsOpen: open });
       },
 
+      setAlertExplanationOpened: (open) => {
+        if (get().alertExplanationOpened === open) {
+          return;
+        }
+        set({ alertExplanationOpened: open });
+      },
+
       resetForRun: (runId) => {
         if (get().activeRunId === runId) {
           return;
@@ -167,15 +225,34 @@ export const useWorkspaceUiStore = create<WorkspaceUiState>()(
           },
         });
       },
+
+      rememberRunContext: (context) => {
+        const current = get().runContext;
+        if (current?.runId === context.runId && current.userId === context.userId) {
+          return;
+        }
+        set({ runContext: context });
+      },
+
+      clearRunContext: () => {
+        if (get().runContext === null) {
+          return;
+        }
+        set({ runContext: null });
+      },
     }),
     {
       name: PANEL_PREFERENCES_STORAGE_KEY,
-      partialize: (state) => ({ panelPreferences: state.panelPreferences }),
+      partialize: (state) => ({
+        panelPreferences: state.panelPreferences,
+        runContext: state.runContext,
+      }),
       merge: (persisted, current) => {
         const persistedState = persisted as Partial<WorkspaceUiState> | undefined;
         return {
           ...current,
           panelPreferences: parsePanelPreferences(persistedState?.panelPreferences),
+          runContext: parseRunContext(persistedState?.runContext),
         };
       },
     },

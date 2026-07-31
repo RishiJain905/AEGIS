@@ -8,13 +8,18 @@
  *    clicks Next. Never depends on simulation state, so an operator can read the whole
  *    cockpit tour at their own pace while telemetry builds in the background.
  *  - `do` — asks the operator to actually perform something, and names the observable
- *    evidence that proves they did. Soft-gated: Next is always available, but performing
- *    the real action checks the objective off and pulls the walkthrough forward.
+ *    evidence that proves they did. Performing the real action checks the objective off and
+ *    pulls the walkthrough forward; whether an *unmet* objective blocks `Next` depends on its
+ *    declared {@link TutorialObjectiveRequirement}.
  *
- * Soft gating is deliberate. Several objectives (a first alert, an incident, a BASTION
- * proposal) can only be satisfied once the simulation produces them, which takes minutes.
- * A hard gate would strand the operator staring at a spinner; instead the objective stays
- * visible and self-completes whenever the evidence lands.
+ * Objectives are declaratively gated, not uniformly soft. `required` objectives — ones under
+ * the operator's own control, or ones the deterministic training scenario reliably produces
+ * in time — block `Next` until satisfied. `skippable` objectives, which depend on run state
+ * that may never materialise this playthrough (an incident that never correlates, a model
+ * that never replies), also block `Next`, but the operator can explicitly "Skip objective" to
+ * get past one, and the skip is recorded rather than hidden. `optional` objectives never
+ * block at all. This is what stops the walkthrough either stranding an operator on state the
+ * run cannot produce, or silently letting them past a beat they never actually completed.
  *
  * This module is pure data and types — no React, no browser APIs — so the machine, the
  * overlay and the content can be built and tested independently of one another.
@@ -36,6 +41,12 @@ export interface TutorialEvidence {
   graphOptionsOpened: boolean;
   /** At least one alert has been raised on the run. */
   alertRaised: boolean;
+  /**
+   * An alert has been raised *and* the operator has opened its Explanation disclosure — see
+   * BUG-005. `alertRaised` alone proves the alert is visible, not read; this is the stricter
+   * evidence the "read the explanation" objective actually needs.
+   */
+  alertExplanationOpened: boolean;
   /** The operator has opened or selected an incident. */
   incidentOpened: boolean;
   /** The operator has executed any operator command against an asset. */
@@ -64,6 +75,7 @@ export const EMPTY_EVIDENCE: TutorialEvidence = {
   assetSelected: false,
   graphOptionsOpened: false,
   alertRaised: false,
+  alertExplanationOpened: false,
   incidentOpened: false,
   operatorActionExecuted: false,
   containmentActionExecuted: false,
@@ -76,6 +88,20 @@ export const EMPTY_EVIDENCE: TutorialEvidence = {
 };
 
 export type TutorialBeatKind = 'learn' | 'do';
+
+/**
+ * How strictly an objective gates `Next`.
+ *
+ *  - `required` — blocks `Next` until the evidence lands. Reserved for objectives the
+ *    operator can always satisfy under their own control (select a node, open a panel, send
+ *    a message) or that the deterministic training scenario reliably produces in time.
+ *  - `skippable` — blocks `Next` until the evidence lands *or* the operator explicitly
+ *    chooses "Skip objective". Use for objectives that depend on state the run may not have
+ *    produced yet (an incident that has not correlated, a proposal that needs a live model),
+ *    so a genuinely stuck operator has a deliberate way through rather than a dead end.
+ *  - `optional` — never blocks `Next` and carries no skip affordance; it can simply go unmet.
+ */
+export type TutorialObjectiveRequirement = 'required' | 'optional' | 'skippable';
 
 /** The observable goal of a `do` beat, and the copy shown either side of satisfying it. */
 export interface TutorialObjective {
@@ -91,6 +117,13 @@ export interface TutorialObjective {
    * result of what they just did.
    */
   advanceOnSatisfied?: boolean;
+  /** Declares whether this objective gates `Next`, and how — see {@link TutorialObjectiveRequirement}. */
+  requirement: TutorialObjectiveRequirement;
+  /**
+   * Why this objective might not be satisfiable this run — shown beside the "Skip objective"
+   * affordance and in the completion summary. Required on `skippable` objectives.
+   */
+  skipReason?: string;
 }
 
 export interface TutorialBeat {
@@ -173,6 +206,12 @@ export interface TutorialProgress {
   reached: number;
   /** Beat ids whose objectives have been satisfied at least once. */
   completedBeatIds: string[];
+  /**
+   * Beat ids whose `skippable` objective the operator explicitly skipped via "Skip
+   * objective". Distinct from `completedBeatIds` — a skipped objective was never met, and the
+   * completion summary and chapter menu say so honestly rather than folding it into "done".
+   */
+  skippedBeatIds: string[];
   /** Operator collapsed the card to its pill. */
   minimized: boolean;
   /** Operator dismissed the walkthrough. Reopenable — this is not a one-way door. */
@@ -185,13 +224,14 @@ export interface TutorialProgress {
   clockHeld: boolean;
 }
 
-export const TUTORIAL_PROGRESS_VERSION = 3;
+export const TUTORIAL_PROGRESS_VERSION = 4;
 
 export const INITIAL_PROGRESS: TutorialProgress = {
   version: TUTORIAL_PROGRESS_VERSION,
   cursor: 0,
   reached: 0,
   completedBeatIds: [],
+  skippedBeatIds: [],
   minimized: false,
   dismissed: false,
   clockHeld: false,

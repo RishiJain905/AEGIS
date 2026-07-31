@@ -251,7 +251,7 @@ describe('runClockNotice', () => {
 
 describe('applyRunClockNotice', () => {
   const learnBeat = firstBeat().beat;
-  const strandedBeat = beatFor('alertRaised').beat;
+  const strandedBeat = beatFor('alertExplanationOpened').beat;
   const cockpitBeat = beatFor('assetSelected').beat;
 
   it('is identity-preserving when there is nothing to say', () => {

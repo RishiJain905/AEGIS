@@ -45,6 +45,8 @@ const hoisted = vi.hoisted(() => ({
   }[],
   /** Every run command the controller issues. It may only ever issue `pause`, and only once. */
   runCommands: [] as string[],
+  /** Runs the walkthrough asked the server to create, via its "Start training" recovery. */
+  createdRuns: [] as unknown[],
   chapters: [
     {
       id: 'ch-one',
@@ -73,6 +75,7 @@ const hoisted = vi.hoisted(() => ({
             pending: 'Select an asset',
             done: 'Asset selected',
             advanceOnSatisfied: true,
+            requirement: 'required',
           },
         },
       ],
@@ -90,7 +93,13 @@ const hoisted = vi.hoisted(() => ({
           body: [],
           anchors: [],
           pointerLabel: 'reports',
-          objective: { evidence: 'reportReady', pending: 'Wait', done: 'Ready' },
+          objective: {
+            evidence: 'reportReady',
+            pending: 'Wait',
+            done: 'Ready',
+            requirement: 'skippable',
+            skipReason: 'May not compile in time.',
+          },
         },
       ],
     },
@@ -145,6 +154,15 @@ vi.mock('@/features/live-run/use-run-commands', () => ({
     resume: { mutate: () => undefined },
     stop: { mutate: () => undefined },
     step: { mutate: () => undefined },
+  }),
+  // The walkthrough offers "Start training" when its run has already finished, so the
+  // controller holds a create-run mutation even on the paths that never fire it.
+  useCreateRun: () => ({
+    isPending: false,
+    mutateAsync: (input: unknown) => {
+      hoisted.createdRuns.push(input);
+      return Promise.resolve({ run: { id: 'run_fresh_training' } });
+    },
   }),
 }));
 
@@ -358,6 +376,38 @@ describe('TutorialController · evidence', () => {
 
     expect(hoisted.observationCalls.at(-1)?.enabled).toBe(false);
     expect(hoisted.observationCalls.at(-1)?.pendingKeys).toEqual([]);
+  });
+});
+
+describe('TutorialController · objective skipping', () => {
+  it('records an explicit skip against the current beat and reflects it in props', () => {
+    const { rerender } = renderController();
+    act(() => {
+      latestProps()?.onJumpToChapter('ch-two');
+    });
+    expect(latestProps()?.resolved.beat.id).toBe('report');
+    expect(latestProps()?.objectiveSkipped).toBe(false);
+
+    act(() => {
+      latestProps()?.onSkipObjective();
+    });
+    rerender();
+
+    expect(latestProps()?.objectiveSkipped).toBe(true);
+    expect(storedProgress('run_a')).toMatchObject({ skippedBeatIds: ['report'] });
+  });
+
+  it('carries the skip into the objective audit', () => {
+    renderController();
+    act(() => {
+      latestProps()?.onJumpToChapter('ch-two');
+    });
+    act(() => {
+      latestProps()?.onSkipObjective();
+    });
+
+    const entry = latestProps()?.objectiveAudit.find((candidate) => candidate.beatId === 'report');
+    expect(entry?.status).toBe('skipped');
   });
 });
 

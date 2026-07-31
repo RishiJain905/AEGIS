@@ -116,7 +116,14 @@ export function isRunTerminal(status: string | null | undefined): boolean {
  * containment proposal. Claiming more than that would be telling the operator something false.
  */
 export const SIMULATION_DEPENDENT_EVIDENCE: ReadonlySet<TutorialEvidenceKey> =
-  new Set<TutorialEvidenceKey>(['telemetryFlowing', 'alertRaised', 'proposalRaised']);
+  new Set<TutorialEvidenceKey>([
+    'telemetryFlowing',
+    'alertRaised',
+    // Needs alertRaised as a precondition, so it strands the same way a finished run never
+    // having raised an alert would.
+    'alertExplanationOpened',
+    'proposalRaised',
+  ]);
 
 // ---------------------------------------------------------------------------------------
 // Reading the clock

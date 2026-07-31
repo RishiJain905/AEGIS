@@ -116,6 +116,7 @@ const ORIENTATION: TutorialChapter = {
         evidence: 'telemetryFlowing',
         pending: 'Watch the SIM clock advance in the control link.',
         done: 'Telemetry is flowing — the simulation is live.',
+        requirement: 'required',
       },
     },
   ],
@@ -167,6 +168,7 @@ const READING_THE_FLOOR: TutorialChapter = {
         evidence: 'assetSelected',
         pending: 'Select an asset on the graph.',
         done: 'Asset selected — the inspector and command bar are armed.',
+        requirement: 'required',
       },
     },
     {
@@ -184,6 +186,7 @@ const READING_THE_FLOOR: TutorialChapter = {
         pending: 'Open View options on the graph.',
         done: 'View options open.',
         advanceOnSatisfied: true,
+        requirement: 'required',
       },
     },
     {
@@ -263,9 +266,13 @@ const SIGNALS_AND_CASES: TutorialChapter = {
       ],
       pointerLabel: 'the alerts list in the inspector',
       objective: {
-        evidence: 'alertRaised',
+        // BUG-005: this used to key on `alertRaised`, so the objective read as met the moment
+        // an alert merely existed — before its Explanation was ever opened. `alertExplanationOpened`
+        // (see tutorial-contract.ts) is `alertRaised` plus the actual disclosure interaction.
+        evidence: 'alertExplanationOpened',
         pending: 'Wait for the first alert, then open its Explanation.',
         done: 'First alert raised — read the explanation before you move.',
+        requirement: 'required',
       },
     },
     {
@@ -287,6 +294,11 @@ const SIGNALS_AND_CASES: TutorialChapter = {
         evidence: 'incidentOpened',
         pending: 'Open the incident from the inspector.',
         done: 'Incident open — this is your case file.',
+        // BUG-006: alerts can still be uncorrelated at this point in the run — there is no
+        // incident to open yet — so this cannot be required.
+        requirement: 'skippable',
+        skipReason:
+          'Alerts may not have correlated into an incident yet this run. Investigate a little longer, or skip and come back once one appears.',
       },
     },
     {
@@ -391,6 +403,7 @@ const COMMANDING_ASSETS: TutorialChapter = {
         evidence: 'operatorActionExecuted',
         pending: 'Run Observe on a device and read the result toast.',
         done: 'Command executed — the toast reported the outcome.',
+        requirement: 'required',
       },
     },
     {
@@ -428,6 +441,7 @@ const COMMANDING_ASSETS: TutorialChapter = {
         evidence: 'containmentActionExecuted',
         pending: 'Isolate the compromised workstation through the consequences dialog.',
         done: 'Containment executed — watch the node’s status ring change.',
+        requirement: 'required',
       },
     },
     {
@@ -491,6 +505,7 @@ const THE_COPILOT: TutorialChapter = {
         evidence: 'agentTaskCreated',
         pending: 'Send WATCHTOWER a directive in the composer.',
         done: 'Directive sent — the agent is working.',
+        requirement: 'required',
       },
     },
     {
@@ -508,6 +523,11 @@ const THE_COPILOT: TutorialChapter = {
         evidence: 'agentReplyReceived',
         pending: 'Wait for the reply, then read its tool chips and evidence citations.',
         done: 'Reply received — the tool trace and citations are on the card.',
+        // The connected model can time out or fail at the provider boundary before it ever
+        // replies — not something the operator can force, so this cannot be required.
+        requirement: 'skippable',
+        skipReason:
+          'The connected model can be slow or fail to respond. Skip if it does not reply after a fair wait.',
       },
     },
     {
@@ -576,6 +596,11 @@ const THE_CALL: TutorialChapter = {
         evidence: 'proposalRaised',
         pending: 'Wait for a BASTION proposal on the incident.',
         done: 'Proposal raised — read its selected option.',
+        // Needs an open incident (itself skippable) and a responsive model — either can be
+        // absent this run, so this cannot be required.
+        requirement: 'skippable',
+        skipReason:
+          'Needs an open incident and a responsive model to draft a proposal. Skip if neither has landed yet.',
       },
     },
     {
@@ -606,6 +631,10 @@ const THE_CALL: TutorialChapter = {
         evidence: 'containmentResolved',
         pending: 'Approve or reject the proposal.',
         done: 'Decision recorded — the gate is closed.',
+        // Chained on `proposalRaised`, which is itself skippable — nothing to decide on if no
+        // proposal ever landed.
+        requirement: 'skippable',
+        skipReason: 'Needs a proposal to approve or reject. Skip if none has been raised.',
       },
     },
     {
@@ -643,6 +672,8 @@ const THE_CALL: TutorialChapter = {
         evidence: 'runComplete',
         pending: 'Let the run reach its horizon, or stop it deliberately.',
         done: 'Run complete — the debrief is unlocked.',
+        // Always within the operator's control — Stop is available whenever they choose it.
+        requirement: 'required',
       },
     },
   ],
@@ -751,6 +782,11 @@ const AFTER_ACTION: TutorialChapter = {
         evidence: 'reportReady',
         pending: 'Let the run finalize — this clears once its report has compiled.',
         done: 'Debrief ready — read the breakdown, not just the number.',
+        // BUG-006: report generation runs after the tutorial hands off from the run — it can
+        // take a while, or stall outright — so this cannot strand the walkthrough.
+        requirement: 'skippable',
+        skipReason:
+          'The report compiles once the run is terminal, which can take a moment or stall. Skip and check the After-action route directly.',
       },
       surface: 'after-action',
     },

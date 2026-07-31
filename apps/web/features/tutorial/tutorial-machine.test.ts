@@ -18,11 +18,14 @@ import {
   isObjectiveSatisfied,
   isWalkthroughComplete,
   jumpToChapter,
+  objectiveAudit,
+  objectiveBlockReason,
   pendingObjectiveKeys,
   resolveCurrentBeat,
   setDismissed,
   setMinimized,
   skipChapter,
+  skipObjective,
 } from './tutorial-machine';
 
 /**
@@ -66,6 +69,7 @@ const CHAPTERS: readonly TutorialChapter[] = [
           pending: 'Wait for telemetry',
           done: 'Telemetry is flowing',
           advanceOnSatisfied: true,
+          requirement: 'required',
         },
       },
       {
@@ -75,7 +79,12 @@ const CHAPTERS: readonly TutorialChapter[] = [
         body: [],
         anchors: [],
         pointerLabel: 'alerts',
-        objective: { evidence: 'alertRaised', pending: 'Wait for an alert', done: 'Alert raised' },
+        objective: {
+          evidence: 'alertRaised',
+          pending: 'Wait for an alert',
+          done: 'Alert raised',
+          requirement: 'required',
+        },
       },
     ],
   },
@@ -105,6 +114,7 @@ const CHAPTERS: readonly TutorialChapter[] = [
           pending: 'Open an incident',
           done: 'Incident open',
           advanceOnSatisfied: true,
+          requirement: 'required',
         },
       },
     ],
@@ -122,7 +132,13 @@ const CHAPTERS: readonly TutorialChapter[] = [
         body: [],
         anchors: [],
         pointerLabel: 'reports',
-        objective: { evidence: 'reportReady', pending: 'Wait for it', done: 'Ready' },
+        objective: {
+          evidence: 'reportReady',
+          pending: 'Wait for it',
+          done: 'Ready',
+          requirement: 'skippable',
+          skipReason: 'Report generation can stall.',
+        },
       },
     ],
   },
@@ -471,6 +487,83 @@ describe('flag setters', () => {
     });
     expect(setDismissed(dismissed, true)).toBe(dismissed);
     expect(setDismissed(dismissed, false).dismissed).toBe(false);
+  });
+});
+
+describe('objectiveBlockReason', () => {
+  it('is null for a learn beat', () => {
+    expect(objectiveBlockReason(beatAt(WELCOME), progressAt(), EMPTY_EVIDENCE)).toBeNull();
+  });
+
+  it('blocks a required objective until its evidence lands', () => {
+    const beat = beatAt(WATCH);
+    expect(objectiveBlockReason(beat, progressAt(), EMPTY_EVIDENCE)).toBe('Wait for telemetry');
+    expect(
+      objectiveBlockReason(beat, progressAt(), evidence({ telemetryFlowing: true })),
+    ).toBeNull();
+  });
+
+  it('treats a completed beat id as resolved even without live evidence', () => {
+    const beat = beatAt(WATCH);
+    const done = progressAt({ completedBeatIds: ['watch'] });
+    expect(objectiveBlockReason(beat, done, EMPTY_EVIDENCE)).toBeNull();
+  });
+
+  it('blocks a skippable objective until it is satisfied or explicitly skipped', () => {
+    const beat = beatAt(REPORT);
+    expect(objectiveBlockReason(beat, progressAt(), EMPTY_EVIDENCE)).toBe('Wait for it');
+    expect(objectiveBlockReason(beat, progressAt(), evidence({ reportReady: true }))).toBeNull();
+
+    const skipped = skipObjective(progressAt(), 'report');
+    expect(objectiveBlockReason(beat, skipped, EMPTY_EVIDENCE)).toBeNull();
+  });
+});
+
+describe('skipObjective', () => {
+  it('records the beat id and is idempotent, preserving identity when already skipped', () => {
+    const skipped = skipObjective(progressAt(), 'report');
+    expect(skipped.skippedBeatIds).toEqual(['report']);
+    expect(skipObjective(skipped, 'report')).toBe(skipped);
+  });
+
+  it('never touches completedBeatIds', () => {
+    const skipped = skipObjective(progressAt({ completedBeatIds: ['watch'] }), 'report');
+    expect(skipped.completedBeatIds).toEqual(['watch']);
+  });
+});
+
+describe('objectiveAudit', () => {
+  it('reports every objective beat as met, skipped or unmet', () => {
+    const progress = progressAt({
+      cursor: REPORT,
+      reached: REPORT,
+      completedBeatIds: ['watch', 'alert'],
+      skippedBeatIds: ['open'],
+    });
+    const audit = objectiveAudit(progress, BEATS, EMPTY_EVIDENCE);
+    expect(audit.map((entry) => [entry.beatId, entry.status])).toEqual([
+      ['watch', 'met'],
+      ['alert', 'met'],
+      ['open', 'skipped'],
+      ['report', 'unmet'],
+    ]);
+  });
+
+  it('reads live evidence as well as persisted completion', () => {
+    const audit = objectiveAudit(progressAt(), BEATS, evidence({ alertRaised: true }));
+    const alert = audit.find((entry) => entry.beatId === 'alert');
+    expect(alert?.status).toBe('met');
+  });
+
+  it('carries the declared requirement through', () => {
+    const audit = objectiveAudit(progressAt(), BEATS, EMPTY_EVIDENCE);
+    expect(audit.find((entry) => entry.beatId === 'report')?.requirement).toBe('skippable');
+    expect(audit.find((entry) => entry.beatId === 'watch')?.requirement).toBe('required');
+  });
+
+  it('excludes learn beats, which have no objective', () => {
+    const audit = objectiveAudit(progressAt(), BEATS, EMPTY_EVIDENCE);
+    expect(audit.some((entry) => entry.beatId === 'welcome')).toBe(false);
   });
 });
 

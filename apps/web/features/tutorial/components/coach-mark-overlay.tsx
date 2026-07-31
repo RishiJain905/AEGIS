@@ -13,6 +13,7 @@ import type {
   TutorialObjective,
   TutorialProgress,
 } from '../tutorial-contract';
+import type { ObjectiveAuditEntry } from '../tutorial-machine';
 import { ChapterMenu } from './chapter-menu';
 
 interface Rect {
@@ -38,15 +39,32 @@ export interface CoachMarkOverlayProps {
   evidence: TutorialEvidence;
   progress: TutorialProgress;
   objectiveSatisfied: boolean;
+  /** Whether the current beat's `skippable` objective has been explicitly skipped. */
+  objectiveSkipped: boolean;
+  /**
+   * Every `do` beat's objective and how it was resolved, across the whole walkthrough — see
+   * `objectiveAudit` in `tutorial-machine.ts`. Drives the chapter menu's unresolved marker and
+   * the completion summary on the final beat.
+   */
+  objectiveAudit: readonly ObjectiveAuditEntry[];
   onNext: () => void;
   onBack: () => void;
   onSkipChapter: () => void;
   onJumpToChapter: (chapterId: string) => void;
+  /** Records an explicit skip of the current beat's `skippable` objective. */
+  onSkipObjective: () => void;
   onMinimize: () => void;
   onRestore: () => void;
   onDismiss: () => void;
   onBegin: () => void;
   onLaunchNext: () => void;
+  /**
+   * Offered only when the walkthrough is attached to a run that has already finished, so
+   * the operator has one way out of a tour whose world stopped moving. Absent otherwise —
+   * the walkthrough is not a launcher.
+   */
+  onRestartTraining?: (() => void) | undefined;
+  restartTrainingPending?: boolean | undefined;
 }
 
 const CARD_GAP = 14;
@@ -386,36 +404,47 @@ function BeatGauge({
 }
 
 /**
- * The objective of a `do` beat, either side of the operator satisfying it.
+ * The objective of a `do` beat, either side of the operator satisfying — or skipping — it.
  *
  * Everything that changes on completion — the frame, the glow, the marker, the label —
  * moves on one transition, so landing an objective reads as a single confirmation rather
  * than four independent flickers. Under reduced motion the same states are reached with no
  * transition at all.
+ *
+ * A `skippable` objective that is neither satisfied nor skipped renders an explicit "Skip
+ * objective" affordance beside its `skipReason` — see BUG-006. `required` and `optional`
+ * objectives never show it: `required` has no honest way past, `optional` needs none.
  */
 function ObjectiveCallout({
   objective,
   satisfied,
+  skipped,
+  onSkip,
   reducedMotion,
 }: {
   objective: TutorialObjective;
   satisfied: boolean;
+  skipped: boolean;
+  onSkip: (() => void) | undefined;
   reducedMotion: boolean;
 }) {
   const transition = reducedMotion
     ? undefined
     : 'transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-[var(--aegis-motion-duration-slow)] ease-[var(--aegis-motion-ease-emphasis)]';
+  const resolved = satisfied || skipped;
 
   return (
     <div
       data-testid="tutorial-objective"
-      data-state={satisfied ? 'done' : 'pending'}
+      data-state={satisfied ? 'done' : skipped ? 'skipped' : 'pending'}
       className={cn(
         'flex items-start gap-2.5 rounded-[var(--aegis-radius-md)] border px-3 py-2.5',
         transition,
         satisfied
           ? 'border-[var(--aegis-status-normal)] bg-[var(--aegis-status-normal-bg)] shadow-[0_0_20px_-6px_var(--aegis-status-normal)]'
-          : 'border-[var(--aegis-accent-line)] bg-[var(--aegis-accent-soft)] shadow-none',
+          : skipped
+            ? 'border-[var(--aegis-border-default)] bg-[var(--aegis-surface-hover)] shadow-none'
+            : 'border-[var(--aegis-accent-line)] bg-[var(--aegis-accent-soft)] shadow-none',
       )}
     >
       <span
@@ -424,15 +453,17 @@ function ObjectiveCallout({
           transition,
           satisfied
             ? 'border-[var(--aegis-status-normal)] bg-[var(--aegis-status-normal)]'
-            : 'border-[var(--aegis-accent-cyan)] bg-transparent',
+            : skipped
+              ? 'border-[var(--aegis-text-faint)] bg-transparent'
+              : 'border-[var(--aegis-accent-cyan)] bg-transparent',
         )}
       >
         <span
           className={cn(
             'size-1.5 rounded-full bg-[var(--aegis-accent-cyan)]',
             transition,
-            satisfied ? 'opacity-0' : 'opacity-100',
-            !satisfied && !reducedMotion && 'animate-pulse',
+            resolved ? 'opacity-0' : 'opacity-100',
+            !resolved && !reducedMotion && 'animate-pulse',
           )}
         />
         <CheckGlyph
@@ -443,23 +474,96 @@ function ObjectiveCallout({
           )}
         />
       </span>
-      <div className="flex min-w-0 flex-col gap-0.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span
           className={cn(
             typographyTokens.eyebrow,
             transition,
-            satisfied ? 'text-[var(--aegis-status-normal)]' : 'text-[var(--aegis-accent-strong)]',
+            satisfied
+              ? 'text-[var(--aegis-status-normal)]'
+              : skipped
+                ? 'text-[var(--aegis-text-muted)]'
+                : 'text-[var(--aegis-accent-strong)]',
           )}
         >
-          {satisfied ? 'Objective met' : 'Objective'}
+          {satisfied ? 'Objective met' : skipped ? 'Objective skipped' : 'Objective'}
+          {!satisfied && !skipped && objective.requirement !== 'required' ? ' · optional' : ''}
         </span>
         <p
           data-testid="tutorial-advance-hint"
           className={cn(typographyTokens.bodySm, 'text-[var(--aegis-text-secondary)]')}
         >
-          {satisfied ? objective.done : objective.pending}
+          {satisfied
+            ? objective.done
+            : skipped
+              ? (objective.skipReason ?? objective.pending)
+              : objective.pending}
         </p>
+        {onSkip ? (
+          <div className="mt-1 flex flex-col items-start gap-1">
+            {objective.skipReason ? (
+              <p className={cn(typographyTokens.bodySm, 'text-[var(--aegis-text-faint)]')}>
+                {objective.skipReason}
+              </p>
+            ) : null}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSkip}
+              data-testid="tutorial-skip-objective"
+              className="-ml-2"
+            >
+              Skip objective
+            </Button>
+          </div>
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The completion summary on the walkthrough's final beat.
+ *
+ * BUG-006 asks the tour to close honestly rather than implying every objective was met just
+ * because every beat was seen. Lists every objective still `skipped` or `unmet` at the end,
+ * grouped by nothing fancier than walkthrough order — the point is visibility, not ceremony.
+ */
+function CompletionSummary({ audit }: { audit: readonly ObjectiveAuditEntry[] }) {
+  const outstanding = audit.filter((entry) => entry.status !== 'met');
+
+  if (outstanding.length === 0) {
+    return (
+      <p
+        data-testid="tutorial-completion-summary"
+        className={cn(typographyTokens.bodySm, 'text-[var(--aegis-status-normal)]')}
+      >
+        Every objective was met this run.
+      </p>
+    );
+  }
+
+  return (
+    <div
+      data-testid="tutorial-completion-summary"
+      className="flex flex-col gap-1.5 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-hover)] px-3 py-2.5"
+    >
+      <span className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-accent-strong)]')}>
+        {outstanding.length} objective{outstanding.length === 1 ? '' : 's'} skipped or unmet
+      </span>
+      <ul className="flex flex-col gap-1">
+        {outstanding.map((entry) => (
+          <li
+            key={entry.beatId}
+            className={cn(typographyTokens.bodySm, 'text-[var(--aegis-text-secondary)]')}
+          >
+            <span className="text-[var(--aegis-text-faint)]">
+              {entry.status === 'skipped' ? 'Skipped' : 'Unmet'} ·{' '}
+            </span>
+            {entry.chapterTitle} — {entry.beatTitle}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -473,8 +577,9 @@ function ObjectiveCallout({
  * the same reason. When a beat's anchor is absent from the DOM the card renders centred in
  * a degraded-but-usable mode with the same copy and controls.
  *
- * Progress is soft-gated: Next is always live. Several objectives can only be satisfied
- * once the simulation produces the evidence, and a hard gate would strand the operator.
+ * Gating follows the beat's declared objective requirement (see `tutorial-contract.ts`):
+ * `Next` is disabled with a visible reason while a `required` or unresolved `skippable`
+ * objective is outstanding, and stays live for `optional` ones and beats with none at all.
  * Escape collapses the card to its pill rather than ending the walkthrough — dismissing is
  * a deliberate, separate control.
  */
@@ -484,15 +589,20 @@ export function CoachMarkOverlay({
   evidence,
   progress,
   objectiveSatisfied,
+  objectiveSkipped,
+  objectiveAudit,
   onNext,
   onBack,
   onSkipChapter,
   onJumpToChapter,
+  onSkipObjective,
   onMinimize,
   onRestore,
   onDismiss,
   onBegin,
   onLaunchNext,
+  onRestartTraining,
+  restartTrainingPending,
 }: CoachMarkOverlayProps) {
   const reducedMotion = useReducedMotion();
   const [mounted, setMounted] = useState(false);
@@ -505,6 +615,17 @@ export function CoachMarkOverlay({
 
   const { beat, chapter, index, beatNumber, beatCount, chapterNumber, chapterCount } = resolved;
   const minimized = progress.minimized;
+
+  // `Next` is refused only for an outstanding `required`/`skippable` objective — `optional`
+  // ones and beats with none never block. See `objectiveBlockReason` in `tutorial-machine.ts`
+  // for the same rule expressed as a pure function; this mirrors it against the props already
+  // in hand rather than importing the machine into a presentational component.
+  const objective = beat.objective;
+  const resolvedObjective = objectiveSatisfied || objectiveSkipped;
+  const nextBlocked =
+    objective != null && objective.requirement !== 'optional' && !resolvedObjective;
+  const canSkipObjective =
+    objective != null && objective.requirement === 'skippable' && !resolvedObjective;
 
   useEffect(() => {
     setMounted(true);
@@ -605,7 +726,9 @@ export function CoachMarkOverlay({
           return;
         case 'ArrowRight':
           event.preventDefault();
-          onNext();
+          if (!nextBlocked) {
+            onNext();
+          }
           return;
         case 'ArrowLeft':
           event.preventDefault();
@@ -616,13 +739,15 @@ export function CoachMarkOverlay({
         case 'Enter':
           if (!onControl) {
             event.preventDefault();
-            onNext();
+            if (!nextBlocked) {
+              onNext();
+            }
           }
           return;
         default:
       }
     },
-    [index, onBack, onMinimize, onNext],
+    [index, nextBlocked, onBack, onMinimize, onNext],
   );
 
   const chapterStartIndex = index - (beatNumber - 1);
@@ -632,7 +757,9 @@ export function CoachMarkOverlay({
     const objectiveLine = beat.objective
       ? objectiveSatisfied
         ? ` Objective met: ${beat.objective.done}`
-        : ` Objective: ${beat.objective.pending}`
+        : objectiveSkipped
+          ? ` Objective skipped.`
+          : ` Objective: ${beat.objective.pending}`
       : '';
     return `Chapter ${String(chapterNumber)} of ${String(chapterCount)}, ${chapter.title}. Beat ${String(beatNumber)} of ${String(beatCount)}: ${beat.title}. Pointing at ${beat.pointerLabel}.${objectiveLine}`;
   }, [
@@ -640,6 +767,7 @@ export function CoachMarkOverlay({
     beat.pointerLabel,
     beat.title,
     beatCount,
+    objectiveSkipped,
     beatNumber,
     chapter.title,
     chapterCount,
@@ -654,6 +782,7 @@ export function CoachMarkOverlay({
   const menuId = 'tutorial-chapter-menu-panel';
   const titleId = `tutorial-beat-title-${beat.id}`;
   const bodyId = `tutorial-beat-body-${beat.id}`;
+  const nextBlockedId = `tutorial-next-blocked-${beat.id}`;
   const isCentered = anchorRect == null;
 
   // Drawn from the same rect the placement engine treats as off-limits, so what the
@@ -851,6 +980,7 @@ export function CoachMarkOverlay({
                 chapters={chapters}
                 activeChapterId={chapter.id}
                 reached={progress.reached}
+                objectiveAudit={objectiveAudit}
                 onSelect={handleSelectChapter}
                 onClose={closeMenu}
               />
@@ -880,6 +1010,8 @@ export function CoachMarkOverlay({
                   key={beat.id}
                   objective={beat.objective}
                   satisfied={objectiveSatisfied}
+                  skipped={objectiveSkipped}
+                  onSkip={canSkipObjective ? onSkipObjective : undefined}
                   reducedMotion={reducedMotion}
                 />
               ) : null}
@@ -890,8 +1022,20 @@ export function CoachMarkOverlay({
                 </Button>
               ) : null}
               {beat.primaryAction === 'launch-next' ? (
-                <Button onClick={onLaunchNext} data-testid="tutorial-launch-next">
-                  Launch Operation Silent Relay
+                <>
+                  <CompletionSummary audit={objectiveAudit} />
+                  <Button onClick={onLaunchNext} data-testid="tutorial-launch-next">
+                    Launch Operation Silent Relay
+                  </Button>
+                </>
+              ) : null}
+              {onRestartTraining ? (
+                <Button
+                  onClick={onRestartTraining}
+                  disabled={restartTrainingPending}
+                  data-testid="tutorial-restart-training"
+                >
+                  {restartTrainingPending ? 'Starting training…' : 'Start training'}
                 </Button>
               ) : null}
             </div>
@@ -947,11 +1091,24 @@ export function CoachMarkOverlay({
                 variant={beat.primaryAction ? 'secondary' : 'default'}
                 size="sm"
                 onClick={onNext}
+                disabled={nextBlocked}
+                aria-describedby={nextBlocked && !menuOpen ? nextBlockedId : undefined}
                 data-testid="tutorial-next"
               >
                 Next
               </Button>
             </div>
+            {nextBlocked && !menuOpen ? (
+              <p
+                id={nextBlockedId}
+                data-testid="tutorial-next-blocked-reason"
+                className={cn(typographyTokens.bodySm, 'text-[var(--aegis-text-muted)]')}
+              >
+                {objective.requirement === 'skippable'
+                  ? 'Complete the objective above, or skip it, to continue.'
+                  : 'Complete the objective above to continue.'}
+              </p>
+            ) : null}
           </div>
         </div>
       )}
