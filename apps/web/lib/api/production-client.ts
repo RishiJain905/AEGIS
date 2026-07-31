@@ -87,6 +87,7 @@ export function createProductionClient(): AegisApiClient {
     getRun: (runId, signal) => fetchJson(`/api/v1/runs/${runId}`, signal),
     listRuns: (signal) => fetchJson('/api/v1/runs', signal),
     listIncidents: (runId, signal) => fetchJson(`/api/v1/runs/${runId}/incidents`, signal),
+    listAllIncidents: (signal) => fetchJson('/api/v1/incidents', signal),
     getIncident: (incidentId, signal) => fetchJson(`/api/v1/incidents/${incidentId}`, signal),
     getInvestigationDetail: (incidentId, signal) =>
       fetchJson(`/api/v1/incidents/${incidentId}/investigation`, signal, (data) =>

@@ -7,13 +7,14 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Button, Drawer, DrawerContent, DrawerHeader, DrawerTitle, Rail } from '@aegis/ui';
 
 import type { ResolvedTheme } from '@/features/shell/contracts/panel-preferences';
+import { useActiveRunId } from '@/features/shell/hooks/use-active-run';
 import { useTheme } from '@/features/shell/hooks/use-theme';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 // Nav items keyed by their base path. Run-scoped destinations (active run, replay,
-// after-action) resolve to the run the operator is currently in, so the rail never points
-// at a stale placeholder run mid-engagement; with no active run they fall back to the
-// catalogue rather than a dead link.
+// after-action) follow the operator's run — the one named by the route, or the one they
+// were last on. With no run at all they render disabled: sending "Active run" to the
+// catalogue looked like a broken link, because from the catalogue it went nowhere.
 const NAV_ITEMS = [
   { base: '/scenarios', label: 'Scenarios', icon: 'grid', runScoped: false },
   { base: '/runs', label: 'Active run', icon: 'pulse', runScoped: true },
@@ -27,19 +28,23 @@ const NAV_ITEMS = [
 
 type NavIconName = (typeof NAV_ITEMS)[number]['icon'];
 
-/** Pull the run id out of a run-scoped route so the rail can keep run links in-context. */
-function activeRunIdFromPath(pathname: string): string | null {
-  const match = /^\/(?:runs|replay|after-action)\/([^/]+)/.exec(pathname);
-  return match?.[1] ?? null;
-}
+// Run-scoped bases that are also a real page on their own. Replay's base renders a run
+// picker, so with no run in context the rail can send the operator there to choose one
+// instead of going inert — replay was previously reachable only by typing a run's URL.
+const SELF_SERVING_RUN_SCOPED_BASES = new Set<string>(['/replay']);
 
-/** Resolve a nav item's href: run-scoped items follow the active run, else fall back to it. */
-function navHref(item: (typeof NAV_ITEMS)[number], activeRunId: string | null): string {
+/** A nav item's destination, or `null` when it is run-scoped and there is no run. */
+function navHref(item: (typeof NAV_ITEMS)[number], activeRunId: string | null): string | null {
   if (!item.runScoped) {
     return item.base;
   }
-  return activeRunId ? `${item.base}/${activeRunId}` : '/scenarios';
+  if (activeRunId) {
+    return `${item.base}/${activeRunId}`;
+  }
+  return SELF_SERVING_RUN_SCOPED_BASES.has(item.base) ? item.base : null;
 }
+
+const NO_ACTIVE_RUN_HINT = 'No active run — start one from Scenarios';
 
 function NavIcon({ name }: { name: NavIconName }) {
   const paths: Record<NavIconName, ReactNode> = {
@@ -174,26 +179,47 @@ const ACTIVE_PILL =
 
 function NavLinks({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
-  const activeRunId = activeRunIdFromPath(pathname);
+  const activeRunId = useActiveRunId();
 
   return (
     <>
       {NAV_ITEMS.map((item) => {
         const href = navHref(item, activeRunId);
         const active = pathname === item.base || pathname.startsWith(`${item.base}/`);
+        const className = collapsed
+          ? `relative w-10 justify-center px-0 ${active ? ACTIVE_PILL : ''}`
+          : `relative w-full justify-start px-3 ${
+              active ? `${ACTIVE_PILL} shadow-[inset_2px_0_0_var(--aegis-accent-cyan)]` : ''
+            }`;
+
+        // Unreachable destination: rendered, named and focusable so the rail keeps its
+        // shape and the operator can see why, but inert rather than linking somewhere it
+        // does not mean.
+        if (href === null) {
+          return (
+            <Button
+              key={item.base}
+              variant="ghost"
+              size="sm"
+              disabled
+              aria-disabled="true"
+              data-testid={`rail-${item.icon}-disabled`}
+              className={`${className} cursor-not-allowed opacity-45`}
+              title={`${item.label} — ${NO_ACTIVE_RUN_HINT}`}
+            >
+              <NavIcon name={item.icon} />
+              {!collapsed ? <span>{item.label}</span> : null}
+            </Button>
+          );
+        }
+
         return (
           <Button
             key={item.base}
             asChild
             variant={active ? 'secondary' : 'ghost'}
             size="sm"
-            className={
-              collapsed
-                ? `relative w-10 justify-center px-0 ${active ? ACTIVE_PILL : ''}`
-                : `relative w-full justify-start px-3 ${
-                    active ? `${ACTIVE_PILL} shadow-[inset_2px_0_0_var(--aegis-accent-cyan)]` : ''
-                  }`
-            }
+            className={className}
           >
             <Link
               href={href}

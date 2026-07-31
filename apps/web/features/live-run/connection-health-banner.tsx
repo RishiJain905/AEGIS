@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 import { ConnectionHealthState } from '@aegis/contracts-ts';
-import { Alert, Badge, cn, getMotionTransition, useReducedMotion } from '@aegis/ui';
+import { Alert, Badge, Button, cn, getMotionTransition, useReducedMotion } from '@aegis/ui';
 
 import { useLiveRun } from '@/features/live-run/live-run-provider';
 import type { ConnectionStatus } from '@/lib/api';
@@ -189,6 +191,8 @@ export function ConnectionHealthBanner() {
   const liveRun = useLiveRun();
   const connectionQuery = useConnectionStatus();
   const reducedMotion = useReducedMotion();
+  const queryClient = useQueryClient();
+  const [retrying, setRetrying] = useState(false);
 
   const isLiveMode = liveRun?.isLiveMode === true;
   const health = liveRun?.state.connectionHealth;
@@ -207,6 +211,22 @@ export function ConnectionHealthBanner() {
     [isLiveMode, health, isStale, connectionStatus],
   );
   const shown = useNoticeHysteresis(notice);
+
+  // Manual recovery. Automatic retries deliberately slow down while an endpoint keeps
+  // failing (see lib/api/retry-policy), which is right for the machine and wrong for an
+  // operator who has just fixed the thing and wants to know now. Refetching the active
+  // queries clears their error state on success, which is also what resets the polling
+  // cadence to its healthy interval.
+  const resync = liveRun?.resync;
+  const handleRetry = useCallback(() => {
+    setRetrying(true);
+    void Promise.allSettled([
+      queryClient.refetchQueries({ type: 'active' }),
+      resync ? resync() : Promise.resolve(),
+    ]).finally(() => {
+      setRetrying(false);
+    });
+  }, [queryClient, resync]);
 
   // Entrance is opt-in per appearance so the banner fades in rather than popping over the map.
   const [entered, setEntered] = useState(false);
@@ -244,11 +264,29 @@ export function ConnectionHealthBanner() {
                 }
           }
         >
-          <span className="text-xs leading-4">{shown.detail}</span>
+          <span className="text-xs leading-4">
+            {shown.detail}
+            {shown.variant === 'warning' ? ' Retries are backing off.' : null}
+          </span>
           {isLiveMode && sequence !== undefined ? (
             <div className="mt-2 flex items-center gap-2">
               <Badge>{`Sequence ${String(sequence)}`}</Badge>
               {isStale === true ? <Badge>Stale</Badge> : null}
+            </div>
+          ) : null}
+          {/* Only where waiting is the alternative. A paused simulator or an in-flight
+              catch-up recovers on its own, and a button that "fixes" neither is noise. */}
+          {shown.variant === 'warning' ? (
+            <div className="mt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRetry}
+                disabled={retrying}
+                data-testid="connection-retry-now"
+              >
+                {retrying ? 'Retrying…' : 'Retry now'}
+              </Button>
             </div>
           ) : null}
         </Alert>

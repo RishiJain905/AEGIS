@@ -147,6 +147,28 @@ function MetaChip({ label, value }: { label: string; value: string }) {
   );
 }
 
+/**
+ * What to tell the operator when a launch is refused.
+ *
+ * A pinned-seed scenario — the tutorial, at seed 1000 — derives one run id for the whole
+ * database, so whoever launches it first owns it. The server used to answer 200 with that
+ * run and the operator landed in a workspace they had no permission to read; it now
+ * refuses with `RUN_OWNED_BY_ANOTHER_USER`, and the refusal is only useful if we say what
+ * it was.
+ */
+function launchErrorMessage(error: unknown): string {
+  if (!(error instanceof ApiClientError)) {
+    return 'Could not start the run. Check the connection and try again.';
+  }
+  if (error.code === 'RUN_OWNED_BY_ANOTHER_USER') {
+    return `${error.message} Runs of this scenario are shared, so only its owner or an administrator can restart it.`;
+  }
+  if (error.status === 400) {
+    return 'This scenario could not be launched — its package is unavailable on the server. Try Operation Silent Relay, or contact an operator to provision the scenario.';
+  }
+  return 'Could not start the run. Check the connection and try again.';
+}
+
 export default function ScenariosPage() {
   const router = useRouter();
   const scenariosQuery = useScenarios();
@@ -279,11 +301,7 @@ export default function ScenariosPage() {
         {createRun.isError ? (
           <ErrorState
             data-testid="create-run-error"
-            message={
-              createRun.error instanceof ApiClientError && createRun.error.status === 400
-                ? 'This scenario could not be launched — its package is unavailable on the server. Try Operation Silent Relay, or contact an operator to provision the scenario.'
-                : 'Could not start the run. Check the connection and try again.'
-            }
+            message={launchErrorMessage(createRun.error)}
             onRetry={() => {
               createRun.reset();
             }}

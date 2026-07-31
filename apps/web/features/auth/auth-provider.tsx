@@ -246,3 +246,14 @@ export function useAuth(): AuthContextValue {
   }
   return ctx;
 }
+
+/**
+ * The session if there is one, `null` if this subtree has no provider.
+ *
+ * For shared chrome that reads identity but does not depend on it — the operations rail
+ * reads it only to decide whether a remembered run id still belongs to the signed-in
+ * operator. Anything that acts on the session should use `useAuth` and get the error.
+ */
+export function useOptionalAuth(): AuthContextValue | null {
+  return useContext(AuthContext);
+}

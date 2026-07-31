@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
 
 import {
@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@aegis/ui';
 
+import { useActiveRunId } from '@/features/shell/hooks/use-active-run';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 interface CommandItem {
@@ -21,26 +22,8 @@ interface CommandItem {
   action: () => void;
 }
 
-/**
- * The run the palette's run-scoped commands should target.
- *
- * `activeRunId` in the workspace store is cleared by `resetForRun(null)` the moment the
- * operator leaves a run surface, so it cannot be the only source. The route is read first
- * — the same rule the operations rail uses — so the two navigation surfaces agree on what
- * "the active run" means instead of disagreeing on the same page.
- */
-function activeRunIdFromPath(pathname: string | null): string | null {
-  if (!pathname) {
-    return null;
-  }
-  const match = /^\/(?:runs|replay|after-action)\/([^/?#]+)/.exec(pathname);
-  const captured = match?.[1];
-  return captured ? decodeURIComponent(captured) : null;
-}
-
 export function CommandPalette() {
   const router = useRouter();
-  const pathname = usePathname();
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const lastFocusRef = useRef<HTMLElement | null>(null);
@@ -48,10 +31,11 @@ export function CommandPalette() {
   const open = useWorkspaceUiStore((state) => state.workspace.commandPaletteOpen);
   const setCommandPaletteOpen = useWorkspaceUiStore((state) => state.setCommandPaletteOpen);
   const togglePanelCollapsed = useWorkspaceUiStore((state) => state.togglePanelCollapsed);
-  const storedRunId = useWorkspaceUiStore((state) => state.activeRunId);
   const [query, setQuery] = useState('');
 
-  const activeRunId = activeRunIdFromPath(pathname) ?? storedRunId;
+  // Shared with the operations rail, so the two navigation surfaces cannot disagree about
+  // what "the active run" is on the same page.
+  const activeRunId = useActiveRunId();
 
   const commands: CommandItem[] = [
     {

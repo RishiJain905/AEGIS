@@ -107,6 +107,60 @@ def test_token_bucket_rejects_burst_bypass_with_stable_error() -> None:
     assert int(blocked.headers["retry-after"]) >= 1
 
 
+def test_middleware_rejections_keep_their_cors_headers() -> None:
+    """A rejection the browser cannot read is worse than the rejection itself.
+
+    ``CORSMiddleware`` only decorates responses that pass back out through it, so anything
+    answered *above* it leaves without ``Access-Control-Allow-Origin``. The browser then
+    drops the response before JavaScript sees the status, reports an opaque network error,
+    and the client retries — which produces another header-less rejection. That loop is how
+    a failing run bootstrap turned into hundreds of ``ERR_FAILED`` requests in QA. The rate
+    limiter and the body limiter both answer requests themselves, so both have to sit below
+    CORS, not just the unhandled-500 path.
+    """
+    origin = {"Origin": "http://localhost:3000"}
+    client = _client(
+        _settings(
+            AEGIS_RATE_LIMIT_REQUESTS_PER_MINUTE=1,
+            AEGIS_RATE_LIMIT_BURST=1,
+            AEGIS_REQUEST_BODY_MAX_BYTES=16,
+        )
+    )
+
+    ok = client.get("/_security-probe", headers=origin)
+    assert ok.status_code == 200
+    assert ok.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+    rate_limited = client.get("/_security-probe", headers=origin)
+    assert rate_limited.status_code == 429
+    assert rate_limited.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+    oversized = _client(_settings(AEGIS_REQUEST_BODY_MAX_BYTES=16)).post(
+        "/_security-probe",
+        content=b'{"payload":"this is too large"}',
+        headers={**origin, "Content-Type": "application/json"},
+    )
+    assert oversized.status_code == 413
+    assert oversized.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+
+def test_unhandled_route_errors_keep_their_cors_headers() -> None:
+    """The 500 an operator actually sees has to be readable by the browser too."""
+    app: FastAPI = create_app(_settings())
+
+    async def boom() -> None:
+        raise RuntimeError("route exploded")
+
+    app.add_api_route("/_boom", boom, methods=["GET"])
+    client = TestClient(app, raise_server_exceptions=False)
+
+    response = client.get("/_boom", headers={"Origin": "http://localhost:3000"})
+
+    assert response.status_code == 500
+    assert response.json()["code"] == "INTERNAL_ERROR"
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+
 def test_liveness_and_readiness_paths_are_exempt_from_rate_limit() -> None:
     client = _client(
         _settings(

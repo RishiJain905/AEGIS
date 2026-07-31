@@ -3,13 +3,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionHealthState } from '@aegis/contracts-ts';
 
-const { useLiveRun, useConnectionStatus } = vi.hoisted(() => ({
+const { useLiveRun, useConnectionStatus, refetchQueries, resync } = vi.hoisted(() => ({
   useLiveRun: vi.fn(),
   useConnectionStatus: vi.fn(),
+  refetchQueries: vi.fn(() => Promise.resolve()),
+  resync: vi.fn(() => Promise.resolve()),
 }));
 vi.mock('@/features/live-run/live-run-provider', () => ({ useLiveRun }));
 vi.mock('@/features/shell/hooks/use-shell-queries', () => ({
   useConnectionStatus,
+}));
+// The banner's manual retry reaches the cache directly; the shell owns the real provider.
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ refetchQueries }),
 }));
 
 import { ConnectionHealthBanner, describeConnectionNotice } from './connection-health-banner';
@@ -17,6 +23,7 @@ import { ConnectionHealthBanner, describeConnectionNotice } from './connection-h
 function mockLive(health: string, isStale = false) {
   useLiveRun.mockReturnValue({
     isLiveMode: true,
+    resync,
     state: { connectionHealth: health, isStale, lastAppliedSequence: 42 },
   });
 }
@@ -192,6 +199,49 @@ describe('ConnectionHealthBanner hysteresis', () => {
     const banner = screen.getByTestId('connection-banner');
     expect(banner).toHaveAttribute('data-connection-notice', 'fixture_offline');
     expect(banner).toHaveTextContent('Showing last known fixture data.');
+  });
+});
+
+describe('ConnectionHealthBanner manual recovery', () => {
+  it('offers a retry that refetches the active queries and resyncs the transport', () => {
+    mockLive(ConnectionHealthState.DISCONNECTED);
+    render(<ConnectionHealthBanner />);
+    advance(700);
+
+    // The operator is told the automatic retries have slowed down, not left guessing why
+    // nothing is happening.
+    expect(screen.getByTestId('connection-banner')).toHaveTextContent('Retries are backing off.');
+
+    act(() => {
+      screen.getByTestId('connection-retry-now').click();
+    });
+
+    expect(refetchQueries).toHaveBeenCalledWith({ type: 'active' });
+    expect(resync).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers it on a fixture-backed view too, where there is no transport to resync', () => {
+    mockFixture('offline');
+    render(<ConnectionHealthBanner />);
+    advance(700);
+
+    act(() => {
+      screen.getByTestId('connection-retry-now').click();
+    });
+
+    expect(refetchQueries).toHaveBeenCalledWith({ type: 'active' });
+    expect(resync).not.toHaveBeenCalled();
+  });
+
+  it('stays out of the way when the condition recovers on its own', () => {
+    // A paused simulator resumes when the operator resumes it, and a catch-up finishes by
+    // itself. A "Retry now" on either would do nothing and say something false.
+    mockLive(ConnectionHealthState.SIMULATOR_PAUSED);
+    render(<ConnectionHealthBanner />);
+    advance(700);
+
+    expect(screen.getByTestId('connection-banner')).toBeInTheDocument();
+    expect(screen.queryByTestId('connection-retry-now')).toBeNull();
   });
 });
 

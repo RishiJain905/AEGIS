@@ -4,13 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/api';
 import { useApiClient } from '@/lib/api/api-client-provider';
+import { pollIntervalWhileHealthy } from '@/lib/api/retry-policy';
 
 export function useConnectionStatus() {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.connection.status,
     queryFn: ({ signal }) => client.getConnectionStatus(signal),
-    refetchInterval: 30_000,
+    refetchInterval: pollIntervalWhileHealthy(30_000),
   });
 }
 

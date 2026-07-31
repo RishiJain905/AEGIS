@@ -69,6 +69,8 @@ export interface AegisApiClient {
   getRun(runId: string, signal?: AbortSignal): Promise<RunV1>;
   listRuns(signal?: AbortSignal): Promise<RunV1[]>;
   listIncidents(runId: string, signal?: AbortSignal): Promise<IncidentV1[]>;
+  /** Every incident on a run the caller may read — the cross-run triage queue. */
+  listAllIncidents(signal?: AbortSignal): Promise<IncidentV1[]>;
   getIncident(incidentId: string, signal?: AbortSignal): Promise<IncidentV1>;
   getInvestigationDetail(incidentId: string, signal?: AbortSignal): Promise<InvestigationDetailV1>;
   getAgentSession(sessionId: string, signal?: AbortSignal): Promise<AgentSessionDetailV1>;

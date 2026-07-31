@@ -187,14 +187,15 @@ def _marker_incident_exists(incident_id: str) -> bool:
     return found[0]
 
 
-def _launch(
+def _post_launch(
     client: TestClient,
     *,
     seed: int,
     key: str,
     user_id: str = OWNER,
     restart_existing: bool | None = None,
-) -> dict:
+):
+    """The raw launch response, for the cases where a refusal is the expected answer."""
     csrf = login_as(client, user_id=user_id)
     body: dict[str, object] = {
         "schemaVersion": 1,
@@ -203,10 +204,27 @@ def _launch(
     }
     if restart_existing is not None:
         body["restartExisting"] = restart_existing
-    response = client.post(
+    return client.post(
         "/api/v1/runs",
         json=body,
         headers={"Idempotency-Key": key, **auth_headers(csrf)},
+    )
+
+
+def _launch(
+    client: TestClient,
+    *,
+    seed: int,
+    key: str,
+    user_id: str = OWNER,
+    restart_existing: bool | None = None,
+) -> dict:
+    response = _post_launch(
+        client,
+        seed=seed,
+        key=key,
+        user_id=user_id,
+        restart_existing=restart_existing,
     )
     assert response.status_code == 200, response.text
     return response.json()
@@ -294,14 +312,23 @@ def test_restart_cascades_every_run_scoped_table(still_api_client: TestClient) -
     assert after["outbox"] == after["domain_events"], after
 
 
-def test_restart_by_a_non_owner_leaves_the_run_intact(api_client: TestClient) -> None:
-    """Another operator's restart degrades to a resume; it must not destroy the run."""
+def test_launch_by_a_non_owner_is_refused_and_leaves_the_run_intact(
+    api_client: TestClient,
+) -> None:
+    """Another operator's launch is refused: it neither destroys the run nor receives it.
+
+    This used to "degrade to a resume" — 200 with the owner's run in the body. The caller
+    cannot read that run, so the client navigated to it and every follow-up request 403'd
+    into "Unable to load workspace data" (BUG-001). 409 rather than 403 because the caller
+    *may* create runs; what they cannot have is this one, and the distinct code is what
+    lets the catalogue explain it. The marker incident still proves the run survived.
+    """
     _seed_other_operator()
     first = _launch(api_client, seed=7103, key="restart-7103-a")
     run_id = first["run"]["id"]
     _seed_marker_incident(run_id, "incident:inc_restart_probe_7103")
 
-    second = _launch(
+    second = _post_launch(
         api_client,
         seed=7103,
         key="restart-7103-b",
@@ -309,8 +336,11 @@ def test_restart_by_a_non_owner_leaves_the_run_intact(api_client: TestClient) ->
         restart_existing=True,
     )
 
-    assert second["run"]["id"] == run_id
-    assert second["eventsEmitted"] == 0
+    assert second.status_code == 409, second.text
+    envelope = second.json()
+    assert envelope["code"] == "RUN_OWNED_BY_ANOTHER_USER"
+    # The refusal must not leak the other operator's run id back to the caller.
+    assert run_id not in second.text
     assert _marker_incident_exists("incident:inc_restart_probe_7103")
 
 

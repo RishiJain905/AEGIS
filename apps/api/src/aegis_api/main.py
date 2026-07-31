@@ -124,11 +124,36 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.state.settings = resolved_settings
     app.state.gateway = gateway
 
-    # Added first, so it ends up innermost: `add_middleware` prepends, and this has to sit
-    # *below* CORS for an unhandled 500 to come back out through the CORS layer and pick up
-    # its Access-Control-Allow-Origin header. Without that the browser drops the response and
-    # the operator sees a network error instead of the failure.
+    # Middleware order matters for CORS, and `add_middleware` prepends: the LAST call below
+    # ends up outermost. CORS is added last on purpose, so every response the stack can
+    # produce leaves through it and carries `Access-Control-Allow-Origin`.
+    #
+    # A response emitted *above* CORS is invisible to the browser: it fails the CORS check
+    # before JavaScript ever sees the status, so the client reports an opaque network error
+    # and — because a network error looks retryable where a 429 does not — retries, which
+    # produces another header-less rejection. That is how an operator's failing run bootstrap
+    # turned into hundreds of `ERR_FAILED` requests. The rate limiter and the body limiter
+    # both answer requests themselves (429/413/400), so they have to sit below CORS too, not
+    # just the unhandled-500 path.
     app.add_middleware(UnhandledErrorMiddleware)
+    app.add_middleware(create_observability_middleware(resolved_settings.OTEL_SERVICE_NAME))
+    app.add_middleware(
+        RequestBodyLimitMiddleware,
+        max_bytes=resolved_settings.AEGIS_REQUEST_BODY_MAX_BYTES,
+    )
+    app.add_middleware(
+        TokenBucketRateLimitMiddleware,
+        session_cookie_name=resolved_settings.AEGIS_SESSION_COOKIE_NAME,
+        requests_per_minute=resolved_settings.AEGIS_RATE_LIMIT_REQUESTS_PER_MINUTE,
+        burst=resolved_settings.AEGIS_RATE_LIMIT_BURST,
+        max_buckets=resolved_settings.AEGIS_RATE_LIMIT_MAX_BUCKETS,
+    )
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        environment=resolved_settings.AEGIS_ENV,
+        hsts_enabled=resolved_settings.AEGIS_SECURITY_HSTS_ENABLED,
+        hsts_max_age_seconds=resolved_settings.AEGIS_SECURITY_HSTS_MAX_AGE_SECONDS,
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=resolved_settings.cors_allowed_origins,
@@ -148,24 +173,6 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
             "X-Aegis-Incident-Id",
         ],
         expose_headers=["X-Request-Id", "X-Correlation-Id", "traceparent"],
-    )
-    app.add_middleware(create_observability_middleware(resolved_settings.OTEL_SERVICE_NAME))
-    app.add_middleware(
-        RequestBodyLimitMiddleware,
-        max_bytes=resolved_settings.AEGIS_REQUEST_BODY_MAX_BYTES,
-    )
-    app.add_middleware(
-        TokenBucketRateLimitMiddleware,
-        session_cookie_name=resolved_settings.AEGIS_SESSION_COOKIE_NAME,
-        requests_per_minute=resolved_settings.AEGIS_RATE_LIMIT_REQUESTS_PER_MINUTE,
-        burst=resolved_settings.AEGIS_RATE_LIMIT_BURST,
-        max_buckets=resolved_settings.AEGIS_RATE_LIMIT_MAX_BUCKETS,
-    )
-    app.add_middleware(
-        SecurityHeadersMiddleware,
-        environment=resolved_settings.AEGIS_ENV,
-        hsts_enabled=resolved_settings.AEGIS_SECURITY_HSTS_ENABLED,
-        hsts_max_age_seconds=resolved_settings.AEGIS_SECURITY_HSTS_MAX_AGE_SECONDS,
     )
 
     @app.exception_handler(AuthDependencyError)

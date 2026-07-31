@@ -238,6 +238,10 @@ export function createFixtureProvider(options: FixtureProviderOptions = {}): Aeg
       return applyProfile(incidents, signal);
     },
 
+    async listAllIncidents(signal) {
+      return applyProfile(dataset.incidents, signal);
+    },
+
     async getIncident(incidentId, signal) {
       const incident = dataset.incidents.find((item) => item.id === incidentId);
       if (!incident) {

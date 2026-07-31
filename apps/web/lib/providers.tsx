@@ -5,7 +5,7 @@ import { useState, type ReactNode } from 'react';
 
 import { AuthProvider } from '@/features/auth';
 import { ThemeManager } from '@/features/shell/components/theme-manager';
-import { ApiClientError } from '@/lib/api';
+import { queryRetryDelayMs, shouldRetryQuery } from '@/lib/api/retry-policy';
 
 function createQueryClient(): QueryClient {
   return new QueryClient({
@@ -13,14 +13,11 @@ function createQueryClient(): QueryClient {
       queries: {
         staleTime: 30_000,
         gcTime: 5 * 60_000,
-        retry: (failureCount, error) => {
-          if (error instanceof ApiClientError) {
-            if (error.status === 404 || error.status === 401 || error.status === 403) {
-              return false;
-            }
-          }
-          return failureCount < 2;
-        },
+        // Bounded attempts, jittered backoff, hard ceiling. See lib/api/retry-policy.
+        retry: shouldRetryQuery,
+        // TanStack hands the delay function `(attemptIndex, error)`; the policy's second
+        // parameter is the jitter source, so it is called positionally here.
+        retryDelay: (attemptIndex) => queryRetryDelayMs(attemptIndex),
         refetchOnWindowFocus: false,
       },
     },
