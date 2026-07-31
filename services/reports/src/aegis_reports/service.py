@@ -9,8 +9,10 @@ from typing import Any
 from aegis_contracts.persistence import ObjectMetadataReferenceV1
 from aegis_contracts.reports import (
     AfterActionReportV1,
+    ReportClaimV1,
     ReportExportArtifactV1,
     ReportExportFormatV1,
+    ReportGenerationModeV1,
     ReportGenerationStatusV1,
     ReportVersionV1,
 )
@@ -72,9 +74,29 @@ class ReportService:
         latest_version = await uow.reports.latest_version_number(run_id)
         version_number = latest_version + 1
 
+        # Grounding is resolved before the report is built so the report's checksum covers
+        # the claim set that is actually persisted, and so its provenance label reflects
+        # what really happened: a rejected or absent narrative yields a deterministic
+        # report, never one that reads as agent-authored.
         grounding_fallback = False
+        grounded_claims: list[ReportClaimV1] | None = None
+        if narrative_claims:
+            grounding = ground_narrative_claims(
+                structured_claims=narrative_claims,
+                source=source,
+            )
+            if grounding.grounding_failed or grounding.rejected_claim_count > 0:
+                grounding_fallback = True
+            else:
+                grounded_claims = list(grounding.claims)
+
+        generation_mode = (
+            ReportGenerationModeV1.LLM_NARRATIVE
+            if grounded_claims
+            else ReportGenerationModeV1.DETERMINISTIC
+        )
         report_id = new_runtime_id_fn("aar")
-        template_report = build_template_report(
+        report = build_template_report(
             report_id=report_id,
             version_number=version_number,
             source=source,
@@ -83,25 +105,10 @@ class ReportService:
             task_id=task_id,
             provider_id=provider_id,
             prompt_version=prompt_version,
+            grounding_fallback=grounding_fallback,
+            generation_mode=generation_mode,
+            narrative_claims=grounded_claims,
         )
-
-        if narrative_claims:
-            grounding = ground_narrative_claims(
-                structured_claims=narrative_claims,
-                source=source,
-            )
-            if grounding.grounding_failed or grounding.rejected_claim_count > 0:
-                grounding_fallback = True
-                report = template_report.model_copy(update={"grounding_fallback": True})
-            else:
-                report = template_report.model_copy(
-                    update={
-                        "claims": template_report.claims + grounding.claims,
-                        "grounding_fallback": False,
-                    }
-                )
-        else:
-            report = template_report
 
         status = (
             ReportGenerationStatusV1.GROUNDING_FALLBACK
@@ -125,6 +132,7 @@ class ReportService:
             task_id=task_id,
             checksum=report.checksum,
             grounding_fallback=grounding_fallback,
+            generation_mode=generation_mode,
             created_at=datetime.now(UTC),
         )
 

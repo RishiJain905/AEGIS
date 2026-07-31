@@ -79,6 +79,37 @@ describe('ReportsPanel readiness states', () => {
     expect(useAfterActionReport).toHaveBeenCalledWith('run_done', { enabled: true });
   });
 
+  it.each([
+    ['deterministic', 'machine-assembled', 'agent narrative'],
+    ['llm_narrative', 'agent narrative', 'machine-assembled'],
+  ])(
+    'labels a %s report as "%s" so its provenance is never ambiguous',
+    (generationMode, expectedPill, absentPill) => {
+      useRunStatusForReports.mockReturnValue({ isPending: false, data: { status: 'stopped' } });
+      useAfterActionReport.mockReturnValue({
+        isPending: false,
+        isError: false,
+        data: {
+          versionNumber: 1,
+          generationMode,
+          groundingFallback: false,
+          narrativeProviderId: null,
+          executiveSummary: 'Summary',
+          checksum: 'abc123',
+          sessionId: null,
+          taskId: null,
+          timeline: [],
+          claims: [],
+        },
+      });
+
+      render(<ReportsPanel runId="run_done" />);
+
+      expect(screen.getByText(expectedPill)).toBeInTheDocument();
+      expect(screen.queryByText(absentPill)).not.toBeInTheDocument();
+    },
+  );
+
   it('still shows the not-ready state on a real report-query failure for an eligible run (not gating, an actual error)', () => {
     useRunStatusForReports.mockReturnValue({ isPending: false, data: { status: 'completed' } });
     useAfterActionReport.mockReturnValue({ isPending: false, isError: true, data: undefined });

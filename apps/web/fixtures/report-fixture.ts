@@ -179,6 +179,9 @@ export const syntheticAfterActionReport: AfterActionReportV1 = parseContract(
       },
     },
     groundingFallback: false,
+    // The demo fixture models a completed SCRIBE run, so it must not inherit the
+    // contract's safe 'deterministic' default.
+    generationMode: 'llm_narrative',
     narrativeProviderId: 'mock',
     narrativePromptVersion: 'phase23-scribe-v1',
     sessionId: 'agent-session:ags_scribe_001',
@@ -205,6 +208,7 @@ export const syntheticReportVersions: ReportVersionV1[] = [
     taskId: 'atk_01ARZ3NDEKTSV4RRFFQ69G5FBD',
     checksum: syntheticAfterActionReport.checksum,
     groundingFallback: false,
+    generationMode: 'llm_narrative',
     createdAt: '2026-06-30T02:30:00.000Z',
   }),
 ];

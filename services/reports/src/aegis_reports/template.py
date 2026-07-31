@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Sequence
 from datetime import UTC, datetime
 
 from aegis_contracts.investigation import InvestigationDetailV1
@@ -14,6 +15,7 @@ from aegis_contracts.reports import (
     ReportCitationV1,
     ReportClaimCategoryV1,
     ReportClaimV1,
+    ReportGenerationModeV1,
 )
 from aegis_contracts.versioning import (
     AFTER_ACTION_REPORT_SCHEMA_VERSION,
@@ -54,6 +56,8 @@ def build_template_report(
     provider_id: str | None = None,
     prompt_version: str | None = None,
     grounding_fallback: bool = False,
+    generation_mode: ReportGenerationModeV1 = ReportGenerationModeV1.DETERMINISTIC,
+    narrative_claims: Sequence[ReportClaimV1] | None = None,
 ) -> AfterActionReportV1:
     claims: list[ReportClaimV1] = []
     claim_index = 0
@@ -189,6 +193,11 @@ def build_template_report(
             )
         )
 
+    # Grounded model claims are appended here rather than merged by the caller so the
+    # checksum below covers the full claim set actually persisted.
+    if narrative_claims:
+        claims.extend(narrative_claims)
+
     contradictions = [item.summary for item in investigation.hypothesis_comparisons if item.summary]
     uncertainties = [
         item
@@ -196,22 +205,44 @@ def build_template_report(
         for item in revision.unknowns
     ][:8]
 
-    executive_summary = (
-        f"Deterministic after-action report for incident '{title}'. "
-        f"Evidence attachments: {len(investigation.evidence_attachments)}. "
-        f"Hypotheses: {len(investigation.hypotheses)}. "
-        f"Proposals: {len(investigation.proposals)}. "
-        f"Policy decisions: {len(investigation.policy_decisions)}."
+    has_agent_artifacts = bool(
+        investigation.triage_results
+        or investigation.hypotheses
+        or investigation.proposals
+        or investigation.policy_decisions
     )
+    summary_parts = [
+        f"Deterministic after-action report for incident '{title}'.",
+        f"Evidence attachments: {len(investigation.evidence_attachments)}.",
+        f"Hypotheses: {len(investigation.hypotheses)}.",
+        f"Proposals: {len(investigation.proposals)}.",
+        f"Policy decisions: {len(investigation.policy_decisions)}.",
+    ]
+    if generation_mode is ReportGenerationModeV1.DETERMINISTIC and not has_agent_artifacts:
+        # The degraded case the operator most needs flagged: the run stopped without any
+        # agent investigation, so everything below is reconstructed from persisted run
+        # state alone. Say so in the prose, not just in the provenance field, because the
+        # Markdown/HTML exports travel outside the UI that renders that field.
+        summary_parts.append(
+            "No agent investigation artifacts were recorded for this run; the report is "
+            "reconstructed from persisted events, alerts, and operator activity only."
+        )
+    executive_summary = " ".join(summary_parts)
     chronology_summary = (
         f"Timeline synthesized from sequences {source.source_sequence_from}"
         f"–{source.source_sequence_to} with {len(source.timeline)} chronology entries."
     )
 
     created_at = datetime.now(UTC)
+    # Content-addressed: the checksum covers what the report *says*, never the randomly
+    # allocated report id, so the same run state hashes identically on every regeneration.
+    # That is what makes the deterministic fallback auditable and safely re-runnable.
     report_payload = {
-        "id": report_id,
+        "runId": source.run_id,
+        "incidentId": source.incident_id,
         "versionNumber": version_number,
+        "generationMode": generation_mode.value,
+        "executiveSummary": executive_summary,
         "claims": [claim.model_dump(by_alias=True, mode="json") for claim in claims],
         "timeline": [entry.model_dump(by_alias=True, mode="json") for entry in source.timeline],
     }
@@ -236,6 +267,7 @@ def build_template_report(
         uncertainties=uncertainties,
         source=source,
         grounding_fallback=grounding_fallback,
+        generation_mode=generation_mode,
         narrative_provider_id=provider_id,
         narrative_prompt_version=prompt_version,
         session_id=session_id,

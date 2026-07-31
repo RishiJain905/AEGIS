@@ -66,6 +66,13 @@ export const reportExportFormatSchema = z.enum(['markdown', 'json', 'html']);
 
 export const reportGenerationStatusSchema = z.enum(['completed', 'grounding_fallback', 'failed']);
 
+/**
+ * How the narrative content of a report version was produced. `deterministic` reports are
+ * assembled purely from persisted run state with no model in the loop and must never be
+ * presented as agent-authored narrative.
+ */
+export const reportGenerationModeSchema = z.enum(['llm_narrative', 'deterministic']);
+
 export const reportCitationSchema = z
   .object({
     schemaVersion: schemaVersionCheck(REPORT_CITATION_SCHEMA_VERSION),
@@ -142,6 +149,7 @@ export const afterActionReportSchema = z
     uncertainties: z.array(z.string()).default([]),
     source: afterActionReportSourceSchema,
     groundingFallback: z.boolean().default(false),
+    generationMode: reportGenerationModeSchema.default('deterministic'),
     narrativeProviderId: z.string().max(64).nullable().optional(),
     narrativePromptVersion: z.string().max(64).nullable().optional(),
     sessionId: agentSessionIdSchema.nullable().optional(),
@@ -168,6 +176,7 @@ export const reportVersionSchema = z
     taskId: agentTaskIdSchema.nullable().optional(),
     checksum: z.string().min(64).max(64),
     groundingFallback: z.boolean().default(false),
+    generationMode: reportGenerationModeSchema.default('deterministic'),
     createdAt: utcTimestampSchema,
   })
   .strict();
@@ -216,6 +225,7 @@ export type ReportClaimCategoryV1 = z.infer<typeof reportClaimCategorySchema>;
 export type ReportCitationKindV1 = z.infer<typeof reportCitationKindSchema>;
 export type ReportExportFormatV1 = z.infer<typeof reportExportFormatSchema>;
 export type ReportGenerationStatusV1 = z.infer<typeof reportGenerationStatusSchema>;
+export type ReportGenerationModeV1 = z.infer<typeof reportGenerationModeSchema>;
 export type ReportCitationV1 = z.infer<typeof reportCitationSchema>;
 export type ReportClaimV1 = z.infer<typeof reportClaimSchema>;
 export type ReportTimelineEntryV1 = z.infer<typeof reportTimelineEntrySchema>;

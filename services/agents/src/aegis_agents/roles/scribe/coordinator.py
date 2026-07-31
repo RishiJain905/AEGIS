@@ -1,18 +1,42 @@
-"""SCRIBE coordinator — trigger after-action report generation."""
+"""SCRIBE coordinator — trigger after-action report generation.
+
+Two entry points, deliberately separated:
+
+* :meth:`ScribeCoordinator.trigger_for_run` is the **strict** path used by the explicit
+  operator action (``POST /runs/{id}/investigation/trigger-scribe``). It refuses to run
+  when the incident has no WATCHTOWER / ORACLE / BASTION artifacts, because an operator
+  asking for an agent narrative should be told the investigation is incomplete rather than
+  handed something the agents never wrote.
+* :meth:`ScribeCoordinator.ensure_report_for_run` is the **best-effort** path used by run
+  finalization. When the strict prerequisites hold it delegates to the strict path
+  unchanged; when they do not it falls back to a deterministic report assembled from
+  persisted run state (events, alerts, evidence, proposals, policy decisions), labelled
+  ``generation_mode = deterministic`` so nothing reads as agent-authored.
+
+The split exists so the fallback cannot weaken the strict path by accident: loosening
+``trigger_for_run`` would have made the operator-facing trigger silently produce
+template-only reports too.
+"""
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
+from enum import StrEnum
 
 from aegis_agents.runtime.errors import AgentRuntimeError, AgentRuntimeErrorCode
 from aegis_agents.runtime.session_service import AgentSessionService
 from aegis_agents.runtime.task_service import AgentTaskService
 from aegis_contracts.agent_runtime import CreateAgentSessionRequestV1, CreateAgentTaskRequestV1
 from aegis_contracts.entities import AgentRole
+from aegis_contracts.investigation import InvestigationDetailV1
 from aegis_contracts.reports import TriggerScribeRequestV1
 from aegis_persistence.orm.tables import AgentTaskRow, IncidentRow
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
+from aegis_reports.service import ReportService
 from sqlalchemy import select
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -23,15 +47,140 @@ class ScribeTriggerResult:
     report_version_id: str | None = None
 
 
+class ScribeReportOutcome(StrEnum):
+    """What :meth:`ScribeCoordinator.ensure_report_for_run` actually did."""
+
+    #: Prerequisites held; a SCRIBE agent task was queued for the caller to execute.
+    AGENT_TASK_QUEUED = "agent_task_queued"
+    #: Prerequisites missing; a deterministic report was written from persisted state.
+    DETERMINISTIC = "deterministic"
+    #: A report already existed for this run; nothing was written (idempotent re-run).
+    ALREADY_REPORTED = "already_reported"
+    #: The run never produced an incident, so there is nothing to report on.
+    SKIPPED_NO_INCIDENT = "skipped_no_incident"
+
+
+@dataclass
+class ScribeEnsureResult:
+    outcome: ScribeReportOutcome
+    incident_id: str | None = None
+    scribe_session_id: str | None = None
+    scribe_task_id: str | None = None
+    report_version_id: str | None = None
+
+
+def _has_full_investigation(detail: InvestigationDetailV1) -> bool:
+    """The artifacts the LLM narrative path grounds against."""
+    return bool(detail.triage_results and detail.hypotheses and detail.proposals)
+
+
 class ScribeCoordinator:
     def __init__(
         self,
         *,
         session_service: AgentSessionService | None = None,
         task_service: AgentTaskService | None = None,
+        report_service: ReportService | None = None,
     ) -> None:
         self._sessions = session_service or AgentSessionService()
         self._tasks = task_service or AgentTaskService()
+        self._reports = report_service or ReportService()
+
+    async def ensure_report_for_run(
+        self,
+        uow: PostgresUnitOfWork,
+        request: TriggerScribeRequestV1,
+    ) -> ScribeEnsureResult:
+        """Guarantee a stopped run ends with *some* after-action report.
+
+        Never raises for the ordinary "nothing to narrate" shapes — a run with no
+        incident, or no agent artifacts, is a normal outcome of an unattended run, not an
+        error. Genuine faults (a broken repository, a contract violation) still propagate;
+        the finalization caller keeps its own best-effort guard around those.
+        """
+        incident_id = await self._resolve_incident_id(uow, request)
+        if incident_id is None:
+            logger.info(
+                "After-action report skipped for run %s: no incident was ever raised",
+                request.run_id,
+            )
+            return ScribeEnsureResult(outcome=ScribeReportOutcome.SKIPPED_NO_INCIDENT)
+
+        detail = await uow.investigation.get_detail(incident_id, request.run_id)
+        if _has_full_investigation(detail):
+            # Prerequisites hold: use the strict path untouched, including its own
+            # idempotency-key dedup, so the LLM narrative is still what gets produced.
+            result = await self.trigger_for_run(uow, request)
+            return ScribeEnsureResult(
+                outcome=ScribeReportOutcome.AGENT_TASK_QUEUED,
+                incident_id=result.incident_id,
+                scribe_session_id=result.scribe_session_id,
+                scribe_task_id=result.scribe_task_id,
+                report_version_id=result.report_version_id,
+            )
+
+        return await self.ensure_deterministic_report(uow, request, incident_id=incident_id)
+
+    async def ensure_deterministic_report(
+        self,
+        uow: PostgresUnitOfWork,
+        request: TriggerScribeRequestV1,
+        *,
+        incident_id: str | None = None,
+    ) -> ScribeEnsureResult:
+        """Write a deterministic report for the run unless one already exists.
+
+        Also usable as a safety net after the agent path: finalization calls it once more
+        when a queued SCRIBE task failed, so an unreachable provider degrades to a
+        template report instead of leaving the after-action surface empty.
+        """
+        resolved = incident_id or await self._resolve_incident_id(uow, request)
+        if resolved is None:
+            return ScribeEnsureResult(outcome=ScribeReportOutcome.SKIPPED_NO_INCIDENT)
+
+        # Idempotency: the deterministic fallback exists only to stop the after-action
+        # surface being empty. If any version already exists — an earlier finalization, or
+        # a real SCRIBE narrative — re-running must add nothing.
+        existing = await uow.reports.list_versions(request.run_id)
+        if existing:
+            return ScribeEnsureResult(
+                outcome=ScribeReportOutcome.ALREADY_REPORTED,
+                incident_id=resolved,
+                report_version_id=existing[-1].id,
+            )
+
+        _report, version, _exports = await self._reports.generate_report(
+            uow,
+            run_id=request.run_id,
+            incident_id=resolved,
+            session_id=None,
+            task_id=None,
+            trace_id=request.trace_id,
+            provider_id=None,
+            prompt_version=None,
+            narrative_claims=None,
+        )
+        logger.info(
+            "Deterministic after-action report %s written for run %s",
+            version.id,
+            request.run_id,
+        )
+        return ScribeEnsureResult(
+            outcome=ScribeReportOutcome.DETERMINISTIC,
+            incident_id=resolved,
+            report_version_id=version.id,
+        )
+
+    async def _resolve_incident_id(
+        self,
+        uow: PostgresUnitOfWork,
+        request: TriggerScribeRequestV1,
+    ) -> str | None:
+        if request.incident_id is not None:
+            return request.incident_id
+        # Oldest-first so repeated finalizations of a multi-incident run pick the same one.
+        incidents = await uow.incidents.list_by_run(request.run_id)
+        return incidents[0].id if incidents else None
 
     async def trigger_for_run(
         self,

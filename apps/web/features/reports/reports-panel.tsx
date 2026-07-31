@@ -91,6 +91,14 @@ function ReportContent({ report }: { report: AfterActionReportV1 }) {
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge>{`v${String(report.versionNumber)}`}</Badge>
           <Pill tone="accent">immutable</Pill>
+          {/* Provenance, stated up front: a deterministic report is assembled from
+              persisted run state with no agent in the loop, and must never be read as
+              an agent-authored narrative. */}
+          {report.generationMode === 'deterministic' ? (
+            <Pill tone="warning">machine-assembled</Pill>
+          ) : (
+            <Pill>agent narrative</Pill>
+          )}
           {report.groundingFallback ? <Pill tone="warning">grounding fallback</Pill> : null}
           {report.narrativeProviderId ? <Pill>{report.narrativeProviderId}</Pill> : null}
         </div>

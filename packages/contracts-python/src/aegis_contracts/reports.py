@@ -75,6 +75,21 @@ class ReportGenerationStatusV1(StrEnum):
     FAILED = "failed"
 
 
+class ReportGenerationModeV1(StrEnum):
+    """How the narrative content of a report version was produced.
+
+    Provenance, not quality: ``DETERMINISTIC`` reports are assembled purely from persisted
+    run state (events, alerts, evidence, proposals, policy decisions) with no model in the
+    loop, and must never be presented to an operator as agent-authored narrative. A run
+    whose agents never produced artifacts — because the provider was unavailable, or the
+    run was left unattended — still gets a ``DETERMINISTIC`` report so the after-action
+    surface is populated instead of empty.
+    """
+
+    LLM_NARRATIVE = "llm_narrative"
+    DETERMINISTIC = "deterministic"
+
+
 class ReportCitationV1(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
@@ -208,6 +223,12 @@ class AfterActionReportV1(BaseModel):
     uncertainties: list[str] = Field(default_factory=list)
     source: AfterActionReportSourceV1
     grounding_fallback: bool = Field(default=False, alias="groundingFallback")
+    # Defaults to DETERMINISTIC so payloads persisted before this field existed are read
+    # back as "no model authorship claimed" rather than silently asserting one.
+    generation_mode: ReportGenerationModeV1 = Field(
+        default=ReportGenerationModeV1.DETERMINISTIC,
+        alias="generationMode",
+    )
     narrative_provider_id: str | None = Field(default=None, alias="narrativeProviderId")
     narrative_prompt_version: str | None = Field(default=None, alias="narrativePromptVersion")
     session_id: AgentSessionId | None = Field(default=None, alias="sessionId")
@@ -245,6 +266,10 @@ class ReportVersionV1(BaseModel):
     task_id: AgentTaskId | None = Field(default=None, alias="taskId")
     checksum: str = Field(min_length=64, max_length=64)
     grounding_fallback: bool = Field(default=False, alias="groundingFallback")
+    generation_mode: ReportGenerationModeV1 = Field(
+        default=ReportGenerationModeV1.DETERMINISTIC,
+        alias="generationMode",
+    )
     created_at: UtcTimestamp = Field(alias="createdAt")
 
     @model_validator(mode="after")

@@ -23,6 +23,7 @@ def render_markdown(report: AfterActionReportV1) -> str:
         f"**Report version:** {report.version_number}",
         f"**Workspace version:** {WORKSPACE_VERSION}",
         f"**Checksum:** `{report.checksum}`",
+        f"**Generation mode:** {report.generation_mode.value}",
         f"**Grounding fallback:** {report.grounding_fallback}",
         "",
         "## Executive summary",
@@ -78,6 +79,7 @@ def render_html(report: AfterActionReportV1) -> str:
 <h1>{_escape_html(report.title)}</h1>
 <p>Version {_escape_html(report.version_number)} · checksum
 <code>{_escape_html(report.checksum)}</code></p>
+<p>Generation mode: {_escape_html(report.generation_mode.value)}</p>
 <h2>Executive summary</h2><p>{_escape_html(report.executive_summary)}</p>
 <h2>Timeline</h2><ul>{timeline_rows}</ul>
 <h2>Claims</h2><ul>{claim_rows}</ul>
