@@ -7,11 +7,17 @@ enforced server-side, never by the UI alone.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 
 from aegis_contracts import AegisSettings, PlatformRoleV1
 from aegis_contracts.errors import ContractValidationError
 from aegis_model_provider import load_provider_settings
+from aegis_model_provider.config import ProviderSettings
+from aegis_model_provider.health_probe import (
+    ProviderProbeState,
+    probe_model_provider,
+)
 from aegis_observability.health import evaluate_readiness
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from fastapi import APIRouter, Depends, Request
@@ -86,13 +92,43 @@ async def get_policy() -> AdminPolicyResponseV1:
     return AdminService().build_policy_snapshot()
 
 
+async def _model_provider_health(provider_settings: ProviderSettings) -> dict[str, object]:
+    """Probe the model provider as a *separate* axis from infrastructure readiness.
+
+    Deliberately not folded into ``evaluate_readiness``: AEGIS stays operable with
+    the model down, so a dead provider must never make ``/ready`` (or this panel's
+    infrastructure summary) report not-ready. The probe already fails soft; this
+    second guard makes the admin route unbreakable even if the probe itself
+    regresses.
+    """
+    try:
+        result = await probe_model_provider(provider_settings)
+        return result.to_payload()
+    except Exception as exc:  # noqa: BLE001 — never 500 the admin page over a probe
+        return {
+            "provider": "unknown",
+            "state": ProviderProbeState.FAILED.value,
+            "baseUrl": None,
+            "configuredModel": None,
+            "reportedModels": [],
+            "reportedModel": None,
+            "configuredModelServed": None,
+            "latencyMs": None,
+            "checkedAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            "message": f"Provider health probe failed: {type(exc).__name__}",
+        }
+
+
 @router.get("/settings", response_model=AdminSettingsResponseV1)
 async def get_settings(request: Request) -> AdminSettingsResponseV1:
     settings: AegisSettings = request.app.state.settings
     provider_settings = load_provider_settings()
     results = await collect_dependency_statuses(settings)
     health: dict[str, object] = {
+        # Infrastructure axis only — postgres / redis / object storage.
         "status": evaluate_readiness(results).value,
         "dependencies": [result.to_status().model_dump(by_alias=True) for result in results],
+        # Model axis, reported side by side and never merged into the above.
+        "modelProvider": await _model_provider_health(provider_settings),
     }
     return AdminService().build_settings_snapshot(settings, provider_settings, health=health)

@@ -71,6 +71,17 @@ def is_retryable_error(error: ProviderRuntimeError) -> bool:
     }
 
 
+# Below this much remaining budget there is no point starting another attempt:
+# the model would be cut off before it could produce anything usable, and the
+# turn is better spent reporting an honest timeout.
+MIN_ATTEMPT_SECONDS = 1.0
+
+
+def _is_warming_up(error: ProviderRuntimeError) -> bool:
+    """Whether the endpoint said it is still loading its weights."""
+    return bool(error.error.details.get("warmingUp"))
+
+
 async def run_with_resilience[T](
     ctx: ResilienceContext,
     *,
@@ -78,21 +89,44 @@ async def run_with_resilience[T](
     timeout_ms: int | None,
     operation: Callable[[], Awaitable[T]],
 ) -> T:
+    """Run ``operation`` under a retry/circuit/concurrency budget.
+
+    ``timeout_ms`` is the budget for the WHOLE call — every attempt plus the
+    backoff between them — not one attempt. That is the contract the caller
+    actually needs: the agent runtime holds its own task deadline over this call,
+    and per-attempt-only budgeting made it arithmetically certain that the
+    caller's deadline would fire mid-retry (4 attempts x 200s behind a 240s
+    deadline). When it did, the loop reported "Provider request was cancelled"
+    and the operator saw a PROVIDER_FAILURE for what was really a timeout.
+
+    Each attempt therefore gets ``min(per-attempt ceiling, budget remaining)``,
+    and no attempt starts without enough runway to matter. When the budget runs
+    out the caller gets TIMEOUT/RETRY_EXHAUSTED — a real, retryable provider
+    error with a persisted artifact — rather than being killed mid-flight.
+
+    ``CancelledError`` is re-raised untouched. Cancellation belongs to whoever
+    requested it (an outer deadline, a disconnected client); converting it into a
+    returned error object both lies about the cause and breaks structured
+    concurrency for every caller above.
+    """
     ctx.assert_circuit_closed(trace_id=trace_id)
-    timeout_seconds = (
-        timeout_ms / 1000.0
-        if timeout_ms is not None
-        else float(ctx.settings.AEGIS_PROVIDER_TIMEOUT_SECONDS)
-    )
+    attempt_ceiling = float(ctx.settings.AEGIS_PROVIDER_TIMEOUT_SECONDS)
+    total_budget = timeout_ms / 1000.0 if timeout_ms is not None else attempt_ceiling
+    deadline = time.monotonic() + total_budget
     attempt = 0
     max_attempts = ctx.settings.AEGIS_PROVIDER_MAX_RETRIES + 1
     last_error: ProviderRuntimeError | None = None
 
     async with ctx.semaphore:
         while attempt < max_attempts:
+            remaining = deadline - time.monotonic()
+            if attempt > 0 and remaining < MIN_ATTEMPT_SECONDS:
+                break
             attempt += 1
             try:
-                result = await asyncio.wait_for(operation(), timeout=timeout_seconds)
+                result = await asyncio.wait_for(
+                    operation(), timeout=max(MIN_ATTEMPT_SECONDS, min(attempt_ceiling, remaining))
+                )
                 ctx.circuit_breaker.record_success()
                 return result
             except TimeoutError:
@@ -104,20 +138,14 @@ async def run_with_resilience[T](
                         trace_id=trace_id,
                     )
                 )
-            except asyncio.CancelledError:
-                raise ProviderRuntimeError(
-                    make_provider_error(
-                        code=ProviderErrorCode.CANCELLATION,
-                        message="Provider request was cancelled",
-                        retryable=False,
-                        trace_id=trace_id,
-                    )
-                ) from None
             except ProviderRuntimeError as exc:
                 last_error = exc
                 if not is_retryable_error(exc) or attempt >= max_attempts:
                     ctx.circuit_breaker.record_failure()
                     raise
+            except asyncio.CancelledError:
+                # Not ours to convert — see the docstring.
+                raise
             except Exception as exc:
                 last_error = ProviderRuntimeError(
                     make_provider_error(
@@ -132,12 +160,23 @@ async def run_with_resilience[T](
                 raise last_error from exc
 
             ctx.circuit_breaker.record_failure()
-            await asyncio.sleep(
-                ctx.settings.AEGIS_PROVIDER_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
+            backoff = (
+                ctx.settings.AEGIS_PROVIDER_COLD_START_BACKOFF_SECONDS
+                if _is_warming_up(last_error)
+                else ctx.settings.AEGIS_PROVIDER_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
             )
+            # Sleeping past the deadline would only delay the timeout the caller
+            # is already owed, so the backoff is clamped to what is left.
+            sleep_for = min(backoff, max(0.0, deadline - time.monotonic()))
+            if sleep_for > 0:
+                await asyncio.sleep(sleep_for)
 
+    # The loop exits either because the attempts ran out or because the budget
+    # did; both mean "we gave the provider everything it was allotted", so both
+    # normalize to RETRY_EXHAUSTED rather than leaving a bare per-attempt error.
+    exhausted = attempt >= max_attempts or time.monotonic() >= deadline
     if last_error is not None:
-        if last_error.error.code == ProviderErrorCode.TIMEOUT and attempt >= max_attempts:
+        if last_error.error.code == ProviderErrorCode.TIMEOUT and exhausted:
             raise ProviderRuntimeError(
                 make_provider_error(
                     code=ProviderErrorCode.RETRY_EXHAUSTED,
@@ -146,7 +185,7 @@ async def run_with_resilience[T](
                     trace_id=trace_id,
                 )
             ) from None
-        if attempt >= max_attempts and is_retryable_error(last_error):
+        if exhausted and is_retryable_error(last_error):
             raise ProviderRuntimeError(
                 make_provider_error(
                     code=ProviderErrorCode.RETRY_EXHAUSTED,

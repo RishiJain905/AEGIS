@@ -90,7 +90,14 @@ class AegisSettings(BaseSettings):
     # periodically advances every RUNNING run. See docs/superpowers/specs.
     AEGIS_SIM_TICK_ENABLED: bool = True
     AEGIS_SIM_TICK_INTERVAL_SECONDS: float = Field(default=2.0, gt=0.0)
-    AEGIS_SIM_STEPS_PER_TICK: int = Field(default=1, ge=1)
+    # Steps per run per tick. Operation Silent Relay emits ~1075 events across its full
+    # 1500 sim-second horizon; at one step every two seconds that is a ~30-minute wall-clock
+    # engagement with a ~30-second wait before the first alert, which reads to an operator
+    # as a run that never started. Four steps per tick brings a full run to ~8 minutes and
+    # the first alert to under ten seconds. Determinism is untouched: the event sequence is
+    # a function of (scenario, seed, actions), and this only changes how fast wall-clock
+    # time delivers it.
+    AEGIS_SIM_STEPS_PER_TICK: int = Field(default=4, ge=1)
     # Engine-visible completion horizon: the ticker STOPs a run once its virtual clock
     # has advanced this many sim-seconds past the scenario's initial sim time. Sim-time
     # is restart-safe (restored from the checkpoint) and covers the full scripted

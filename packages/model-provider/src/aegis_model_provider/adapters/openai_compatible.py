@@ -13,6 +13,10 @@ from aegis_model_provider.config import ProviderSettings
 class OpenAICompatibleProvider(OpenAIHostedProvider):
     provider_id = "openai-compatible"
 
+    # llama-server's json_schema grammar cannot coexist with this model's forced
+    # <think> opener (see OpenAIHostedProvider._use_server_response_format).
+    _use_server_response_format = False
+
     def __init__(self, settings: ProviderSettings) -> None:
         super().__init__(settings, base_url=settings.AEGIS_PROVIDER_LOCAL_BASE_URL)
         self._settings = settings
@@ -56,4 +60,5 @@ class OpenAICompatibleProvider(OpenAIHostedProvider):
         return AsyncOpenAI(
             api_key=self._settings.AEGIS_PROVIDER_LOCAL_API_KEY,
             base_url=self._base_url,
+            **self._client_options(),
         )

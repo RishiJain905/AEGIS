@@ -161,27 +161,122 @@ describe('PlatformPanel', () => {
     cleanup();
   });
 
-  it('renders health, provider mode, and the secret-exclusion note', () => {
-    useAdminSettings.mockReturnValue({
-      isPending: false,
-      isError: false,
-      data: {
-        environment: 'test',
-        version: '1.0.0',
-        logLevel: 'info',
-        provider: { defaultProvider: 'mock', localModel: 'llama3.2' },
-        websocket: { enabled: true },
-        security: { hstsEnabled: false },
-        observability: { otelEnabled: false },
-        auth: { devAuthEnabled: true },
-        health: {
-          status: 'ready',
-          dependencies: [{ name: 'postgres', state: 'ready' }],
-        },
+  function settings(overrides: Record<string, unknown> = {}) {
+    return {
+      environment: 'test',
+      version: '1.0.0',
+      logLevel: 'info',
+      provider: { defaultProvider: 'openai-compatible', localModel: 'llama3.2' },
+      websocket: { enabled: true },
+      security: { hstsEnabled: false },
+      observability: { otelEnabled: false },
+      auth: { devAuthEnabled: true },
+      health: {
+        status: 'ready',
+        // The API emits DependencyStateV1 values ("ok"), never "ready".
+        dependencies: [
+          { name: 'postgres', state: 'ok' },
+          { name: 'redis', state: 'ok' },
+          { name: 'object_storage', state: 'ok' },
+        ],
       },
-    });
+      ...overrides,
+    };
+  }
+
+  it('renders health, provider mode, and the secret-exclusion note', () => {
+    useAdminSettings.mockReturnValue({ isPending: false, isError: false, data: settings() });
     render(<PlatformPanel />);
     expect(screen.getByTestId('admin-platform')).toBeInTheDocument();
     expect(screen.getByText(/Secrets .* are never included/i)).toBeInTheDocument();
+  });
+
+  it('counts the same dependency records it renders below the summary (BUG-021)', () => {
+    useAdminSettings.mockReturnValue({ isPending: false, isError: false, data: settings() });
+    render(<PlatformPanel />);
+    expect(screen.getByText('3/3 dependencies ok')).toBeInTheDocument();
+  });
+
+  it('counts an unhealthy dependency out of the summary', () => {
+    useAdminSettings.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: settings({
+        health: {
+          status: 'not_ready',
+          dependencies: [
+            { name: 'postgres', state: 'ok' },
+            { name: 'redis', state: 'unavailable' },
+            { name: 'object_storage', state: 'ok' },
+          ],
+        },
+      }),
+    });
+    render(<PlatformPanel />);
+    expect(screen.getByText('2/3 dependencies ok')).toBeInTheDocument();
+  });
+
+  it('renders a failing model-provider probe without disturbing infrastructure readiness', () => {
+    useAdminSettings.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: settings({
+        health: {
+          status: 'ready',
+          dependencies: [
+            { name: 'postgres', state: 'ok' },
+            { name: 'redis', state: 'ok' },
+            { name: 'object_storage', state: 'ok' },
+          ],
+          modelProvider: {
+            provider: 'openai-compatible',
+            state: 'failed',
+            baseUrl: 'http://localhost:8086/v1',
+            configuredModel: 'Gwimi-4-12B-IT-Q6_K.gguf',
+            reportedModels: [],
+            reportedModel: null,
+            configuredModelServed: null,
+            latencyMs: null,
+            checkedAt: '2026-07-31T00:00:00Z',
+            message: 'ConnectionError: Connection refused',
+          },
+        },
+      }),
+    });
+    render(<PlatformPanel />);
+    expect(screen.getByTestId('admin-model-provider-health')).toBeInTheDocument();
+    expect(screen.getByText('ConnectionError: Connection refused')).toBeInTheDocument();
+    // Infrastructure summary stays green — the model is a separate axis.
+    expect(screen.getByText('3/3 dependencies ok')).toBeInTheDocument();
+  });
+
+  it('surfaces the model id the provider server actually serves', () => {
+    useAdminSettings.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: settings({
+        health: {
+          status: 'ready',
+          dependencies: [{ name: 'postgres', state: 'ok' }],
+          modelProvider: {
+            provider: 'openai-compatible',
+            state: 'ok',
+            baseUrl: 'http://localhost:8086/v1',
+            configuredModel: 'Gwimi-4-12B-IT-Q6_K.gguf',
+            reportedModels: ['Qwimi-3.6-27B-Q3_K_S.gguf'],
+            reportedModel: 'Qwimi-3.6-27B-Q3_K_S.gguf',
+            configuredModelServed: false,
+            latencyMs: 4.2,
+            checkedAt: '2026-07-31T00:00:00Z',
+            message: null,
+          },
+        },
+      }),
+    });
+    render(<PlatformPanel />);
+    expect(screen.getByText('Qwimi-3.6-27B-Q3_K_S.gguf')).toBeInTheDocument();
+    expect(
+      screen.getByText(/configured model .* is not served by this endpoint/i),
+    ).toBeInTheDocument();
   });
 });

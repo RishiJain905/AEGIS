@@ -56,9 +56,31 @@ export interface AdminDependencyStatus {
   detail?: string | null;
 }
 
+/**
+ * Model-provider probe result — a readiness axis of its own, deliberately kept
+ * out of `status`/`dependencies`: AEGIS stays operable with the model down, so a
+ * failing provider must never flip infrastructure readiness.
+ *
+ * `reportedModel` is what the provider server actually serves; `configuredModel`
+ * is the env value. They drift, and the panel shows both when they disagree.
+ */
+export interface AdminModelProviderHealth {
+  provider: string;
+  state: 'ok' | 'failed' | 'skipped';
+  baseUrl?: string | null;
+  configuredModel?: string | null;
+  reportedModels?: string[];
+  reportedModel?: string | null;
+  configuredModelServed?: boolean | null;
+  latencyMs?: number | null;
+  checkedAt?: string | null;
+  message?: string | null;
+}
+
 export interface AdminSettingsHealth {
   status?: string;
   dependencies?: AdminDependencyStatus[];
+  modelProvider?: AdminModelProviderHealth;
 }
 
 export interface AdminSettingsResponse {

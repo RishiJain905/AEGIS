@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 import os
 import signal
 from collections.abc import Awaitable, Callable
@@ -15,6 +16,8 @@ from aegis_contracts import load_settings
 from aegis_persistence.engine import create_engine, dispose_engine, get_session_maker
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+logger = logging.getLogger(__name__)
 
 
 def _orphan_lease_seconds() -> float:
@@ -62,6 +65,7 @@ async def _poll_once(
             try:
                 await executor.execute(uow, task.id)
                 processed += 1
+                logger.info("Agent task executed", extra={"taskId": task.id})
             except Exception:
                 # The executor owns its own commits and persists a terminal task
                 # on every failure before re-raising, so nothing here should be
@@ -69,6 +73,18 @@ async def _poll_once(
                 # the context manager would otherwise COMMIT any partial, unhandled
                 # write (e.g. a claim stranded by an unexpected error), orphaning
                 # the task in 'running'.
+                #
+                # Logging is not optional here: this except used to swallow the
+                # failure silently, which is how a total provider outage produced a
+                # worker container with zero log lines. The terminal task row in
+                # Postgres is the audit record; this line is what makes the failure
+                # visible while it is happening.
+                logger.warning(
+                    "Agent task failed: %s",
+                    task.id,
+                    extra={"taskId": task.id},
+                    exc_info=True,
+                )
                 await uow.rollback()
                 continue
     return processed
@@ -93,6 +109,25 @@ async def _run_poll_loop(
 
 async def _run_loop(stop_event: asyncio.Event | None = None) -> None:
     settings = load_settings()
+    # Install the root handlers before anything else runs. Without this the
+    # process has no logging configuration at all, so every line this module (and
+    # the executor beneath it) emits is discarded and the container looks idle
+    # even while every task it runs is failing. Mirrors the outbox relay's boot.
+    try:
+        from aegis_observability.setup import init_observability
+
+        init_observability(
+            service_name=getattr(settings, "OTEL_SERVICE_NAME", "aegis-agent-worker"),
+            enabled=getattr(settings, "OTEL_ENABLED", True),
+            otlp_endpoint=getattr(
+                settings, "OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"
+            ),
+            otlp_protocol=getattr(settings, "OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"),
+            log_level=settings.LOG_LEVEL.value,
+            json_logs=getattr(settings, "AEGIS_LOG_JSON", True),
+        )
+    except Exception:  # noqa: BLE001 — observability must never block the worker
+        logging.basicConfig(level=logging.INFO)
     engine = create_engine(settings)
     session_maker = get_session_maker(settings, engine=engine)
     executor = create_task_executor()
@@ -104,6 +139,14 @@ async def _run_loop(stop_event: asyncio.Event | None = None) -> None:
         await recover_running_tasks(uow)
     interval = float(os.environ.get("AEGIS_AGENT_RUNTIME_POLL_SECONDS", "1.0"))
     orphan_lease_seconds = _orphan_lease_seconds()
+    logger.info(
+        "Agent runtime worker started",
+        extra={
+            "pollIntervalSeconds": interval,
+            "orphanLeaseSeconds": orphan_lease_seconds,
+            "taskTimeoutSeconds": _resolve_task_timeout_seconds(),
+        },
+    )
 
     async def poll() -> int:
         return await _poll_once(
@@ -116,6 +159,7 @@ async def _run_loop(stop_event: asyncio.Event | None = None) -> None:
     try:
         await _run_poll_loop(poll, stop_event, interval=interval)
     finally:
+        logger.info("Agent runtime worker stopped")
         await dispose_engine(engine)
 
 

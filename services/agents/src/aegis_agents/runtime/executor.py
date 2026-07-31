@@ -63,6 +63,7 @@ from aegis_contracts.agent_runtime import (
     EvidenceCitationV1,
     ToolInvocationStatus,
 )
+from aegis_contracts.entities import AutonomyInitiatorV1
 from aegis_contracts.generation import (
     GenerationMessageRole,
     GenerationMessageV1,
@@ -126,6 +127,35 @@ LOOP_PERSIST_HEADROOM_SECONDS = 5.0
 # consume it, so the loop concludes with the answer it already holds rather than
 # risking a timeout that would discard the whole turn.
 MIN_LOOP_ITERATION_SECONDS = 15.0
+
+# Slack between the provider's own budget and the ``wait_for`` that guards it.
+# The provider stack must always run out of road FIRST: when it does it returns a
+# real error (TIMEOUT/RETRY_EXHAUSTED) with a persisted artifact, whereas the
+# wait_for merely kills it mid-flight. That distinction is what produced the
+# operator-facing "Provider request was cancelled (PROVIDER_FAILURE)" — the
+# provider had no deadline of its own, so the only thing that ever stopped it was
+# this cancellation.
+PROVIDER_BUDGET_HEADROOM_SECONDS = 2.0
+
+# The generation contract bounds timeoutMs to [100, 600000].
+_MIN_PROVIDER_BUDGET_MS = 100
+_MAX_PROVIDER_BUDGET_MS = 600_000
+
+
+def _with_provider_budget(
+    request: GenerationRequestV1,
+    *,
+    wait_for_seconds: float,
+) -> GenerationRequestV1:
+    """Pin the request's total provider budget inside the caller's deadline.
+
+    ``timeout_ms`` is the budget for the entire provider call — every retry and
+    backoff included — so setting it here is what stops the retry loop from
+    outliving the task that owns it.
+    """
+    budget_ms = int((wait_for_seconds - PROVIDER_BUDGET_HEADROOM_SECONDS) * 1000)
+    clamped = max(_MIN_PROVIDER_BUDGET_MS, min(_MAX_PROVIDER_BUDGET_MS, budget_ms))
+    return request.model_copy(update={"timeout_ms": clamped})
 
 
 @dataclass
@@ -354,7 +384,7 @@ class TaskExecutor:
         task exactly as it did before.
         """
         deadline = time.monotonic() + self._timeout_seconds
-        request = prepared.request
+        request = _with_provider_budget(prepared.request, wait_for_seconds=self._timeout_seconds)
         response = await asyncio.wait_for(
             self._generation.generate(request),
             timeout=self._timeout_seconds,
@@ -436,10 +466,13 @@ class TaskExecutor:
             if exhausted:
                 messages = [*messages, build_tool_budget_exhausted_message()]
 
-            follow_up = request.model_copy(
-                update={"request_id": new_runtime_id("gen"), "messages": messages}
-            )
             remaining = deadline - time.monotonic() - LOOP_PERSIST_HEADROOM_SECONDS
+            follow_up = _with_provider_budget(
+                request.model_copy(
+                    update={"request_id": new_runtime_id("gen"), "messages": messages}
+                ),
+                wait_for_seconds=max(1.0, remaining),
+            )
             try:
                 check_budget(budget, trace_id=prepared.task.trace_id)
                 next_response = await asyncio.wait_for(
@@ -1150,13 +1183,17 @@ class TaskExecutor:
                 )
                 tool_status = invocation.status.value
             except AgentRuntimeError as exc:
-                # Incident-scoped tasks keep the strict contract: a tool failure
-                # fails the task. Run-scoped tasks (operator chat) fail soft — a
-                # tool the model tried that needs an incident (e.g. BASTION's
+                # Operator-tasked incident work keeps the strict contract: a tool
+                # failure fails the task. Run-scoped tasks (operator chat) fail soft
+                # — a tool the model tried that needs an incident (e.g. BASTION's
                 # proposal tool with no incident open) is recorded and streamed as
                 # a failed/rejected chip, and the agent's grounded artifact still
-                # lands so the operator gets a useful reply.
-                if not run_scoped:
+                # lands so the operator gets a useful reply. Autonomy turns fail
+                # soft for the same reason even when scoped to the case they
+                # enrich: nobody is watching a background lane, and losing the
+                # whole triage because one tool errored is strictly worse than
+                # recording the failure and keeping the grounded artifact.
+                if not run_scoped and task.initiator is not AutonomyInitiatorV1.AUTONOMY:
                     raise
                 tool_status = (
                     ToolInvocationStatus.REJECTED.value
@@ -1354,9 +1391,12 @@ class TaskExecutor:
         # A guard keeps this defensive: if the session cannot transition to the
         # target (already terminal, e.g. a legacy orphan), skip it rather than
         # raising — a claimed task must still reach its terminal state.
-        run_scoped = task.incident_id is None
+        # Keyed on the SESSION, not the task: an autonomy lane turn carries the
+        # incident id of the case it enriches while its lane session stays
+        # run-scoped, and failing that one turn must not terminate the lane.
+        session_run_scoped = session.incident_id is None
         target_state: AgentSessionState | None
-        if run_scoped:
+        if session_run_scoped:
             target_state = None
         elif code == AgentRuntimeErrorCode.TASK_CANCELLED:
             target_state = AgentSessionState.CANCELLED

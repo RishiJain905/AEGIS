@@ -39,7 +39,7 @@ function newIdempotencyKey(prefix: string): string {
 // (including failures) before responding, so a request that outlives this is a stuck
 // socket, not live work — abort it so the pending state resolves. The committed turn,
 // if the backend did finish, still surfaces via the polling refetch of the session list.
-const SEND_TIMEOUT_MS = 180_000;
+export const SEND_TIMEOUT_MS = 180_000;
 
 async function requestJson<T>(
   path: string,
@@ -160,11 +160,22 @@ function isTaskFailure(status: string | null): boolean {
  */
 export function useSendAgentMessage(runId: string) {
   const queryClient = useQueryClient();
-  // Surfaced so the thread can show a single, honest "retrying…" state during the one
-  // automatic re-attempt. A ref backs the state so the mutationFn reads a stable setter.
-  const [isRetrying, setIsRetrying] = useState(false);
-  const retryingRef = useRef(setIsRetrying);
-  retryingRef.current = setIsRetrying;
+  // Retry state is tracked *per role*, not globally: two roles can legitimately have
+  // turns in flight at once, and a single shared flag made one role's automatic retry
+  // relabel whichever role the operator happened to be looking at (BUG-023).
+  const [retryingRoles, setRetryingRoles] = useState<readonly ChatRole[]>([]);
+  const setRetryingRef = useRef(setRetryingRoles);
+  setRetryingRef.current = setRetryingRoles;
+
+  const markRetrying = (role: ChatRole, on: boolean) => {
+    setRetryingRef.current((prev) => {
+      const has = prev.includes(role);
+      if (has === on) {
+        return prev;
+      }
+      return on ? [...prev, role] : prev.filter((candidate) => candidate !== role);
+    });
+  };
 
   const sendOnce = async ({
     role,
@@ -215,15 +226,15 @@ export function useSendAgentMessage(runId: string) {
       if (!isTaskFailure(terminalTaskStatus(first))) {
         return;
       }
-      retryingRef.current(true);
+      markRetrying(input.role, true);
       try {
         await sendOnce(input);
       } finally {
-        retryingRef.current(false);
+        markRetrying(input.role, false);
       }
     },
-    onSettled: () => {
-      retryingRef.current(false);
+    onSettled: (_data, _error, variables) => {
+      markRetrying(variables.role, false);
     },
     onSuccess: async (_result, variables) => {
       await queryClient.invalidateQueries({
@@ -237,5 +248,10 @@ export function useSendAgentMessage(runId: string) {
     },
   });
 
-  return Object.assign(mutation, { isRetrying });
+  return Object.assign(mutation, {
+    /** Roles whose single automatic re-attempt is currently running. */
+    retryingRoles,
+    /** Any role retrying at all — kept for callers that do not care which. */
+    isRetrying: retryingRoles.length > 0,
+  });
 }

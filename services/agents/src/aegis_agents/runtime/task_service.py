@@ -40,7 +40,17 @@ class AgentTaskService:
         *,
         session: AgentSessionV1,
         request: CreateAgentTaskRequestV1,
+        incident_id: str | None = None,
     ) -> AgentTaskV1:
+        """Queue a task on ``session``.
+
+        ``incident_id`` scopes a single task to a case its session is not bound to. That
+        is what lets the autonomy lanes — one long-lived run-scoped session per (run,
+        role) — enrich the case the detection engine already opened for an alerting
+        asset: the executor keys role post-processing off ``task.incident_id``, so
+        without this an autonomy triage turn could never write to an incident. Defaults
+        to the session's own incident, which is every other caller's behaviour.
+        """
         provider_id = request.provider_id or _configured_default_provider_id()
         now = datetime.now(UTC)
         existing = await uow.agent_tasks.get_by_idempotency(
@@ -54,7 +64,7 @@ class AgentTaskService:
             id=new_runtime_id("atk"),
             session_id=session.id,
             run_id=session.run_id,
-            incident_id=session.incident_id,
+            incident_id=incident_id or session.incident_id,
             status=AgentTaskStatus.QUEUED,
             attempt=1,
             idempotency_key=request.idempotency_key,

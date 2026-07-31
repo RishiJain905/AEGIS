@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
 import {
   NodeStatus,
@@ -20,6 +20,25 @@ import {
   useReducedMotion,
 } from '@aegis/ui';
 
+import Link from 'next/link';
+
+import { useRunIncidents } from '@/features/incidents';
+import { ApiClientError } from '@/lib/api/types';
+
+import {
+  CLIENT_DEADLINE_ERROR_CODE,
+  COPILOT_TASK_DEADLINE_MS,
+  DEADLINE_POLL_MS,
+  copilotTaskReducer,
+  deriveRoleTurn,
+  initialCopilotTaskMap,
+  isTerminalTaskStatus,
+  latestSessionForRole,
+  latestTaskOf,
+  otherBusyRoles,
+  type CopilotClientError,
+  type RoleTurnView,
+} from './copilot-task-state';
 import {
   CHAT_ROLES,
   useRunAgentSessions,
@@ -42,6 +61,39 @@ const ROLE_PLACEHOLDER: Record<ChatRole, string> = {
 };
 
 const MAX_INSTRUCTIONS = 4000;
+
+const INCIDENT_REQUIRED_PLACEHOLDER = 'BASTION needs an open incident before it can propose…';
+
+/**
+ * BASTION's prerequisite, stated where the operator hits it.
+ *
+ * The named way forward is deliberately *not* "ask WATCHTOWER". Copilot messages open a
+ * run-scoped session (`incidentId: null`), and the executor skips role post-processing for
+ * run-scoped tasks, so a WATCHTOWER turn here can never open a case however well it runs.
+ * Autonomy triage does not open one either. The only thing that opens a case on a live run
+ * today is an operator act anchoring the operator incident — pinning a hypothesis being the
+ * cheapest and most reversible — so that is what this points at.
+ */
+function IncidentRequiredNotice() {
+  return (
+    <Alert variant="warning" data-testid="agent-chat-incident-required">
+      <span className="flex flex-col gap-1">
+        <span className="font-medium">Incident required</span>
+        <span>
+          BASTION proposes containment against an open case, and this run has none yet. Pin a
+          hypothesis in the operator console — that opens the case BASTION needs. Alerts on their
+          own do not open one.
+        </span>
+        <Link
+          href="/incidents"
+          className="w-fit underline underline-offset-2 hover:text-[var(--aegis-accent-strong)]"
+        >
+          Review the incident queue
+        </Link>
+      </span>
+    </Alert>
+  );
+}
 
 interface ChatTurn {
   taskId: string;
@@ -168,10 +220,71 @@ function ToolChips({ tools }: { tools: ToolInvocationV1[] }) {
   );
 }
 
-function TurnView({ turn }: { turn: ChatTurn }) {
-  const status = turn.task.status;
-  const isFailed = status === 'failed' || status === 'timed_out';
+const FAILURE_FALLBACK_MESSAGE: Record<string, string> = {
+  failed: 'The agent task failed.',
+  cancelled: 'The agent task was cancelled.',
+  timed_out: 'The agent task timed out.',
+};
+
+/**
+ * Identity line for a turn: the task id and the trace/request id.
+ *
+ * The error *code* is deliberately not repeated here — the failure alert above already
+ * carries it, and duplicating it makes the card noisier without adding information.
+ */
+function TurnDiagnostics({ taskId, traceId }: { taskId: string | null; traceId: string | null }) {
+  const parts: { label: string; value: string }[] = [];
+  if (taskId) {
+    parts.push({ label: 'task', value: taskId });
+  }
+  if (traceId) {
+    parts.push({ label: 'trace', value: traceId });
+  }
+  if (parts.length === 0) {
+    return null;
+  }
+  return (
+    <p
+      className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10px] text-[var(--aegis-text-muted)]"
+      data-testid="agent-chat-turn-diagnostics"
+    >
+      {parts.map((part) => (
+        <span key={part.label}>
+          <span className="uppercase tracking-wide">{part.label} </span>
+          <span className="text-[var(--aegis-text-secondary)]">{part.value}</span>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+function TurnView({
+  turn,
+  clientTimedOut = false,
+  onRetry,
+}: {
+  turn: ChatTurn;
+  /**
+   * The client safety deadline fired against this turn while the backend still
+   * reports it as in flight — render it as resolved rather than eternally "Working…".
+   */
+  clientTimedOut?: boolean;
+  onRetry?: (instructions: string) => void;
+}) {
+  const backendStatus = turn.task.status;
+  const status =
+    clientTimedOut && !isTerminalTaskStatus(backendStatus) ? 'timed_out' : backendStatus;
+  const isFailed = status === 'failed' || status === 'timed_out' || status === 'cancelled';
   const isWorking = status === 'queued' || status === 'running';
+  const errorCode =
+    clientTimedOut && !isTerminalTaskStatus(backendStatus)
+      ? CLIENT_DEADLINE_ERROR_CODE
+      : (turn.task.errorCode ?? null);
+  const errorMessage =
+    clientTimedOut && !isTerminalTaskStatus(backendStatus)
+      ? `No result after ${String(Math.round(COPILOT_TASK_DEADLINE_MS / 60_000))} minutes. The task never reported a terminal state.`
+      : (turn.task.errorMessage ?? FAILURE_FALLBACK_MESSAGE[status] ?? 'The agent task failed.');
+  const retryInstructions = turn.instructions;
   return (
     <li className="flex flex-col gap-2">
       {turn.instructions ? (
@@ -184,14 +297,33 @@ function TurnView({ turn }: { turn: ChatTurn }) {
       <div className="flex flex-col gap-2 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-3 py-2">
         <ToolChips tools={turn.tools} />
         {isWorking ? (
-          <p className="text-sm text-[var(--aegis-text-muted)]">Working…</p>
+          <>
+            <p className="text-sm text-[var(--aegis-text-muted)]">Working…</p>
+            <TurnDiagnostics taskId={turn.taskId} traceId={turn.task.traceId} />
+          </>
         ) : isFailed ? (
-          <Alert variant="error">
-            {turn.task.errorMessage ?? 'The agent task failed.'}
-            {turn.task.errorCode ? (
-              <span className="ml-1 font-mono text-[10px]">({turn.task.errorCode})</span>
+          <div className="flex flex-col gap-2" data-testid="agent-chat-turn-error">
+            <Alert variant="error">
+              {errorMessage}
+              {errorCode ? <span className="ml-1 font-mono text-[10px]">({errorCode})</span> : null}
+            </Alert>
+            <TurnDiagnostics taskId={turn.taskId} traceId={turn.task.traceId} />
+            {onRetry && retryInstructions ? (
+              <div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  data-testid="agent-chat-retry"
+                  onClick={() => {
+                    onRetry(retryInstructions);
+                  }}
+                >
+                  Retry
+                </Button>
+              </div>
             ) : null}
-          </Alert>
+          </div>
         ) : turn.artifact ? (
           <ArtifactBody artifact={turn.artifact} />
         ) : (
@@ -208,78 +340,184 @@ export interface AgentChatPanelProps {
   runId: string;
 }
 
+/** Turn an unknown mutation rejection into something an operator can act on. */
+function toClientError(error: unknown): CopilotClientError {
+  if (error instanceof ApiClientError) {
+    return { code: error.code, message: error.message, traceId: error.traceId ?? null };
+  }
+  if (error instanceof Error) {
+    // `AbortSignal.timeout` rejects with a TimeoutError whose message ("signal timed out")
+    // means nothing to an operator and — critically — does not mean the *task* died: the
+    // backend usually keeps working. Say so, and let the authoritative task row decide
+    // whether the turn is actually over.
+    const aborted = error.name === 'TimeoutError' || error.name === 'AbortError';
+    return {
+      code: aborted ? 'REQUEST_TIMEOUT' : null,
+      message: aborted
+        ? 'The request to the agent service timed out. If the task is still running it will resolve here on its own.'
+        : error.message,
+      traceId: null,
+    };
+  }
+  return { code: null, message: 'The request failed.', traceId: null };
+}
+
 export function AgentChatPanel({ runId }: AgentChatPanelProps) {
   // Operator threads only — the autonomy worker's background triage sessions are not
   // this conversation and must not appear in it.
   const sessionsQuery = useRunAgentSessions(runId, 'operator');
   const sendMessage = useSendAgentMessage(runId);
   const reducedMotion = useReducedMotion();
+  const incidentsQuery = useRunIncidents(runId);
 
   const [role, setRole] = useState<ChatRole>('WATCHTOWER');
   const [draft, setDraft] = useState('');
-  // The instructions just submitted, kept separately from `draft` (which clears the
-  // moment send happens) so the optimistic turn below still has text to show while
-  // the request is in flight.
-  const [pendingInstructions, setPendingInstructions] = useState<string | null>(null);
+  // Per-role client state. Everything the operator sees — busy, failed, succeeded — is
+  // *derived* from the authoritative task rows rather than stored, so a role's turn can
+  // never be re-owned by whichever role happens to be selected (BUG-023) and a repeated
+  // terminal transition is a no-op by construction (BUG-024).
+  const [localTasks, dispatch] = useReducer(copilotTaskReducer, initialCopilotTaskMap);
   const draftRef = useRef<HTMLTextAreaElement>(null);
 
-  // Most recent session for the selected role (the active thread).
-  const roleSession = useMemo<AgentSessionDetailV1 | undefined>(() => {
-    const details = sessionsQuery.data ?? [];
-    const forRole = details.filter((detail) => detail.session.role === role);
-    return forRole.length > 0 ? forRole[forRole.length - 1] : undefined;
-  }, [sessionsQuery.data, role]);
+  // One entry per role: its newest operator session plus the derived state of the turn
+  // that role owns. Computed for *every* role, not just the selected one, so a task that
+  // reaches a terminal state while the operator is looking elsewhere still resolves its
+  // own card and re-enables its own composer.
+  const roleViews = useMemo(() => {
+    const details = sessionsQuery.data;
+    const entries = CHAT_ROLES.map((candidate) => {
+      const session = latestSessionForRole(details, candidate);
+      return [
+        candidate,
+        { session, view: deriveRoleTurn(candidate, latestTaskOf(session), localTasks[candidate]) },
+      ] as const;
+    });
+    return Object.fromEntries(entries) as Record<
+      ChatRole,
+      { session: AgentSessionDetailV1 | undefined; view: RoleTurnView }
+    >;
+  }, [sessionsQuery.data, localTasks]);
+
+  const views = useMemo(() => {
+    const entries = CHAT_ROLES.map((candidate) => [candidate, roleViews[candidate].view] as const);
+    return Object.fromEntries(entries) as Record<ChatRole, RoleTurnView>;
+  }, [roleViews]);
+
+  const roleSession = roleViews[role].session;
+  const view = roleViews[role].view;
+  /** Busy state of the SELECTED role only — never a global "something is in flight". */
+  const pending = view.busy;
+  const retrying = sendMessage.retryingRoles.includes(role);
 
   const turns = useMemo(() => (roleSession ? buildTurns(roleSession) : []), [roleSession]);
 
-  const pending = sendMessage.isPending;
-  const retrying = sendMessage.isRetrying;
+  // Client-side safety deadline. Without it a task whose terminal transition never lands
+  // (a provider that hangs, a dropped socket, a worker that died mid-turn) leaves the card
+  // spinning forever with the composer disabled. Resolving into an explicit timed-out state
+  // that offers Retry always beats an unbounded spinner.
+  useEffect(() => {
+    const watched = CHAT_ROLES.map((candidate) => views[candidate]).filter(
+      (candidate) => candidate.busy && candidate.startedAtMs !== null && candidate.turnKey !== null,
+    );
+    if (watched.length === 0) {
+      return undefined;
+    }
+    const tick = () => {
+      const now = Date.now();
+      for (const candidate of watched) {
+        if (
+          candidate.startedAtMs !== null &&
+          candidate.turnKey !== null &&
+          now - candidate.startedAtMs >= COPILOT_TASK_DEADLINE_MS
+        ) {
+          // Idempotent: the reducer returns the same state object once a turn is already
+          // deadlined, so this cannot drive a render loop.
+          dispatch({ type: 'deadline-reached', role: candidate.role, turnKey: candidate.turnKey });
+        }
+      }
+    };
+    tick();
+    const timer = setInterval(tick, DEADLINE_POLL_MS);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [views]);
 
-  // The realtime `agent.*` event invalidation (live-run-provider.tsx) refetches
-  // sessions as soon as the backend creates the task — well before this request's
-  // own (inline, potentially slow) response arrives. That can land the real turn,
-  // already showing "Working…", while `pending` is still true. Once that happens,
-  // suppress the optimistic placeholder below so the submission renders once, not
-  // twice.
+  // BASTION's containment tooling is incident-scoped: with no case open on the run, its
+  // proposal tool is rejected and the turn burns a provider call to say nothing useful.
+  // Block the send instead, and name the way out. An unreadable incident list is not
+  // treated as "no incidents" — a failed read must not invent a block that isn't there.
+  const incidentRequired =
+    role === 'BASTION' && incidentsQuery.isSuccess && incidentsQuery.data.length === 0;
+
+  // The realtime `agent.*` event invalidation (live-run-provider.tsx) refetches sessions
+  // as soon as the backend creates the task — well before this request's own (inline,
+  // potentially slow) response arrives. Once the real turn is visible the derived phase is
+  // already `working`, which suppresses the optimistic placeholder below, so the submission
+  // renders once, not twice.
+  const showOptimisticTurn = view.phase === 'sending';
   const lastTurn = turns.length > 0 ? turns[turns.length - 1] : undefined;
-  const lastTurnIsInFlight =
-    lastTurn?.task.status === 'queued' || lastTurn?.task.status === 'running';
-  const submissionAlreadyVisible =
-    pending &&
-    pendingInstructions !== null &&
-    lastTurn?.instructions === pendingInstructions &&
-    lastTurnIsInFlight;
+
+  const send = useCallback(
+    (instructions: string, target: ChatRole) => {
+      const trimmed = instructions.trim();
+      if (!trimmed || views[target].busy) {
+        return;
+      }
+      dispatch({ type: 'submitted', role: target, instructions: trimmed, atMs: Date.now() });
+      sendMessage.mutate(
+        { role: target, instructions: trimmed, sessionId: roleViews[target].session?.session.id },
+        {
+          onSuccess: () => {
+            draftRef.current?.focus();
+          },
+          onError: (error: unknown) => {
+            dispatch({ type: 'send-failed', role: target, error: toClientError(error) });
+          },
+          onSettled: () => {
+            dispatch({ type: 'send-settled', role: target });
+          },
+        },
+      );
+    },
+    [roleViews, sendMessage, views],
+  );
 
   const submit = () => {
     const instructions = draft.trim();
-    if (!instructions || pending) {
+    if (!instructions || pending || incidentRequired) {
       return;
     }
     // Clear the composer the moment the operator sends, not when the (possibly
     // slow, inline-LLM) response comes back — the request is committed either way,
-    // and a failure surfaces through the error alert below, not by handing the
-    // text back.
+    // and a failure surfaces through the turn's error card, not by handing the text back.
     setDraft('');
-    setPendingInstructions(instructions);
-    sendMessage.mutate(
-      { role, instructions, sessionId: roleSession?.session.id },
-      {
-        onSuccess: () => {
-          draftRef.current?.focus();
-        },
-        onSettled: () => {
-          setPendingInstructions(null);
-        },
-      },
-    );
+    send(instructions, role);
   };
+
+  /** Retry re-sends the same prompt as a brand new task on this role's own thread. */
+  const retry = useCallback(
+    (instructions: string) => {
+      send(instructions, role);
+    },
+    [role, send],
+  );
+
+  const otherWorking = otherBusyRoles(views, role);
+  const clientDeadlineHit =
+    view.phase === 'timed_out' && view.errorCode === CLIENT_DEADLINE_ERROR_CODE;
+  const resolvedWithError =
+    view.phase === 'failed' || view.phase === 'timed_out' || view.phase === 'cancelled';
+  // A transport failure that never produced a task row has no turn to render it, so the
+  // role-level notice below is the only place it can surface.
+  const orphanClientError = view.phase === 'failed' && view.taskId === null;
 
   const liveStatus = retrying
     ? `${role} task failed — retrying once…`
     : pending
       ? `${role} is investigating…`
-      : sendMessage.isError
-        ? 'The last request failed.'
+      : resolvedWithError
+        ? `The last ${role} task ended in ${view.phase}. ${view.errorMessage ?? ''}`.trim()
         : '';
 
   return (
@@ -295,27 +533,48 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Agent role">
           {CHAT_ROLES.map((candidate) => {
             const selected = candidate === role;
+            const candidateBusy = views[candidate].busy;
             return (
               <button
                 key={candidate}
                 type="button"
                 role="radio"
                 aria-checked={selected}
+                data-testid={`agent-chat-role-${candidate}`}
+                data-busy={candidateBusy ? 'true' : 'false'}
                 onClick={() => {
+                  // Selecting a role changes the VIEW only. Every role keeps its own
+                  // in-flight task, busy state and history; nothing is renamed or cancelled.
                   setRole(candidate);
                 }}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                   selected
                     ? 'border-[var(--aegis-accent)] bg-[var(--aegis-accent-soft)] text-[var(--aegis-text-primary)]'
                     : 'border-[var(--aegis-border-subtle)] text-[var(--aegis-text-secondary)] hover:border-[var(--aegis-border-strong)]'
                 }`}
               >
                 {candidate}
+                {candidateBusy ? (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className={`h-1.5 w-1.5 rounded-full bg-[var(--aegis-accent)] ${
+                        reducedMotion ? '' : 'animate-pulse'
+                      }`}
+                    />
+                    <span className="sr-only">{`${candidate} task in flight`}</span>
+                  </>
+                ) : null}
               </button>
             );
           })}
         </div>
         <p className="text-xs text-[var(--aegis-text-muted)]">{ROLE_BLURB[role]}</p>
+        {otherWorking.length > 0 ? (
+          <p className="text-[10px] text-[var(--aegis-text-muted)]" data-testid="agent-chat-others">
+            {`Still working elsewhere: ${otherWorking.join(', ')}`}
+          </p>
+        ) : null}
 
         <div
           className="flex min-h-[8rem] flex-1 flex-col gap-3 overflow-y-auto pr-1"
@@ -335,14 +594,21 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
           ) : (
             <ul className="flex flex-col gap-4">
               {turns.map((turn) => (
-                <TurnView key={turn.taskId} turn={turn} />
+                <TurnView
+                  key={turn.taskId}
+                  turn={turn}
+                  // The client deadline only ever applies to the turn it fired against.
+                  clientTimedOut={clientDeadlineHit && turn.taskId === view.turnKey}
+                  // Retry lives on the newest turn only, and only once the role is free.
+                  onRetry={turn.taskId === lastTurn?.taskId && !pending ? retry : undefined}
+                />
               ))}
-              {pending && !submissionAlreadyVisible ? (
+              {showOptimisticTurn ? (
                 <li className="flex flex-col gap-2">
-                  {pendingInstructions ? (
+                  {localTasks[role].instructions ? (
                     <div className="self-end rounded-[var(--aegis-radius-md)] bg-[var(--aegis-accent-soft)] px-3 py-2">
                       <p className="whitespace-pre-wrap text-sm text-[var(--aegis-text-primary)]">
-                        {pendingInstructions}
+                        {localTasks[role].instructions}
                       </p>
                     </div>
                   ) : null}
@@ -370,10 +636,35 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
           {liveStatus}
         </span>
 
-        {sendMessage.isError ? (
-          <Alert variant="error">
-            {sendMessage.error instanceof Error ? sendMessage.error.message : 'The request failed.'}
-          </Alert>
+        {incidentRequired ? <IncidentRequiredNotice /> : null}
+
+        {orphanClientError ? (
+          <div className="flex flex-col gap-2" data-testid="agent-chat-role-error">
+            <Alert variant="error">
+              {view.errorMessage ?? 'The request failed.'}
+              {view.errorCode ? (
+                <span className="ml-1 font-mono text-[10px]">({view.errorCode})</span>
+              ) : null}
+            </Alert>
+            <TurnDiagnostics taskId={view.taskId} traceId={view.traceId} />
+            {view.retryInstructions ? (
+              <div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  data-testid="agent-chat-retry"
+                  onClick={() => {
+                    if (view.retryInstructions) {
+                      retry(view.retryInstructions);
+                    }
+                  }}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : null}
+          </div>
         ) : null}
 
         <form
@@ -402,15 +693,18 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
               }
             }}
             rows={2}
-            placeholder={ROLE_PLACEHOLDER[role]}
-            disabled={pending}
+            placeholder={incidentRequired ? INCIDENT_REQUIRED_PLACEHOLDER : ROLE_PLACEHOLDER[role]}
+            disabled={pending || incidentRequired}
             className="w-full resize-none rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-base)] px-3 py-2 text-sm text-[var(--aegis-text-primary)] placeholder:text-[var(--aegis-text-muted)] focus:border-[var(--aegis-accent)] focus:outline-none"
           />
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-[var(--aegis-text-muted)]">
               Enter to send · Shift+Enter for a new line
             </span>
-            <Button type="submit" disabled={pending || draft.trim().length === 0}>
+            <Button
+              type="submit"
+              disabled={pending || incidentRequired || draft.trim().length === 0}
+            >
               {pending ? 'Sending…' : `Send to ${role}`}
             </Button>
           </div>

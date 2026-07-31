@@ -83,7 +83,7 @@ services:
       # .env.example for tuning notes.
       AEGIS_SIM_TICK_ENABLED: ${AEGIS_SIM_TICK_ENABLED:-true}
       AEGIS_SIM_TICK_INTERVAL_SECONDS: ${AEGIS_SIM_TICK_INTERVAL_SECONDS:-2.0}
-      AEGIS_SIM_STEPS_PER_TICK: ${AEGIS_SIM_STEPS_PER_TICK:-1}
+      AEGIS_SIM_STEPS_PER_TICK: ${AEGIS_SIM_STEPS_PER_TICK:-4}
       AEGIS_SIM_MAX_SIM_SECONDS: ${AEGIS_SIM_MAX_SIM_SECONDS:-1500}
       OTEL_ENABLED: ${OTEL_ENABLED:-true}
       OTEL_SERVICE_NAME: aegis-api
@@ -103,15 +103,20 @@ services:
       # start the optional `llama` profile and override the URLs to http://llama:8086/v1.)
       AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
-      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Gwimi-4-12B-IT-Q6_K.gguf}
+      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
       # A local reasoning model can take tens of seconds per turn; give agent tasks
       # generous headroom (they still fail soft past this, shown in the chat).
-      # The local 27B reasoning model needs 30-90s+ per turn; the provider request
-      # timeout must exceed a real turn or valid generations get cancelled (default 60s).
-      AEGIS_PROVIDER_TIMEOUT_SECONDS: ${AEGIS_PROVIDER_TIMEOUT_SECONDS:-200}
+      # Timeout budget chain — each layer must resolve before the one above it:
+      # provider attempt ceiling (300s) < provider total budget (task timeout - 2s,
+      # set per request) < agent task timeout (540s) < copilot client deadline (600s).
+      # When the provider outlived the task deadline it was cancelled mid-flight and
+      # the operator saw "Provider request was cancelled (PROVIDER_FAILURE)". Measured
+      # on the local 27B reasoning model: ~76 tok/s prefill, ~27 tok/s generation, so
+      # one real turn is 90-165s and a 3-round tool loop needs minutes.
+      AEGIS_PROVIDER_TIMEOUT_SECONDS: ${AEGIS_PROVIDER_TIMEOUT_SECONDS:-300}
       AEGIS_PROVIDER_MAX_OUTPUT_TOKENS: ${AEGIS_PROVIDER_MAX_OUTPUT_TOKENS:-4096}
-      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-240}
+      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-540}
       AEGIS_AGENT_TOOL_LOOP_MAX_ITERATIONS: ${AEGIS_AGENT_TOOL_LOOP_MAX_ITERATIONS:-3}
     ports:
       - '${API_PORT:-8000}:8000'
@@ -186,13 +191,18 @@ services:
       # the same provider (see the api service note above).
       AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
-      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Gwimi-4-12B-IT-Q6_K.gguf}
+      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
-      # The local 27B reasoning model needs 30-90s+ per turn; the provider request
-      # timeout must exceed a real turn or valid generations get cancelled (default 60s).
-      AEGIS_PROVIDER_TIMEOUT_SECONDS: ${AEGIS_PROVIDER_TIMEOUT_SECONDS:-200}
+      # Timeout budget chain — each layer must resolve before the one above it:
+      # provider attempt ceiling (300s) < provider total budget (task timeout - 2s,
+      # set per request) < agent task timeout (540s) < copilot client deadline (600s).
+      # When the provider outlived the task deadline it was cancelled mid-flight and
+      # the operator saw "Provider request was cancelled (PROVIDER_FAILURE)". Measured
+      # on the local 27B reasoning model: ~76 tok/s prefill, ~27 tok/s generation, so
+      # one real turn is 90-165s and a 3-round tool loop needs minutes.
+      AEGIS_PROVIDER_TIMEOUT_SECONDS: ${AEGIS_PROVIDER_TIMEOUT_SECONDS:-300}
       AEGIS_PROVIDER_MAX_OUTPUT_TOKENS: ${AEGIS_PROVIDER_MAX_OUTPUT_TOKENS:-4096}
-      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-240}
+      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-540}
       AEGIS_AGENT_TOOL_LOOP_MAX_ITERATIONS: ${AEGIS_AGENT_TOOL_LOOP_MAX_ITERATIONS:-3}
     depends_on:
       postgres:
@@ -241,13 +251,18 @@ services:
       AEGIS_LOG_JSON: ${AEGIS_LOG_JSON:-true}
       AEGIS_PROVIDER_DEFAULT: ${AEGIS_PROVIDER_DEFAULT:-openai-compatible}
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
-      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Gwimi-4-12B-IT-Q6_K.gguf}
+      AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1
-      # The local 27B reasoning model needs 30-90s+ per turn; the provider request
-      # timeout must exceed a real turn or valid generations get cancelled (default 60s).
-      AEGIS_PROVIDER_TIMEOUT_SECONDS: ${AEGIS_PROVIDER_TIMEOUT_SECONDS:-200}
+      # Timeout budget chain — each layer must resolve before the one above it:
+      # provider attempt ceiling (300s) < provider total budget (task timeout - 2s,
+      # set per request) < agent task timeout (540s) < copilot client deadline (600s).
+      # When the provider outlived the task deadline it was cancelled mid-flight and
+      # the operator saw "Provider request was cancelled (PROVIDER_FAILURE)". Measured
+      # on the local 27B reasoning model: ~76 tok/s prefill, ~27 tok/s generation, so
+      # one real turn is 90-165s and a 3-round tool loop needs minutes.
+      AEGIS_PROVIDER_TIMEOUT_SECONDS: ${AEGIS_PROVIDER_TIMEOUT_SECONDS:-300}
       AEGIS_PROVIDER_MAX_OUTPUT_TOKENS: ${AEGIS_PROVIDER_MAX_OUTPUT_TOKENS:-4096}
-      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-240}
+      AEGIS_AGENT_TASK_TIMEOUT_SECONDS: ${AEGIS_AGENT_TASK_TIMEOUT_SECONDS:-540}
       AEGIS_AGENT_TOOL_LOOP_MAX_ITERATIONS: ${AEGIS_AGENT_TOOL_LOOP_MAX_ITERATIONS:-3}
     depends_on:
       postgres:

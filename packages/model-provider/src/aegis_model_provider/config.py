@@ -25,9 +25,21 @@ class ProviderSettings(BaseSettings):
     )
 
     AEGIS_PROVIDER_DEFAULT: ProviderKind = ProviderKind.MOCK
-    AEGIS_PROVIDER_TIMEOUT_SECONDS: int = Field(default=60, ge=1, le=600)
+    # Ceiling on ONE attempt. A local reasoning model at ~25 tok/s spends minutes
+    # on a long prompt, so the bound is hours-capable rather than the old 600s.
+    # The *total* budget for a call (every attempt plus backoff) is the caller's
+    # ``timeout_ms``, which is what actually bounds operator-facing latency.
+    AEGIS_PROVIDER_TIMEOUT_SECONDS: int = Field(default=60, ge=1, le=3600)
     AEGIS_PROVIDER_MAX_RETRIES: int = Field(default=3, ge=0, le=10)
     AEGIS_PROVIDER_RETRY_BACKOFF_SECONDS: float = Field(default=1.0, ge=0.1, le=60.0)
+    # Backoff used instead of the exponential one when the endpoint reports it is
+    # still loading its weights. llama-server lazy-loads a multi-GB GGUF on the
+    # first request and 503s meanwhile; 1s/2s/4s burns every retry inside seven
+    # seconds of a load that takes minutes.
+    AEGIS_PROVIDER_COLD_START_BACKOFF_SECONDS: float = Field(default=15.0, ge=0.1, le=300.0)
+    # (The admin reachability probe's budget is AEGIS_PROVIDER_PROBE_TIMEOUT_MS,
+    # owned by health_probe.py — deliberately independent of the generation
+    # timeout, since an admin page must not hang on a wedged model server.)
     AEGIS_PROVIDER_CIRCUIT_BREAKER_THRESHOLD: int = Field(default=5, ge=1, le=100)
     AEGIS_PROVIDER_CIRCUIT_BREAKER_RESET_SECONDS: int = Field(default=60, ge=1, le=3600)
     AEGIS_PROVIDER_MAX_CONCURRENT_REQUESTS: int = Field(default=10, ge=1, le=256)

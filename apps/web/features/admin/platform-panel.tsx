@@ -12,7 +12,11 @@ import {
 
 import { SectionHeading } from './admin-ui';
 import { useAdminSettings } from './use-admin-queries';
-import type { AdminSettingsResponse } from './types';
+import type {
+  AdminDependencyStatus,
+  AdminModelProviderHealth,
+  AdminSettingsResponse,
+} from './types';
 
 function formatScalar(value: unknown): string {
   if (typeof value === 'string') {
@@ -72,11 +76,76 @@ function healthBadge(status: string | undefined) {
   return <Badge variant={variant}>{value}</Badge>;
 }
 
+/**
+ * The API reports dependency health as a DependencyStateV1 (`ok` | `degraded` |
+ * `unavailable` | `failed` | `skipped`) — never `ready`, which belongs to the
+ * *aggregate* ReadyStatusV1. Counting `ready` here is what produced the
+ * "READINESS ready / 0/3 dependencies ready" contradiction (BUG-021); the summary
+ * is now derived from the exact records rendered below it.
+ */
+function dependencyState(dependency: AdminDependencyStatus): string {
+  return dependency.state ?? dependency.status ?? 'unknown';
+}
+
+function isDependencyHealthy(dependency: AdminDependencyStatus): boolean {
+  return dependencyState(dependency) === 'ok';
+}
+
+function ProviderDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-[var(--aegis-border-subtle)] pb-1.5">
+      <dt className={cn(typographyTokens.monoSm, 'uppercase text-[var(--aegis-text-muted)]')}>
+        {label}
+      </dt>
+      <dd className={cn(typographyTokens.monoSm, 'text-right text-[var(--aegis-text-primary)]')}>
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+/**
+ * Model-provider readiness, reported beside — never merged into — infrastructure
+ * readiness. AEGIS must stay operable with the model down.
+ */
+function ModelProviderHealth({ health }: { health: AdminModelProviderHealth }) {
+  const servedModel = health.reportedModel ?? health.reportedModels?.[0] ?? null;
+  const configuredModel = health.configuredModel ?? null;
+  const drifted = health.configuredModelServed === false && configuredModel !== null;
+
+  return (
+    <section className="space-y-3" data-testid="admin-model-provider-health">
+      <SectionHeading>Model provider health</SectionHeading>
+      <div className="space-y-3 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-elevated)_70%,transparent)] px-3 py-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-[var(--aegis-text-primary)]">
+            {health.provider}
+          </span>
+          {healthBadge(health.state)}
+        </div>
+        <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+          <ProviderDetail label="endpoint" value={formatValue(health.baseUrl)} />
+          <ProviderDetail label="served model" value={formatValue(servedModel)} />
+          <ProviderDetail label="configured model" value={formatValue(configuredModel)} />
+          <ProviderDetail label="last probe" value={formatValue(health.checkedAt)} />
+        </dl>
+        {drifted ? (
+          <p className="text-xs leading-5 text-[var(--aegis-text-muted)]">
+            {`Configured model "${String(configuredModel)}" is not served by this endpoint — requests naming it will fail.`}
+          </p>
+        ) : null}
+        {health.message ? (
+          <p className="text-xs leading-5 text-[var(--aegis-text-muted)]">{health.message}</p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function PlatformContent({ data }: { data: AdminSettingsResponse }) {
   const dependencies = data.health.dependencies ?? [];
-  const readyCount = dependencies.filter(
-    (dependency) => (dependency.state ?? dependency.status) === 'ready',
-  ).length;
+  const healthyCount = dependencies.filter(isDependencyHealthy).length;
+  const modelProvider = data.health.modelProvider;
 
   return (
     <div className="space-y-8" data-testid="admin-platform">
@@ -84,17 +153,18 @@ function PlatformContent({ data }: { data: AdminSettingsResponse }) {
         <MetricTile label="Environment" value={data.environment} />
         <MetricTile label="Version" value={data.version} />
         <MetricTile
-          label="Readiness"
+          label="Infrastructure"
           value={data.health.status ?? 'unknown'}
           trend={
             dependencies.length > 0
-              ? `${String(readyCount)}/${String(dependencies.length)} dependencies ready`
+              ? `${String(healthyCount)}/${String(dependencies.length)} dependencies ok`
               : undefined
           }
         />
         <MetricTile
           label="Provider"
           value={formatScalar(data.provider.defaultProvider ?? 'unknown')}
+          trend={modelProvider ? `model probe ${modelProvider.state}` : undefined}
         />
       </div>
 
@@ -110,12 +180,14 @@ function PlatformContent({ data }: { data: AdminSettingsResponse }) {
                 <span className="text-xs font-medium text-[var(--aegis-text-primary)]">
                   {dependency.name}
                 </span>
-                {healthBadge(dependency.state ?? dependency.status)}
+                {healthBadge(dependencyState(dependency))}
               </li>
             ))}
           </ul>
         </section>
       ) : null}
+
+      {modelProvider ? <ModelProviderHealth health={modelProvider} /> : null}
 
       <div className="space-y-8">
         <ConfigSection title="Model provider" values={data.provider} />
