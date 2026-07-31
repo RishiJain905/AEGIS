@@ -16,7 +16,7 @@ from aegis_contracts import AgentTaskStatus, AutonomyInitiatorV1, RulesOfEngagem
 from aegis_persistence.engine import create_engine, get_session_maker
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
-from tests.integration.agents.helpers import seed_investigation_run
+from tests.integration.agents.helpers import SEEDED_ASSET_ID, seed_investigation_run
 
 pytestmark = pytest.mark.skipif(
     os.getenv("AEGIS_INTEGRATION_POSTGRES") != "1",
@@ -45,7 +45,7 @@ async def test_new_alert_enqueues_autonomy_watchtower_task() -> None:
             uow,
             run_id=run_id,
             alert_id=alert_ids[0],
-            asset_id="asset:device-workstation-01",
+            asset_id=SEEDED_ASSET_ID,
             alert_title="Repeated authentication failures",
             roe=RulesOfEngagementV1.INVESTIGATE,
             now=1000.0,
@@ -57,6 +57,12 @@ async def test_new_alert_enqueues_autonomy_watchtower_task() -> None:
         assert task.initiator == AutonomyInitiatorV1.AUTONOMY
         assert task.status == AgentTaskStatus.QUEUED
         assert task.instructions is not None and "NO_CHANGE" in task.instructions
+        # WATCHTOWER enriches the case the detection engine already opened for this asset
+        # (ADR 0037): the turn is scoped to that incident, which is what lets its role
+        # post-processing write triage, while the lane session stays run-scoped and shared.
+        assert task.incident_id == _incident
+        lane = await uow.agent_sessions.get_by_id(task.session_id)
+        assert lane is not None and lane.incident_id is None
 
         # The session itself is marked autonomy too, not just its tasks — that is what
         # keeps this background thread out of the operator's copilot.
@@ -81,7 +87,7 @@ async def test_observe_roe_triages_but_forbids_chaining_in_instructions() -> Non
             uow,
             run_id=run_id,
             alert_id=alert_ids[0],
-            asset_id="asset:device-workstation-01",
+            asset_id=SEEDED_ASSET_ID,
             alert_title="Lateral movement",
             roe=RulesOfEngagementV1.OBSERVE,
             now=2000.0,
@@ -102,7 +108,7 @@ async def test_per_asset_cooldown_denies_second_enqueue() -> None:
             uow,
             run_id=run_id,
             alert_id=alert_ids[0],
-            asset_id="asset:device-workstation-01",
+            asset_id=SEEDED_ASSET_ID,
             alert_title="A",
             roe=RulesOfEngagementV1.INVESTIGATE,
             now=100.0,
@@ -112,7 +118,7 @@ async def test_per_asset_cooldown_denies_second_enqueue() -> None:
             uow,
             run_id=run_id,
             alert_id=alert_ids[1],
-            asset_id="asset:device-workstation-01",
+            asset_id=SEEDED_ASSET_ID,
             alert_title="B",
             roe=RulesOfEngagementV1.INVESTIGATE,
             now=130.0,
@@ -130,7 +136,7 @@ async def test_per_run_cap_denies_when_exhausted() -> None:
             uow,
             run_id=run_id,
             alert_id=alert_ids[0],
-            asset_id="asset:device-workstation-01",
+            asset_id=SEEDED_ASSET_ID,
             alert_title="A",
             roe=RulesOfEngagementV1.INVESTIGATE,
             now=10.0,
@@ -158,7 +164,7 @@ async def test_max_concurrent_denies_second_active_task() -> None:
             uow,
             run_id=run_id,
             alert_id=alert_ids[0],
-            asset_id="asset:device-workstation-01",
+            asset_id=SEEDED_ASSET_ID,
             alert_title="A",
             roe=RulesOfEngagementV1.INVESTIGATE,
             now=10.0,

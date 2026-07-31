@@ -6,4 +6,6 @@ export {
   useIncident,
   useIncidentRunAlerts,
   useInvestigationDetail,
+  useRunIncidents,
 } from './hooks/use-incident-queries';
+export { describeQueueFailure, type QueueFailure } from './lib/queue-error';

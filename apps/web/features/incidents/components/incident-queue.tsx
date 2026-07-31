@@ -11,6 +11,7 @@ import {
   summarizeQueue,
   type IncidentQueueRow,
 } from '../lib/incident-model';
+import { describeQueueFailure } from '../lib/queue-error';
 import { IncidentWorkspace } from './incident-workspace';
 import { IncidentStateBadge, SEVERITY_ACCENT_BG, SeverityChip } from './incident-primitives';
 
@@ -55,6 +56,24 @@ function QueueRow({ row }: { row: IncidentQueueRow }) {
   );
 }
 
+/**
+ * Name the failure rather than showing one "Something went wrong" for every cause —
+ * an expired session, an unreachable API, and a rejected payload need different
+ * responses from the operator, and Retry only helps for some of them.
+ */
+function QueueError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  const failure = describeQueueFailure(error);
+  return (
+    <ErrorState
+      title={failure.title}
+      message={failure.message}
+      onRetry={failure.retryable ? onRetry : undefined}
+      data-testid="incident-queue-error"
+      data-failure-kind={failure.kind}
+    />
+  );
+}
+
 export function IncidentQueue() {
   const queueQuery = useIncidentQueue();
 
@@ -67,15 +86,16 @@ export function IncidentQueue() {
       {queueQuery.isPending ? (
         <LoadingState message="Loading incident queue…" data-testid="incident-queue-loading" />
       ) : queueQuery.isError ? (
-        <ErrorState
-          message="Unable to load incidents."
-          onRetry={() => void queueQuery.refetch()}
-          data-testid="incident-queue-error"
+        <QueueError
+          error={queueQuery.error}
+          onRetry={() => {
+            void queueQuery.refetch();
+          }}
         />
       ) : queueQuery.data.length === 0 ? (
         <EmptyState
-          title="No incidents"
-          description="No incidents have been raised across active runs."
+          title="No incidents yet"
+          description="No case has been opened on the runs you can see. A case opens when you pin a hypothesis or take a containment action on a run — raising alerts alone does not open one."
           data-testid="incident-queue-empty"
         />
       ) : (

@@ -23,6 +23,8 @@ from datetime import UTC, datetime
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_contracts import (
     ActionClass,
+    ActorRef,
+    ActorType,
     ApprovalDecision,
     ApprovalV1,
     AuthenticatedActorV1,
@@ -34,6 +36,7 @@ from aegis_contracts import (
     OperatorActionStatusV1,
     OperatorHypothesisRequestV1,
     PermissionV1,
+    build_incident_created_event,
 )
 from aegis_contracts.entities import ActionProposalV1, ProposalStatus
 from aegis_contracts.proposals import (
@@ -96,7 +99,9 @@ class OperatorActionService:
         actor_id = actor.user_id
         authorization_token = f"session:{actor.session_id}"
 
-        incident = await self._resolve_incident(uow, run_id, request.incident_id)
+        incident = await self._resolve_incident(
+            uow, run_id, request.incident_id, actor_id, trace_id
+        )
 
         proposal, revision = self._build_operator_proposal(
             incident_id=incident.id,
@@ -213,7 +218,9 @@ class OperatorActionService:
         on the request are advisory scope for the operator; HypothesisV1 carries evidence
         grounding, not asset ids, so they are not persisted on the row.
         """
-        incident = await self._resolve_incident(uow, run_id, request.incident_id)
+        incident = await self._resolve_incident(
+            uow, run_id, request.incident_id, actor_id, new_runtime_id("trc")
+        )
         hypothesis = HypothesisV1(
             schema_version=1,
             id=new_runtime_id("hyp"),
@@ -236,7 +243,7 @@ class OperatorActionService:
         incident_id: str | None = None,
     ) -> list[HypothesisV1]:
         if incident_id is not None:
-            incident = await self._resolve_incident(uow, run_id, incident_id)
+            incident = await self._require_incident(uow, run_id, incident_id)
             return await uow.oracle_hypotheses.list_hypotheses_for_incident(incident.id)
         # No explicit incident: read the operator anchor if it exists, without creating one
         # (this is a read path).
@@ -302,25 +309,38 @@ class OperatorActionService:
         await uow.proposals.update_proposal(executed)
         return execution.executed_action.id, approval.id
 
+    async def _require_incident(
+        self, uow: PostgresUnitOfWork, run_id: str, incident_id: str
+    ) -> IncidentV1:
+        """Look up an incident the caller named, never creating one.
+
+        Split out from :meth:`_resolve_incident` so read paths cannot reach the creating
+        branch — opening a case is a write and now emits ``incident.created``, which a
+        listing endpoint must never do.
+        """
+        incident = await uow.incidents.get_by_id(incident_id)
+        if incident is None or incident.run_id != run_id:
+            raise OperatorActionError(
+                status_code=404,
+                code="NOT_FOUND",
+                message=f"Incident not found for run: {incident_id}",
+            )
+        return incident
+
     async def _resolve_incident(
         self,
         uow: PostgresUnitOfWork,
         run_id: str,
         incident_id: str | None,
+        actor_id: str,
+        trace_id: str,
     ) -> IncidentV1:
         if incident_id is not None:
-            incident = await uow.incidents.get_by_id(incident_id)
-            if incident is None or incident.run_id != run_id:
-                raise OperatorActionError(
-                    status_code=404,
-                    code="NOT_FOUND",
-                    message=f"Incident not found for run: {incident_id}",
-                )
-            return incident
-        return await self._ensure_operator_incident(uow, run_id)
+            return await self._require_incident(uow, run_id, incident_id)
+        return await self._ensure_operator_incident(uow, run_id, actor_id, trace_id)
 
     async def _ensure_operator_incident(
-        self, uow: PostgresUnitOfWork, run_id: str
+        self, uow: PostgresUnitOfWork, run_id: str, actor_id: str, trace_id: str
     ) -> IncidentV1:
         operator_incident_id = _operator_incident_id(run_id)
         existing = await uow.incidents.get_by_id(operator_incident_id)
@@ -338,7 +358,22 @@ class OperatorActionService:
             created_at=now,
             updated_at=now,
         )
-        return await uow.incidents.add(incident)
+        created = await uow.incidents.add(incident)
+        # Row and event in the same transaction, per the architecture contract. Until this
+        # landed the operator incident was the only case a live run ever produced, and it
+        # existed solely as a table row — replay, the reports timeline, and the after-action
+        # dossier reconstruct incidents from events and so never saw it.
+        next_sequence = await uow.events.next_sequence(run_id)
+        await uow.append_event(
+            build_incident_created_event(
+                created,
+                event_id=new_runtime_id("evt"),
+                sequence=next_sequence,
+                actor=ActorRef(type=ActorType.OPERATOR, id=actor_id),
+                trace_id=trace_id,
+            )
+        )
+        return created
 
     def _build_operator_proposal(
         self,

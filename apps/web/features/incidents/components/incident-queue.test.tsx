@@ -25,6 +25,7 @@ vi.mock('next/link', () => ({
 }));
 
 import { IncidentQueue } from '@/features/incidents/components/incident-queue';
+import { ApiClientError } from '@/lib/api/types';
 
 function row(id: string, state: string, alertIds: string[]) {
   return {
@@ -72,10 +73,42 @@ describe('IncidentQueue', () => {
       isPending: false,
       isError: true,
       data: undefined,
+      error: new Error('boom'),
       refetch: vi.fn(),
     });
     render(<IncidentQueue />);
     expect(screen.getByTestId('incident-queue-error')).toBeInTheDocument();
+  });
+
+  it('distinguishes an expired session from a transport failure, and hides a useless retry', () => {
+    useIncidentQueue.mockReturnValue({
+      isPending: false,
+      isError: true,
+      data: undefined,
+      error: new ApiClientError({ code: 'UNAUTHENTICATED', message: 'expired', status: 401 }),
+      refetch: vi.fn(),
+    });
+    render(<IncidentQueue />);
+    const state = screen.getByTestId('incident-queue-error');
+    expect(state).toHaveAttribute('data-failure-kind', 'auth');
+    expect(screen.getByText(/session has expired/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument();
+  });
+
+  it('offers a retry when the API is unreachable', () => {
+    useIncidentQueue.mockReturnValue({
+      isPending: false,
+      isError: true,
+      data: undefined,
+      error: new TypeError('Failed to fetch'),
+      refetch: vi.fn(),
+    });
+    render(<IncidentQueue />);
+    expect(screen.getByTestId('incident-queue-error')).toHaveAttribute(
+      'data-failure-kind',
+      'connectivity',
+    );
+    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
   });
 
   it('shows an empty state when no incidents exist', () => {

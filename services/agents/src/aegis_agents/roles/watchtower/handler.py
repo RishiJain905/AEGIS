@@ -18,6 +18,16 @@ from aegis_agents.roles.registry import PostProcessContext
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_agents.runtime.investigation_events import build_triage_completed_event
 
+_DEFAULT_RATIONALE = "Deterministic correlation completed; investigation recommended."
+_DEFAULT_CONFIDENCE = 0.7
+
+
+def _escalation(raw: Any) -> TriageEscalationLevel:
+    try:
+        return TriageEscalationLevel(raw)
+    except ValueError:
+        return TriageEscalationLevel.INVESTIGATE
+
 
 class WatchtowerRoleHandler:
     role = AgentRole.WATCHTOWER
@@ -71,9 +81,16 @@ class WatchtowerRoleHandler:
             grouped_alert_ids=structured.get("groupedAlertIds", []),
             separated_alert_ids=structured.get("separatedAlertIds", []),
             correlation_decisions=correlation_decisions,
-            escalation=TriageEscalationLevel(structured["escalation"]),
-            escalation_rationale=structured["escalationRationale"],
-            confidence=structured["confidence"],
+            # Defaulted rather than indexed: WATCHTOWER now also runs on autonomy lane
+            # turns against a case the detection engine opened, and a local model that
+            # drops a field there would otherwise lose the whole triage to a KeyError.
+            # The defaults match the deterministic coordinator's, so a partial answer
+            # still enriches the case instead of failing it.
+            escalation=_escalation(structured.get("escalation")),
+            escalation_rationale=str(
+                structured.get("escalationRationale") or _DEFAULT_RATIONALE
+            ),
+            confidence=float(structured.get("confidence") or _DEFAULT_CONFIDENCE),
             evidence_ids=evidence_ids,
             idempotency_key=ctx.idempotency_key,
             created_at=now,

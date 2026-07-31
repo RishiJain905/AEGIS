@@ -179,6 +179,12 @@ from aegis_contracts.graph import (
     NodeStatus,
     RelationshipType,
 )
+from aegis_contracts.incident_events import (
+    DETECTION_ENGINE_ACTOR_ID,
+    build_incident_created_event,
+    build_incident_updated_event,
+    deterministic_incident_id,
+)
 from aegis_contracts.investigation import (
     AgentGraphOverlayV1,
     CandidateAffectedAssetV1,
@@ -200,6 +206,7 @@ from aegis_contracts.killchain import (
     KILLCHAIN_TECHNIQUE_DISRUPTED,
     KILLCHAIN_TECHNIQUE_EXECUTED,
     NEUTRALIZED_CAMPAIGN_STATUSES,
+    NODE_STATUS_BY_WORLD_STATUS,
     RUN_OUTCOME_RESOLVED,
     AttackTactic,
     CampaignStatus,
@@ -207,6 +214,7 @@ from aegis_contracts.killchain import (
     DisruptionEffect,
     RunOutcome,
     RunOutcomeReason,
+    project_node_status,
 )
 from aegis_contracts.live_run import (
     ConnectionHealthSnapshotV1,
@@ -322,6 +330,7 @@ from aegis_contracts.reports import (
     ReportClaimV1,
     ReportExportArtifactV1,
     ReportExportFormatV1,
+    ReportGenerationModeV1,
     ReportGenerationStatusV1,
     ReportTimelineEntryV1,
     ReportVersionV1,
@@ -446,6 +455,7 @@ __all__ = [
     "ContainmentStatus",
     "DisruptionEffect",
     "NEUTRALIZED_CAMPAIGN_STATUSES",
+    "NODE_STATUS_BY_WORLD_STATUS",
     "RUN_OUTCOME_RESOLVED",
     "RunOutcome",
     "RunOutcomeReason",
@@ -498,6 +508,7 @@ __all__ = [
     "ReportClaimV1",
     "ReportExportArtifactV1",
     "ReportExportFormatV1",
+    "ReportGenerationModeV1",
     "ReportGenerationStatusV1",
     "ReportTimelineEntryV1",
     "ReportVersionV1",
@@ -643,7 +654,11 @@ __all__ = [
     "WebSocketErrorCode",
     "WebSocketFrameV1",
     "WebSocketMessageType",
+    "DETECTION_ENGINE_ACTOR_ID",
+    "build_incident_created_event",
+    "build_incident_updated_event",
     "build_websocket_frame",
+    "deterministic_incident_id",
     "WorldStateSnapshotV1",
     "AssetInstanceSnapshotV1",
     "GeneratorStateSnapshotV1",
@@ -754,4 +769,5 @@ __all__ = [
     "assert_supported_schema_version",
     "load_settings",
     "parse_contract",
+    "project_node_status",
 ]

@@ -55,7 +55,9 @@ def should_suppress_candidate(
             return True, "cooldown_active"
 
     if rule.suppression_group:
-        prior = state.last_alert_by_group.get(rule.suppression_group)
+        prior = state.last_alert_by_group.get(
+            (rule.suppression_group, candidate.entity_id)
+        )
         if prior is not None:
             prior_severity, prior_time = prior
             prior_rank = SEVERITY_RANK.get(prior_severity, 0)
@@ -76,5 +78,8 @@ def record_emitted_candidate(
 ) -> None:
     state.emitted_dedup_keys.add(candidate.deduplication_key)
     if rule.suppression_group:
-        state.last_alert_by_group[rule.suppression_group] = (candidate.severity, now_sim_time)
+        state.last_alert_by_group[(rule.suppression_group, candidate.entity_id)] = (
+            candidate.severity,
+            now_sim_time,
+        )
     state.alert_timestamps.append((now_sim_time, candidate.rule_id, candidate.entity_id))

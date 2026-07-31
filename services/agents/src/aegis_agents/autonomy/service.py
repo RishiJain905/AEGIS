@@ -17,7 +17,12 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from aegis_contracts import AegisSettings, AgentRole, RulesOfEngagementV1
+from aegis_contracts import (
+    AegisSettings,
+    AgentRole,
+    RulesOfEngagementV1,
+    deterministic_incident_id,
+)
 from aegis_contracts.agent_runtime import (
     AgentTaskStatus,
     CreateAgentSessionRequestV1,
@@ -133,8 +138,28 @@ class AutonomyTriageService:
             reason=f"alert:{alert_id}",
             alert_id=alert_id,
             asset_id=asset_id,
+            incident_id=await self._existing_incident_for_asset(uow, run_id, asset_id),
             now=now,
         )
+
+    @staticmethod
+    async def _existing_incident_for_asset(
+        uow: PostgresUnitOfWork, run_id: str, asset_id: str
+    ) -> str | None:
+        """The asset's already-open case, or None. Never opens one.
+
+        WATCHTOWER enriches cases; it does not create them (ADR 0037 — the detection
+        engine opens incidents deterministically, so incident existence survives a
+        provider outage). Deliberately a lookup and not a resolve-or-create, mirroring
+        ``OperatorActionService._require_incident``: a triage turn that could open a case
+        would put incident existence back behind a model call.
+
+        Returning None leaves the task run-scoped, which is exactly the pre-correlation
+        behaviour — the alert simply has not crossed a correlation threshold yet.
+        """
+        incident_id = deterministic_incident_id(run_id, asset_id)
+        incident = await uow.incidents.get_by_id(incident_id)
+        return incident.id if incident is not None else None
 
     async def on_directive_match(
         self,
@@ -204,6 +229,7 @@ class AutonomyTriageService:
         reason: str,
         alert_id: str | None = None,
         asset_id: str | None = None,
+        incident_id: str | None = None,
         now: float | None = None,
     ) -> str | None:
         wall = now if now is not None else time.monotonic()
@@ -231,6 +257,10 @@ class AutonomyTriageService:
                 instructions=instructions,
                 initiator=AutonomyInitiatorV1.AUTONOMY,
             ),
+            # Scoped to the case the detection engine already opened for this asset (when
+            # there is one), so the turn's role post-processing lands on that incident.
+            # The lane session itself stays run-scoped and shared.
+            incident_id=incident_id,
         )
         next_sequence = await uow.events.next_sequence(run_id)
         await uow.append_event(

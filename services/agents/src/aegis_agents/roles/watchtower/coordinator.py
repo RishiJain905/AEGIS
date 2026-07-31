@@ -6,7 +6,13 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from aegis_contracts import IncidentState, IncidentV1
+from aegis_contracts import (
+    ActorRef,
+    ActorType,
+    IncidentState,
+    IncidentV1,
+    build_incident_created_event,
+)
 from aegis_contracts.agent_runtime import CreateAgentSessionRequestV1, CreateAgentTaskRequestV1
 from aegis_contracts.entities import AgentRole, AgentSessionV1, AlertV1
 from aegis_contracts.investigation import (
@@ -60,7 +66,7 @@ class WatchtowerCoordinator:
         triage_output: dict[str, Any] | None = None,
     ) -> WatchtowerTriggerResult:
         alerts = await self._resolve_alerts(uow, request.run_id, request.alert_ids)
-        incident = await self._resolve_incident(uow, request.run_id, alerts)
+        incident = await self._resolve_incident(uow, request.run_id, alerts, request.trace_id)
 
         existing = await uow.investigation.get_triage_by_idempotency(
             incident.id,
@@ -150,6 +156,7 @@ class WatchtowerCoordinator:
         uow: PostgresUnitOfWork,
         run_id: str,
         alerts: list[AlertV1],
+        trace_id: str,
     ) -> IncidentV1:
         incidents = await self._list_incidents_for_run(uow, run_id)
         if incidents:
@@ -167,7 +174,22 @@ class WatchtowerCoordinator:
             created_at=now,
             updated_at=now,
         )
-        return await uow.incidents.add(incident)
+        created = await uow.incidents.add(incident)
+        # Row and event in the same transaction, per the architecture contract. Without
+        # this the case exists only in the incidents table: replay, the reports timeline,
+        # and the after-action dossier all reconstruct incidents from the event stream and
+        # would never see it.
+        next_sequence = await uow.events.next_sequence(run_id)
+        await uow.append_event(
+            build_incident_created_event(
+                created,
+                event_id=new_runtime_id("evt"),
+                sequence=next_sequence,
+                actor=ActorRef(type=ActorType.SYSTEM, id="asset:detection-engine"),
+                trace_id=trace_id,
+            )
+        )
+        return created
 
     async def _list_incidents_for_run(
         self,

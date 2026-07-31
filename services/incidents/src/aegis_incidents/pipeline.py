@@ -19,6 +19,7 @@ from aegis_contracts.versioning import DETECTION_EVALUATE_RESPONSE_SCHEMA_VERSIO
 from aegis_ml.features import compute_features_from_events
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
+from aegis_incidents.correlation import open_correlated_incidents
 from aegis_incidents.promotion import build_alert_created_event, candidate_to_alert
 from aegis_incidents.rules.dedup import record_emitted_candidate, should_suppress_candidate
 from aegis_incidents.rules.evaluator import evaluate_vectors
@@ -150,6 +151,16 @@ async def run_detection_for_events(
         persisted = await persist_detection_candidates(
             uow,
             pipeline_result.accepted_candidates,
+            events=events,
+            trace_id=trace_id,
+        )
+        # Correlation runs on every evaluation, not only when this pass persisted an
+        # alert: a case can also become warranted because the simulation compromised an
+        # asset that was already alerting. It is idempotent (deterministic incident ids,
+        # dedupe against the run's open cases), so a re-scan opens nothing twice.
+        await open_correlated_incidents(
+            uow,
+            run_id=run_id,
             events=events,
             trace_id=trace_id,
         )
