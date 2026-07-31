@@ -9,6 +9,7 @@ import { useRuns } from '@/features/shell/hooks/use-shell-queries';
 interface RunSummary {
   id: string;
   startedAt: string;
+  createdAt?: string | null;
 }
 
 /**
@@ -24,7 +25,17 @@ function latestRun(runs: RunSummary[] | undefined): RunSummary | undefined {
   if (!runs?.length) {
     return undefined;
   }
-  return [...runs].sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
+  // createdAt is the wall clock at creation; startedAt is the deterministic scenario
+  // epoch and identical on every run, so it only breaks ties for pre-migration rows
+  // (which carry no createdAt and sort last).
+  return [...runs].sort((a, b) => {
+    const left = a.createdAt ?? '';
+    const right = b.createdAt ?? '';
+    if (left !== right) {
+      return right.localeCompare(left);
+    }
+    return b.startedAt.localeCompare(a.startedAt);
+  })[0];
 }
 
 export default function ReportsPage() {

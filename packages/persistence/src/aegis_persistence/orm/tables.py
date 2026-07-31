@@ -66,6 +66,10 @@ class RunRow(Base):
     revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Wall-clock creation stamp (migration 019). started_at is the deterministic
+    # scenario epoch on every run, so this column is the only truthful recency order.
+    # Nullable: rows created before the migration have no record; they sort last.
+    created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Owner of the run (creating actor's userId). Nullable for legacy/seeded rows,
     # backfilled to a demo/admin owner by migration 014. No FK: auth users are seeded
     # at app startup, not by migration, so an owner may not exist at migrate time.
@@ -891,10 +895,12 @@ class ReportVersionRow(Base):
         ForeignKey("runs.id", ondelete="CASCADE"),
         nullable=False,
     )
-    incident_id: Mapped[str] = mapped_column(
+    # Nullable (migration 019): a zero-incident run may still persist its
+    # after-action report rather than being forced to skip generation.
+    incident_id: Mapped[str | None] = mapped_column(
         String(64),
         ForeignKey("incidents.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
     )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     report_id: Mapped[str] = mapped_column(String(64), nullable=False)

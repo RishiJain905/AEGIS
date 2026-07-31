@@ -266,6 +266,12 @@
       "title": "ReportClaimV1",
       "type": "object"
     },
+    "ReportGenerationModeV1": {
+      "description": "How the narrative content of a report version was produced.\n\nProvenance, not quality: ``DETERMINISTIC`` reports are assembled purely from persisted\nrun state (events, alerts, evidence, proposals, policy decisions) with no model in the\nloop, and must never be presented to an operator as agent-authored narrative. A run\nwhose agents never produced artifacts \u2014 because the provider was unavailable, or the\nrun was left unattended \u2014 still gets a ``DETERMINISTIC`` report so the after-action\nsurface is populated instead of empty.",
+      "enum": ["llm_narrative", "deterministic"],
+      "title": "ReportGenerationModeV1",
+      "type": "string"
+    },
     "ReportTimelineEntryV1": {
       "additionalProperties": false,
       "properties": {
@@ -362,6 +368,10 @@
       "minLength": 1,
       "title": "Executivesummary",
       "type": "string"
+    },
+    "generationMode": {
+      "$ref": "#/$defs/ReportGenerationModeV1",
+      "default": "deterministic"
     },
     "groundingFallback": {
       "default": false,

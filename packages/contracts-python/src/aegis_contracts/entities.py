@@ -195,6 +195,12 @@ class RunV1(BaseModel):
     started_at: UtcTimestamp = Field(alias="startedAt")
     sim_time: SimTimestamp = Field(alias="simTime")
     revision: Revision
+    # Wall-clock creation stamp. startedAt is the deterministic scenario epoch (the
+    # same constant on every run), so this is the only field that can order runs by
+    # recency. Additive optional (schemaVersion stays 1): rows created before
+    # migration 019 are null and sort last. Stamped by the persistence layer, never
+    # part of the hashed event stream.
+    created_at: UtcTimestamp | None = Field(default=None, alias="createdAt")
     # Owner of the run (the authenticated actor that created it). Additive optional
     # field (schemaVersion stays 1): legacy/seeded rows may be null and are backfilled
     # to a demo/admin owner by migration 014. See ADR 0034.

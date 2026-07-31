@@ -127,6 +127,13 @@
     "GraphNodeV1": {
       "additionalProperties": false,
       "properties": {
+        "appliedControls": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Appliedcontrols",
+          "type": "array"
+        },
         "assetType": {
           "$ref": "#/$defs/AssetType"
         },

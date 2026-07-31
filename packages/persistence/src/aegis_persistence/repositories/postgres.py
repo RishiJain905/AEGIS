@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from aegis_contracts import (
     ActionProposalV1,
@@ -189,6 +191,13 @@ class PostgresRunRepository:
         return run_to_domain(row) if row else None
 
     async def add(self, run: RunV1) -> RunV1:
+        if run.created_at is None:
+            # Wall-clock stamp, deliberately outside the deterministic sim clock:
+            # started_at is the pinned scenario epoch on every run, so this is the
+            # only field that lets "latest run" mean anything. It lives in the row
+            # for SQL ordering and in the payload so reads round-trip it; it is
+            # never part of the hashed event stream.
+            run = run.model_copy(update={"created_at": datetime.now(UTC)})
         payload = domain_to_payload(run)
         row = RunRow(
             id=run.id,
@@ -199,6 +208,7 @@ class PostgresRunRepository:
             revision=run.revision,
             payload=payload,
             started_at=run.started_at,
+            created_at=run.created_at,
             owner_user_id=run.owner_user_id,
         )
         self._session.add(row)
@@ -443,6 +453,21 @@ class PostgresIncidentRepository:
         result = await self._session.execute(
             select(IncidentRow)
             .where(IncidentRow.run_id == run_id)
+            .order_by(IncidentRow.created_at)
+        )
+        return [incident_to_domain(row) for row in result.scalars().all()]
+
+    async def list_by_runs(self, run_ids: Sequence[str]) -> list[IncidentV1]:
+        """Incidents across several runs in one query, oldest-first.
+
+        Backs the cross-run triage queue: the caller resolves which runs the actor may
+        see, then reads their incidents here instead of issuing one request per run.
+        """
+        if not run_ids:
+            return []
+        result = await self._session.execute(
+            select(IncidentRow)
+            .where(IncidentRow.run_id.in_(list(run_ids)))
             .order_by(IncidentRow.created_at)
         )
         return [incident_to_domain(row) for row in result.scalars().all()]

@@ -50,6 +50,18 @@
       "default": null,
       "title": "Commanderintent"
     },
+    "createdAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Createdat"
+    },
     "id": {
       "title": "Id",
       "type": "string"
