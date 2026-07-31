@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchSnapshotBootstrap } from '@/lib/realtime/snapshot-resync';
+import { pollIntervalWhileHealthy } from '@/lib/api/retry-policy';
 
 export interface ThreatTempoReading {
   /** Ambient pressure scalar in [0, 1], or null when the run has no fog tension. */
@@ -38,7 +39,7 @@ export function useThreatTempo(runId: string, options?: { enabled?: boolean }) {
       };
     },
     enabled: (options?.enabled ?? true) && Boolean(runId),
-    refetchInterval: 5_000,
+    refetchInterval: pollIntervalWhileHealthy(5_000),
     // Ambient indicator — a missed poll should never surface an error state.
     retry: false,
   });

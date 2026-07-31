@@ -7,3 +7,5 @@ export {
   latestDetection,
 } from './feed-model';
 export type { FeedRow } from './feed-model';
+export { buildProposalFacts, describeAction } from './action-model';
+export type { ActionCardModel, ActionStage } from './action-model';

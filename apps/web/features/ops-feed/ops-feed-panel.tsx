@@ -5,7 +5,10 @@ import { useMemo, useState } from 'react';
 import { EmptyState, ErrorState, LoadingState, Panel, cn } from '@aegis/ui';
 
 import { useRunFeed, type RunFeedEntry } from '@/features/command-surface';
+import { useRunGraph } from '@/features/shell/hooks/use-shell-queries';
+import { useFocusAsset } from '@/features/operational-graph';
 
+import { buildProposalFacts, describeAction, type ActionCardModel } from './action-model';
 import { buildFeedRows, latestDetection, type FeedRow } from './feed-model';
 
 /** Category → short human label + accent token for the left rail + chip. */
@@ -49,6 +52,130 @@ function InitiatorBadge({ initiator }: { initiator: string | null | undefined })
     );
   }
   return null;
+}
+
+/** Stage → chip tone. Executed is the loud one; the rest report state without alarm. */
+const STAGE_TONE: Record<string, string> = {
+  executed: 'border-[var(--aegis-accent-line)] text-[var(--aegis-accent-strong)]',
+  'awaiting approval':
+    'border-[color-mix(in_srgb,var(--aegis-risk-medium)_60%,transparent)] text-[var(--aegis-risk-medium)]',
+  blocked:
+    'border-[color-mix(in_srgb,var(--aegis-risk-critical)_60%,transparent)] text-[var(--aegis-risk-critical)]',
+  rejected:
+    'border-[color-mix(in_srgb,var(--aegis-risk-high)_60%,transparent)] text-[var(--aegis-risk-high)]',
+  cancelled: 'border-[var(--aegis-border-subtle)] text-[var(--aegis-text-muted)]',
+  proposed: 'border-[var(--aegis-border-default)] text-[var(--aegis-text-secondary)]',
+};
+
+/** Stage → chip copy. Matches the action-result toast's vocabulary (BUG-012). */
+const STAGE_LABEL: Record<string, string> = {
+  executed: 'executed',
+  'awaiting approval': 'awaiting approval',
+  blocked: 'blocked by policy',
+  rejected: 'rejected',
+  cancelled: 'cancelled',
+  proposed: 'proposed',
+};
+
+/**
+ * A command order, rendered so it can be audited from the feed alone: what was done, to
+ * which asset by name, at what class, under what policy verdict, with what effect and on
+ * whose stated reason. The raw event stays one disclosure away for anyone who needs it.
+ */
+function ActionCard({
+  entry,
+  action,
+  assetLabel,
+  onFocusAsset,
+}: {
+  entry: RunFeedEntry;
+  action: ActionCardModel;
+  assetLabel: string | null;
+  onFocusAsset: (assetId: string) => void;
+}) {
+  return (
+    <li
+      className="flex items-start gap-3 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-3 py-2"
+      data-testid="ops-feed-action"
+      data-category={entry.category}
+      data-stage={action.stage}
+    >
+      <span
+        aria-hidden="true"
+        className="mt-1 h-8 w-0.5 shrink-0 rounded-full"
+        style={{ backgroundColor: 'var(--aegis-accent-cyan)' }}
+      />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              'rounded-full border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide',
+              STAGE_TONE[action.stage] ?? STAGE_TONE['proposed'],
+            )}
+          >
+            {STAGE_LABEL[action.stage] ?? action.stage}
+          </span>
+          {action.actionClassLabel ? (
+            <span className="font-mono text-[9px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
+              {action.actionClassLabel}
+            </span>
+          ) : null}
+          <span className="ml-auto shrink-0 font-mono text-[10px] tabular-nums text-[var(--aegis-text-muted)]">
+            {simTimeShort(entry.simTime)}
+          </span>
+        </div>
+
+        <p className="flex flex-wrap items-baseline gap-1.5 text-[0.8125rem] leading-5 text-[var(--aegis-text-primary)]">
+          <span className="font-medium">{action.verb}</span>
+          {action.targetAssetId ? (
+            <>
+              <span className="text-[var(--aegis-text-muted)]">on</span>
+              <button
+                type="button"
+                data-testid={`ops-feed-action-target-${entry.eventId}`}
+                onClick={() => {
+                  onFocusAsset(action.targetAssetId ?? '');
+                }}
+                className="rounded-[var(--aegis-radius-sm)] font-medium text-[var(--aegis-accent-strong)] underline decoration-[var(--aegis-accent-line)] underline-offset-2 transition-colors hover:text-[var(--aegis-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]"
+              >
+                {assetLabel ?? action.targetAssetId}
+              </button>
+            </>
+          ) : null}
+        </p>
+
+        {action.impact ? (
+          <p className="text-[11px] leading-4 text-[var(--aegis-text-secondary)]">
+            {action.impact}
+            {action.reversible === false ? ' Not reversible.' : ''}
+          </p>
+        ) : null}
+
+        {action.justification ? (
+          <p className="border-l border-[var(--aegis-border-strong)] pl-2 text-[11px] italic leading-4 text-[var(--aegis-text-secondary)]">
+            “{action.justification}”
+          </p>
+        ) : null}
+
+        {action.policyOutcome ? (
+          <span className="font-mono text-[9px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
+            Policy: {action.policyOutcome.replace(/_/g, ' ')}
+          </span>
+        ) : null}
+
+        <details className="mt-0.5">
+          <summary className="cursor-pointer font-mono text-[9px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
+            Raw event
+          </summary>
+          <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded-[var(--aegis-radius-sm)] bg-[var(--aegis-surface-base)] p-2 font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
+            {entry.type}
+            {'\n'}
+            {JSON.stringify(entry.payload, null, 2)}
+          </pre>
+        </details>
+      </div>
+    </li>
+  );
 }
 
 function EntryRow({
@@ -158,9 +285,29 @@ function CollapsedRow({ entries, count }: { entries: RunFeedEntry[]; count: numb
   );
 }
 
-function FeedRowView({ row }: { row: FeedRow }) {
+function FeedRowView({
+  row,
+  action,
+  assetLabel,
+  onFocusAsset,
+}: {
+  row: FeedRow;
+  action: ActionCardModel | null;
+  assetLabel: string | null;
+  onFocusAsset: (assetId: string) => void;
+}) {
   if (row.kind === 'collapsed') {
     return <CollapsedRow entries={row.entries} count={row.count} />;
+  }
+  if (action) {
+    return (
+      <ActionCard
+        entry={row.entry}
+        action={action}
+        assetLabel={assetLabel}
+        onFocusAsset={onFocusAsset}
+      />
+    );
   }
   return <EntryRow entry={row.entry} detection={row.detection} biasCheck={row.biasCheck} />;
 }
@@ -177,10 +324,20 @@ export interface OpsFeedPanelProps {
  */
 export function OpsFeedPanel({ runId }: OpsFeedPanelProps) {
   const feedQuery = useRunFeed(runId);
+  const graphQuery = useRunGraph(runId);
+  const focusAsset = useFocusAsset();
 
   const entries = feedQuery.data ?? [];
   const rows = useMemo(() => buildFeedRows(entries), [entries]);
   const detection = useMemo(() => latestDetection(entries), [entries]);
+  const proposalFacts = useMemo(() => buildProposalFacts(entries), [entries]);
+  const assetLabels = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const node of graphQuery.data?.snapshot?.nodes ?? []) {
+      map.set(node.id, node.label);
+    }
+    return map;
+  }, [graphQuery.data]);
 
   return (
     <Panel
@@ -210,9 +367,20 @@ export function OpsFeedPanel({ runId }: OpsFeedPanelProps) {
           />
         ) : (
           <ul className="flex flex-col gap-2">
-            {rows.map((row) => (
-              <FeedRowView key={row.key} row={row} />
-            ))}
+            {rows.map((row) => {
+              const action = row.kind === 'entry' ? describeAction(row.entry, proposalFacts) : null;
+              return (
+                <FeedRowView
+                  key={row.key}
+                  row={row}
+                  action={action}
+                  assetLabel={
+                    action?.targetAssetId ? (assetLabels.get(action.targetAssetId) ?? null) : null
+                  }
+                  onFocusAsset={focusAsset}
+                />
+              );
+            })}
           </ul>
         )}
       </div>

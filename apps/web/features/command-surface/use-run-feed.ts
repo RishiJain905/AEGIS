@@ -9,6 +9,7 @@ import { apiFetch } from '@/lib/api/auth-fetch';
 import { ApiClientError } from '@/lib/api/types';
 
 import type { RunFeedEntry, RunFeedPage } from './contracts';
+import { pollIntervalWhileHealthy } from '@/lib/api/retry-policy';
 
 /** Safety cap on cursor-follow paging so a long run cannot spin unbounded. */
 const MAX_FEED_PAGES = 12;
@@ -86,8 +87,9 @@ export function useRunFeed(runId: string, options?: UseRunFeedOptions) {
     queryKey: feedKey(runId),
     queryFn: ({ signal }) => fetchAllFeedEntries(runId, signal),
     enabled: (options?.enabled ?? true) && Boolean(runId),
-    // Ambient heartbeat: a missed poll should degrade quietly, not error the panel.
-    refetchInterval: 6_000,
+    // Ambient heartbeat: a missed poll should degrade quietly, not error the panel, and
+    // a dead endpoint should be polled progressively less often rather than every 6s.
+    refetchInterval: pollIntervalWhileHealthy(6_000),
     retry: false,
     staleTime: 2_000,
   });

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
@@ -11,6 +11,24 @@ vi.mock('@/features/command-surface', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/command-surface')>();
   return { ...actual, useRunFeed: (runId: string) => useRunFeed(runId) as unknown };
 });
+
+// The panel resolves asset display names off the run graph (the same cached query the
+// workspace already holds) and hands the operator to the node on click.
+const graphSnapshot = {
+  data: {
+    snapshot: {
+      nodes: [{ id: 'asset:svc-identity-broker', label: 'Identity Broker' }],
+    },
+  },
+};
+vi.mock('@/features/shell/hooks/use-shell-queries', () => ({
+  useRunGraph: () => graphSnapshot,
+}));
+
+const focusAsset = vi.fn();
+vi.mock('@/features/operational-graph', () => ({
+  useFocusAsset: () => focusAsset,
+}));
 
 function feedResult(entries: RunFeedEntry[]) {
   return { data: entries, isPending: false, isError: false, refetch: vi.fn() };
@@ -58,6 +76,72 @@ describe('OpsFeedPanel', () => {
     useRunFeed.mockReturnValue(feedResult([]));
     render(<OpsFeedPanel runId="run_x" />);
     expect(screen.getByText(/Quiet on the floor/i)).toBeInTheDocument();
+  });
+
+  it('renders command traffic as an auditable action card naming its target', () => {
+    useRunFeed.mockReturnValue(
+      feedResult([
+        entry({
+          sequence: 5,
+          type: 'operator.action.proposed',
+          category: 'operator_action',
+          summary: 'operator.action.proposed (asset:svc-identity-broker)',
+          initiator: 'operator',
+          payload: {
+            proposalId: 'prop_1',
+            incidentId: 'incident:inc_1',
+            scenarioCommand: 'isolate',
+            actionClass: 'class_2',
+            targetAssetId: 'asset:svc-identity-broker',
+          },
+        }),
+        entry({
+          sequence: 6,
+          type: 'action.executed',
+          category: 'execution',
+          summary: 'action.executed',
+          payload: {
+            proposalId: 'prop_1',
+            incidentId: 'incident:inc_1',
+            approvalId: 'apr_1',
+            executedActionId: 'act_1',
+            commandId: 'cmd_1',
+          },
+        }),
+      ]),
+    );
+    render(<OpsFeedPanel runId="run_x" />);
+
+    const cards = screen.getAllByTestId('ops-feed-action');
+    expect(cards).toHaveLength(2);
+    expect(cards[0]).toHaveAttribute('data-stage', 'executed');
+    expect(cards[0]).toHaveTextContent('Isolate');
+    expect(cards[0]).toHaveTextContent('Class 2 · Operational');
+    expect(cards[0]).toHaveTextContent('Severs the asset from the network');
+    expect(screen.getAllByText('Identity Broker')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Raw event')[0]).toBeInTheDocument();
+  });
+
+  it('hands the operator to the target node when an action target is clicked', () => {
+    useRunFeed.mockReturnValue(
+      feedResult([
+        entry({
+          sequence: 5,
+          type: 'operator.action.proposed',
+          category: 'operator_action',
+          payload: {
+            proposalId: 'prop_1',
+            scenarioCommand: 'isolate',
+            actionClass: 'class_2',
+            targetAssetId: 'asset:svc-identity-broker',
+          },
+        }),
+      ]),
+    );
+    render(<OpsFeedPanel runId="run_x" />);
+
+    fireEvent.click(screen.getByText('Identity Broker'));
+    expect(focusAsset).toHaveBeenCalledWith('asset:svc-identity-broker');
   });
 
   it('has no accessibility violations in dark and light themes', async () => {
