@@ -27,6 +27,35 @@ def test_resolve_target_sequence_defaults_to_latest() -> None:
     assert service._resolve_target_sequence(events, sequence=None, sim_time=None) == 12
 
 
+def test_resolve_target_sequence_rejects_sequence_past_the_end() -> None:
+    """Comparison paths must fail loudly rather than answer for a different sequence."""
+    from aegis_contracts.replay import ReplayErrorCode
+    from aegis_replay.errors import ReplayEngineError
+
+    service = ReplayService(InMemoryObjectStorage.create())
+    events = sample_history(count=12)
+    try:
+        service._resolve_target_sequence(events, sequence=500, sim_time=None)
+    except ReplayEngineError as exc:
+        assert exc.code is ReplayErrorCode.REPLAY_VALIDATION_FAILED
+        assert exc.details["maxSequence"] == 12
+    else:  # pragma: no cover - strict path must raise
+        raise AssertionError("sequence past the end was accepted")
+
+
+def test_resolve_target_sequence_clamps_for_operator_scrubbing() -> None:
+    """Scrubbing to End lands on the run's last real state instead of a 400."""
+    service = ReplayService(InMemoryObjectStorage.create())
+    events = sample_history(count=12)
+    target = service._resolve_target_sequence(
+        events,
+        sequence=500,
+        sim_time=None,
+        clamp_sequence=True,
+    )
+    assert target == 12
+
+
 def test_build_cursor() -> None:
     service = ReplayService(InMemoryObjectStorage.create())
     cursor = service.build_cursor(

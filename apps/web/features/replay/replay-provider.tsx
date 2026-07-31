@@ -13,7 +13,6 @@ import {
   toHistoricalGraphAdapter,
 } from '@/features/replay/lib/historical-graph-adapter';
 import { speedToIntervalMs } from '@/features/replay/lib/playback';
-import { REPLAY_FIXTURE_MAX_SEQUENCE } from '@/fixtures/replay-fixture';
 import { useApiClient } from '@/lib/api';
 import { ApiClientError } from '@/lib/api/types';
 import { useReplayStore } from '@/stores/replay-store';
@@ -77,9 +76,13 @@ export function ReplayProvider({ runId, children, initialSequence }: ReplayProvi
         if (cancelled) {
           return;
         }
-        const maxSequence = Math.max(latest.cursor.sequence, REPLAY_FIXTURE_MAX_SEQUENCE);
+        // An unbounded reconstruction lands on the run's last persisted event, so its
+        // cursor IS the maximum sequence. Never widen the range past that: scrubbing to
+        // an End the run never reached is what made the transport ask for state that
+        // does not exist.
+        const maxSequence = latest.cursor.sequence;
         enterHistorical(runId, {
-          sequence: initialSequence ?? latest.cursor.sequence,
+          sequence: initialSequence ?? maxSequence,
           maxSequence,
         });
       })
@@ -89,7 +92,7 @@ export function ReplayProvider({ runId, children, initialSequence }: ReplayProvi
         }
         enterHistorical(runId, {
           sequence: initialSequence ?? 0,
-          maxSequence: REPLAY_FIXTURE_MAX_SEQUENCE,
+          maxSequence: 0,
         });
         if (error instanceof ApiClientError) {
           useReplayStore.setState({

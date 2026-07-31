@@ -47,6 +47,7 @@ async def _reconstruct_operator_state(
     sim_time: datetime | None = None,
     incident_id: str | None = None,
     prefer_snapshot: bool = True,
+    clamp_sequence: bool = False,
 ) -> ReplayStateV1:
     """Reconstruct with fog-of-war: redacted while the run is live, full truth once over."""
     run = await uow.runs.get_by_id(run_id)
@@ -59,6 +60,7 @@ async def _reconstruct_operator_state(
             sim_time=sim_time,
             incident_id=incident_id,
             prefer_snapshot=prefer_snapshot,
+            clamp_sequence=clamp_sequence,
         )
     manifest = get_run_command_service().manifest_for_scenario_version(run.scenario_version_id)
     return await service.reconstruct_operator_view(
@@ -70,6 +72,7 @@ async def _reconstruct_operator_state(
         sim_time=sim_time,
         incident_id=incident_id,
         prefer_snapshot=prefer_snapshot,
+        clamp_sequence=clamp_sequence,
     )
 
 SimTimeQuery = Annotated[datetime | None, Query(alias="simTime")]
@@ -157,6 +160,9 @@ async def get_replay_state(
                 sim_time=sim_time,
                 incident_id=incident_id,
                 prefer_snapshot=prefer_snapshot,
+                # Scrubbing to the end of a run must land on its last real state, not a
+                # 400: the returned cursor tells the client the true maximum sequence.
+                clamp_sequence=True,
             )
         except ReplayEngineError as exc:
             raise _http_error(exc) from exc
@@ -180,6 +186,7 @@ async def get_replay_cursor(
                 sequence=sequence,
                 sim_time=sim_time,
                 incident_id=incident_id,
+                clamp_sequence=True,
             )
         except ReplayEngineError as exc:
             raise _http_error(exc) from exc

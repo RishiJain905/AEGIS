@@ -88,6 +88,7 @@ class ReplayService:
         sim_time: datetime | None = None,
         incident_id: str | None = None,
         prefer_snapshot: bool = True,
+        clamp_sequence: bool = False,
     ) -> ReplayStateV1:
         import time
 
@@ -101,6 +102,7 @@ class ReplayService:
                 sim_time=sim_time,
                 incident_id=incident_id,
                 prefer_snapshot=prefer_snapshot,
+                clamp_sequence=clamp_sequence,
             )
             try:
                 from aegis_observability.instrumentation import record_replay
@@ -136,7 +138,16 @@ class ReplayService:
         sim_time: datetime | None = None,
         incident_id: str | None = None,
         prefer_snapshot: bool = True,
+        clamp_sequence: bool = False,
     ) -> ReplayStateV1:
+        """Reconstruct state at a cursor.
+
+        ``clamp_sequence`` is for operator-facing scrubbing, where a cursor past the end of
+        the run should land on the last real state rather than fail: the returned cursor
+        reports the sequence actually reconstructed, so the client can correct its range.
+        Comparison paths (diff, equivalence, diagnostics) leave it off — silently answering
+        for a different sequence than asked would make those results meaningless.
+        """
         self.assert_read_only(uow)
         events = await self._load_all_events(uow, run_id)
         if not events and sequence is None and sim_time is None:
@@ -154,6 +165,7 @@ class ReplayService:
             events,
             sequence=sequence,
             sim_time=sim_time,
+            clamp_sequence=clamp_sequence,
         )
         self._assert_sequence_contiguous(events, up_to=target_sequence)
 
@@ -251,6 +263,7 @@ class ReplayService:
         sim_time: datetime | None = None,
         incident_id: str | None = None,
         prefer_snapshot: bool = True,
+        clamp_sequence: bool = False,
     ) -> ReplayStateV1:
         """Operator-facing replay: fog-respecting mid-run, full truth once the run is over.
 
@@ -270,6 +283,7 @@ class ReplayService:
             sim_time=sim_time,
             incident_id=incident_id,
             prefer_snapshot=prefer_snapshot,
+            clamp_sequence=clamp_sequence,
         )
         if not run_active or state.graph is None:
             return state
@@ -401,6 +415,7 @@ class ReplayService:
         sequence: int | None = None,
         sim_time: datetime | None = None,
         incident_id: str | None = None,
+        clamp_sequence: bool = False,
     ) -> ReplayCursorV1:
         state = await self.reconstruct(
             uow,
@@ -408,6 +423,7 @@ class ReplayService:
             sequence=sequence,
             sim_time=sim_time,
             incident_id=incident_id,
+            clamp_sequence=clamp_sequence,
         )
         return state.cursor
 
@@ -466,14 +482,17 @@ class ReplayService:
         *,
         sequence: int | None,
         sim_time: datetime | None,
+        clamp_sequence: bool = False,
     ) -> int:
         if not events:
             if sequence is not None:
-                return sequence
+                return 0 if clamp_sequence else sequence
             return 0
         if sequence is not None:
             max_seq = events[-1].sequence
             if sequence > max_seq:
+                if clamp_sequence:
+                    return max_seq
                 raise ReplayEngineError(
                     ReplayErrorCode.REPLAY_VALIDATION_FAILED,
                     "Requested sequence exceeds available event history",

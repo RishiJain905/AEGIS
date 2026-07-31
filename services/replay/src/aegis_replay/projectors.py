@@ -37,6 +37,7 @@ from aegis_contracts.entities import (
     ProposalStatus,
 )
 from aegis_contracts.graph import AssetType, EntityType, NodeStatus
+from aegis_contracts.killchain import is_control_status, project_effective_status
 from aegis_contracts.replay import ReplayErrorCode
 from aegis_contracts.versioning import (
     ACTION_PROPOSAL_SCHEMA_VERSION,
@@ -92,6 +93,11 @@ class ProjectorState:
     run_id: str
     run: RunV1 | None = None
     graph_nodes: dict[str, GraphNodeV1] = field(default_factory=dict)
+    #: Security posture per asset, tracked beside the nodes because ``GraphNodeV1.status``
+    #: is the *composed* status. Without it a containment would overwrite the posture in
+    #: the projection and replay would forget what the attacker had done — the same defect
+    #: the world state carries this split to avoid.
+    asset_postures: dict[str, str] = field(default_factory=dict)
     graph_edges: list[dict[str, Any]] = field(default_factory=list)
     graph_revision: int = 0
     incidents: dict[str, IncidentV1] = field(default_factory=dict)
@@ -125,6 +131,11 @@ class ReplayProjector:
         projector.state.run = state.run
         if state.graph is not None:
             projector.state.graph_nodes = {node.id: node for node in state.graph.nodes}
+            # A checkpointed projection only carries composed statuses; seeding posture
+            # from them is exact wherever no containing control is masking one.
+            projector.state.asset_postures = {
+                node.id: node.status.value for node in state.graph.nodes
+            }
             projector.state.graph_edges = [
                 edge.model_dump(mode="json", by_alias=True) for edge in state.graph.edges
             ]
@@ -378,8 +389,17 @@ class ReplayProjector:
         if event.type.endswith("authentication.failed"):
             node = self.state.graph_nodes.get(asset_id)
             if node is not None:
+                # A failed auth is a posture signal, so it must not paint over a control:
+                # an isolated asset stays contained however noisy its auth log gets.
+                status, controls = self._apply_asset_status(
+                    asset_id, NodeStatus.SUSPICIOUS.value
+                )
                 self.state.graph_nodes[asset_id] = node.model_copy(
-                    update={"status": NodeStatus.SUSPICIOUS, "revision": node.revision + 1}
+                    update={
+                        "status": NodeStatus(status),
+                        "applied_controls": controls,
+                        "revision": node.revision + 1,
+                    }
                 )
 
     def _on_branch_selected(self, event: DomainEventEnvelopeV1) -> None:
@@ -425,14 +445,34 @@ class ReplayProjector:
 
         return handler
 
+    def _apply_asset_status(self, asset_id: str, applied: str) -> tuple[str, list[str]]:
+        """Route one applied status into the projection's posture/control split.
+
+        Mirrors ``AssetState.apply_status``: a control accumulates, anything else replaces
+        the posture. Reconstructing the split here — rather than reading it off the event —
+        means runs persisted before the split replay into the same composed projection as
+        runs recorded after it, because the event has always carried the applied value.
+        """
+        node = self.state.graph_nodes.get(asset_id)
+        controls = list(node.applied_controls) if node is not None else []
+        if is_control_status(applied):
+            if applied not in controls:
+                controls.append(applied)
+        else:
+            self.state.asset_postures[asset_id] = applied
+        posture = self.state.asset_postures.get(asset_id, NodeStatus.NORMAL.value)
+        return project_effective_status(posture, controls).value, controls
+
     def _on_asset_status_changed(self, event: DomainEventEnvelopeV1) -> None:
         payload = event.payload
         asset_id = _as_str(payload.get("assetId"), event.subject.id)
-        status_raw = _as_str(payload.get("status"), "suspicious")
-        try:
-            status = NodeStatus(status_raw)
-        except ValueError:
-            status = NodeStatus.SUSPICIOUS
+        # The event carries one value from either vocabulary — a posture the attacker
+        # drove the asset into, or a control the defender applied. Composing the two
+        # rather than overwriting is what keeps an observed compromise visibly
+        # compromised, and a contained one from reading as an unhandled threat.
+        status, controls = self._apply_asset_status(
+            asset_id, _as_str(payload.get("status"), "suspicious")
+        )
         existing = self.state.graph_nodes.get(asset_id)
         if existing is None:
             node = GraphNodeV1.model_validate(
@@ -445,13 +485,18 @@ class ReplayProjector:
                     "clusterId": payload.get("clusterId"),
                     "riskScore": _as_float(payload.get("riskScore"), 0.0),
                     "criticality": _as_float(payload.get("criticality"), 0.5),
-                    "status": status.value,
+                    "status": status,
+                    "appliedControls": controls,
                     "revision": 1,
                 }
             )
         else:
             node = existing.model_copy(
-                update={"status": status, "revision": existing.revision + 1}
+                update={
+                    "status": NodeStatus(status),
+                    "applied_controls": controls,
+                    "revision": existing.revision + 1,
+                }
             )
         self.state.graph_nodes[asset_id] = node
         self.state.graph_revision += 1
@@ -466,6 +511,11 @@ class ReplayProjector:
         except Exception:
             return
         self.state.graph_nodes = {node.id: node for node in snapshot.nodes}
+        # A persisted snapshot is authoritative for the nodes it carries; reseed posture
+        # from it so status changes after this point compose against the right baseline.
+        self.state.asset_postures.update(
+            {node.id: node.status.value for node in snapshot.nodes}
+        )
         self.state.graph_edges = [
             edge.model_dump(mode="json", by_alias=True) for edge in snapshot.edges
         ]
@@ -509,9 +559,26 @@ class ReplayProjector:
             state = IncidentState(state_raw)
         except ValueError:
             state = existing.state
+        # The detection engine also emits this event when a follow-on alert joins an open
+        # case (the registry has no alert-attachment type), so the payload's alert ids are
+        # merged, not ignored — otherwise a replayed incident keeps only the alerts it was
+        # opened with and the case-file timeline diverges from the live run.
+        payload_alert_ids = payload.get("alertIds")
+        alert_ids = sorted(
+            {
+                *existing.alert_ids,
+                *(
+                    item
+                    for item in (payload_alert_ids if isinstance(payload_alert_ids, list) else [])
+                    if isinstance(item, str)
+                ),
+            }
+        )
         self.state.incidents[incident_id] = existing.model_copy(
             update={
                 "state": state,
+                "alert_ids": alert_ids,
+                "title": _as_str(payload.get("title"), existing.title),
                 "updated_at": event.recorded_at,
                 "revision": existing.revision + 1,
             }
@@ -560,24 +627,32 @@ class ReplayProjector:
                     }
                 )
 
+    def _agent_session_id(self, event: DomainEventEnvelopeV1) -> str:
+        payload = event.payload
+        return _as_str(
+            payload.get("sessionId") or payload.get("agentSessionId") or payload.get("id"),
+            event.subject.id,
+        )
+
     def _on_agent_session_started(self, event: DomainEventEnvelopeV1) -> None:
         payload = event.payload
-        session_id = _as_str(payload.get("id") or payload.get("agentSessionId"), event.subject.id)
+        session_id = self._agent_session_id(event)
         role_raw = _as_str(payload.get("role"), AgentRole.TRACE.value)
         try:
             role = AgentRole(role_raw)
         except ValueError:
             role = AgentRole.TRACE
+        # The run is authoritative on the envelope, and the incident is genuinely absent
+        # for run-scoped copilot threads (ADR 0035) — neither is repeated in the payload.
+        incident_id = payload.get("incidentId")
         self.state.agent_sessions[session_id] = AgentSessionV1.model_validate(
             {
                 "schemaVersion": AGENT_SESSION_SCHEMA_VERSION,
                 "id": session_id,
-                "incidentId": _as_str(
-                    payload.get("incidentId"),
-                    "incident:inc_unknown",
-                ),
+                "runId": self.state.run_id,
+                "incidentId": incident_id if isinstance(incident_id, str) else None,
                 "role": role.value,
-                "state": AgentSessionState.GATHERING.value,
+                "state": self._agent_session_state(payload, AgentSessionState.GATHERING),
                 "traceId": _as_str(payload.get("traceId"), event.trace_id),
                 "createdAt": event.recorded_at.isoformat().replace("+00:00", "Z"),
                 "updatedAt": event.recorded_at.isoformat().replace("+00:00", "Z"),
@@ -593,24 +668,39 @@ class ReplayProjector:
                 checksum=_as_str(payload.get("checksum")) or None,
             )
 
+    @staticmethod
+    def _agent_session_state(
+        payload: dict[str, Any],
+        fallback: AgentSessionState,
+    ) -> str:
+        """Resolve a session state from a payload that names it ``toState`` or ``state``."""
+        raw = payload.get("toState") or payload.get("state")
+        if isinstance(raw, str):
+            try:
+                return AgentSessionState(raw).value
+            except ValueError:
+                pass
+        return fallback.value
+
     def _on_agent_session_state(self, event: DomainEventEnvelopeV1) -> None:
         payload = event.payload
-        session_id = _as_str(payload.get("agentSessionId") or payload.get("id"), event.subject.id)
+        session_id = self._agent_session_id(event)
         existing = self.state.agent_sessions.get(session_id)
         if existing is None:
+            # A state change can be the first event in range when reconstruction starts
+            # mid-run; seed the session from it so the transition is not dropped.
             self._on_agent_session_started(event)
-            return
-        state_raw = _as_str(payload.get("state"), existing.state.value)
-        try:
-            state = AgentSessionState(state_raw)
-        except ValueError:
-            state = existing.state
+            existing = self.state.agent_sessions.get(session_id)
+            if existing is None:
+                return
+        state = AgentSessionState(self._agent_session_state(payload, existing.state))
         self.state.agent_sessions[session_id] = existing.model_copy(
             update={"state": state, "updated_at": event.recorded_at}
         )
 
     def _on_agent_session_completed(self, event: DomainEventEnvelopeV1) -> None:
         payload = dict(event.payload)
+        payload["toState"] = AgentSessionState.COMPLETED.value
         payload["state"] = AgentSessionState.COMPLETED.value
         event = event.model_copy(update={"payload": payload})
         self._on_agent_session_state(event)
@@ -791,11 +881,24 @@ class ReplayProjector:
 
     def _maybe_project_evidence(self, event: DomainEventEnvelopeV1) -> None:
         payload = event.payload
-        evidence_id = payload.get("evidenceId") or payload.get("id")
-        summary = payload.get("summary")
+        evidence_id: object
+        summary: object
         if event.type == "alert.created":
-            evidence_id = evidence_id or f"evidence:evd_alert_{event.sequence}"
-            summary = summary or _as_str(payload.get("title"), "Alert evidence")
+            # ``evidenceId`` names evidence; the alert's ``id`` names the alert
+            # (``alert:...``). Falling back to ``id`` meant the "evidence:" guard below
+            # rejected every real alert, so replay reconstructed an empty evidence list
+            # for every run — the historical inspector had nothing to show.
+            explicit = payload.get("evidenceId")
+            evidence_id = (
+                explicit if isinstance(explicit, str) else f"evidence:evd_alert_{event.sequence}"
+            )
+            summary = _as_str(payload.get("summary")) or _as_str(
+                payload.get("title"),
+                "Alert evidence",
+            )
+        else:
+            evidence_id = payload.get("evidenceId") or payload.get("id")
+            summary = payload.get("summary")
         if not isinstance(evidence_id, str) or not evidence_id.startswith("evidence:"):
             return
         if not isinstance(summary, str) or not summary:

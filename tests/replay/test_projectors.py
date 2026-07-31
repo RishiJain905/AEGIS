@@ -96,3 +96,160 @@ def test_cursor_tracks_last_sequence_and_sim_time() -> None:
     state = projector.to_replay_state(provenance=provenance)
     assert state.cursor.sequence == 7
     assert state.cursor.sim_time == event.sim_time
+
+
+def test_agent_session_events_project_without_run_id_in_payload() -> None:
+    """Persisted ``agent.session.*`` payloads carry no ``runId``/``incidentId``.
+
+    The run is authoritative on the envelope, so reconstruction must read it from
+    there rather than expecting the payload to repeat it. Historical runs recorded
+    before this was noticed must keep replaying.
+    """
+    projector = ReplayProjector(RUN_ID)
+    session_id = "agent-session:ags_2wbx78zte6y5bgnay0z3xzwd"
+    projector.apply_event(
+        make_event(
+            sequence=1,
+            event_type="agent.session.started",
+            payload={
+                "schemaVersion": 1,
+                "sessionId": session_id,
+                "role": "WATCHTOWER",
+            },
+            subject_id=session_id,
+            event_index=1,
+        )
+    )
+    projector.apply_event(
+        make_event(
+            sequence=2,
+            event_type="agent.session.state_changed",
+            payload={
+                "schemaVersion": 1,
+                "sessionId": session_id,
+                "fromState": "gathering",
+                "toState": "hypothesizing",
+                "reason": "model_step_received",
+                "taskId": "atk_ST85WYZZ10Z17V8CEH0BA25WNB",
+            },
+            subject_id=session_id,
+            event_index=2,
+        )
+    )
+
+    provenance = empty_provenance(
+        run_id=RUN_ID,
+        mode=ReplayModeV1.FROM_EVENTS,
+        applied_from=1,
+        applied_to=2,
+        applied_count=2,
+    )
+    state = projector.to_replay_state(provenance=provenance)
+    assert len(state.agent_sessions) == 1
+    session = state.agent_sessions[0]
+    assert session.id == session_id
+    assert session.run_id == RUN_ID
+    # Run-scoped copilot threads have no incident (ADR 0035) — do not invent one.
+    assert session.incident_id is None
+    assert session.role.value == "WATCHTOWER"
+    assert session.state.value == "hypothesizing"
+
+
+def test_alert_created_projects_evidence_despite_carrying_its_own_alert_id() -> None:
+    """A real ``alert.created`` payload leads with ``id: alert:...`` and has no summary."""
+    projector = ReplayProjector(RUN_ID)
+    projector.apply_event(
+        make_event(
+            sequence=13,
+            event_type="alert.created",
+            payload={
+                "schemaVersion": 1,
+                "id": "alert:det-83b4c12208df6a15249b",
+                "runId": RUN_ID,
+                "title": "Unseen source activity detected",
+                "assetId": "asset:svc-comms-gateway",
+                "severity": "medium",
+            },
+            subject_id="asset:svc-comms-gateway",
+            event_index=13,
+        )
+    )
+    provenance = empty_provenance(
+        run_id=RUN_ID,
+        mode=ReplayModeV1.FROM_EVENTS,
+        applied_from=13,
+        applied_to=13,
+        applied_count=1,
+    )
+    state = projector.to_replay_state(provenance=provenance)
+    assert len(state.evidence) == 1
+    evidence = state.evidence[0]
+    assert evidence.id.startswith("evidence:")
+    assert evidence.summary == "Unseen source activity detected"
+    assert evidence.asset_id == "asset:svc-comms-gateway"
+
+
+def test_agent_session_state_change_creates_session_when_start_was_pruned() -> None:
+    """A state change without a preceding start still lands in the reconstructed state."""
+    projector = ReplayProjector(RUN_ID)
+    session_id = "agent-session:ags_y7v8djhnda7jzmhd9kgegd1q"
+    projector.apply_event(
+        make_event(
+            sequence=4,
+            event_type="agent.session.state_changed",
+            payload={
+                "schemaVersion": 1,
+                "sessionId": session_id,
+                "fromState": "queued",
+                "toState": "gathering",
+                "reason": "task_started",
+            },
+            subject_id=session_id,
+            event_index=4,
+        )
+    )
+    provenance = empty_provenance(
+        run_id=RUN_ID,
+        mode=ReplayModeV1.FROM_EVENTS,
+        applied_from=4,
+        applied_to=4,
+        applied_count=1,
+    )
+    state = projector.to_replay_state(provenance=provenance)
+    assert len(state.agent_sessions) == 1
+    assert state.agent_sessions[0].run_id == RUN_ID
+    assert state.agent_sessions[0].state.value == "gathering"
+
+
+def _status_event(sequence: int, asset_id: str, status: str):
+    return make_event(
+        sequence=sequence,
+        event_type="sim.asset.status_changed",
+        subject_id=asset_id,
+        payload={"schemaVersion": 1, "assetId": asset_id, "status": status},
+    )
+
+
+def test_replay_composes_posture_and_controls_from_a_legacy_event_stream() -> None:
+    """Replay must not let a control overwrite the compromise it was answering.
+
+    The stream carries one applied value per event — the shape every persisted run has,
+    including runs recorded before posture and controls were split — so replaying an
+    observation over a compromise is the exact reconstruction of the defect. The node has
+    to come back compromised *and* under observation.
+    """
+    asset_id = "asset:svc-api-gateway"
+    projector = ReplayProjector(RUN_ID)
+    projector.apply_event(_status_event(1, asset_id, "compromised"))
+    projector.apply_event(_status_event(2, asset_id, "observed"))
+
+    node = projector.state.graph_nodes[asset_id]
+    assert node.status.value == "compromised"
+    assert node.applied_controls == ["observed"]
+
+    # Isolating on top reads as contained, and the compromise underneath survives it.
+    projector.apply_event(_status_event(3, asset_id, "isolated"))
+    node = projector.state.graph_nodes[asset_id]
+    assert node.status.value == "contained"
+    assert node.applied_controls == ["observed", "isolated"]
+    assert projector.state.asset_postures[asset_id] == "compromised"
