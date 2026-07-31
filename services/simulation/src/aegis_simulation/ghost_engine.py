@@ -49,6 +49,7 @@ from aegis_contracts import (
     SimulationCommandV1,
 )
 from aegis_contracts.ghost import GhostAssetStatusV1
+from aegis_contracts.graph import NodeStatus
 from aegis_contracts.simulation import SimulationRunStatus
 from aegis_contracts.versioning import (
     GHOST_BRANCH_RESULT_SCHEMA_VERSION,
@@ -514,19 +515,55 @@ def _step_to_horizon(
     return emitted, steps
 
 
-def _final_statuses(runtime: SimulationRuntime) -> dict[str, str]:
-    return {asset_id: asset.status for asset_id, asset in runtime.world.assets.items()}
+@dataclass(frozen=True)
+class _AssetOutcome:
+    """One asset's end state in a branch: what the attacker did, and what we did about it.
+
+    A counterfactual compares two *actions*, so collapsing these into one status would
+    make the comparison blind twice over. Composing them ("isolated" and "restricted"
+    both read as contained) hides the difference the branch exists to show; keeping only
+    the control ("observed" replacing "compromised") hides an intrusion that is still
+    running. The branch keeps both and picks the right one per question.
+    """
+
+    posture: str
+    controls: tuple[str, ...]
+
+    @property
+    def label(self) -> str:
+        """The comparison key: the control applied, qualified by the posture under it.
+
+        An untouched asset reads as its posture and a cleanly-contained one as its
+        control, so the common cases stay the plain words an operator expects; only an
+        asset carrying both says so ("isolated over compromised").
+        """
+        if not self.controls:
+            return self.posture
+        applied = "+".join(self.controls)
+        if self.posture == NodeStatus.NORMAL.value:
+            return applied
+        return f"{applied} over {self.posture}"
 
 
-def _build_outcome(label: str, statuses: dict[str, str]) -> GhostOutcomeV1:
-    compromised = sorted(a for a, s in statuses.items() if s in _ADVERSARY_STATUSES)
-    contained = [a for a, s in statuses.items() if s in _CONTAINED_STATUSES]
-    breach = sorted(a for a, s in statuses.items() if s in _BREACH_STATUSES)
+def _final_statuses(runtime: SimulationRuntime) -> dict[str, _AssetOutcome]:
+    return {
+        asset_id: _AssetOutcome(posture=asset.status, controls=tuple(asset.applied_controls))
+        for asset_id, asset in runtime.world.assets.items()
+    }
+
+
+def _build_outcome(label: str, statuses: dict[str, _AssetOutcome]) -> GhostOutcomeV1:
+    # Counts read the two facts separately: an asset the defender isolated is contained,
+    # and it is *also* still compromised — which is exactly the trade-off a branch is
+    # asking the operator to weigh.
+    compromised = sorted(a for a, s in statuses.items() if s.posture in _ADVERSARY_STATUSES)
+    contained = [a for a, s in statuses.items() if set(s.controls) & _CONTAINED_STATUSES]
+    breach = sorted(a for a, s in statuses.items() if s.posture in _BREACH_STATUSES)
     return GhostOutcomeV1(
         label=label,
         final_statuses=[
-            GhostAssetStatusV1(asset_id=asset_id, status=status)
-            for asset_id, status in sorted(statuses.items())
+            GhostAssetStatusV1(asset_id=asset_id, status=outcome.label)
+            for asset_id, outcome in sorted(statuses.items())
         ],
         compromised_count=len(compromised),
         contained_count=len(contained),
@@ -536,12 +573,14 @@ def _build_outcome(label: str, statuses: dict[str, str]) -> GhostOutcomeV1:
 
 
 def _asset_diffs(
-    real: dict[str, str], ghost: dict[str, str]
+    real: dict[str, _AssetOutcome], ghost: dict[str, _AssetOutcome]
 ) -> list[GhostAssetDiffV1]:
     diffs: list[GhostAssetDiffV1] = []
     for asset_id in sorted(set(real) | set(ghost)):
-        real_status = real.get(asset_id, "absent")
-        ghost_status = ghost.get(asset_id, "absent")
+        real_outcome = real.get(asset_id)
+        ghost_outcome = ghost.get(asset_id)
+        real_status = real_outcome.label if real_outcome is not None else "absent"
+        ghost_status = ghost_outcome.label if ghost_outcome is not None else "absent"
         if real_status != ghost_status:
             diffs.append(
                 GhostAssetDiffV1(
@@ -660,9 +699,9 @@ def _request_fingerprint(run_id: str, request: GhostBranchRequestV1) -> str:
 
 
 def _result_hash(
-    statuses: dict[str, str], timeline: list[GhostTimelineBeatV1]
+    statuses: dict[str, _AssetOutcome], timeline: list[GhostTimelineBeatV1]
 ) -> str:
-    canonical = ";".join(f"{a}:{s}" for a, s in sorted(statuses.items()))
+    canonical = ";".join(f"{a}:{s.label}" for a, s in sorted(statuses.items()))
     canonical += "||" + ";".join(
         f"{b.sequence}:{b.kind}:{b.asset_id or ''}:{b.status or ''}" for b in timeline
     )

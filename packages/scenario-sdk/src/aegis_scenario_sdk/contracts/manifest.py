@@ -8,9 +8,9 @@ from typing import Any
 
 from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 from aegis_contracts.graph import AssetType, NodeStatus, RelationshipType
-from aegis_contracts.killchain import AttackTactic
+from aegis_contracts.killchain import AttackTactic, is_control_status
 from aegis_contracts.primitives import AssetId, ClusterId, EdgeId, ScenarioId, SimTimestamp
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from aegis_scenario_sdk.primitives import ScenarioLocalId
 from aegis_scenario_sdk.version import SCENARIO_MANIFEST_SCHEMA_VERSION
@@ -234,6 +234,13 @@ class KillChainTechniqueV1(BaseModel):
     name: str = Field(min_length=1)
     anchor: AnchorSelectorV1
     dwell_sim_seconds: float = Field(alias="dwellSimSeconds", gt=0.0)
+    #: The *posture* this technique drives its anchor into. Restricted to the attacker's
+    #: half of the vocabulary: ``contained`` is the one value the posture and defensive
+    #: control vocabularies share, and it is classified as a control (ADR 0036), so an
+    #: authored ``contained`` would be written as a posture by the live engine and as a
+    #: control by the cold rebuild — the two would disagree about the same event stream.
+    #: It is also meaningless as an attacker outcome, so rejecting it at authoring time
+    #: costs nothing and keeps the two paths provably identical.
     compromise_status: NodeStatus = Field(
         default=NodeStatus.COMPROMISED, alias="compromiseStatus"
     )
@@ -246,6 +253,16 @@ class KillChainTechniqueV1(BaseModel):
     requires_capabilities: list[str] = Field(
         default_factory=list, alias="requiresCapabilities"
     )
+
+    @field_validator("compromise_status")
+    @classmethod
+    def _reject_control_compromise_status(cls, value: NodeStatus) -> NodeStatus:
+        if is_control_status(value.value):
+            raise ValueError(
+                "compromiseStatus must be an attacker posture, not the defensive "
+                f"control '{value.value}'"
+            )
+        return value
 
 
 class ReactionPreconditionType(StrEnum):

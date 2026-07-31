@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 import logging
 import secrets
 from collections.abc import Callable
@@ -130,20 +131,18 @@ def _normalize_commander_intent(intent: str | None) -> str | None:
     return trimmed or None
 
 
-def may_reset_run(
+def may_access_run(
     run: RunV1,
     *,
     requester_user_id: str | None,
     requester_is_admin: bool,
 ) -> bool:
-    """Owner-or-admin gate for destroying an existing run on a ``restartExisting`` relaunch.
+    """Owner-or-admin gate for an existing run.
 
     Deliberately mirrors the API's ``has_run_access`` (ADR 0034 / AEGIS-OITB-008) rather
     than importing it — services must not depend on ``apps/api``. Admins always pass; a
     non-admin passes only when the run has an owner and it is them. A null-owner run
-    (legacy or seeded demo data) is admin-only, so an ordinary operator relaunching a
-    pinned-seed scenario can never destroy someone else's history: they get today's
-    behaviour (the existing run, returned unchanged) instead.
+    (legacy or seeded demo data) is admin-only.
     """
     if requester_is_admin:
         return True
@@ -151,6 +150,91 @@ def may_reset_run(
         requester_user_id is not None
         and run.owner_user_id is not None
         and run.owner_user_id == requester_user_id
+    )
+
+
+def may_reset_run(
+    run: RunV1,
+    *,
+    requester_user_id: str | None,
+    requester_is_admin: bool,
+) -> bool:
+    """Whether a ``restartExisting`` relaunch may destroy ``run``.
+
+    Same owner-or-admin decision as :func:`may_access_run`: an ordinary operator can never
+    destroy someone else's history. That matters more than it looks, because a run's seed
+    is visible in the UI and the client chooses it — were this gate relaxed, knowing
+    another operator's seed would be enough to delete their run.
+    """
+    return may_access_run(
+        run,
+        requester_user_id=requester_user_id,
+        requester_is_admin=requester_is_admin,
+    )
+
+
+def scoped_create_idempotency_key(
+    *,
+    idempotency_key: str,
+    owner_user_id: str | None,
+    scenario_package_path: str,
+) -> str:
+    """Namespace a run-creation ``Idempotency-Key`` to the actor and scenario.
+
+    Idempotency records live in one flat ``(scope, key)`` table shared by every simulation
+    command, so a key the client picked is enough to replay whatever run it recorded —
+    including a run belonging to someone else, which the caller then cannot even read.
+    Folding the requester and the scenario into the stored key makes replay possible only
+    for the identity that created the record. The client's original key is still what the
+    response reports; only the storage key changes.
+
+    Hashed rather than concatenated because ``idempotency_records.idempotency_key`` is
+    bounded at 256 characters and user ids and package paths are both unbounded here.
+    """
+    digest = hashlib.sha256(
+        f"{owner_user_id or ''}|{scenario_package_path}|{idempotency_key}".encode()
+    ).hexdigest()
+    return f"cmd-create-{digest[:40]}"
+
+
+def _require_run_access(
+    run: RunV1,
+    *,
+    requester_user_id: str | None,
+    requester_is_admin: bool,
+) -> None:
+    """Raise unless the requester may read ``run``.
+
+    ``UNAUTHORIZED`` is rendered by the runs router as HTTP 409 with the
+    ``RUN_OWNED_BY_ANOTHER_USER`` code — a conflict rather than a forbidden, because the
+    caller is allowed to create runs; what they cannot have is *this* run. Pinned-seed
+    scenarios (the guided tutorial launches at seed 1000) derive one run id per
+    (seed, scenario version) for everybody, so whoever launches one first owns it.
+
+    The refused run's id is deliberately *not* in the error. It would be harmless as
+    disclosure — the caller supplied the seed the id is derived from — but this is the
+    exact failure that produced BUG-001, where a launch handed back a run id the client
+    then navigated to and could not read. An id the caller must not follow has no business
+    in the response; the server log and trace carry it for support.
+    """
+    if may_access_run(
+        run,
+        requester_user_id=requester_user_id,
+        requester_is_admin=requester_is_admin,
+    ):
+        return
+    logger.info(
+        "Refusing launch: run %s is owned by %s, requested by %s",
+        run.id,
+        run.owner_user_id,
+        requester_user_id,
+    )
+    raise SimulationError(
+        code=SimulationErrorCode.UNAUTHORIZED,
+        message=(
+            "This run already exists and belongs to another operator. "
+            "Ask them or an administrator to restart it."
+        ),
     )
 
 
@@ -285,10 +369,19 @@ class RunCommandService:
         owner_user_id: str | None = None,
         requester_is_admin: bool = False,
     ) -> RunCommandResponseV1:
-        if idempotency_key is not None:
+        scoped_key = (
+            scoped_create_idempotency_key(
+                idempotency_key=idempotency_key,
+                owner_user_id=owner_user_id,
+                scenario_package_path=request.scenario_package_path,
+            )
+            if idempotency_key is not None
+            else None
+        )
+        if scoped_key is not None:
             existing = await uow.idempotency.get(
                 scope=SIMULATION_COMMAND_SCOPE,
-                idempotency_key=idempotency_key,
+                idempotency_key=scoped_key,
             )
             if existing is not None:
                 run = await uow.runs.get_by_id(existing.response_ref or "")
@@ -297,6 +390,14 @@ class RunCommandService:
                         code=SimulationErrorCode.VALIDATION_FAILED,
                         message="Idempotency record references missing run",
                     )
+                # The scoped key already binds the record to this actor. Re-checking access
+                # costs one predicate and closes the door on records written before that
+                # scoping existed, which are keyed by the raw client key.
+                _require_run_access(
+                    run,
+                    requester_user_id=owner_user_id,
+                    requester_is_admin=requester_is_admin,
+                )
                 return RunCommandResponseV1(
                     schema_version=RUN_COMMAND_RESPONSE_SCHEMA_VERSION,
                     run=run,
@@ -329,6 +430,15 @@ class RunCommandService:
             )
             existing_run = await uow.runs.get_by_id(derived_run_id)
             if existing_run is not None:
+                # Resolving to a run the caller cannot read is worse than failing: the
+                # launch answered 200 with someone else's run id, the client navigated to
+                # it, and every follow-up request 403'd into an "unable to load workspace"
+                # dead end. Refuse here instead, with a code the launch surface can explain.
+                _require_run_access(
+                    existing_run,
+                    requester_user_id=owner_user_id,
+                    requester_is_admin=requester_is_admin,
+                )
                 may_restart = request.restart_existing and may_reset_run(
                     existing_run,
                     requester_user_id=owner_user_id,
@@ -369,6 +479,7 @@ class RunCommandService:
                         request=request,
                         seed=request.seed,
                         idempotency_key=idempotency_key,
+                        command_key=scoped_key,
                         owner_user_id=owner_user_id,
                     )
 
@@ -382,6 +493,7 @@ class RunCommandService:
             request=request,
             seed=seed,
             idempotency_key=idempotency_key,
+            command_key=scoped_key,
             owner_user_id=owner_user_id,
         )
 
@@ -425,9 +537,15 @@ class RunCommandService:
         request: RunCreateRequestV1,
         seed: int,
         idempotency_key: str | None,
+        command_key: str | None,
         owner_user_id: str | None,
     ) -> RunCommandResponseV1:
-        """Persist a new run at ``seed``, START it, and project its initial graph snapshot."""
+        """Persist a new run at ``seed``, START it, and project its initial graph snapshot.
+
+        ``idempotency_key`` is what the client sent and what the response reports;
+        ``command_key`` is the actor-scoped key the idempotency record is stored under (see
+        :func:`scoped_create_idempotency_key`). They are deliberately different values.
+        """
         service = SimulationApplicationService(uow)
         runtime, manifest = await service.create_run_from_package(
             package_dir,
@@ -440,7 +558,7 @@ class RunCommandService:
         _ = manifest
 
         command = service.build_command(
-            command_id=idempotency_key or f"cmd-start-{seed}-{runtime.run_id}",
+            command_id=command_key or f"cmd-start-{seed}-{runtime.run_id}",
             command_type=SimulationCommandType.START,
             run_id=runtime.run_id,
         )
@@ -570,8 +688,14 @@ class RunCommandService:
             snapshot = build_graph_snapshot_from_runtime(runtime, sequence=0, revision=0)
             await snapshot_repo.add(snapshot)
 
-        events = await PostgresEventQueryRepository(uow.session).list_by_run(run_id)
-        last_sequence = events[-1].sequence if events else 0
+        # The run's head sequence, read straight off the sequence counter. Deriving it from
+        # ``list_by_run(...)[-1]`` capped it at that query's 1000-row default: past a
+        # thousand events the bootstrap kept reporting a stale head, every live frame then
+        # arrived beyond ``lastAppliedSequence + 1``, and the client gap-detected into a
+        # resync that returned the same stale head — a permanent resync loop with a frozen
+        # graph. Silent Relay reaches ~975 events at its horizon, so runs were completing
+        # just under the cliff.
+        last_sequence = max(await uow.events.next_sequence(run_id) - 1, 0)
 
         # Fog of war: while the run is active, the operator sees only disclosed truth. Once
         # terminal (stopped/completed), the graph switches to full ground truth for debrief.
@@ -786,8 +910,9 @@ class RunCommandService:
             status = str(event.payload.get("status", ""))
             asset = runtime.world.assets.get(asset_id)
             if asset is not None and status:
-                asset.status = status
-                asset.revision += 1
+                # Same composition the live handler applies, so a rebuilt runtime and a
+                # live one hold identical postures and controls for the same stream.
+                asset.apply_status(status)
         elif event.type == "sim.branch.selected":
             group = str(event.payload.get("branchGroup", ""))
             branch_id = str(event.payload.get("branchId", ""))

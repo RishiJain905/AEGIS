@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from aegis_contracts import DomainEventEnvelopeV1, GraphSnapshotV1
+from aegis_contracts.killchain import project_effective_status
 from aegis_scenario_sdk.contracts.manifest import (
     GeneratorDefinitionV1,
     HiddenConditionDefinitionV1,
@@ -36,12 +37,16 @@ from aegis_scenario_sdk.contracts.manifest import (
 _REVEALED_EVENT = "sim.hidden_condition.revealed"
 _ALERT_PREFIX = "alert."
 
-# The status an undisclosed governed asset is shown as. Governed assets begin at their
+# The *posture* an undisclosed governed asset is shown at. Governed assets begin at their
 # manifest ``initial_status`` (``normal`` in the shipped scenarios) and only an attacker
-# ``effect.set_asset_status`` moves them while hidden, so the last *disclosed* status of a
-# hidden-governed asset is always its baseline. We therefore redact to ``normal`` rather
-# than tracking a per-asset last-disclosed history. Operator/agent containment changes are
-# never governed by a hidden condition and so are never redacted.
+# ``effect.set_asset_status`` moves their posture while hidden, so the last *disclosed*
+# posture of a hidden-governed asset is always its baseline. We therefore redact to
+# ``normal`` rather than tracking a per-asset last-disclosed history.
+#
+# This is the posture only. Operator and agent containment lands in the asset's applied
+# controls, and those survive redaction untouched — governance is a property of the
+# *asset*, so an operator acting on a fogged asset is entirely ordinary and their own
+# action must still reach them.
 REDACTED_STATUS = "normal"
 
 _SET_STATUS_PLUGIN = "effect.set_asset_status"
@@ -191,9 +196,18 @@ def redact_graph_snapshot(
 ) -> GraphSnapshotV1:
     """Return an operator-safe copy of a graph snapshot.
 
-    Undisclosed governed nodes are shown at their baseline status with ``disclosed=false``
-    and their risk clamped to the manifest baseline (no attacker-driven spike leaks). All
-    other nodes pass through with ``disclosed=true``. The input snapshot is never mutated.
+    Undisclosed governed nodes are shown at their baseline *posture* with
+    ``disclosed=false`` and their risk clamped to the manifest baseline (no attacker-driven
+    spike leaks). All other nodes pass through with ``disclosed=true``. The input snapshot
+    is never mutated.
+
+    A node's ``status`` is the composition of its posture and its applied controls, so the
+    redaction replaces only the posture and recomposes: an asset the operator has isolated
+    still reads ``contained`` even while the compromise underneath it stays hidden.
+    Blanking the whole status instead would have shown a host the operator had just
+    contained as untouched — hiding their own action from them, which fog of war never
+    means. ``applied_controls`` itself is left intact for the same reason: the operator
+    issued those commands, so they disclose nothing about the attacker.
     """
     if not governing_map:
         return snapshot
@@ -212,7 +226,9 @@ def redact_graph_snapshot(
         new_nodes.append(
             node.model_copy(
                 update={
-                    "status": REDACTED_STATUS,
+                    "status": project_effective_status(
+                        REDACTED_STATUS, node.applied_controls
+                    ),
                     "disclosed": False,
                     "risk_score": min(node.risk_score, baseline_risk),
                 }

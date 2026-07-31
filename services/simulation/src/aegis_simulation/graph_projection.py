@@ -46,7 +46,15 @@ def build_graph_snapshot_from_runtime(
             "clusterId": asset.zone_id,
             "riskScore": asset.risk_score,
             "criticality": asset.criticality,
-            "status": asset.status,
+            # World state holds posture and applied controls separately; the graph
+            # contract exposes one composed status plus the controls beside it, so the
+            # inspector can show "compromised, under observation" without the projection
+            # having to pick a winner. Translating here is also mandatory — passing a raw
+            # control value through makes GraphSnapshotV1 validation reject the node,
+            # which fails the snapshot write inside every subsequent STEP/RESUME and
+            # strands the run in place.
+            "status": asset.effective_status,
+            "appliedControls": list(asset.applied_controls),
             "revision": asset.revision,
         }
         for asset in sorted(runtime.world.assets.values(), key=lambda item: item.id)

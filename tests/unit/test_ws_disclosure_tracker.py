@@ -81,6 +81,22 @@ def test_ungoverned_asset_never_redacted():
     assert tracker.redact(env).event.payload["status"] == "compromised"
 
 
+def test_operator_controls_are_never_redacted_on_a_fogged_asset():
+    """The operator's own order has to reach them, disclosed asset or not.
+
+    ``sim.asset.status_changed`` carries both vocabularies. Rewriting a control to the
+    baseline told the client nothing had happened to an asset the operator had just acted
+    on — so observing or isolating a fogged host looked like a dead click, which is
+    exactly the case where the operator most needs the feedback. The control value is the
+    operator's own command; it says nothing about the attacker.
+    """
+    tracker = _tracker()
+    assert tracker.redact(_status_envelope("observed")).event.payload["status"] == "observed"
+    assert tracker.redact(_status_envelope("isolated")).event.payload["status"] == "isolated"
+    # The attacker's posture on the same undisclosed asset is still redacted.
+    assert tracker.redact(_status_envelope("compromised")).event.payload["status"] == "normal"
+
+
 def test_non_status_events_pass_through():
     tracker = _tracker()
     env = build_realtime_envelope(_event("telemetry.network.connection", {"assetId": _ASSET}))

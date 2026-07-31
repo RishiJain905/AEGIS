@@ -10,6 +10,7 @@ import {
 
 import { ActionConsequencesDialog } from './action-consequences-dialog';
 import { ActionResultToast, type ActionResult } from './action-result-toast';
+import { usePendingControlStore } from './pending-control-store';
 
 export interface AssetActionRunnerOptions {
   runId: string;
@@ -50,6 +51,7 @@ export function useAssetActionRunner({
   incidentId,
 }: AssetActionRunnerOptions): AssetActionRunner {
   const submit = useSubmitOperatorAction(runId);
+  const notePendingControl = usePendingControlStore((state) => state.note);
   const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm>(null);
   const [reason, setReason] = useState('');
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -67,6 +69,12 @@ export function useAssetActionRunner({
       {
         onSuccess: (response) => {
           setToast({ commandLabel: meta.label, assetLabel, response });
+          // Acknowledge the order on the asset itself while the control makes its way
+          // through the event stream; the inspector clears this the moment the real
+          // applied control lands. A blocked action never gets an acknowledgment.
+          if (response.status !== 'blocked') {
+            notePendingControl(runId, assetId, meta.label);
+          }
           setPendingConfirm(null);
           setReason('');
           setDialogError(null);

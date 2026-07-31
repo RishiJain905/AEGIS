@@ -26,6 +26,7 @@ from aegis_contracts.versioning import RUN_CREATE_REQUEST_SCHEMA_VERSION
 from aegis_persistence.repositories.postgres import (
     PostgresAlertRepository,
     PostgresGraphSnapshotRepository,
+    PostgresIncidentRepository,
     PostgresRunRepository,
     PostgresScenarioRepository,
     PostgresScenarioVersionRepository,
@@ -60,6 +61,11 @@ def _simulation_error_response(exc: SimulationError) -> JSONResponse:
         SimulationErrorCode.INVALID_STATE: ("CONFLICT", 409),
         SimulationErrorCode.DUPLICATE_COMMAND: ("CONFLICT", 409),
         SimulationErrorCode.PLATFORM_INCOMPATIBLE: ("VALIDATION_FAILED", 400),
+        # A launch that resolves to a run the caller does not own. 409, not 403: the caller
+        # may create runs, they just cannot have this one — a pinned-seed scenario derives
+        # a single run id for everybody, so the first launcher owns it. The distinct code
+        # lets the launch surface say that instead of showing a generic failure.
+        SimulationErrorCode.UNAUTHORIZED: ("RUN_OWNED_BY_ANOTHER_USER", 409),
     }
     api_code, status = code_map.get(exc.code, ("INTERNAL_ERROR", 500))
     envelope = ApiErrorEnvelopeV1(
@@ -175,22 +181,54 @@ async def get_scenario(scenario_id: str) -> ScenarioV1 | JSONResponse:
 
 @router.get("/scenarios/{scenario_id}/versions", response_model=list[ScenarioVersionV1])
 async def list_scenario_versions(scenario_id: str) -> list[ScenarioVersionV1]:
+    """Persisted versions for a scenario, falling back to its packaged manifest.
+
+    The persisted row only exists once the scenario's first run is created, so an
+    un-launched catalogue entry still needs a version to identify. The fallback reads the
+    manifest — the same source ``_discover_scenarios`` uses — rather than restating a
+    version string here, which is how this endpoint came to advertise a
+    ``scenario-version:1.0.0-silent-relay`` id that no run ever carried.
+    """
+    session_maker = get_db_session_maker()
+    async with session_maker() as session:
+        persisted = await PostgresScenarioVersionRepository(session).list_for_scenario(scenario_id)
+    if persisted:
+        return persisted
+    return _scenario_versions_from_manifest(scenario_id)
+
+
+def _scenario_versions_from_manifest(scenario_id: str) -> list[ScenarioVersionV1]:
     from datetime import UTC, datetime
 
-    if scenario_id == "scenario:operation-silent-relay":
+    import yaml
+
+    for package in _FALLBACK_SCENARIO_PACKAGES:
+        manifest_path = WORKSPACE_ROOT / "scenarios" / package / "manifest.yaml"
+        if not manifest_path.exists():
+            continue
+        try:
+            metadata = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))["metadata"]
+            packaged_id = metadata.get("scenarioId") or metadata["scenario_id"]
+            version = metadata["version"]
+        except (KeyError, TypeError, yaml.YAMLError) as exc:
+            logger.warning("Skipping version fallback for %s: %s", package, exc)
+            continue
+        if packaged_id != scenario_id:
+            continue
         return [
             ScenarioVersionV1(
                 schema_version=1,
-                id="scenario-version:1.0.0-silent-relay",
+                id=f"scenario-version:{version}",
                 scenario_id=scenario_id,
-                version="1.0.0-silent-relay",
-                required_platform_version="0.0.0-phase10",
-                published_at=datetime(2026, 6, 30, 12, 0, 0, tzinfo=UTC),
+                version=version,
+                required_platform_version=metadata.get(
+                    "requiredPlatformVersion",
+                    "0.0.0-phase10",
+                ),
+                published_at=datetime(2026, 1, 1, tzinfo=UTC),
             )
         ]
-    session_maker = get_db_session_maker()
-    async with session_maker() as session:
-        return await PostgresScenarioVersionRepository(session).list_for_scenario(scenario_id)
+    return []
 
 
 @router.get("/runs", response_model=list[RunV1])
@@ -396,24 +434,38 @@ async def step_run(
     return await _run_command(request, run_id, SimulationCommandType.STEP, idempotency_key, actor)
 
 
+@router.get("/incidents", response_model=list[IncidentV1])
+async def list_visible_incidents(
+    actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
+) -> list[IncidentV1]:
+    """Cross-run triage queue: every incident on a run this actor may read.
+
+    The queue used to be assembled client-side by fanning out over the run list, which
+    issued 2N+1 requests and reliably tripped the API's per-session burst limit once a
+    handful of runs existed — the queue then failed whole rather than degrading. Run
+    visibility here matches ``list_runs`` exactly (admins see all runs, everyone else
+    only their own), so the queue can never leak another operator's incidents.
+    """
+    async with db_session() as session:
+        run_repo = PostgresRunRepository(session)
+        if actor_is_admin(actor):
+            runs = await run_repo.list_all()
+        else:
+            runs = await run_repo.list_for_owner(actor.user_id)
+        return await PostgresIncidentRepository(session).list_by_runs([run.id for run in runs])
+
+
 @router.get("/runs/{run_id}/incidents", response_model=list[IncidentV1])
 async def list_run_incidents(
     run_id: str,
     actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
 ) -> list[IncidentV1] | JSONResponse:
     async with db_session() as session:
-        from aegis_persistence.mappers import incident_to_domain
-        from aegis_persistence.orm.tables import IncidentRow
-        from sqlalchemy import select
-
         run = await PostgresRunRepository(session).get_by_id(run_id)
         authorized = _authorize_run(run, actor, run_id)
         if isinstance(authorized, JSONResponse):
             return authorized
-        result = await session.execute(
-            select(IncidentRow).where(IncidentRow.run_id == run_id).order_by(IncidentRow.created_at)
-        )
-        return [incident_to_domain(item) for item in result.scalars().all()]
+        return await PostgresIncidentRepository(session).list_by_run(run_id)
 
 
 @router.get("/runs/{run_id}/alerts", response_model=list[AlertV1])

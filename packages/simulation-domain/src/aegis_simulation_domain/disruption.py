@@ -89,11 +89,19 @@ def asset_business_weight(criticality: float) -> float:
     return _BASE_ASSET_WEIGHT + _CRITICALITY_WEIGHT * criticality
 
 
-def _status_of(world: WorldState, asset_id: str | None) -> str | None:
+def _controls_of(world: WorldState, asset_id: str | None) -> frozenset[str]:
+    """The defensive controls currently live on an asset.
+
+    Disruption is a question about *controls*, never about posture: an asset is severed
+    because the defender isolated it, not because the attacker compromised it. Reading the
+    control set rather than a single collapsed status is what lets an asset be both
+    compromised and contained — the state every one of these predicates is really asking
+    about.
+    """
     if asset_id is None:
-        return None
+        return frozenset()
     asset = world.assets.get(asset_id)
-    return None if asset is None else asset.status
+    return frozenset() if asset is None else frozenset(asset.applied_controls)
 
 
 @dataclass(frozen=True)
@@ -152,19 +160,18 @@ def assess_disruption(
         campaign.techniques[index] if 0 <= index < len(campaign.techniques) else None
     )
 
-    foothold_status = _status_of(world, state.current_foothold_id)
-    foothold_severed = foothold_status in FOOTHOLD_SEVERING_STATUSES
+    foothold_controls = _controls_of(world, state.current_foothold_id)
+    foothold_severed = bool(foothold_controls & FOOTHOLD_SEVERING_STATUSES)
 
-    anchor_status = _status_of(world, state.pending_anchor_id)
-    anchor_severed = anchor_status in FOOTHOLD_SEVERING_STATUSES
+    anchor_controls = _controls_of(world, state.pending_anchor_id)
+    anchor_severed = bool(anchor_controls & FOOTHOLD_SEVERING_STATUSES)
 
     # Exfiltration is the one tactic that also needs a path *out*: blocking egress on
     # either the staging foothold or the egress anchor stops it even mid-flight.
     egress_blocked = False
     if technique is not None and technique.tactic == AttackTactic.EXFILTRATION:
-        egress_blocked = (
-            anchor_status in EGRESS_SEVERING_STATUSES
-            or foothold_status in EGRESS_SEVERING_STATUSES
+        egress_blocked = bool(
+            (anchor_controls | foothold_controls) & EGRESS_SEVERING_STATUSES
         )
 
     revoked: list[str] = []
@@ -172,7 +179,7 @@ def assess_disruption(
         if capability in state.revoked_capabilities:
             revoked.append(capability)
             continue
-        if _status_of(world, source_asset_id) in IDENTITY_SEVERING_STATUSES:
+        if _controls_of(world, source_asset_id) & IDENTITY_SEVERING_STATUSES:
             revoked.append(capability)
     revoked_set = set(revoked)
     blocking = (
@@ -188,18 +195,19 @@ def assess_disruption(
     }
     halted: list[tuple[str, str]] = []
     for asset_id in sorted(in_flight_assets):
-        status = _status_of(world, asset_id)
-        if status in EXECUTION_HALTING_STATUSES:
-            halted.append((asset_id, str(status)))
+        # Sorted so an asset carrying two halting controls names the same one every run.
+        halting = sorted(_controls_of(world, asset_id) & EXECUTION_HALTING_STATUSES)
+        if halting:
+            halted.append((asset_id, halting[0]))
 
     usable = sorted(
         asset_id
         for asset_id in state.established_footholds
         if asset_id != state.current_foothold_id
-        and _status_of(world, asset_id) not in FOOTHOLD_SEVERING_STATUSES
+        and not (_controls_of(world, asset_id) & FOOTHOLD_SEVERING_STATUSES)
     )
     all_severed = all(
-        _status_of(world, asset_id) in FOOTHOLD_SEVERING_STATUSES
+        _controls_of(world, asset_id) & FOOTHOLD_SEVERING_STATUSES
         for asset_id in state.established_footholds
     ) and bool(state.established_footholds)
 
@@ -258,8 +266,13 @@ def compute_business_disruption(
     cost = 0.0
     for asset_id in sorted(world.assets):
         asset = world.assets[asset_id]
-        impact = CONTAINMENT_IMPACT_WEIGHTS.get(asset.status)
-        if impact is None or impact <= 0.0:
+        # Several controls can be live at once (observe, then isolate); the asset is only
+        # as unavailable as its heaviest one, so cost never double-counts.
+        impact = max(
+            (CONTAINMENT_IMPACT_WEIGHTS.get(control, 0.0) for control in asset.applied_controls),
+            default=0.0,
+        )
+        if impact <= 0.0:
             continue
         if asset_id in attacker_held_asset_ids:
             continue

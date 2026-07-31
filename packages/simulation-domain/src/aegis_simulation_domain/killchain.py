@@ -89,6 +89,22 @@ def resolve_anchor(
     return candidates[index]
 
 
+def _asset_in_status(world: WorldState, asset_id: str | None, statuses: set[str]) -> bool:
+    """Whether an asset is in one of ``statuses`` in *either* vocabulary.
+
+    Authored reaction rules name statuses freely: some watch the attacker's own posture
+    ("has my foothold been marked compromised yet?"), most watch what the defender did
+    ("has my foothold been isolated?"). The asset holds those separately, so a rule that
+    checked only one field would silently stop firing for half the vocabulary.
+    """
+    if asset_id is None:
+        return False
+    asset = world.assets.get(asset_id)
+    if asset is None:
+        return False
+    return asset.status in statuses or bool(statuses & set(asset.applied_controls))
+
+
 def precondition_met(
     precondition: ReactionPreconditionV1,
     *,
@@ -104,16 +120,11 @@ def precondition_met(
     """
     statuses = set(precondition.statuses)
     if precondition.type == ReactionPreconditionType.FOOTHOLD_ISOLATED:
-        foothold = state.current_foothold_id
-        if foothold is None:
-            return False
-        asset = world.assets.get(foothold)
-        return asset is not None and asset.status in statuses
+        return _asset_in_status(world, state.current_foothold_id, statuses)
     if precondition.type == ReactionPreconditionType.ASSET_STATUS_IS:
         if precondition.asset_id is None:
             return False
-        asset = world.assets.get(str(precondition.asset_id))
-        return asset is not None and asset.status in statuses
+        return _asset_in_status(world, str(precondition.asset_id), statuses)
     if precondition.type == ReactionPreconditionType.CAPABILITY_REVOKED:
         capability = precondition.capability
         if capability is None or capability not in state.established_capabilities:
@@ -126,8 +137,7 @@ def precondition_met(
             if precondition.asset_id is not None
             else state.established_capabilities[capability]
         )
-        asset = world.assets.get(source_asset_id)
-        return asset is not None and asset.status in statuses
+        return _asset_in_status(world, source_asset_id, statuses)
     if precondition.type == ReactionPreconditionType.PENDING_ANCHOR_DISRUPTED:
         return assessment.anchor_severed
     if precondition.type == ReactionPreconditionType.ALL_FOOTHOLDS_DISRUPTED:
@@ -159,7 +169,9 @@ def counter_move_available(
         if target is None or target not in state.established_footholds:
             return False
         asset = world.assets.get(target)
-        return asset is not None and asset.status not in FOOTHOLD_SEVERING_STATUSES
+        return asset is not None and not (
+            set(asset.applied_controls) & FOOTHOLD_SEVERING_STATUSES
+        )
     if move.type == ReactionCounterMoveType.ACTIVATE_TECHNIQUE:
         if move.technique_id is None:
             return False

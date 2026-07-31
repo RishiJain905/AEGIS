@@ -69,6 +69,19 @@ function isLiveDataSource(): boolean {
   return process.env.NEXT_PUBLIC_AEGIS_DATA_SOURCE === 'api';
 }
 
+/**
+ * The sequence the bootstrap's graph snapshot actually reflects — the point live event
+ * application has to resume from.
+ *
+ * Snapshots are only written by an emitting simulation command, while the run's sequence
+ * stream also carries alerts, agent tasks and approved actions. The run head
+ * (`lastAppliedSequence`) is therefore routinely ahead of the snapshot, and treating it as
+ * the applied cursor silently declares that gap already applied.
+ */
+function graphSequenceFloor(bootstrap: SnapshotBootstrapPayloadV1): number {
+  return Math.min(bootstrap.graphSnapshot.sequence, bootstrap.lastAppliedSequence);
+}
+
 interface LiveRunProviderProps {
   runId: string;
   children: ReactNode;
@@ -285,6 +298,28 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
     [applyEventToGraph, queryClient, runId],
   );
 
+  /**
+   * Replay every persisted event the freshly loaded snapshot does not already contain.
+   *
+   * Runs on both the first bootstrap and every resync: both load a snapshot that can lag
+   * the run head, and without this the client simply never sees the events in between —
+   * the live socket only carries what happens from now on.
+   */
+  const catchUpFromSnapshot = useCallback(
+    async (bootstrap: SnapshotBootstrapPayloadV1) => {
+      const fromSequence = graphSequenceFloor(bootstrap) + 1;
+      if (fromSequence > bootstrap.lastAppliedSequence) {
+        return;
+      }
+      const events = await fetchMissingEvents(runId, fromSequence, bootstrap.lastAppliedSequence);
+      for (const event of events) {
+        applyEventToGraph(event, true);
+        saveStoredCursor(runId, event.sequence);
+      }
+    },
+    [applyEventToGraph, runId],
+  );
+
   const performResync = useCallback(async () => {
     gapRecoveryRef.current = true;
     connectionHealthRef.current = ConnectionHealthState.SNAPSHOT_RESYNC;
@@ -300,8 +335,16 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       setBootstrapSnapshot(bootstrap.graphSnapshot);
       setGraphRevision((value) => value + 1);
       // Reset the synchronous dedup mirrors to the snapshot's authoritative
-      // sequence before replaying missed events on top of it.
-      lastAppliedSequenceRef.current = bootstrap.lastAppliedSequence;
+      // sequence before replaying missed events on top of it. That is the *snapshot's*
+      // sequence, not the run head: the graph we just loaded reflects world state as of
+      // the snapshot, and any event after it has not been applied. Seeding the cursor
+      // with the head instead declared those events already applied and skipped them —
+      // which is how the inspector could keep showing `normal` for an asset the tape had
+      // already recorded as compromised. Seen-ids are cleared for the same reason: the
+      // replay below must be allowed to re-apply events this client saw before the
+      // snapshot reset the graph underneath them.
+      lastAppliedSequenceRef.current = graphSequenceFloor(bootstrap);
+      seenEventIdsRef.current = new Set();
       runStatusRef.current = bootstrap.run.status;
       connectionHealthRef.current = ConnectionHealthState.CATCHING_UP;
       dispatch({
@@ -315,25 +358,26 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       });
       // A resync reloads authoritative state; the run record it carries is the freshest
       // status/sim-time we have, so republish it rather than leaving the header on
-      // whatever the interrupted live stream last managed to apply.
+      // whatever the interrupted live stream last managed to apply. It is stamped with
+      // the snapshot's sequence, not the head — the reducer drops any delta at or below
+      // its `lastAppliedSequence`, so publishing the head first would discard the entire
+      // catch-up that follows.
       dispatch({
         type: 'update_run_status',
         runStatus: bootstrap.run.status,
         simTime: bootstrap.run.simTime,
-        sequence: bootstrap.lastAppliedSequence,
+        sequence: graphSequenceFloor(bootstrap),
       });
 
-      const cursor = loadStoredCursor(runId);
-      const fromSequence = Math.max(cursor, bootstrap.lastAppliedSequence) + 1;
-      const events = await fetchMissingEvents(
-        runId,
-        fromSequence,
-        bootstrap.lastAppliedSequence + 500,
-      );
-      for (const event of events) {
-        applyEventToGraph(event, true);
-        saveStoredCursor(runId, event.sequence);
-      }
+      await catchUpFromSnapshot(bootstrap);
+
+      // Settle the header on the run's true head once the catch-up has landed.
+      dispatch({
+        type: 'update_run_status',
+        runStatus: runStatusRef.current,
+        simTime: bootstrap.run.simTime,
+        sequence: bootstrap.lastAppliedSequence,
+      });
 
       connectionHealthRef.current = ConnectionHealthState.CONNECTED;
       dispatch({
@@ -344,7 +388,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
     } finally {
       gapRecoveryRef.current = false;
     }
-  }, [applyEventToGraph, runId]);
+  }, [applyEventToGraph, catchUpFromSnapshot, runId]);
 
   // Keep the reveal-convergence ref pointed at the latest resync closure so the
   // event handler can trigger it without a declaration-order dependency.
@@ -374,7 +418,9 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         knownNodesRef.current = new Map(
           bootstrapPayload.graphSnapshot.nodes.map((node) => [node.id, node]),
         );
-        lastAppliedSequenceRef.current = bootstrapPayload.lastAppliedSequence;
+        // The snapshot's own sequence, not the run head — see `graphSequenceFloor`. The
+        // head is only reached after the catch-up below replays what the snapshot misses.
+        lastAppliedSequenceRef.current = graphSequenceFloor(bootstrapPayload);
         runStatusRef.current = bootstrapPayload.run.status;
         setBootstrapSnapshot(bootstrapPayload.graphSnapshot);
         setGraphRevision((value) => value + 1);
@@ -390,6 +436,13 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         dispatch({
           type: 'update_run_status',
           runStatus: bootstrapPayload.run.status,
+          simTime: bootstrapPayload.run.simTime,
+          sequence: graphSequenceFloor(bootstrapPayload),
+        });
+        await catchUpFromSnapshot(bootstrapPayload);
+        dispatch({
+          type: 'update_run_status',
+          runStatus: runStatusRef.current,
           simTime: bootstrapPayload.run.simTime,
           sequence: bootstrapPayload.lastAppliedSequence,
         });
@@ -515,7 +568,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       transportRef.current?.disconnect();
       transportRef.current = null;
     };
-  }, [isLiveMode, performResync, processEnvelope, runId]);
+  }, [catchUpFromSnapshot, isLiveMode, performResync, processEnvelope, runId]);
 
   useEffect(() => {
     return () => {

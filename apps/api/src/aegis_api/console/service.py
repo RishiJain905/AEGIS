@@ -52,6 +52,9 @@ _FEED_CATEGORIES: tuple[tuple[str, str], ...] = (
     ("incident.", "incident"),
     ("detection.alert", "alert"),
     ("alert.", "alert"),
+    # A hidden condition becoming visible is the run's loudest beat, and it never reached
+    # the feed: the bare "reveal" prefix below matches no event type the simulation emits.
+    ("sim.hidden_condition.", "reveal"),
     ("reveal", "reveal"),
     ("directive.", "directive"),
 )

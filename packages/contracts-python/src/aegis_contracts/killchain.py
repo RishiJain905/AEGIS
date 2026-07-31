@@ -16,7 +16,10 @@ as literal unions in ``@aegis/contracts`` — keep the two in step.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from enum import StrEnum
+
+from aegis_contracts.graph import NodeStatus
 
 
 class AttackTactic(StrEnum):
@@ -102,6 +105,119 @@ class ContainmentStatus(StrEnum):
     ROLLING_BACK = "rolling_back"
     CONTAINED = "contained"
     QUARANTINED = "quarantined"
+
+
+#: World-state asset status → the operator-facing :class:`~aegis_contracts.graph.NodeStatus`
+#: it projects to.
+#:
+#: The world models an asset's *operational* state with the richer
+#: :class:`ContainmentStatus` vocabulary (which control was applied), while the graph
+#: contract exposes the *security posture* an operator reads off a node. Those are
+#: deliberately different vocabularies at different altitudes, so every producer of a
+#: ``GraphNodeV1`` has to translate. Projecting the raw world status straight through
+#: makes ``GraphSnapshotV1`` validation reject the node (``'isolated'`` is not a
+#: ``NodeStatus``) and strands the run: the snapshot write inside a STEP/RESUME command
+#: fails, so the run can never advance past its first containment action again.
+#:
+#: The disruptive controls all read as ``CONTAINED`` — the operator has taken the asset
+#: away from the attacker, and *how* is carried by the action feed and the event stream,
+#: not by the node's posture. Observation-only controls read as ``UNDER_INVESTIGATION``:
+#: they change what the defender is watching, never whether the asset is contained.
+NODE_STATUS_BY_WORLD_STATUS: dict[str, str] = {
+    ContainmentStatus.OBSERVED.value: "under_investigation",
+    ContainmentStatus.HEIGHTENED_MONITORING.value: "under_investigation",
+    ContainmentStatus.ISOLATED.value: "contained",
+    ContainmentStatus.ACCESS_RESTRICTED.value: "contained",
+    ContainmentStatus.CREDENTIALS_REVOKED.value: "contained",
+    ContainmentStatus.RESTARTING.value: "contained",
+    ContainmentStatus.ROLLING_BACK.value: "contained",
+    ContainmentStatus.CONTAINED.value: "contained",
+    ContainmentStatus.QUARANTINED.value: "contained",
+}
+
+
+#: Every value the defensive-control vocabulary can take.
+CONTROL_STATUSES: frozenset[str] = frozenset(status.value for status in ContainmentStatus)
+
+#: Controls that take the asset away from the attacker. An asset carrying one of these
+#: reads as ``CONTAINED`` no matter what the attacker had done to it.
+CONTAINING_CONTROL_STATUSES: frozenset[str] = frozenset(
+    status
+    for status, projected in NODE_STATUS_BY_WORLD_STATUS.items()
+    if projected == NodeStatus.CONTAINED.value
+)
+
+#: Controls that only change what the defender is watching. These never mask the posture
+#: underneath — an observed compromise is still a compromise.
+OBSERVATION_CONTROL_STATUSES: frozenset[str] = frozenset(
+    status
+    for status, projected in NODE_STATUS_BY_WORLD_STATUS.items()
+    if projected == NodeStatus.UNDER_INVESTIGATION.value
+)
+
+
+def is_control_status(status: str) -> bool:
+    """Whether ``status`` names a defensive control rather than a security posture.
+
+    The two vocabularies overlap on exactly one value, ``"contained"``, which is
+    classified as a control: it is what a defender action (or an authored consequence
+    event) *does* to an asset, and the disruption model reads it as foothold-severing.
+    """
+    return status in CONTROL_STATUSES
+
+
+def project_node_status(world_status: str) -> NodeStatus:
+    """Project a world-state asset status onto the operator-facing graph vocabulary.
+
+    A status that is already a ``NodeStatus`` (the attacker-driven and baseline values —
+    ``normal``/``suspicious``/``under_investigation``/``contained``/``compromised``)
+    passes through unchanged. A containment status maps through
+    :data:`NODE_STATUS_BY_WORLD_STATUS`.
+
+    An unrecognized status projects to ``UNDER_INVESTIGATION`` rather than raising: an
+    unknown status still means *something* moved this asset off baseline, and a projection
+    that raises would wedge the whole run's snapshot write — the failure mode this
+    function exists to prevent. Scenario-authored statuses are validated at authoring
+    time, so this branch is a safety net, not an authoring escape hatch.
+    """
+    try:
+        return NodeStatus(world_status)
+    except ValueError:
+        pass
+    mapped = NODE_STATUS_BY_WORLD_STATUS.get(world_status)
+    return NodeStatus(mapped) if mapped is not None else NodeStatus.UNDER_INVESTIGATION
+
+
+def project_effective_status(posture: str, applied_controls: Iterable[str]) -> NodeStatus:
+    """Compose a security posture and its applied controls into one operator-facing status.
+
+    An asset carries two independent facts: what the attacker did to it (its *posture*)
+    and what the defender did about it (its *applied controls*). ``GraphNodeV1`` has a
+    single ``status`` field, so the two have to be composed at projection time — and the
+    composition has to be lossless in the world state, or the response toolkit erases the
+    intrusion it is responding to.
+
+    Precedence, in order:
+
+    1. Any containing control wins. Isolating a compromised host reads ``CONTAINED``: the
+       operator's answer to the compromise is the salient fact, and the compromise itself
+       is still on the asset for scoring, disruption, and the after-action to read.
+    2. Otherwise a non-baseline posture wins. Observing a compromised host leaves it
+       reading ``COMPROMISED`` — watching an asset is not a response to it, and hiding the
+       compromise behind ``UNDER_INVESTIGATION`` is the defect this function exists to
+       prevent.
+    3. Otherwise an observation control on a baseline asset reads ``UNDER_INVESTIGATION``:
+       nothing is known to be wrong, but the defender is looking.
+    """
+    controls = set(applied_controls)
+    if controls & CONTAINING_CONTROL_STATUSES:
+        return NodeStatus.CONTAINED
+    posture_status = project_node_status(posture)
+    if posture_status is not NodeStatus.NORMAL:
+        return posture_status
+    if controls & OBSERVATION_CONTROL_STATUSES:
+        return NodeStatus.UNDER_INVESTIGATION
+    return NodeStatus.NORMAL
 
 
 class DisruptionEffect(StrEnum):

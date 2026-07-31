@@ -1,9 +1,15 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import type { AssetRiskScoreV1, GraphSnapshotV1 } from '@aegis/contracts-ts';
 import { Badge, Panel } from '@aegis/ui';
 
 import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-visual-store';
+import {
+  isPendingControlFresh,
+  usePendingControlStore,
+} from '@/features/operator-actions/pending-control-store';
 
 import {
   InspectorField,
@@ -26,12 +32,26 @@ export function GraphEntityInspector({
   riskScore,
 }: GraphEntityInspectorProps) {
   const visualState = useGraphVisualStore((s) => s.visualState);
+  const pendingControls = usePendingControlStore((s) => s.pending);
+  const clearPendingControl = usePendingControlStore((s) => s.clear);
 
-  if (!selectedEntityId) {
-    return null;
-  }
+  const node = selectedEntityId
+    ? (snapshot.nodes.find((n) => n.id === selectedEntityId) ?? null)
+    : null;
+  const appliedControls = node?.appliedControls ?? [];
+  const pending = node ? pendingControls[node.id] : undefined;
+  // The acknowledgment exists only to cover the gap before the control lands. Once the
+  // node carries one — or the order has been unanswered long enough to stop meaning
+  // anything — drop it rather than keep promising something that never arrived.
+  const pendingResolved =
+    pending !== undefined && (appliedControls.length > 0 || !isPendingControlFresh(pending));
 
-  const node = snapshot.nodes.find((n) => n.id === selectedEntityId);
+  useEffect(() => {
+    if (node && pendingResolved) {
+      clearPendingControl(node.id);
+    }
+  }, [node, pendingResolved, clearPendingControl]);
+
   if (!node) {
     return null;
   }
@@ -46,9 +66,29 @@ export function GraphEntityInspector({
           <p className="text-sm font-semibold leading-5 text-[var(--aegis-text-primary)]">
             {node.label}
           </p>
+          {/*
+            Posture and applied controls are two different facts and the inspector shows
+            both: the status badge is what is wrong with the asset, the control badges are
+            what we have done about it. Reading only the first would put a compromised
+            host under observation and make it look merely "under investigation".
+          */}
           <div className="flex flex-wrap gap-2">
             <Badge>{node.assetType}</Badge>
             <Badge variant="outline">{node.status.replace(/_/g, ' ')}</Badge>
+            {appliedControls.map((control) => (
+              <Badge key={control} variant="outline" data-testid="applied-control-badge">
+                {control.replace(/_/g, ' ')}
+              </Badge>
+            ))}
+            {pending && !pendingResolved ? (
+              <Badge
+                variant="outline"
+                data-testid="pending-control-badge"
+                className="border-dashed border-[var(--aegis-accent-line)] text-[var(--aegis-accent-strong)]"
+              >
+                {pending.label} · applying
+              </Badge>
+            ) : null}
           </div>
         </div>
 

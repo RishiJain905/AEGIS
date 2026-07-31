@@ -131,7 +131,13 @@ class AssetInstanceSnapshotV1(BaseModel):
 
     id: AssetId
     asset_type: str = Field(alias="assetType", min_length=1)
+    #: Security posture — what the attacker did to this asset.
     status: str = Field(min_length=1)
+    #: Defensive controls the response toolkit has applied, in application order. Additive
+    #: with a default, so checkpoints written before posture and controls were separated
+    #: still restore at the same schema version (their collapsed ``status`` is split back
+    #: out on restore).
+    applied_controls: list[str] = Field(default_factory=list, alias="appliedControls")
     risk_score: float = Field(alias="riskScore", ge=0.0, le=1.0)
     criticality: float = Field(ge=0.0, le=1.0)
     zone_id: str = Field(alias="zoneId", min_length=1)

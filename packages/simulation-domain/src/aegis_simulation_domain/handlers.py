@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from aegis_contracts import ActorRef, ActorType, DomainEventEnvelopeV1
+from aegis_contracts.killchain import OBSERVATION_CONTROL_STATUSES
 from aegis_contracts.versioning import DOMAIN_EVENT_SCHEMA_VERSION
 from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
 
@@ -53,13 +54,38 @@ def _build_envelope(
     )
 
 
+#: How much faster an asset under an observation control reports.
+#:
+#: This is what makes "Observe" mechanically real rather than a label. Watching an asset
+#: does not change what is happening on it — inventing extra failures because someone is
+#: looking would be a lie the scoring layer then rewards — it changes how much of what is
+#: already happening reaches the defender. Halving the sampling interval doubles the
+#: telemetry every detection window sees for that asset, so rate-based rules cross their
+#: thresholds sooner and an alert (and with it fog-of-war disclosure) arrives earlier.
+#:
+#: Applied at reschedule time off world state, so it is a pure function of the action
+#: sequence, needs no extra RNG draw, and lifting the control restores the authored
+#: cadence — ``interval_sim_seconds`` itself is never rewritten.
+OBSERVATION_CADENCE_DIVISOR = 2
+
+
+def _observation_interval(generator: GeneratorState, world: WorldState) -> int:
+    asset = world.assets.get(generator.target_asset_id)
+    if asset is not None and set(asset.applied_controls) & OBSERVATION_CONTROL_STATUSES:
+        return max(1, generator.interval_sim_seconds // OBSERVATION_CADENCE_DIVISOR)
+    return generator.interval_sim_seconds
+
+
 def _reschedule_generator(
     generator: GeneratorState | None,
     sim_time: datetime,
+    world: WorldState,
 ) -> datetime | None:
     if generator is None:
         return None
-    generator.next_sim_time = sim_time + timedelta(seconds=generator.interval_sim_seconds)
+    generator.next_sim_time = sim_time + timedelta(
+        seconds=_observation_interval(generator, world)
+    )
     return generator.next_sim_time
 
 
@@ -106,7 +132,10 @@ def execute_plugin(
                 payload={"assetId": asset_id, "outcome": "failed" if is_failure else "succeeded"},
             )
         )
-        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+        return HandlerResult(
+            events=emitted,
+            reschedule=_reschedule_generator(generator, sim_time, world),
+        )
 
     if plugin_id == "telemetry.api_request":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -126,7 +155,10 @@ def execute_plugin(
                 payload={"assetId": asset_id, "statusCode": 500 if is_error else 200},
             )
         )
-        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+        return HandlerResult(
+            events=emitted,
+            reschedule=_reschedule_generator(generator, sim_time, world),
+        )
 
     if plugin_id == "telemetry.network_flow":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -149,7 +181,10 @@ def execute_plugin(
                 },
             )
         )
-        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+        return HandlerResult(
+            events=emitted,
+            reschedule=_reschedule_generator(generator, sim_time, world),
+        )
 
     if plugin_id == "telemetry.health_check":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -171,7 +206,10 @@ def execute_plugin(
                 payload={"assetId": asset_id, "healthy": healthy},
             )
         )
-        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+        return HandlerResult(
+            events=emitted,
+            reschedule=_reschedule_generator(generator, sim_time, world),
+        )
 
     if plugin_id == "telemetry.database_query":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -197,7 +235,10 @@ def execute_plugin(
                 },
             )
         )
-        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+        return HandlerResult(
+            events=emitted,
+            reschedule=_reschedule_generator(generator, sim_time, world),
+        )
 
     if plugin_id == "telemetry.deployment_event":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -226,7 +267,10 @@ def execute_plugin(
                 },
             )
         )
-        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+        return HandlerResult(
+            events=emitted,
+            reschedule=_reschedule_generator(generator, sim_time, world),
+        )
 
     if plugin_id == "telemetry.process_activity":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -254,7 +298,10 @@ def execute_plugin(
                 },
             )
         )
-        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+        return HandlerResult(
+            events=emitted,
+            reschedule=_reschedule_generator(generator, sim_time, world),
+        )
 
     if plugin_id == "telemetry.ai_inference":
         asset_id = target_asset_id or (generator.target_asset_id if generator else "asset:unknown")
@@ -283,15 +330,22 @@ def execute_plugin(
                 },
             )
         )
-        return HandlerResult(events=emitted, reschedule=_reschedule_generator(generator, sim_time))
+        return HandlerResult(
+            events=emitted,
+            reschedule=_reschedule_generator(generator, sim_time, world),
+        )
 
     if plugin_id == "effect.set_asset_status":
         status = str(config.get("status", "unknown"))
         asset_id = str(config.get("assetId", target_asset_id or "asset:svc-auth-service"))
         asset = world.assets.get(asset_id)
         if asset is not None:
-            asset.status = status
-            asset.revision += 1
+            # Compose, never overwrite: a defensive control (observe, isolate, ...) is
+            # recorded alongside the attacker-driven posture instead of replacing it.
+            # The emitted payload keeps carrying the single applied value, so every
+            # persisted run — including runs recorded before the split — replays into the
+            # same composed world by routing that value through the same vocabulary.
+            asset.apply_status(status)
         emitted.append(
             _build_envelope(
                 run_id=run_id,

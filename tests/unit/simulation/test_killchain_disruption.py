@@ -18,7 +18,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
-from aegis_contracts.graph import AssetType
+from aegis_contracts.graph import AssetType, NodeStatus
 from aegis_contracts.killchain import (
     AttackTactic,
     CampaignStatus,
@@ -246,9 +246,7 @@ def _completed(runtime: SimulationRuntime) -> list[str]:
 
 def _contain(runtime: SimulationRuntime, asset_id: str, status: str) -> None:
     """Apply a containment action exactly as ``effect.set_asset_status`` would."""
-    asset = runtime.world.assets[asset_id]
-    asset.status = status
-    asset.revision += 1
+    runtime.world.assets[asset_id].apply_status(status)
 
 
 def _events(runtime: SimulationRuntime, event_type: str) -> list[dict]:
@@ -275,14 +273,19 @@ def test_containment_status_vocabulary_covers_every_command() -> None:
 def _bare_world(statuses: dict[str, str]) -> WorldState:
     world = WorldState()
     for asset_id, status in statuses.items():
-        world.assets[asset_id] = AssetState(
+        asset = AssetState(
             id=asset_id,
             asset_type="service",
-            status=status,
+            status=NodeStatus.NORMAL.value,
             risk_score=0.1,
             criticality=0.5,
             zone_id="z",
         )
+        # Route through the world's own entry point so a control value lands in
+        # ``applied_controls`` and a posture value lands in ``status``, exactly as the
+        # effect plugin would place it.
+        asset.apply_status(status)
+        world.assets[asset_id] = asset
     return world
 
 
@@ -347,7 +350,7 @@ def test_fallback_prefers_a_foothold_the_defender_has_not_severed() -> None:
     assert assessment.all_footholds_severed is False
 
     _bare = world.assets["asset:c"]
-    _bare.status = ISOLATE
+    _bare.apply_status(ISOLATE)
     assert assess_disruption(
         campaign=campaign, state=state, world=world
     ).all_footholds_severed is True
@@ -369,20 +372,20 @@ def test_disruption_cost_scales_with_criticality_and_ignores_read_only_actions()
     )
     assert baseline.cost == 0.0
 
-    world.assets["asset:small"].status = COMMAND_STATUS_MAP[
-        ScenarioCommandTemplateV1.INCREASE_MONITORING
-    ]
+    world.assets["asset:small"].apply_status(
+        COMMAND_STATUS_MAP[ScenarioCommandTemplateV1.INCREASE_MONITORING]
+    )
     watched = compute_business_disruption(
         world=world, attacker_held_asset_ids=frozenset(), policy=policy
     )
     assert watched.cost == 0.0, "monitoring an asset costs the business nothing"
 
-    world.assets["asset:small"].status = ISOLATE
+    world.assets["asset:small"].apply_status(ISOLATE)
     cheap = compute_business_disruption(
         world=world, attacker_held_asset_ids=frozenset(), policy=policy
     ).cost
-    world.assets["asset:small"].status = "normal"
-    world.assets["asset:big"].status = ISOLATE
+    world.assets["asset:small"].lift_controls()
+    world.assets["asset:big"].apply_status(ISOLATE)
     expensive = compute_business_disruption(
         world=world, attacker_held_asset_ids=frozenset(), policy=policy
     ).cost
@@ -461,7 +464,7 @@ def test_neutralizing_every_campaign_wins(campaign_status: str) -> None:
 def test_a_win_bought_with_heavy_collateral_is_only_a_costly_win() -> None:
     world = _bare_world({f"asset:{i}": "normal" for i in range(10)})
     for i in range(3):
-        world.assets[f"asset:{i}"].status = ISOLATE
+        world.assets[f"asset:{i}"].apply_status(ISOLATE)
     world.campaigns[CAMPAIGN_ID] = CampaignRuntimeState(
         campaign_id=CAMPAIGN_ID, status=CampaignStatus.CONTAINED.value, active=False
     )
@@ -474,7 +477,7 @@ def test_a_win_bought_with_heavy_collateral_is_only_a_costly_win() -> None:
 def test_over_containment_loses_even_though_the_attacker_was_stopped() -> None:
     world = _bare_world({f"asset:{i}": "normal" for i in range(10)})
     for i in range(6):
-        world.assets[f"asset:{i}"].status = ISOLATE
+        world.assets[f"asset:{i}"].apply_status(ISOLATE)
     world.campaigns[CAMPAIGN_ID] = CampaignRuntimeState(
         campaign_id=CAMPAIGN_ID, status=CampaignStatus.CONTAINED.value, active=False
     )
@@ -490,7 +493,7 @@ def test_crippling_critical_services_the_attacker_never_touched_loses() -> None:
         asset.criticality = 0.1
     for i in range(2):
         world.assets[f"asset:{i}"].criticality = 0.95
-        world.assets[f"asset:{i}"].status = ISOLATE
+        world.assets[f"asset:{i}"].apply_status(ISOLATE)
     world.campaigns[CAMPAIGN_ID] = CampaignRuntimeState(
         campaign_id=CAMPAIGN_ID, status=CampaignStatus.CONTAINED.value, active=False
     )

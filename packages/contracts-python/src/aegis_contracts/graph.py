@@ -70,8 +70,17 @@ class GraphNodeV1(BaseModel):
     cluster_id: ClusterId | None = Field(default=None, alias="clusterId")
     risk_score: float = Field(alias="riskScore", ge=0.0, le=1.0)
     criticality: float = Field(ge=0.0, le=1.0)
+    #: The asset's composed operator-facing status: a containing control reads CONTAINED,
+    #: otherwise the security posture underneath shows through. See
+    #: ``aegis_contracts.killchain.project_effective_status``.
     status: NodeStatus
     revision: Revision
+    #: Defensive controls currently applied, in application order ("observed",
+    #: "isolated", ...). Additive (schemaVersion stays 1) and empty by default, so legacy
+    #: producers and fixtures are unaffected. Carried beside ``status`` rather than folded
+    #: into it because the two answer different questions — what is wrong with this asset,
+    #: and what have we done about it — and folding them lost the first one.
+    applied_controls: list[str] = Field(default_factory=list, alias="appliedControls")
     # Fog of war: whether the operator may see this node's *true* security state yet.
     # Additive (schemaVersion stays 1); defaults true so unredacted producers and legacy
     # payloads are unaffected. Undisclosed nodes are served with a redacted (baseline)

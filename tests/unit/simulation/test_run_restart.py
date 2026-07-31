@@ -24,8 +24,9 @@ from aegis_simulation.run_command_service import (
     RunCommandService,
     RuntimeCacheEntry,
     may_reset_run,
+    scoped_create_idempotency_key,
 )
-from aegis_simulation_domain import SimulationEngine
+from aegis_simulation_domain import SimulationEngine, SimulationError, SimulationErrorCode
 from aegis_simulation_domain.ids import derive_run_id
 
 FIXTURE_PACKAGE = "scenarios/_fixtures/valid-minimal"
@@ -54,12 +55,22 @@ class _FakeRunRepository:
 
 
 @dataclass
+class _FakeIdempotencyRecord:
+    response_ref: str
+
+
+@dataclass
 class _FakeIdempotencyRepository:
     purged: list[tuple[str, str]] = field(default_factory=list)
+    # Stored key -> run id, so a test can assert which key the lookup actually used.
+    records: dict[str, str] = field(default_factory=dict)
+    looked_up: list[str] = field(default_factory=list)
 
-    async def get(self, *, scope: str, idempotency_key: str) -> None:
-        _ = (scope, idempotency_key)
-        return None
+    async def get(self, *, scope: str, idempotency_key: str) -> _FakeIdempotencyRecord | None:
+        _ = scope
+        self.looked_up.append(idempotency_key)
+        run_id = self.records.get(idempotency_key)
+        return _FakeIdempotencyRecord(response_ref=run_id) if run_id is not None else None
 
     async def delete_by_response_ref(self, *, scope: str, response_ref: str) -> int:
         self.purged.append((scope, response_ref))
@@ -176,16 +187,100 @@ def test_absent_flag_returns_the_existing_run_untouched() -> None:
     assert uow.idempotency.purged == []
 
 
-def test_restart_by_a_non_owner_falls_back_to_returning_the_existing_run() -> None:
-    """An unauthorized restart degrades to a resume rather than erroring or resetting."""
+def test_launch_by_a_non_owner_is_refused_instead_of_handing_over_a_foreign_run() -> None:
+    """A launch must never resolve to a run the caller cannot read.
+
+    This used to "degrade to a resume": the launch answered 200 with the other operator's
+    run, the client navigated to ``/runs/<that id>``, and every follow-up request 403'd into
+    "Unable to load workspace data". Refusing here is the honest answer, and the distinct
+    code lets the catalogue explain it. Nothing is destroyed either way.
+    """
     existing = _existing_run(owner_user_id=OWNER)
     uow = _FakeUnitOfWork(runs=_FakeRunRepository(run=existing))
     service = RunCommandService(workspace_root=Path("."))
 
-    response = _create(service, uow, restart_existing=True, owner_user_id=OTHER)
+    with pytest.raises(SimulationError) as excinfo:
+        _create(service, uow, restart_existing=True, owner_user_id=OTHER)
 
-    assert response.run.id == existing.id
+    assert excinfo.value.code is SimulationErrorCode.UNAUTHORIZED
+    # The refused run's id must not travel back to the caller: handing over an id the
+    # client cannot read, and would navigate to, is the whole of BUG-001.
+    assert existing.id not in str(excinfo.value.details or {})
+    assert existing.id not in excinfo.value.message
     assert uow.runs.deleted == []
+
+
+def test_operator_starting_the_tutorial_after_another_identity_owns_it_is_refused() -> None:
+    """BUG-001: the tutorial is pinned to seed 1000, so its run id is the same for everyone.
+
+    The reported failure was an operator whose "Start new run" resolved to a run owned by
+    ``user:acct_…`` — a different identity — and answered 200 with ``replayed: true``. The
+    launch must fail loudly instead, whether or not ``restartExisting`` was asked for.
+    """
+    existing = _existing_run(owner_user_id="user:acct_9020b4189b4c9d8b620eb455")
+    uow = _FakeUnitOfWork(runs=_FakeRunRepository(run=existing))
+    service = RunCommandService(workspace_root=Path("."))
+
+    for restart_existing in (False, True):
+        with pytest.raises(SimulationError) as excinfo:
+            _create(
+                service,
+                uow,
+                restart_existing=restart_existing,
+                owner_user_id="user:operator-alpha",
+            )
+        assert excinfo.value.code is SimulationErrorCode.UNAUTHORIZED
+
+    assert uow.runs.deleted == []
+
+
+# --- idempotency keys are scoped to the actor -------------------------------------
+
+
+def test_create_idempotency_key_is_scoped_to_actor_and_scenario() -> None:
+    """One client-chosen key must not address another identity's (or scenario's) record."""
+    base = {"idempotency_key": "launch-key-1", "scenario_package_path": FIXTURE_PACKAGE}
+    mine = scoped_create_idempotency_key(owner_user_id=OWNER, **base)
+
+    assert mine != scoped_create_idempotency_key(owner_user_id=OTHER, **base)
+    assert mine != scoped_create_idempotency_key(owner_user_id=None, **base)
+    assert mine != scoped_create_idempotency_key(
+        idempotency_key="launch-key-1",
+        owner_user_id=OWNER,
+        scenario_package_path="scenarios/other",
+    )
+    # Stable for the same actor, so a double-clicked launch still replays rather than
+    # creating a second run.
+    assert mine == scoped_create_idempotency_key(owner_user_id=OWNER, **base)
+    # `idempotency_records.idempotency_key` is bounded at 256 characters.
+    assert len(mine) <= 256
+
+
+def test_a_shared_client_key_cannot_replay_another_identitys_run() -> None:
+    """The stored key is namespaced, so the lookup misses instead of replaying."""
+    existing = _existing_run(owner_user_id=OWNER)
+    recorded_key = scoped_create_idempotency_key(
+        idempotency_key="launch-key-1",
+        owner_user_id=OWNER,
+        scenario_package_path=FIXTURE_PACKAGE,
+    )
+    uow = _FakeUnitOfWork(
+        runs=_FakeRunRepository(run=existing),
+        idempotency=_FakeIdempotencyRepository(records={recorded_key: existing.id}),
+    )
+    service = RunCommandService(workspace_root=Path("."))
+
+    # The owner replaying their own key still gets their run back.
+    response = _create(service, uow, restart_existing=False, owner_user_id=OWNER)
+    assert response.run.id == existing.id
+    assert uow.idempotency.looked_up == [recorded_key]
+
+    # The same key sent by a different identity resolves to no record at all, so the launch
+    # falls through to the derived-run guard rather than replaying someone else's run.
+    with pytest.raises(SimulationError) as excinfo:
+        _create(service, uow, restart_existing=False, owner_user_id=OTHER)
+    assert excinfo.value.code is SimulationErrorCode.UNAUTHORIZED
+    assert uow.idempotency.looked_up[-1] != recorded_key
 
 
 def test_restart_by_the_owner_deletes_the_run_then_creates_a_new_one() -> None:

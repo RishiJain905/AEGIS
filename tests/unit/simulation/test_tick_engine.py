@@ -40,6 +40,8 @@ class _FakeRuntime:
         # peek() returns None only for an exhausted queue; a sentinel otherwise so the
         # horizon (not exhaustion) drives completion in most tests.
         self.queue = SimpleNamespace(peek=lambda: None if queue_empty else object())
+        # None while the win/lose race is still on; a resolution snapshot once decided.
+        self.run_outcome: object | None = None
 
 
 class _FakeCommandService:
@@ -162,6 +164,26 @@ async def test_advance_steps_running_run_until_horizon_then_stops() -> None:
     assert svc.statuses["run:1"] == "stopped"
     # Idempotency keys are unique per step so no false DUPLICATE_COMMAND dedup.
     assert len({key for _, key in svc.step_calls}) == 3
+
+
+@pytest.mark.asyncio
+async def test_resolved_outcome_completes_run_before_horizon() -> None:
+    """A decided run must stop, not keep stepping to the horizon.
+
+    ``sim.run.outcome_resolved`` means the race is over. Leaving the run RUNNING for the
+    remaining ~19 sim-minutes is what made the live header, after-action (409), reports
+    (empty) and replay all disagree about whether the run had ended.
+    """
+    svc = _FakeCommandService(step_delta_seconds=1)
+    svc.register("run:1")
+    ticker = _ticker(svc, _settings(AEGIS_SIM_MAX_SIM_SECONDS=100_000))
+
+    assert await ticker._advance_run("run:1") is False
+    svc.runtime_cache["run:1"].runtime.run_outcome = SimpleNamespace(outcome="win")
+
+    assert await ticker._advance_run("run:1") is True
+    assert len(svc.stop_calls) == 1
+    assert svc.statuses["run:1"] == "stopped"
 
 
 @pytest.mark.asyncio

@@ -281,14 +281,29 @@ class SimulationTicker:
         return horizon_reached
 
     def _is_complete(self, runtime: SimulationRuntime) -> bool:
-        """A run completes at the sim-time horizon or when its event queue is exhausted.
+        """A run completes once its verdict is in, at the sim-time horizon, or when its
+        event queue is exhausted.
 
-        Silent Relay's baseline generators reschedule forever, so the sim-time horizon is
-        the effective completion signal there; the queue-exhaustion check makes the ticker
-        correct for finite scenarios (e.g. the deterministic tutorial) that simply run out
-        of scheduled work before the horizon.
+        The resolved-outcome check is the primary signal: ``sim.run.outcome_resolved``
+        means the race is decided — every campaign neutralized, exfiltration completed, or
+        containment past the fail threshold — and nothing the operator does afterwards can
+        change it. The rest of the system already treats that event as terminal (the
+        WebSocket disclosure tracker lifts fog on it for the debrief), so a ticker that
+        kept stepping to the horizon left the run's *record* saying ``running`` for another
+        ~19 sim-minutes: after-action 409'd, reports stayed empty, and the run never
+        finalized. Stopping here is what makes the terminal state one thing across the
+        header, the run row, after-action and reports.
+
+        Silent Relay's baseline generators reschedule forever, so the sim-time horizon
+        remains the backstop for a run whose verdict never resolves; the queue-exhaustion
+        check makes the ticker correct for finite scenarios (e.g. the deterministic
+        tutorial) that simply run out of scheduled work before the horizon.
         """
-        return self._reached_horizon(runtime) or runtime.queue.peek() is None
+        return (
+            runtime.run_outcome is not None
+            or self._reached_horizon(runtime)
+            or runtime.queue.peek() is None
+        )
 
     def _reached_horizon(self, runtime: SimulationRuntime) -> bool:
         elapsed = (

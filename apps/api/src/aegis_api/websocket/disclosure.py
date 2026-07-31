@@ -7,7 +7,11 @@ gateway's single enqueue choke point. Two families are rewritten when they conce
 *undisclosed* governed asset:
 
 * ``sim.asset.status_changed`` has its ``status`` replaced with the baseline, so the client
-  applies a no-op node delta.
+  applies a no-op node delta — but only when the payload carries an attacker-driven
+  *posture*. The same event type also carries the operator's own applied controls
+  ("observed", "isolated"), and those are never redacted: the operator issued the command,
+  so withholding it discloses nothing and merely loses their own input (see
+  :meth:`RunDisclosureTracker.redact`).
 * ``sim.killchain.*`` — the attacker kill-chain truth markers — have their payload emptied.
   They name the campaign, the ATT&CK technique and the anchor asset outright, which is
   exactly what the player is meant to hunt for, so none of it survives redaction.
@@ -28,6 +32,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from aegis_contracts import DomainEventEnvelopeV1, RealtimeMessageEnvelopeV1
+from aegis_contracts.killchain import is_control_status
 from aegis_simulation_domain import (
     REDACTED_STATUS,
     DisclosureInputs,
@@ -127,6 +132,15 @@ class RunDisclosureTracker:
             return envelope
         current_status = event.payload.get("status")
         if current_status == REDACTED_STATUS:
+            return envelope
+        # Fog of war hides what the *attacker* did, never what the operator did about it.
+        # This event type carries both vocabularies: an attacker-driven posture, or a
+        # control the operator's own approved command applied. Redacting a control to the
+        # baseline told the client "nothing happened" about an order it had just issued —
+        # so observing or isolating a still-fogged asset (the exact case that matters)
+        # silently did nothing on screen. The control value comes from the operator's own
+        # command and says nothing about the attacker, so it is safe to forward.
+        if isinstance(current_status, str) and is_control_status(current_status):
             return envelope
         redacted_event = event.model_copy(
             update={"payload": {**event.payload, "status": REDACTED_STATUS}}

@@ -2,6 +2,9 @@ import type { DomainEventEnvelopeV1, GraphDeltaV1, GraphSnapshotV1 } from '@aegi
 import {
   ConnectionHealthState,
   GRAPH_DELTA_SCHEMA_VERSION,
+  isControlStatus,
+  projectEffectiveStatus,
+  projectNodeStatus,
   type RealtimeReducerAction,
   type TimelineEntryV1,
 } from '@aegis/contracts-ts';
@@ -25,6 +28,13 @@ const TIMELINE_EVENT_PREFIXES = [
  * Run lifecycle event -> the run status it puts the run into. `resumed` maps back to
  * `running`: "resumed" is a transition, not a state, and the run record/replay projector
  * both settle on `running`, so mapping it literally left the header reading "resumed".
+ *
+ * This table is exhaustive on purpose. Not every `sim.run.*` event is a lifecycle
+ * transition — `sim.run.outcome_resolved` announces the run's win/lose *verdict* while
+ * the run keeps running — so an event absent from this table must leave the run status
+ * alone. Deriving one from the event name published a status (`outcome_resolved`) that
+ * no run record ever holds, which is what made the header claim a terminal run while
+ * after-action, reports and replay all correctly still read `running`.
  */
 const RUN_STATUS_BY_LIFECYCLE_EVENT: Record<string, string> = {
   'sim.run.started': 'running',
@@ -35,13 +45,16 @@ const RUN_STATUS_BY_LIFECYCLE_EVENT: Record<string, string> = {
 
 function timelineStatusForEvent(eventType: string, payload: Record<string, unknown>): string {
   if (eventType === 'sim.asset.status_changed') {
-    return typeof payload.status === 'string' ? payload.status : 'suspicious';
+    return typeof payload.status === 'string' ? projectNodeStatus(payload.status) : 'suspicious';
   }
   if (eventType.startsWith('alert.')) {
     return 'suspicious';
   }
   if (eventType.startsWith('incident.')) {
     return 'under_investigation';
+  }
+  if (eventType.startsWith('sim.hidden_condition.')) {
+    return 'suspicious';
   }
   if (eventType.includes('failed')) {
     return 'suspicious';
@@ -51,6 +64,24 @@ function timelineStatusForEvent(eventType: string, payload: Record<string, unkno
 
 function formatPayloadString(value: unknown, fallback: string): string {
   return typeof value === 'string' ? value : fallback;
+}
+
+/**
+ * Turn a scenario-local condition id into something an operator can read.
+ * `condition-vendor-key-reuse` -> `Vendor key reuse`. The id is the only identity the
+ * reveal event carries, so this is as close to the author's `causeLabel` as the client can
+ * get without leaking the scenario manifest into the operator's session.
+ */
+function humaniseConditionId(conditionId: string): string {
+  const words = conditionId
+    .replace(/^(hidden[-_]?)?condition[-_]?/i, '')
+    .split(/[-_.]+/)
+    .filter(Boolean);
+  if (words.length === 0) {
+    return 'an undisclosed cause';
+  }
+  const [first, ...rest] = words as [string, ...string[]];
+  return [first.charAt(0).toUpperCase() + first.slice(1), ...rest].join(' ');
 }
 
 function timelineLabelForEvent(event: DomainEventEnvelopeV1): string {
@@ -81,6 +112,12 @@ function timelineLabelForEvent(event: DomainEventEnvelopeV1): string {
       return 'Graph risk projection updated';
     case 'incident.created':
       return `Incident: ${formatPayloadString(payload.title, 'created')}`;
+    // The internal event names never reach the operator: a hidden condition is a *cause*
+    // the scenario kept out of view, so it is announced as one.
+    case 'sim.hidden_condition.triggered':
+      return `Underlying cause active: ${humaniseConditionId(formatPayloadString(payload.conditionId, 'unknown'))}`;
+    case 'sim.hidden_condition.revealed':
+      return `Underlying cause revealed: ${humaniseConditionId(formatPayloadString(payload.conditionId, 'unknown'))}`;
     case 'report.generation.completed':
       return 'After-action report generation completed';
     case 'report.version.created':
@@ -156,9 +193,24 @@ function buildNodeDeltaFromStatusChange(
   if (knownNode === undefined) {
     return null;
   }
-  const statusValue = (
-    typeof payload.status === 'string' ? payload.status : knownNode.status
-  ) as GraphSnapshotV1['nodes'][number]['status'];
+  // The payload carries one value from either vocabulary: a posture the attacker drove
+  // the asset into, or a control the defender applied ("isolated", "observed", ...).
+  // Composing the two rather than overwriting is what keeps an observed compromise
+  // visibly compromised; projecting is also what stops a raw control value reaching the
+  // graph store, where the inspector, legend and status table have no entry for it.
+  const applied = typeof payload.status === 'string' ? payload.status : null;
+  if (applied === null) {
+    return null;
+  }
+  const appliedControls = [...(knownNode.appliedControls ?? [])];
+  let posture = knownNode.status as string;
+  if (isControlStatus(applied)) {
+    if (!appliedControls.includes(applied)) {
+      appliedControls.push(applied);
+    }
+  } else {
+    posture = applied;
+  }
   return {
     schemaVersion: GRAPH_DELTA_SCHEMA_VERSION,
     runId: event.runId,
@@ -167,7 +219,8 @@ function buildNodeDeltaFromStatusChange(
     operation: 'upsert_node',
     node: {
       ...knownNode,
-      status: statusValue,
+      status: projectEffectiveStatus(posture, appliedControls),
+      appliedControls,
       revision: knownNode.revision + 1,
     },
   };
@@ -221,12 +274,11 @@ export function projectDomainEventToActions(
     }
   }
 
-  if (event.type.startsWith('sim.run.')) {
-    const runStatus =
-      RUN_STATUS_BY_LIFECYCLE_EVENT[event.type] ?? event.type.replace('sim.run.', '');
+  const lifecycleRunStatus = RUN_STATUS_BY_LIFECYCLE_EVENT[event.type];
+  if (lifecycleRunStatus !== undefined) {
     actions.push({
       type: 'update_run_status',
-      runStatus,
+      runStatus: lifecycleRunStatus,
       simTime: event.simTime,
       sequence: event.sequence,
     });

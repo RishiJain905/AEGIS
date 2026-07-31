@@ -146,10 +146,21 @@ export function useCreateRun() {
         }),
       });
       if (!response.ok) {
+        // Keep the server's own code and message. A launch can fail for a reason the
+        // operator can act on — most importantly RUN_OWNED_BY_ANOTHER_USER, where a
+        // pinned-seed scenario's single run id already belongs to someone else — and
+        // flattening every failure to "Failed to create run: 409" hides that.
+        let envelope: { code?: string; message?: string; traceId?: string } | undefined;
+        try {
+          envelope = (await response.json()) as typeof envelope;
+        } catch {
+          envelope = undefined;
+        }
         throw new ApiClientError({
-          code: 'HTTP_ERROR',
-          message: `Failed to create run: ${String(response.status)}`,
+          code: envelope?.code ?? 'HTTP_ERROR',
+          message: envelope?.message ?? `Failed to create run: ${String(response.status)}`,
           status: response.status,
+          traceId: envelope?.traceId,
         });
       }
       const body: unknown = await response.json();

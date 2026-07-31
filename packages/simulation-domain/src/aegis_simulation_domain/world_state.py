@@ -5,6 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
+from aegis_contracts.killchain import (
+    is_control_status,
+    project_effective_status,
+    project_node_status,
+)
 from aegis_contracts.simulation import (
     AssetInstanceSnapshotV1,
     CampaignRuntimeStateSnapshotV1,
@@ -30,6 +35,24 @@ from aegis_simulation_domain.random_streams import SeededRandomStreams
 
 @dataclass
 class AssetState:
+    """One asset's world state: what the attacker did to it, and what we did about it.
+
+    These are two independent facts and the world has to hold both. ``status`` is the
+    asset's *security posture* — the attacker-driven, manifest-baselined value from the
+    ``NodeStatus`` vocabulary (``normal``/``suspicious``/``under_investigation``/
+    ``contained``/``compromised``). ``applied_controls`` is the set of *defensive controls*
+    the response toolkit has put on it, in the richer ``ContainmentStatus`` vocabulary
+    (``observed``, ``isolated``, ``credentials_revoked``, ...).
+
+    Collapsing the two into one field is what made "Observe" destructive: the operator
+    watched a compromised host and the world forgot it was compromised, because the
+    control overwrote the posture. Keeping them apart means a control can never erase an
+    intrusion, and the after-action can still say what was compromised and when.
+
+    Controls accumulate in application order and are deduplicated, so the tuple doubles as
+    the deterministic record of which controls are live on the asset right now.
+    """
+
     id: str
     asset_type: str
     status: str
@@ -37,6 +60,45 @@ class AssetState:
     criticality: float
     zone_id: str
     revision: int = 0
+    applied_controls: tuple[str, ...] = ()
+
+    def apply_status(self, status: str) -> None:
+        """Apply one status value from either vocabulary without erasing the other.
+
+        The single entry point for ``effect.set_asset_status`` on every path that mutates
+        an asset — the live plugin handler, the cold rebuild that re-applies persisted
+        effect events, and the ghost-branch counterfactual engine — so all three compose
+        the world identically and a rebuilt runtime matches a live one exactly.
+
+        Control values land in :attr:`applied_controls`; anything else (a posture value,
+        or an unrecognized authored status) sets the posture. ``revision`` always advances:
+        something was applied to this asset, and consumers diff on revision.
+        """
+        if is_control_status(status):
+            if status not in self.applied_controls:
+                self.applied_controls = (*self.applied_controls, status)
+        else:
+            self.status = status
+        self.revision += 1
+
+    def lift_controls(self) -> None:
+        """Take every defensive control back off the asset, leaving its posture intact.
+
+        Lifting is already part of the model the proportionality scoring assumes —
+        containment that has since been lifted stops counting against the defender — even
+        though no allowlisted command produces it yet. Keeping it here means the posture
+        underneath survives the lift, which is the whole point of the split: an asset that
+        is un-isolated goes back to being visibly compromised, not visibly fine.
+        """
+        if self.applied_controls:
+            self.applied_controls = ()
+            self.revision += 1
+
+    @property
+    def effective_status(self) -> str:
+        """The single operator-facing status this asset projects to. See
+        :func:`aegis_contracts.killchain.project_effective_status`."""
+        return project_effective_status(self.status, self.applied_controls).value
 
 
 @dataclass
@@ -280,6 +342,7 @@ class WorldState:
                     id=asset.id,
                     asset_type=asset.asset_type,
                     status=asset.status,
+                    applied_controls=list(asset.applied_controls),
                     risk_score=asset.risk_score,
                     criticality=asset.criticality,
                     zone_id=asset.zone_id,
@@ -339,18 +402,7 @@ class WorldState:
     def restore_from_snapshot(self, snapshot: WorldStateSnapshotV1) -> None:
         self.status = snapshot.status
         self.next_sequence = snapshot.next_sequence
-        self.assets = {
-            asset.id: AssetState(
-                id=asset.id,
-                asset_type=asset.asset_type,
-                status=asset.status,
-                risk_score=asset.risk_score,
-                criticality=asset.criticality,
-                zone_id=asset.zone_id,
-                revision=asset.revision,
-            )
-            for asset in snapshot.assets
-        }
+        self.assets = {asset.id: _restore_asset(asset) for asset in snapshot.assets}
         self.relationships = {
             relationship.id: RelationshipState(
                 id=relationship.id,
@@ -391,3 +443,32 @@ class WorldState:
         }
         self.peak_disruption_cost = snapshot.peak_disruption_cost
         self.outcome = snapshot.outcome
+
+
+def _restore_asset(asset: AssetInstanceSnapshotV1) -> AssetState:
+    """Rebuild one asset from a checkpoint, upgrading pre-split checkpoints in place.
+
+    Checkpoints written before posture and controls were separated stored one collapsed
+    ``status``, which for a contained asset holds a control value. Restoring that straight
+    into ``status`` would leave a posture the graph vocabulary does not accept and a set of
+    controls the disruption model cannot see, so a resumed run would forget every
+    containment the operator had applied. Splitting it back out is lossy in one direction
+    only — the posture underneath a legacy containment was already overwritten and is
+    unrecoverable — so we project the control to the posture it implies, which is what the
+    old world would have shown anyway.
+    """
+    status = asset.status
+    controls = tuple(asset.applied_controls)
+    if not controls and is_control_status(status):
+        controls = (status,)
+        status = project_node_status(status).value
+    return AssetState(
+        id=asset.id,
+        asset_type=asset.asset_type,
+        status=status,
+        risk_score=asset.risk_score,
+        criticality=asset.criticality,
+        zone_id=asset.zone_id,
+        revision=asset.revision,
+        applied_controls=controls,
+    )

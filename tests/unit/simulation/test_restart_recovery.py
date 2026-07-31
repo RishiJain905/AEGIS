@@ -81,7 +81,7 @@ def test_recovery_restores_paused_status_and_contained_asset() -> None:
     _execute_containment(reference, asset_id)  # post-checkpoint, no new checkpoint
 
     assert reference.world.status is SimulationRunStatus.PAUSED
-    assert reference.world.assets[asset_id].status == CONTAINED_STATUS
+    assert reference.world.assets[asset_id].applied_controls == (CONTAINED_STATUS,)
 
     post_checkpoint = [
         event
@@ -97,7 +97,7 @@ def test_recovery_restores_paused_status_and_contained_asset() -> None:
     # Authoritative lifecycle status is preserved (never silently RUNNING).
     assert restored.world.status is SimulationRunStatus.PAUSED
     # Executed-action world effect is faithfully reconstructed.
-    assert restored.world.assets[asset_id].status == CONTAINED_STATUS
+    assert restored.world.assets[asset_id].applied_controls == (CONTAINED_STATUS,)
     # Golden-style determinism: identical normalized world state (status, assets, RNG,
     # queue, clock, sequence) as the live runtime.
     assert _world_digest(restored) == _world_digest(reference)
@@ -118,7 +118,7 @@ def test_recovery_from_scratch_reproduces_identical_state() -> None:
     service._replay_events(restored, _sim_events(reference))
 
     assert restored.world.status is SimulationRunStatus.PAUSED
-    assert restored.world.assets[asset_id].status == CONTAINED_STATUS
+    assert restored.world.assets[asset_id].applied_controls == (CONTAINED_STATUS,)
     # Re-stepping is deterministic, so RNG/queue/clock match exactly too.
     assert _world_digest(restored) == _world_digest(reference)
 

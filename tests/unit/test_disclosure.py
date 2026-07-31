@@ -77,7 +77,13 @@ def test_governed_asset_disclosed_by_alert(governing_map):
     assert is_asset_disclosed(_WORKSTATION, governing_map, alerted) is False
 
 
-def _snapshot(*, status: str, risk: float, asset_id: str = _WORKSTATION) -> GraphSnapshotV1:
+def _snapshot(
+    *,
+    status: str,
+    risk: float,
+    asset_id: str = _WORKSTATION,
+    applied_controls: list[str] | None = None,
+) -> GraphSnapshotV1:
     return GraphSnapshotV1.model_validate(
         {
             "schemaVersion": 1,
@@ -91,6 +97,7 @@ def _snapshot(*, status: str, risk: float, asset_id: str = _WORKSTATION) -> Grap
                     "entityType": "asset",
                     "assetType": "device",
                     "label": "WS",
+                    "appliedControls": applied_controls or [],
                     "riskScore": risk,
                     "criticality": 0.5,
                     "status": status,
@@ -122,6 +129,38 @@ def test_redaction_reveals_true_state_after_disclosure(governing_map):
     assert node.status == "compromised"
     assert node.disclosed is True
     assert node.risk_score == pytest.approx(0.9)
+
+
+def test_redaction_keeps_the_operators_own_controls_on_a_fogged_asset(governing_map):
+    """Fog hides the attacker's work, never the operator's.
+
+    Containing a still-fogged asset used to come back reading ``normal``: the redaction
+    blanked the whole composed status, so the operator's own isolate order vanished from
+    the graph they were watching. The posture underneath stays hidden; the control does
+    not.
+    """
+    snap = _snapshot(status="contained", risk=0.9, applied_controls=["isolated"])
+    redacted = redact_graph_snapshot(snap, governing_map, DisclosureInputs())
+    node = redacted.nodes[0]
+    assert node.status == "contained"
+    assert node.applied_controls == ["isolated"]
+    assert node.disclosed is False
+    # The compromise underneath is still hidden — the risk spike does not leak.
+    assert node.risk_score <= governing_map[_WORKSTATION].baseline_risk
+
+
+def test_redaction_of_an_observed_fogged_asset_reads_under_investigation(governing_map):
+    """An observation control is not containment, so it composes over the *baseline*.
+
+    The compromise it is sitting on top of stays hidden, which is the whole point: the
+    operator learns they are watching the asset, not that they were right to.
+    """
+    snap = _snapshot(status="compromised", risk=0.9, applied_controls=["observed"])
+    redacted = redact_graph_snapshot(snap, governing_map, DisclosureInputs())
+    node = redacted.nodes[0]
+    assert node.status == "under_investigation"
+    assert node.applied_controls == ["observed"]
+    assert node.disclosed is False
 
 
 def test_redaction_leaves_ungoverned_untouched(governing_map):
