@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { NodeStatus } from '@aegis/contracts-ts';
 import { Badge } from '@aegis/ui';
 import type { ReactNode } from 'react';
@@ -9,9 +11,12 @@ import { SitrepButton } from '@/features/comms-desk';
 import { LoadoutChips, RoeDial } from '@/features/loadout';
 import { ThreatTempoIndicator, useLiveRun } from '@/features/live-run';
 import { OperatorIdentityBadge } from '@/features/auth';
+import { useAfterActionReport } from '@/features/reports/use-report-queries';
+import { RunStatusRail } from '@/features/shell/components/run-status-rail';
 import {
   useConnectionStatus,
   useRun,
+  useRunGraph,
   useRunReadOnly,
 } from '@/features/shell/hooks/use-shell-queries';
 
@@ -39,39 +44,19 @@ function TelemetryItem({
   );
 }
 
-const LIVE_HEALTH_LABELS: Record<string, string> = {
-  connected: 'Live',
-  disconnected: 'Offline',
-  reconnecting: 'Reconnecting',
-  catching_up: 'Catching up',
-  gap: 'Gap',
-  snapshot_resync: 'Resyncing',
-  simulator_paused: 'Sim paused',
-  locally_paused: 'Updates paused',
-  stale: 'Stale',
-};
-
 export function StatusStrip({ runId }: StatusStripProps) {
   const connectionQuery = useConnectionStatus();
   const runQuery = useRun(runId ?? '');
   const readOnlyQuery = useRunReadOnly(runId ?? '');
   const liveRun = useLiveRun();
+  const isLiveMode = liveRun?.isLiveMode === true;
 
   const connectionStatus = connectionQuery.data ?? 'connected';
   const readOnly = readOnlyQuery.data ?? false;
 
-  const connectionLabel =
-    liveRun?.isLiveMode === true
-      ? (LIVE_HEALTH_LABELS[liveRun.state.connectionHealth] ?? liveRun.state.connectionHealth)
-      : connectionStatus === 'offline'
-        ? 'Offline'
-        : connectionStatus === 'reconnecting'
-          ? 'Reconnecting'
-          : 'Connected';
-
-  const runStatus = liveRun?.isLiveMode ? liveRun.state.runStatus : runQuery.data?.status;
-  const simTime = liveRun?.isLiveMode ? liveRun.state.simTime : runQuery.data?.simTime;
-  const sequence = liveRun?.isLiveMode ? liveRun.state.lastAppliedSequence : undefined;
+  const runStatus = isLiveMode ? liveRun.state.runStatus : runQuery.data?.status;
+  const simTime = isLiveMode ? liveRun.state.simTime : runQuery.data?.simTime;
+  const sequence = isLiveMode ? liveRun.state.lastAppliedSequence : undefined;
   // The run's actual seed (server-drawn when launched seedless). Surfaced so operators can
   // see and cite the seed for a given run — determinism is anchored to it.
   const seed = runQuery.data?.seed;
@@ -82,6 +67,26 @@ export function StatusStrip({ runId }: StatusStripProps) {
   // compact chip alongside the loadout so it stays visible for the whole engagement.
   const commanderIntent = runQuery.data?.commanderIntent ?? null;
 
+  // Posture is the worst *disclosed* node status. Live runs read the mutable graph store
+  // (revision-keyed so a status delta re-derives it); fixture views read the REST snapshot.
+  const restGraphQuery = useRunGraph(runId ?? '', { enabled: Boolean(runId) && !isLiveMode });
+  const graphRevision = isLiveMode ? liveRun.graphRevision : 0;
+  const liveGraphStore =
+    liveRun !== null && liveRun.isLiveMode && liveRun.bootstrapSnapshot !== null
+      ? liveRun.graphStore
+      : null;
+  const postureNodes = useMemo(() => {
+    if (liveGraphStore !== null) {
+      return liveGraphStore.exportSnapshot().nodes;
+    }
+    return restGraphQuery.data?.snapshot?.nodes ?? undefined;
+  }, [liveGraphStore, graphRevision, restGraphQuery.data]);
+
+  // Report readiness: only queried once the run is terminal (the hook itself never fires
+  // before that thanks to `enabled`), so the chip is honest about "ended but not written".
+  const terminal = runStatus === 'completed' || runStatus === 'stopped';
+  const reportQuery = useAfterActionReport(runId ?? '', { enabled: Boolean(runId) && terminal });
+
   return (
     <div
       className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_78%,transparent)] px-5 py-2.5 backdrop-blur-xl xl:px-6"
@@ -89,38 +94,26 @@ export function StatusStrip({ runId }: StatusStripProps) {
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-center gap-2.5">
-        <span className="font-[family-name:var(--aegis-font-display)] text-[0.6875rem] font-semibold uppercase tracking-[0.13em] text-[var(--aegis-text-muted)]">
-          Control link
-        </span>
-        {/* The at-a-glance connection indicator. Fixed size, so a health flip costs no layout —
-            the explanatory copy lives in the one ConnectionHealthBanner, which overlays. */}
-        <Badge
-          nodeStatus={
-            connectionLabel === 'Live' || connectionLabel === 'Connected'
-              ? NodeStatus.NORMAL
-              : NodeStatus.SUSPICIOUS
-          }
-          data-testid="connection-status-badge"
-        >
-          {connectionLabel}
-        </Badge>
-      </div>
+      <RunStatusRail
+        isLiveMode={isLiveMode}
+        connectionHealth={isLiveMode ? liveRun.state.connectionHealth : undefined}
+        connectionStatus={connectionStatus}
+        runStatus={runStatus}
+        nodes={postureNodes}
+        reportAvailable={reportQuery.data !== undefined}
+      />
       {readOnly ? (
         <Badge nodeStatus={NodeStatus.UNDER_INVESTIGATION} data-testid="read-only-badge">
           Read-only
         </Badge>
       ) : null}
-      {runId || runStatus || simTime || sequence !== undefined ? (
+      {runId || simTime || sequence !== undefined ? (
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-l border-[var(--aegis-border-subtle)] pl-4 font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] leading-4 tabular-nums">
           {runId ? <TelemetryItem label="RUN" value={runId} /> : null}
-          {runStatus ? (
-            <TelemetryItem label="STATUS" value={runStatus} testId="run-status" />
-          ) : null}
           {seed !== undefined ? (
             <TelemetryItem label="SEED" value={seed} testId="run-seed" />
           ) : null}
-          {simTime ? <TelemetryItem label="SIM" value={simTime} testId="sim-time" /> : null}
+          {simTime ? <TelemetryItem label="CLOCK" value={simTime} testId="sim-time" /> : null}
           {sequence !== undefined ? (
             <TelemetryItem label="SEQ" value={sequence} testId="applied-sequence" />
           ) : null}

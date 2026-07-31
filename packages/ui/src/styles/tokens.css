@@ -1,14 +1,17 @@
 :root {
-  /* Surfaces — deep-space neutral charcoal; depth comes from atmosphere and
-   * translucency, not blue-tinted slabs. */
-  --aegis-surface-base: #0a0a0e;
-  --aegis-surface-canvas: #08080b;
-  --aegis-surface-elevated: #101016;
-  --aegis-surface-panel: #13131a;
-  --aegis-surface-rail: #0c0c11;
-  --aegis-surface-overlay: #1a1a23;
-  --aegis-surface-raised: #17171f;
-  --aegis-surface-hover: #1e1e28;
+  /* Surfaces — deep-space charcoal with a barely-there cool cast (blue +3–5,
+   * red −1 per step). The cast is deliberate temperature design, not styling:
+   * the void is cold, and every warm element — signal-gold accents, the amber
+   * horizon glow — reads as a light source against it. Depth still comes from
+   * atmosphere and translucency, never from blue-tinted slabs. */
+  --aegis-surface-base: #08090e;
+  --aegis-surface-canvas: #06070b;
+  --aegis-surface-elevated: #0f1017;
+  --aegis-surface-panel: #12131c;
+  --aegis-surface-rail: #0a0b12;
+  --aegis-surface-overlay: #191a26;
+  --aegis-surface-raised: #161722;
+  --aegis-surface-hover: #1d1e2b;
 
   /* Typography — loaded via next/font in the app; stacks below are fallbacks
    * for Storybook and tests. */
@@ -45,10 +48,10 @@
   --aegis-space-12: 3rem;
   --aegis-space-16: 4rem;
 
-  /* Borders */
-  --aegis-border-default: #26262f;
-  --aegis-border-subtle: #1c1c24;
-  --aegis-border-strong: #3a3a46;
+  /* Borders — same cool cast as the surfaces they sit on. */
+  --aegis-border-default: #252734;
+  --aegis-border-subtle: #1b1d28;
+  --aegis-border-strong: #3a3d4e;
   --aegis-border-highlight: rgb(244 232 200 / 0.07);
   --aegis-radius-sm: 0.375rem;
   --aegis-radius-md: 0.625rem;
@@ -65,24 +68,28 @@
 
   /* Focus */
   --aegis-focus-ring: #f2ca6b;
-  --aegis-focus-ring-offset: #0a0a0e;
+  --aegis-focus-ring-offset: #08090e;
   --aegis-focus-width: 2px;
 
-  /* Risk */
+  /* Risk — a thermal ramp: amber-orange → hot orange → red, rising in
+   * temperature with severity. Medium sits at ~32° hue, clearly separated
+   * from the ~42° signal-gold accent so warnings and operator affordances can
+   * never be mistaken for each other (the light theme always worked this way;
+   * dark now matches). */
   --aegis-risk-low: #63d6a2;
   --aegis-risk-low-bg: #0d2a1e;
-  --aegis-risk-medium: #f1c257;
-  --aegis-risk-medium-bg: #2e230d;
-  --aegis-risk-high: #ff9b55;
-  --aegis-risk-high-bg: #31190d;
+  --aegis-risk-medium: #f2a54b;
+  --aegis-risk-medium-bg: #30200a;
+  --aegis-risk-high: #ff8747;
+  --aegis-risk-high-bg: #331708;
   --aegis-risk-critical: #ff7078;
   --aegis-risk-critical-bg: #331115;
 
-  /* Status — NodeStatus + UI states */
+  /* Status — NodeStatus + UI states; suspicious mirrors risk-medium. */
   --aegis-status-normal: #63d6a2;
   --aegis-status-normal-bg: #0d2a1e;
-  --aegis-status-suspicious: #f1c257;
-  --aegis-status-suspicious-bg: #2e230d;
+  --aegis-status-suspicious: #f2a54b;
+  --aegis-status-suspicious-bg: #30200a;
   --aegis-status-under-investigation: #68d0ee;
   --aegis-status-under-investigation-bg: #0d2733;
   --aegis-status-contained: #9aa8ff;
@@ -90,13 +97,13 @@
   --aegis-status-compromised: #ff7078;
   --aegis-status-compromised-bg: #331115;
   --aegis-status-loading: #a3a6ae;
-  --aegis-status-loading-bg: #1a1a22;
+  --aegis-status-loading-bg: #191a25;
   --aegis-status-error: #ff7078;
   --aegis-status-error-bg: #331115;
   --aegis-status-disconnected: #bfc2c9;
-  --aegis-status-disconnected-bg: #20202a;
+  --aegis-status-disconnected-bg: #1f202c;
   --aegis-status-empty: #a3a6ae;
-  --aegis-status-empty-bg: #17171e;
+  --aegis-status-empty-bg: #161721;
 
   /* Density */
   --aegis-density-compact-gap: var(--aegis-space-2);
@@ -115,11 +122,12 @@
  * attribute on the root element (see the shell theme preference).
  */
 :root[data-theme='light'] {
-  /* Surfaces */
+  /* Surfaces — panels warm off-white rather than clinical #fff, so paper and
+   * panel sit in one material; dialogs stay pure white for maximum lift. */
   --aegis-surface-base: #f4f2ec;
   --aegis-surface-canvas: #efede6;
-  --aegis-surface-elevated: #ffffff;
-  --aegis-surface-panel: #ffffff;
+  --aegis-surface-elevated: #fffefb;
+  --aegis-surface-panel: #fefdf9;
   --aegis-surface-rail: #edeae2;
   --aegis-surface-overlay: #ffffff;
   --aegis-surface-raised: #f8f6f1;
@@ -158,21 +166,22 @@
   --aegis-focus-ring: #7a5a10;
   --aegis-focus-ring-offset: #f4f2ec;
 
-  /* Risk */
+  /* Risk — same thermal ramp as dark: amber-orange → orange → red. Medium
+   * pulled toward orange (~32° hue) to keep clear of the gold accent. */
   --aegis-risk-low: #16794f;
   --aegis-risk-low-bg: #e3f5ec;
-  --aegis-risk-medium: #8a5b06;
-  --aegis-risk-medium-bg: #fbf0d9;
+  --aegis-risk-medium: #94520a;
+  --aegis-risk-medium-bg: #fceed3;
   --aegis-risk-high: #a8460d;
   --aegis-risk-high-bg: #fbe7d8;
   --aegis-risk-critical: #c0242f;
   --aegis-risk-critical-bg: #fce4e5;
 
-  /* Status — NodeStatus + UI states */
+  /* Status — NodeStatus + UI states; suspicious mirrors risk-medium. */
   --aegis-status-normal: #16794f;
   --aegis-status-normal-bg: #e3f5ec;
-  --aegis-status-suspicious: #8a5b06;
-  --aegis-status-suspicious-bg: #fbf0d9;
+  --aegis-status-suspicious: #94520a;
+  --aegis-status-suspicious-bg: #fceed3;
   --aegis-status-under-investigation: #0d6e90;
   --aegis-status-under-investigation-bg: #e3f1f6;
   --aegis-status-contained: #4c4fc4;

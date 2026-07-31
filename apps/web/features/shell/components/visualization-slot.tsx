@@ -4,7 +4,6 @@ import dynamic from 'next/dynamic';
 
 import {
   Alert,
-  Badge,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -63,7 +62,8 @@ interface VisualizationSlotProps {
 /**
  * The stage header: one line, because everything it used to say in three was chrome
  * competing with the map for height. The 2D/3D switch lives here rather than inside either
- * renderer so it stays in the same place across modes.
+ * renderer so it stays in the same place across modes, and the sync indicator shares its
+ * instrument styling so the pair reads as one designed control.
  */
 function StageFrame({
   title,
@@ -87,9 +87,21 @@ function StageFrame({
         <h2 className={cn(typographyTokens.displayMd, 'text-[var(--aegis-text-primary)]')}>
           {title}
         </h2>
-        <p className="hidden truncate text-xs text-[var(--aegis-text-muted)] lg:block">{hint}</p>
-        <div className="ml-auto flex items-center gap-2">
-          <Badge variant="outline">GraphStore synced</Badge>
+        <p className="hidden truncate font-[family-name:var(--aegis-font-mono)] text-[0.625rem] uppercase tracking-[0.1em] text-[var(--aegis-text-faint)] lg:block">
+          {hint}
+        </p>
+        <div className="ml-auto flex items-stretch gap-2">
+          <span
+            data-testid="graph-sync-chip"
+            title="This view is projected from the synchronized graph store; both renderers read the same state."
+            className="flex items-center gap-1.5 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-default)] bg-[var(--aegis-surface-canvas)] px-2.5 font-[family-name:var(--aegis-font-mono)] text-[0.625rem] uppercase tracking-[0.1em] text-[var(--aegis-text-muted)] shadow-[inset_0_1px_5px_rgb(0_0_0_/_0.28)]"
+          >
+            <span
+              aria-hidden="true"
+              className="h-1.5 w-1.5 rounded-full bg-[var(--aegis-status-normal)]"
+            />
+            Graph synced
+          </span>
           <GraphViewModeToggle />
         </div>
       </div>

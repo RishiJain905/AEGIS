@@ -37,7 +37,7 @@ const ASSET_TYPE_COLORS: Record<string, string> = {
 // status language of the rest of the UI.
 const STATUS_COLORS: Record<string, string> = {
   normal: '#63d6a2',
-  suspicious: '#f1c257',
+  suspicious: '#f2a54b',
   under_investigation: '#68d0ee',
   contained: '#9aa8ff',
   compromised: '#ff7078',
@@ -46,15 +46,15 @@ const STATUS_COLORS: Record<string, string> = {
 // Risk-band accents mirror the dark-theme `--aegis-risk-*` tokens.
 const RISK_BAND_ACCENTS: Record<RiskBand, string> = {
   low: '#63d6a2',
-  medium: '#f1c257',
-  high: '#ff9b55',
+  medium: '#f2a54b',
+  high: '#ff8747',
   critical: '#ff7078',
 };
 
 const RISK_HALO_COLORS: Record<RiskBand, string> = {
   low: '#63d6a233',
-  medium: '#f1c25744',
-  high: '#ff9b5566',
+  medium: '#f2a54b44',
+  high: '#ff874766',
   critical: '#ff707888',
 };
 
@@ -165,7 +165,7 @@ export function getEdgeVisualStyle(edge: GraphEdgeV1): EdgeVisualStyle {
     riskWeight >= 0.8
       ? '#ff7078'
       : riskWeight >= 0.55
-        ? '#ff9b55'
+        ? '#ff8747'
         : hasActivity
           ? '#36a9e1'
           : '#5d6b7e';

@@ -145,7 +145,7 @@ const LEGEND_ITEMS = [
   },
   {
     label: 'Suspicious',
-    color: '#f1c257',
+    color: '#f2a54b',
     shape: 'ring' as const,
     description: 'Anomalous signals, unconfirmed',
   },
@@ -163,7 +163,7 @@ const LEGEND_ITEMS = [
   },
   {
     label: 'High-risk link',
-    color: '#ff9b55',
+    color: '#ff8747',
     shape: 'line' as const,
     description: 'Edge carrying attack-path risk',
   },
@@ -599,6 +599,24 @@ export function OperationalGraphView({
     };
   }, [snapshot.runId]);
 
+  // Follow a selection made *outside* the canvas — an alert card or an ops-feed action
+  // naming its target asset. Without this the panel selection updated the inspector while
+  // the node stayed wherever the camera happened to be, which is exactly the "it just
+  // prints an asset id at me" complaint. Guarded by a ref so a re-render (or the node click
+  // that already focused) does not re-animate the camera onto the same node.
+  const lastFocusedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!adapterReady || !selectedEntityId) {
+      lastFocusedRef.current = selectedEntityId;
+      return;
+    }
+    if (lastFocusedRef.current === selectedEntityId) {
+      return;
+    }
+    lastFocusedRef.current = selectedEntityId;
+    adapterRef.current?.focusNode(selectedEntityId);
+  }, [adapterReady, selectedEntityId]);
+
   const handleIsolate = useCallback(() => {
     const primaryId = selection.primaryNodeId ?? selectedEntityId;
     if (!primaryId) {
@@ -696,9 +714,25 @@ export function OperationalGraphView({
               onChange={setSearchQuery}
               className="w-48 sm:w-60"
             />
-            <Badge variant="outline" className="font-mono uppercase tracking-[0.12em]">
-              {layoutStatus}
-            </Badge>
+            {/* The layout engine only gets a voice when it has something to say: settling
+                (positions are still moving) or failed. A steady board stays chrome-free. */}
+            {layoutStatus === LayoutStatus.RUNNING ? (
+              <Badge
+                variant="outline"
+                className="motion-safe:animate-pulse font-mono uppercase tracking-[0.12em]"
+                data-testid="graph-layout-status"
+              >
+                Layout settling…
+              </Badge>
+            ) : layoutStatus === LayoutStatus.ERROR ? (
+              <Badge
+                variant="outline"
+                className="font-mono uppercase tracking-[0.12em] text-[var(--aegis-risk-high)]"
+                data-testid="graph-layout-status"
+              >
+                Layout failed
+              </Badge>
+            ) : null}
           </div>
           <div className="graph-command-bar pointer-events-auto flex flex-wrap items-center gap-2">
             <Button
@@ -808,10 +842,10 @@ export function OperationalGraphView({
           <span className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--aegis-accent-cyan)] shadow-[0_0_10px_var(--aegis-accent-cyan)]" />
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--aegis-text-muted)]">
-              Analysis plane · drag to pan · right-click a node to command it
+              Drag to pan · right-click a node to command it
             </span>
           </span>
-          <span className="font-mono text-[10px] text-[var(--aegis-text-muted)]">
+          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--aegis-text-faint)]">
             {String(filteredNodeIds.length)} nodes · LOD {lodTier}
           </span>
         </div>

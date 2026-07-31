@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 import { Button, Tabs, TabsContent, TabsList, TabsTrigger, cn, typographyTokens } from '@aegis/ui';
 
@@ -17,6 +17,11 @@ export interface WorkspaceDockTab {
    * false (default) lets the dock scroll a stack of panels.
    */
   fill?: boolean;
+  /**
+   * Optional live count rendered on the tab — the dock's "needs attention" signal. Shown
+   * on the collapsed strip too, so pending work stays visible when the dock is tucked away.
+   */
+  badge?: number;
 }
 
 export interface WorkspaceDockProps {
@@ -27,6 +32,9 @@ export interface WorkspaceDockProps {
   /** Eyebrow above the tabs, and the dock's accessible name. */
   label: string;
   tabs: WorkspaceDockTab[];
+  /** Controlled active tab. When set, pair with `onActiveTabChange`. */
+  activeTab?: string;
+  onActiveTabChange?: (tabId: string) => void;
   'data-testid'?: string;
 }
 
@@ -45,6 +53,28 @@ function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
   );
 }
 
+function TabBadge({
+  count,
+  className,
+  'data-testid': testId,
+}: {
+  count: number;
+  className?: string;
+  'data-testid'?: string;
+}) {
+  return (
+    <span
+      data-testid={testId}
+      className={cn(
+        'rounded-full border border-[var(--aegis-accent-line)] bg-[var(--aegis-accent-soft)] px-1.5 py-px font-[family-name:var(--aegis-font-mono)] text-[9px] leading-4 tabular-nums text-[var(--aegis-accent-strong)]',
+        className,
+      )}
+    >
+      {count}
+    </span>
+  );
+}
+
 /**
  * A collapsible, tabbed side dock for the run workspace. Docks flank the graph stage and
  * hold everything that is not the play surface, so the graph keeps the middle of the
@@ -57,6 +87,8 @@ export function WorkspaceDock({
   side,
   label,
   tabs,
+  activeTab,
+  onActiveTabChange,
   'data-testid': testId,
 }: WorkspaceDockProps) {
   const collapsed = useWorkspaceUiStore(
@@ -65,14 +97,23 @@ export function WorkspaceDock({
   const setPanelCollapsed = useWorkspaceUiStore((state) => state.setPanelCollapsed);
 
   const firstTabId = tabs[0]?.id ?? '';
-  const [activeId, setActiveId] = useState(firstTabId);
+  const [uncontrolledId, setUncontrolledId] = useState(firstTabId);
+  const activeId = activeTab ?? uncontrolledId;
+
+  const setActiveId = useCallback(
+    (tabId: string) => {
+      setUncontrolledId(tabId);
+      onActiveTabChange?.(tabId);
+    },
+    [onActiveTabChange],
+  );
 
   // Keep the active tab valid if the tab set changes (e.g. a run-scoped tab drops out).
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeId)) {
       setActiveId(firstTabId);
     }
-  }, [tabs, activeId, firstTabId]);
+  }, [tabs, activeId, firstTabId, setActiveId]);
 
   if (collapsed) {
     return (
@@ -101,10 +142,10 @@ export function WorkspaceDock({
               setActiveId(tab.id);
               setPanelCollapsed(region, false);
             }}
-            className="rounded-[var(--aegis-radius-sm)] px-1 py-3 font-[family-name:var(--aegis-font-mono)] text-[10px] uppercase tracking-[0.16em] text-[var(--aegis-text-muted)] transition-colors hover:bg-[var(--aegis-surface-hover)] hover:text-[var(--aegis-text-primary)]"
-            style={{ writingMode: 'vertical-rl' }}
+            className="flex flex-col items-center gap-1 rounded-[var(--aegis-radius-sm)] px-1 py-3 font-[family-name:var(--aegis-font-mono)] text-[10px] uppercase tracking-[0.16em] text-[var(--aegis-text-muted)] transition-colors hover:bg-[var(--aegis-surface-hover)] hover:text-[var(--aegis-text-primary)]"
           >
-            {tab.label}
+            {tab.badge !== undefined && tab.badge > 0 ? <TabBadge count={tab.badge} /> : null}
+            <span style={{ writingMode: 'vertical-rl' }}>{tab.label}</span>
           </button>
         ))}
       </div>
@@ -134,6 +175,13 @@ export function WorkspaceDock({
               {tabs.map((tab) => (
                 <TabsTrigger key={tab.id} value={tab.id} data-testid={`dock-tab-${tab.id}`}>
                   {tab.label}
+                  {tab.badge !== undefined && tab.badge > 0 ? (
+                    <TabBadge
+                      count={tab.badge}
+                      className="ml-1.5"
+                      data-testid={`dock-tab-badge-${tab.id}`}
+                    />
+                  ) : null}
                 </TabsTrigger>
               ))}
             </TabsList>

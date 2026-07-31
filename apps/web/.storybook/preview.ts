@@ -11,7 +11,7 @@ const preview: Preview = {
     backgrounds: {
       default: 'command-centre',
       values: [
-        { name: 'command-centre', value: '#0a0a0e' },
+        { name: 'command-centre', value: '#08090e' },
         { name: 'command-centre-light', value: '#f4f2ec' },
       ],
     },

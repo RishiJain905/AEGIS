@@ -207,104 +207,12 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
               </Panel>
             ) : null}
 
-            {alertsQuery.data && alertsQuery.data.length > 0 ? (
-              <Panel title="Alerts" density="compact" data-testid="alerts-panel">
-                <ul className="flex flex-col gap-2" data-tutorial-id="alerts-list">
-                  {alertsQuery.data.map((alert) => (
-                    <li
-                      key={alert.id}
-                      className="rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] border-l-[3px] border-l-[var(--aegis-risk-high)] bg-[var(--aegis-surface-elevated)] px-3 py-3 text-sm shadow-[var(--aegis-shadow-control)]"
-                      data-testid={`alert-item-${alert.id}`}
-                    >
-                      <p className="font-medium">{alert.title}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <Badge>{alert.severity}</Badge>
-                        {alert.confidence != null ? (
-                          <span className="text-xs text-[var(--aegis-text-muted)]">
-                            {Math.round(alert.confidence * 100)}% confidence
-                          </span>
-                        ) : null}
-                        {alert.detectorVersion ? (
-                          <span className="font-mono text-xs text-[var(--aegis-text-muted)]">
-                            {alert.detectorVersion}
-                          </span>
-                        ) : null}
-                      </div>
-                      {alert.explanation ? (
-                        <details className="mt-2 text-xs leading-5 text-[var(--aegis-text-secondary)]">
-                          <summary className="cursor-pointer font-medium">Explanation</summary>
-                          <p className="mt-1.5 break-words">{alert.explanation.summary}</p>
-                          <p className="mt-1.5 break-words font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
-                            {alert.explanation.comparison}
-                          </p>
-                          {alert.evidence ? (
-                            <p className="mt-1.5 break-words text-[var(--aegis-text-muted)]">
-                              Window: {alert.evidence.windowKey}
-                            </p>
-                          ) : null}
-                        </details>
-                      ) : null}
-                      {'anomalyExplanation' in alert && alert.anomalyExplanation ? (
-                        <details
-                          className="mt-2 text-xs leading-5 text-[var(--aegis-text-secondary)]"
-                          open={alert.detectorId === 'isolation-forest'}
-                        >
-                          <summary className="cursor-pointer font-medium">Anomaly model</summary>
-                          <p className="mt-1.5 break-words">
-                            {(alert.anomalyExplanation as { summary?: string }).summary}
-                          </p>
-                          <p className="mt-1.5 break-words font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
-                            Score:{' '}
-                            {(
-                              (
-                                alert.anomalyExplanation as {
-                                  observedScore?: number;
-                                }
-                              ).observedScore ??
-                              alert.confidence ??
-                              0
-                            ).toFixed(2)}{' '}
-                            / threshold{' '}
-                            {(
-                              alert.anomalyExplanation as { threshold?: number }
-                            ).threshold?.toFixed(2)}
-                          </p>
-                          {'modelVersionId' in alert && alert.modelVersionId ? (
-                            <p className="mt-1.5 break-words font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
-                              Model: {String(alert.modelVersionId)}
-                            </p>
-                          ) : null}
-                          {(
-                            alert.anomalyExplanation as {
-                              topFeatures?: string[];
-                            }
-                          ).topFeatures ? (
-                            <p className="mt-1.5 break-words text-[var(--aegis-text-muted)]">
-                              Top features:{' '}
-                              {(
-                                (
-                                  alert.anomalyExplanation as {
-                                    topFeatures?: string[];
-                                  }
-                                ).topFeatures ?? []
-                              ).join(', ')}
-                            </p>
-                          ) : null}
-                        </details>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              </Panel>
-            ) : null}
-
             {!selectedEntityId &&
             !activeIncidentId &&
-            (!incidentsQuery.data || incidentsQuery.data.length === 0) &&
-            (!alertsQuery.data || alertsQuery.data.length === 0) ? (
+            (!incidentsQuery.data || incidentsQuery.data.length === 0) ? (
               <EmptyState
                 title="No selection"
-                description="Select a graph node, incident, or alert to inspect evidence and context."
+                description="Select a graph node — or an asset named on an alert card — to inspect evidence and context here."
               />
             ) : null}
           </div>

@@ -32,7 +32,8 @@ export const TOKEN_GROUPS: readonly TokenGroup[] = [
   {
     id: 'surfaces',
     title: 'Surfaces',
-    description: 'Obsidian charcoal layers, base to raised, for dense operational work.',
+    description:
+      'Cool obsidian layers, base to raised — a cold void the warm accents glow against.',
     tokens: [
       color('--aegis-surface-base', 'Base'),
       color('--aegis-surface-canvas', 'Canvas'),
@@ -70,7 +71,7 @@ export const TOKEN_GROUPS: readonly TokenGroup[] = [
   {
     id: 'risk',
     title: 'Risk bands',
-    description: 'Risk severity scale used by metric tiles and scoring surfaces.',
+    description: 'Thermal severity ramp — amber-orange to red, hotter as risk rises.',
     tokens: [
       color('--aegis-risk-low', 'Low'),
       color('--aegis-risk-medium', 'Medium'),

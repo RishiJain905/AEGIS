@@ -94,7 +94,7 @@ const ZONE_FRAME_STYLES: Record<ZoneThreatLevel, ZoneFrameStyle> = {
     border: 'rgba(241, 194, 87, 0.38)',
     fill: 'rgba(241, 194, 87, 0.05)',
     label: 'rgba(241, 194, 87, 0.9)',
-    dot: '#f1c257',
+    dot: '#f2a54b',
     borderWidth: 1.25,
   },
   hostile: {

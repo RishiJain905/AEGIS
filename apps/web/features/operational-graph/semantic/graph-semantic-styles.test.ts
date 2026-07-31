@@ -66,7 +66,7 @@ describe('graph semantic styles', () => {
       makeEdge({ confidence: 1, eventCount: 12, riskContribution: 0.65 }),
     );
 
-    expect(style.color).toBe('#ff9b55');
+    expect(style.color).toBe('#ff8747');
     expect(style.color).not.toMatch(/rgba|#[0-9a-f]{8}/i);
     expect(style.opacity).toBeGreaterThan(0.5);
     expect(style.opacity).toBeLessThanOrEqual(1);
@@ -94,7 +94,7 @@ describe('graph semantic styles', () => {
   it('maps risk band to halo color from the risk tokens', () => {
     // Dark-theme --aegis-risk-critical token value, with severity alpha.
     expect(getRiskHaloColor('critical')).toBe('#ff707888');
-    expect(getRiskHaloColor('high')).toBe('#ff9b5566');
+    expect(getRiskHaloColor('high')).toBe('#ff874766');
   });
 });
 
@@ -108,7 +108,7 @@ describe('node semantic accent (§7.1)', () => {
   it('falls back to the risk band color for normal-status elevated risk', () => {
     const accent = getNodeSemanticAccent({ status: 'normal', riskScore: 0.78 });
     expect(accent.source).toBe('risk');
-    expect(accent.emissiveColor).toBe('#ff9b55');
+    expect(accent.emissiveColor).toBe('#ff8747');
   });
 
   it('keeps a quiet neutral accent for no-signal nodes', () => {

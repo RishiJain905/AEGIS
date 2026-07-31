@@ -21,9 +21,11 @@
     margin: 0;
     min-height: 100vh;
     font-family: var(--aegis-font-sans);
+    /* Warm horizon above, cold pool below — the page inherits the command
+     * shell's temperature story even outside the cockpit. */
     background:
       radial-gradient(ellipse 80rem 40rem at 50% -10%, rgb(232 181 66 / 0.04), transparent 60%),
-      radial-gradient(ellipse 60rem 50rem at 110% 110%, rgb(120 110 90 / 0.05), transparent 55%),
+      radial-gradient(ellipse 60rem 50rem at 110% 110%, rgb(96 118 172 / 0.05), transparent 55%),
       var(--aegis-surface-base);
     color: var(--aegis-text-primary);
     -webkit-font-smoothing: antialiased;
@@ -80,17 +82,21 @@
 }
 
 @layer utilities {
-  /* Ambient command-centre canvas: near-black neutral field with a faint
-   * warm horizon glow and a whisper-quiet dot matrix instead of gridlines. */
+  /* Ambient command-centre canvas: a cold near-black field with a warm gold
+   * horizon at the top, a faint cold pool at the floor, and a whisper-quiet
+   * dot matrix instead of gridlines. Warm light against a cool void is the
+   * shell's depth model — instruments glow, the dark recedes. */
   .aegis-command-shell {
     position: relative;
     isolation: isolate;
     background:
       radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.025) 1px, transparent 0),
       radial-gradient(ellipse 70rem 30rem at 50% 0%, rgb(232 181 66 / 0.045), transparent 65%),
+      radial-gradient(ellipse 80rem 34rem at 50% 108%, rgb(96 118 172 / 0.05), transparent 62%),
       var(--aegis-surface-base);
     background-size:
       26px 26px,
+      auto,
       auto,
       auto;
   }
