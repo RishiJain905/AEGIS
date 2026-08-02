@@ -71,16 +71,16 @@
   --aegis-focus-ring-offset: #08090e;
   --aegis-focus-width: 2px;
 
-  /* Risk — a thermal ramp: amber-orange → hot orange → red, rising in
-   * temperature with severity. Medium sits at ~32° hue, clearly separated
-   * from the ~42° signal-gold accent so warnings and operator affordances can
-   * never be mistaken for each other (the light theme always worked this way;
-   * dark now matches). */
+  /* Risk — a thermal ramp: orange → red-orange → red, rising in temperature
+   * with severity. Medium sits at ~28° hue, a full step of hue AND saturation
+   * away from the ~42° signal-gold accent family (focus ring included), so a
+   * warning chip and a gold operator chip can never be mistaken for each other
+   * at a glance. */
   --aegis-risk-low: #63d6a2;
   --aegis-risk-low-bg: #0d2a1e;
-  --aegis-risk-medium: #f2a54b;
-  --aegis-risk-medium-bg: #30200a;
-  --aegis-risk-high: #ff8747;
+  --aegis-risk-medium: #f58a2e;
+  --aegis-risk-medium-bg: #331d08;
+  --aegis-risk-high: #ff6b35;
   --aegis-risk-high-bg: #331708;
   --aegis-risk-critical: #ff7078;
   --aegis-risk-critical-bg: #331115;
@@ -88,8 +88,8 @@
   /* Status — NodeStatus + UI states; suspicious mirrors risk-medium. */
   --aegis-status-normal: #63d6a2;
   --aegis-status-normal-bg: #0d2a1e;
-  --aegis-status-suspicious: #f2a54b;
-  --aegis-status-suspicious-bg: #30200a;
+  --aegis-status-suspicious: #f58a2e;
+  --aegis-status-suspicious-bg: #331d08;
   --aegis-status-under-investigation: #68d0ee;
   --aegis-status-under-investigation-bg: #0d2733;
   --aegis-status-contained: #9aa8ff;
@@ -166,13 +166,13 @@
   --aegis-focus-ring: #7a5a10;
   --aegis-focus-ring-offset: #f4f2ec;
 
-  /* Risk — same thermal ramp as dark: amber-orange → orange → red. Medium
-   * pulled toward orange (~32° hue) to keep clear of the gold accent. */
+  /* Risk — same thermal ramp as dark: orange → red-orange → red. Medium
+   * pulled to ~28° hue to keep clear of the gold accent. */
   --aegis-risk-low: #16794f;
   --aegis-risk-low-bg: #e3f5ec;
-  --aegis-risk-medium: #94520a;
+  --aegis-risk-medium: #9d4d08;
   --aegis-risk-medium-bg: #fceed3;
-  --aegis-risk-high: #a8460d;
+  --aegis-risk-high: #a63a10;
   --aegis-risk-high-bg: #fbe7d8;
   --aegis-risk-critical: #c0242f;
   --aegis-risk-critical-bg: #fce4e5;
@@ -180,7 +180,7 @@
   /* Status — NodeStatus + UI states; suspicious mirrors risk-medium. */
   --aegis-status-normal: #16794f;
   --aegis-status-normal-bg: #e3f5ec;
-  --aegis-status-suspicious: #94520a;
+  --aegis-status-suspicious: #9d4d08;
   --aegis-status-suspicious-bg: #fceed3;
   --aegis-status-under-investigation: #0d6e90;
   --aegis-status-under-investigation-bg: #e3f1f6;

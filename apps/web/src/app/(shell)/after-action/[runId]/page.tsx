@@ -14,7 +14,7 @@ export default function AfterActionPage({ params }: AfterActionPageProps) {
 
   return (
     <ShellRouteGuard runId={runId}>
-      <CommandCentreShell>
+      <CommandCentreShell statusRunId={runId}>
         <div className="p-4 md:p-6">
           <AfterActionDashboard runId={runId} />
         </div>

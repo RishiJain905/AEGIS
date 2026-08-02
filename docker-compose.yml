@@ -272,6 +272,50 @@ services:
       otel-collector:
         condition: service_started
 
+  snapshot-worker:
+    build:
+      context: .
+      dockerfile: services/workers/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      AEGIS_ENV: development
+      # Persists replay snapshot manifests on cadence + at terminal state. Without
+      # this worker replay_snapshot_manifests stays empty and the replay projector
+      # reconstructs from raw events only: placeholder nodes, no edges, and a full
+      # event re-apply on every scrub. The worker existed but no deployment ran it.
+      AEGIS_WORKER_MODE: snapshot
+      LOG_LEVEL: info
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-aegis}
+      POSTGRES_USER: ${POSTGRES_USER:-aegis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aegis_dev}
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-aegis}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-aegis_dev_secret}
+      S3_BUCKET: ${S3_BUCKET:-aegis-artifacts}
+      API_PORT: 8000
+      WEB_PORT: 3000
+      OTEL_ENABLED: ${OTEL_ENABLED:-true}
+      OTEL_SERVICE_NAME: aegis-snapshot-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      AEGIS_LOG_JSON: ${AEGIS_LOG_JSON:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+
   simulator:
     build:
       context: .

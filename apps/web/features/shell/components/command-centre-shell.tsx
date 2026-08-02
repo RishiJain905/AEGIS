@@ -14,10 +14,21 @@ import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 export interface CommandCentreShellProps {
   runId?: string;
   incidentId?: string;
+  /**
+   * The run a run-scoped page (after-action, reports) is ABOUT, when it does not want the
+   * full live cockpit. Feeds only the status rail, so the header reports the viewed run's
+   * real state instead of placeholder facts — without mounting LiveRunProvider.
+   */
+  statusRunId?: string;
   children?: React.ReactNode;
 }
 
-function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreShellProps) {
+function CommandCentreShellInner({
+  runId,
+  incidentId,
+  statusRunId,
+  children,
+}: CommandCentreShellProps) {
   const resetForRun = useWorkspaceUiStore((state) => state.resetForRun);
   // A run without page content of its own gets the viewport-height graph workspace; every
   // other shell route (scenarios, reports, admin, after-action) keeps normal page flow.
@@ -33,7 +44,7 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <OperationsRail />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <StatusStrip runId={runId} />
+          <StatusStrip runId={runId ?? statusRunId} />
           {/* Zero-height slot: the banner overlays the content instead of displacing it, so a
               connection-health flip never resizes the graph canvas or the docks. */}
           <ConnectionHealthBanner />
@@ -57,7 +68,12 @@ function CommandCentreShellInner({ runId, incidentId, children }: CommandCentreS
   );
 }
 
-export function CommandCentreShell({ runId, incidentId, children }: CommandCentreShellProps) {
+export function CommandCentreShell({
+  runId,
+  incidentId,
+  statusRunId,
+  children,
+}: CommandCentreShellProps) {
   useKeyboardShortcuts();
   const isRunWorkspace = Boolean(runId) && !children;
 
@@ -82,7 +98,7 @@ export function CommandCentreShell({ runId, incidentId, children }: CommandCentr
           </CommandCentreShellInner>
         </LiveRunProvider>
       ) : (
-        <CommandCentreShellInner runId={runId} incidentId={incidentId}>
+        <CommandCentreShellInner runId={runId} incidentId={incidentId} statusRunId={statusRunId}>
           {children}
         </CommandCentreShellInner>
       )}

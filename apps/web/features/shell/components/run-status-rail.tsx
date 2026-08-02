@@ -305,6 +305,12 @@ export interface RunStatusRailProps {
   /** Disclosed graph nodes; posture derives from their worst status. */
   nodes?: readonly { status: string }[];
   reportAvailable?: boolean;
+  /**
+   * False on surfaces with no run in context (catalogue, admin). The run-scoped
+   * instruments hide rather than showing placeholder facts — a rail that says
+   * "Underway" about no run in particular is a lie, not a reading.
+   */
+  hasRun?: boolean;
 }
 
 /**
@@ -319,6 +325,7 @@ export function RunStatusRail({
   runStatus,
   nodes,
   reportAvailable = false,
+  hasRun = true,
 }: RunStatusRailProps) {
   const link = describeLink({ isLiveMode, health: connectionHealth, connectionStatus });
   const sim = describeSim(runStatus);
@@ -360,61 +367,65 @@ export function RunStatusRail({
         </span>
       </div>
 
-      <div className="flex items-center gap-1.5 border-l border-[var(--aegis-border-subtle)] pl-3">
-        <InstrumentLabel>Sim</InstrumentLabel>
-        <span
-          data-testid="run-status"
-          title={sim.detail}
-          className={cn(
-            'flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.13em]',
-            sim.terminal
-              ? 'border-[var(--aegis-border-strong)] bg-[var(--aegis-surface-raised)] text-[var(--aegis-text-primary)]'
-              : 'border-transparent',
-          )}
-          style={sim.terminal ? undefined : { color: TONE_COLOR[sim.tone] }}
-        >
-          <span
-            aria-hidden="true"
-            className="font-[family-name:var(--aegis-font-mono)] text-[0.5rem] leading-none"
-          >
-            {sim.glyph}
-          </span>
-          {sim.label}
-        </span>
-      </div>
+      {hasRun ? (
+        <>
+          <div className="flex items-center gap-1.5 border-l border-[var(--aegis-border-subtle)] pl-3">
+            <InstrumentLabel>Sim</InstrumentLabel>
+            <span
+              data-testid="run-status"
+              title={sim.detail}
+              className={cn(
+                'flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.13em]',
+                sim.terminal
+                  ? 'border-[var(--aegis-border-strong)] bg-[var(--aegis-surface-raised)] text-[var(--aegis-text-primary)]'
+                  : 'border-transparent',
+              )}
+              style={sim.terminal ? undefined : { color: TONE_COLOR[sim.tone] }}
+            >
+              <span
+                aria-hidden="true"
+                className="font-[family-name:var(--aegis-font-mono)] text-[0.5rem] leading-none"
+              >
+                {sim.glyph}
+              </span>
+              {sim.label}
+            </span>
+          </div>
 
-      <div className="flex items-center gap-1.5 border-l border-[var(--aegis-border-subtle)] pl-3">
-        <InstrumentLabel>Posture</InstrumentLabel>
-        <span
-          data-testid="threat-posture"
-          data-posture={posture.posture}
-          title={posture.detail}
-          className={cn(
-            'rounded-full px-2 py-0.5 font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.13em]',
-            posture.posture === 'critical' && 'motion-safe:animate-pulse',
-          )}
-          style={{ color: postureTokens.fg, backgroundColor: postureTokens.bg }}
-        >
-          {posture.label}
-        </span>
-      </div>
+          <div className="flex items-center gap-1.5 border-l border-[var(--aegis-border-subtle)] pl-3">
+            <InstrumentLabel>Posture</InstrumentLabel>
+            <span
+              data-testid="threat-posture"
+              data-posture={posture.posture}
+              title={posture.detail}
+              className={cn(
+                'rounded-full px-2 py-0.5 font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.13em]',
+                posture.posture === 'critical' && 'motion-safe:animate-pulse',
+              )}
+              style={{ color: postureTokens.fg, backgroundColor: postureTokens.bg }}
+            >
+              {posture.label}
+            </span>
+          </div>
 
-      <div className="flex items-center gap-1.5 border-l border-[var(--aegis-border-subtle)] pl-3">
-        <InstrumentLabel>Report</InstrumentLabel>
-        <span
-          data-testid="run-outcome"
-          title={report.detail}
-          className={cn(
-            'font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] uppercase tracking-[0.08em]',
-            report.ready && 'font-semibold',
-          )}
-          style={{
-            color: report.ready ? 'var(--aegis-accent-strong)' : TONE_COLOR[report.tone],
-          }}
-        >
-          {report.label}
-        </span>
-      </div>
+          <div className="flex items-center gap-1.5 border-l border-[var(--aegis-border-subtle)] pl-3">
+            <InstrumentLabel>Report</InstrumentLabel>
+            <span
+              data-testid="run-outcome"
+              title={report.detail}
+              className={cn(
+                'font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] uppercase tracking-[0.08em]',
+                report.ready && 'font-semibold',
+              )}
+              style={{
+                color: report.ready ? 'var(--aegis-accent-strong)' : TONE_COLOR[report.tone],
+              }}
+            >
+              {report.label}
+            </span>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

@@ -145,7 +145,7 @@ const LEGEND_ITEMS = [
   },
   {
     label: 'Suspicious',
-    color: '#f2a54b',
+    color: '#f58a2e',
     shape: 'ring' as const,
     description: 'Anomalous signals, unconfirmed',
   },
@@ -163,7 +163,7 @@ const LEGEND_ITEMS = [
   },
   {
     label: 'High-risk link',
-    color: '#ff8747',
+    color: '#ff6b35',
     shape: 'line' as const,
     description: 'Edge carrying attack-path risk',
   },

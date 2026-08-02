@@ -15,6 +15,7 @@ import { VisualizationSlot } from '@/features/shell/components/visualization-slo
 import { WorkspaceDock } from '@/features/shell/components/workspace-dock';
 import { useRunAlerts } from '@/features/shell/hooks/use-shell-queries';
 import { RunTape } from '@/features/timeline';
+import { isRunTerminal } from '@/lib/run-status';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 export interface RunWorkspaceProps {
@@ -78,7 +79,7 @@ function TimelineSemanticsNotice() {
     );
   }
 
-  if (runStatus === 'stopped' || runStatus === 'completed') {
+  if (isRunTerminal(runStatus)) {
     return (
       <p
         role="status"
@@ -136,14 +137,19 @@ export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2" data-testid="command-deck">
+      <div
+        className="flex w-full flex-wrap items-center gap-x-3 gap-y-2"
+        data-testid="command-deck"
+      >
         <LiveRunControls />
         <div className="ml-auto flex items-center gap-2">
           <FocusStageButton />
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 xl:flex-row">
+      {/* `w-full` is deliberate on both rows: the deck and the dock row must always share
+          the same right edge, whatever an ancestor's alignment does. */}
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-3 xl:flex-row">
         <WorkspaceDock
           region="leftDock"
           side="left"

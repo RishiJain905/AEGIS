@@ -120,6 +120,15 @@ describe('RunStatusRail', () => {
     expect(screen.getByTestId('run-outcome')).toHaveTextContent('Underway');
   });
 
+  it('hides the run-scoped instruments when there is no run to speak about', () => {
+    render(<RunStatusRail isLiveMode={false} connectionStatus="connected" hasRun={false} />);
+    expect(screen.getByTestId('connection-status-badge')).toHaveTextContent('Connected');
+    // No placeholder facts: a rail with no run says nothing about SIM, posture, or report.
+    expect(screen.queryByTestId('run-status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('threat-posture')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('run-outcome')).not.toBeInTheDocument();
+  });
+
   it('gives the terminal state visible precedence and lights the report chip', () => {
     render(
       <RunStatusRail

@@ -50,7 +50,7 @@ const FOG_COLOR = '#070a13';
 const ALERT_RIM: Record<SceneZone['alertLevel'], string> = {
   calm: '#31435e',
   guarded: '#9aa8ff',
-  elevated: '#f2a54b',
+  elevated: '#f58a2e',
   critical: '#ff7078',
 };
 
@@ -62,7 +62,7 @@ const ALERT_RIM_OPACITY: Record<SceneZone['alertLevel'], number> = {
 };
 
 const STATUS_TINTS: Record<string, string> = {
-  suspicious: '#f2a54b',
+  suspicious: '#f58a2e',
   under_investigation: '#68d0ee',
   contained: '#9aa8ff',
   compromised: '#ff7078',
@@ -681,7 +681,7 @@ function ThreatSigils({
     <group>
       {marked.map((node) => {
         const radius = nodeRadius(node);
-        const tint = STATUS_TINTS[node.status] ?? '#f2a54b';
+        const tint = STATUS_TINTS[node.status] ?? '#f58a2e';
         const color = resolveThreeColor(tint).color;
         const position: [number, number, number] = [
           node.position.x,
@@ -847,7 +847,7 @@ function RevealPulses({ nodes, reducedMotion }: { nodes: SceneNode[]; reducedMot
             key: `${node.id}:${String(now)}`,
             x: node.position.x,
             z: node.position.z,
-            color: STATUS_TINTS[node.status] ?? '#f2a54b',
+            color: STATUS_TINTS[node.status] ?? '#f58a2e',
             start: now,
           });
         }

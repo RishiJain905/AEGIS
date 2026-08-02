@@ -43,7 +43,7 @@ export default function ReportsPage() {
   const run = latestRun(runsQuery.data as RunSummary[] | undefined);
 
   return (
-    <CommandCentreShell>
+    <CommandCentreShell statusRunId={run?.id}>
       {runsQuery.isPending ? <LoadingState message="Loading reports…" /> : null}
       {!runsQuery.isPending && !run ? (
         <EmptyState

@@ -101,6 +101,7 @@ export function StatusStrip({ runId }: StatusStripProps) {
         runStatus={runStatus}
         nodes={postureNodes}
         reportAvailable={reportQuery.data !== undefined}
+        hasRun={Boolean(runId)}
       />
       {readOnly ? (
         <Badge nodeStatus={NodeStatus.UNDER_INVESTIGATION} data-testid="read-only-badge">

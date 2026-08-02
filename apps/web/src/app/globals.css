@@ -22,10 +22,11 @@
     min-height: 100vh;
     font-family: var(--aegis-font-sans);
     /* Warm horizon above, cold pool below — the page inherits the command
-     * shell's temperature story even outside the cockpit. */
+     * shell's temperature story even outside the cockpit. Alphas are tuned on
+     * a real monitor: below ~8% the glows vanish into the charcoal. */
     background:
-      radial-gradient(ellipse 80rem 40rem at 50% -10%, rgb(232 181 66 / 0.04), transparent 60%),
-      radial-gradient(ellipse 60rem 50rem at 110% 110%, rgb(96 118 172 / 0.05), transparent 55%),
+      radial-gradient(ellipse 80rem 40rem at 50% -10%, rgb(232 181 66 / 0.09), transparent 60%),
+      radial-gradient(ellipse 60rem 50rem at 110% 110%, rgb(96 118 172 / 0.11), transparent 55%),
       var(--aegis-surface-base);
     color: var(--aegis-text-primary);
     -webkit-font-smoothing: antialiased;
@@ -91,8 +92,8 @@
     isolation: isolate;
     background:
       radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.025) 1px, transparent 0),
-      radial-gradient(ellipse 70rem 30rem at 50% 0%, rgb(232 181 66 / 0.045), transparent 65%),
-      radial-gradient(ellipse 80rem 34rem at 50% 108%, rgb(96 118 172 / 0.05), transparent 62%),
+      radial-gradient(ellipse 70rem 30rem at 50% 0%, rgb(232 181 66 / 0.1), transparent 65%),
+      radial-gradient(ellipse 80rem 34rem at 50% 108%, rgb(96 118 172 / 0.11), transparent 62%),
       var(--aegis-surface-base);
     background-size:
       26px 26px,
@@ -104,7 +105,7 @@
   :root[data-theme='light'] .aegis-command-shell {
     background:
       radial-gradient(circle at 1px 1px, rgb(26 24 20 / 0.05) 1px, transparent 0),
-      radial-gradient(ellipse 70rem 30rem at 50% 0%, rgb(176 138 46 / 0.06), transparent 65%),
+      radial-gradient(ellipse 70rem 30rem at 50% 0%, rgb(176 138 46 / 0.12), transparent 65%),
       var(--aegis-surface-base);
     background-size:
       26px 26px,
