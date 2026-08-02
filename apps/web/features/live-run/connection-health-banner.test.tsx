@@ -94,6 +94,41 @@ describe('describeConnectionNotice', () => {
     }
   });
 
+  it('mutes informational delivery narration once the run is terminal', () => {
+    // A stopped run has nothing left to deliver — "Catching up" would otherwise sit on
+    // screen forever, since no future event or resync arrives to clear it.
+    // Not snapshot_resync: that one is a warning and always ends in CONNECTED, so it
+    // cannot stick — and a resync genuinely running deserves its banner.
+    for (const runStatus of ['stopped', 'completed']) {
+      for (const health of [
+        ConnectionHealthState.CATCHING_UP,
+        ConnectionHealthState.SIMULATOR_PAUSED,
+      ]) {
+        expect(
+          describeConnectionNotice({
+            isLiveMode: true,
+            health,
+            isStale: false,
+            connectionStatus: 'connected',
+            runStatus,
+          }),
+        ).toBeNull();
+      }
+    }
+  });
+
+  it('keeps genuine fault warnings even on a terminal run', () => {
+    expect(
+      describeConnectionNotice({
+        isLiveMode: true,
+        health: ConnectionHealthState.DISCONNECTED,
+        isStale: true,
+        connectionStatus: 'connected',
+        runStatus: 'stopped',
+      }),
+    ).toMatchObject({ key: 'disconnected', variant: 'warning' });
+  });
+
   it('falls back to the polled status outside live mode', () => {
     expect(
       describeConnectionNotice({

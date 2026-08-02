@@ -10,6 +10,7 @@ import { Alert, Badge, Button, cn, getMotionTransition, useReducedMotion } from 
 import { useLiveRun } from '@/features/live-run/live-run-provider';
 import type { ConnectionStatus } from '@/lib/api';
 import { useConnectionStatus } from '@/features/shell/hooks/use-shell-queries';
+import { isRunTerminal } from '@/lib/run-status';
 
 /**
  * How long a degraded connection must persist before the operator is told about it. The
@@ -109,13 +110,26 @@ export function describeConnectionNotice(input: {
   health?: string;
   isStale?: boolean;
   connectionStatus: ConnectionStatus;
+  /** The run's lifecycle status, when known — terminal runs mute delivery narration. */
+  runStatus?: string;
 }): ConnectionNotice | null {
   if (input.isLiveMode) {
+    let notice: ConnectionNotice | null = null;
     if (input.health !== undefined && input.health !== ConnectionHealthState.CONNECTED) {
-      return LIVE_NOTICES[input.health] ?? STALE_NOTICE;
+      notice = LIVE_NOTICES[input.health] ?? STALE_NOTICE;
+    } else if (input.isStale === true) {
+      // Connected but the reducer still flags the projection as stale — worth saying so.
+      notice = STALE_NOTICE;
     }
-    // Connected but the reducer still flags the projection as stale — worth saying so.
-    return input.isStale === true ? STALE_NOTICE : null;
+    // A finished run has nothing left to deliver: the informational delivery states
+    // (catching up, resynchronizing, simulator paused) describe a pipeline that no
+    // longer exists, and with no future event to clear them they would sit on screen
+    // forever. Genuine faults keep their warning banner even on an ended run.
+    const terminal = isRunTerminal(input.runStatus);
+    if (terminal && notice !== null && notice.variant === 'default') {
+      return null;
+    }
+    return notice;
   }
   return FIXTURE_NOTICES[input.connectionStatus] ?? null;
 }
@@ -198,6 +212,7 @@ export function ConnectionHealthBanner() {
   const health = liveRun?.state.connectionHealth;
   const isStale = liveRun?.state.isStale;
   const sequence = liveRun?.state.lastAppliedSequence;
+  const runStatus = liveRun?.state.runStatus;
   const connectionStatus = connectionQuery.data ?? 'connected';
 
   const notice = useMemo(
@@ -207,8 +222,9 @@ export function ConnectionHealthBanner() {
         health,
         isStale,
         connectionStatus,
+        runStatus,
       }),
-    [isLiveMode, health, isStale, connectionStatus],
+    [isLiveMode, health, isStale, connectionStatus, runStatus],
   );
   const shown = useNoticeHysteresis(notice);
 
@@ -244,7 +260,11 @@ export function ConnectionHealthBanner() {
 
   return (
     <div className="relative z-20 h-0" data-testid="connection-health-banner">
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-5 pt-3 xl:px-6">
+      {/* pt-16 drops the notice below the command deck's control row: hung at pt-3 it sat
+          exactly over the SIM/LINK transport groups on narrower windows, covering the very
+          controls an operator reaches for while the link recovers. The band it occupies now
+          (stage header / top of the graph) has no interactive chrome at its centre. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-5 pt-16 xl:px-6">
         <Alert
           variant={shown.variant}
           title={shown.title}

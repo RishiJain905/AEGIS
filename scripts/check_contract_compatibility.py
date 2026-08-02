@@ -6,11 +6,13 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+from aegis_contracts.events import EventTypeRegistry
 from aegis_contracts.fixtures import FIXTURE_MODEL_MAP
 from aegis_contracts.parsing import parse_contract
 
@@ -75,6 +77,57 @@ def verify_python_fixtures() -> None:
         parse_contract(model, payload)
 
 
+def verify_event_type_registries() -> None:
+    """The two event-type registries must name the same events at the same versions.
+
+    Fixtures and manifest hashes do not cover this: both languages keep their own literal
+    registry, and nothing compared them. Nine event types the API had been emitting for a
+    while — ``autonomy.task.enqueued``, the ``directive.*`` family, the ``report.*`` family —
+    were absent from the TypeScript side, and the console rejected every one of them with a
+    ``ContractValidationError`` on an HTTP 200. Because a single unknown type aborts the whole
+    catch-up page it appears in, that drift is what left live clients permanently unable to
+    reach their run's head.
+    """
+    ts_source = (ROOT / "packages" / "contracts-ts" / "src" / "events.ts").read_text(
+        encoding="utf-8"
+    )
+    match = re.search(
+        r"EVENT_TYPE_REGISTRY:\s*Readonly<Record<string,\s*number>>\s*=\s*\{(.*?)\n\};",
+        ts_source,
+        re.DOTALL,
+    )
+    if match is None:
+        print("ERROR: could not locate EVENT_TYPE_REGISTRY in contracts-ts", file=sys.stderr)
+        sys.exit(1)
+    ts_types = {
+        name: int(version)
+        for name, version in re.findall(r"'([^']+)'\s*:\s*(\d+)", match.group(1))
+    }
+    python_types = {
+        name: EventTypeRegistry.payload_schema_version(name)
+        for name in EventTypeRegistry.known_types()
+    }
+
+    missing_in_ts = sorted(set(python_types) - set(ts_types))
+    missing_in_python = sorted(set(ts_types) - set(python_types))
+    version_mismatch = sorted(
+        name for name in set(ts_types) & set(python_types) if ts_types[name] != python_types[name]
+    )
+    if missing_in_ts or missing_in_python or version_mismatch:
+        print("ERROR: event type registries disagree across languages", file=sys.stderr)
+        for name in missing_in_ts:
+            print(f"       missing from contracts-ts: {name}", file=sys.stderr)
+        for name in missing_in_python:
+            print(f"       missing from contracts-python: {name}", file=sys.stderr)
+        for name in version_mismatch:
+            print(
+                f"       payload version mismatch for {name}: "
+                f"python={python_types[name]} ts={ts_types[name]}",
+                file=sys.stderr,
+            )
+        sys.exit(1)
+
+
 def resolve_executable(name: str) -> str:
     # Windows CreateProcess only resolves .exe from PATH; pnpm ships as a
     # .cmd/.ps1 shim (plus an extensionless POSIX script Windows cannot spawn),
@@ -115,6 +168,7 @@ def verify_typescript_fixtures() -> None:
 def main() -> None:
     manifest = load_manifest()
     verify_manifest_hashes(manifest)
+    verify_event_type_registries()
     verify_python_fixtures()
     verify_typescript_fixtures()
     print("Contract compatibility check passed.")

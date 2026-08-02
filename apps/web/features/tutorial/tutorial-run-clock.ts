@@ -21,6 +21,8 @@
  * next to the predicate that raises them is what keeps the two honest.
  */
 
+import { TERMINAL_RUN_STATUSES, isRunTerminal } from '@/lib/run-status';
+
 import type {
   ResolvedBeat,
   TutorialBeat,
@@ -88,23 +90,15 @@ export const SIM_HORIZON_MINUTES = Math.round(SIM_HORIZON_SECONDS / 60);
  */
 const MAX_PLAUSIBLE_ELAPSED_SIM_SECONDS = 86_400;
 
-/** Run statuses past which nothing more will happen. `failed`/`aborted` are defensive. */
-export const TERMINAL_RUN_STATUSES: ReadonlySet<string> = new Set([
-  'completed',
-  'stopped',
-  'failed',
-  'aborted',
-]);
+// Canonical since the command deck and the command bar need the same answer; re-exported
+// here so this module's existing consumers are unaffected. See `lib/run-status`.
+export { TERMINAL_RUN_STATUSES, isRunTerminal };
 
 /** The one status in which the virtual clock is actually advancing. */
 const ADVANCING_RUN_STATUS = 'running';
 
 /** The one status the hold itself produces. */
 const HELD_RUN_STATUS = 'paused';
-
-export function isRunTerminal(status: string | null | undefined): boolean {
-  return status != null && TERMINAL_RUN_STATUSES.has(status);
-}
 
 /**
  * Objectives that only the simulation can satisfy, and that a finished run therefore strands.

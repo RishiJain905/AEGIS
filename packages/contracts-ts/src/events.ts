@@ -88,6 +88,16 @@ export const EVENT_TYPE_REGISTRY: Readonly<Record<string, number>> = {
   'investigation.hypothesis.revised': 1,
   'investigation.hypothesis.comparison.created': 1,
   'investigation.verification.requested': 1,
+  'report.version.created': 1,
+  'report.generation.completed': 1,
+  'report.generation.failed': 1,
+  // Phase 7 — operator console, direct actions, autonomy, directives.
+  'operator.action.proposed': 1,
+  'run.roe_changed': 1,
+  'autonomy.task.enqueued': 1,
+  'directive.created': 1,
+  'directive.triggered': 1,
+  'directive.deleted': 1,
 };
 
 export function isKnownEventType(eventType: string): boolean {

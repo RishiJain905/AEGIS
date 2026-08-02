@@ -5,20 +5,26 @@
  * Reports, the catalogue) answered "no run" and the link silently pointed at the
  * catalogue — which, clicked from the catalogue, went nowhere at all.
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useTheme, usePathname, useOptionalAuth } = vi.hoisted(() => ({
+const { useTheme, usePathname, useOptionalAuth, getRun } = vi.hoisted(() => ({
   useTheme: vi.fn(() => ({ theme: 'dark', resolvedTheme: 'dark', setTheme: vi.fn() })),
   usePathname: vi.fn(() => '/scenarios'),
   useOptionalAuth: vi.fn<() => { actor: { userId: string } | null } | null>(() => ({
     actor: { userId: 'user:operator-alpha' },
   })),
+  // The rail resolves its run through `useActiveRunId`, which asks the server whether that
+  // run still exists so a deleted one stops being offered as a destination. These tests are
+  // about which destination the rail names, so the run always exists.
+  getRun: vi.fn((runId: string) => Promise.resolve({ id: runId, status: 'running' })),
 }));
 
 vi.mock('@/features/shell/hooks/use-theme', () => ({ useTheme }));
 vi.mock('next/navigation', () => ({ usePathname }));
 vi.mock('@/features/auth', () => ({ useOptionalAuth }));
+vi.mock('@/lib/api/api-client-provider', () => ({ useApiClient: () => ({ getRun }) }));
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
@@ -38,6 +44,16 @@ function activeRunLink(): HTMLElement | null {
   return screen.queryByRole('link', { name: 'Active run' });
 }
 
+/** A fresh cache per render so one test's run lookup never answers the next one's. */
+function renderRail() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <OperationsRail />
+    </QueryClientProvider>,
+  );
+}
+
 describe('OperationsRail run-scoped destinations', () => {
   beforeEach(() => {
     usePathname.mockReturnValue('/scenarios');
@@ -51,7 +67,7 @@ describe('OperationsRail run-scoped destinations', () => {
 
   it('points at the run named by the route', () => {
     usePathname.mockReturnValue(`/runs/${RUN_ID}`);
-    render(<OperationsRail />);
+    renderRail();
 
     expect(activeRunLink()).toHaveAttribute('href', `/runs/${RUN_ID}`);
     expect(screen.getByRole('link', { name: 'Replay' })).toHaveAttribute(
@@ -62,12 +78,12 @@ describe('OperationsRail run-scoped destinations', () => {
 
   it('remembers the run after the operator leaves the run surface', () => {
     usePathname.mockReturnValue(`/runs/${RUN_ID}`);
-    const { unmount } = render(<OperationsRail />);
+    const { unmount } = renderRail();
     unmount();
 
     // Incidents is not run-scoped, so the route no longer names the run.
     usePathname.mockReturnValue('/incidents');
-    render(<OperationsRail />);
+    renderRail();
 
     expect(activeRunLink()).toHaveAttribute('href', `/runs/${RUN_ID}`);
   });
@@ -77,7 +93,7 @@ describe('OperationsRail run-scoped destinations', () => {
       .getState()
       .rememberRunContext({ runId: RUN_ID, userId: 'user:admin-alpha' });
 
-    render(<OperationsRail />);
+    renderRail();
 
     expect(activeRunLink()).toBeNull();
     expect(screen.getByTestId('rail-pulse-disabled')).toBeInTheDocument();
@@ -88,7 +104,7 @@ describe('OperationsRail run-scoped destinations', () => {
     useWorkspaceUiStore.getState().rememberRunContext({ runId: RUN_ID, userId: OPERATOR });
     useOptionalAuth.mockReturnValue({ actor: null });
 
-    render(<OperationsRail />);
+    renderRail();
 
     // No identity yet is not a mismatched identity: dropping it here would lose the run on
     // every reload, before the session query resolves.
@@ -99,7 +115,7 @@ describe('OperationsRail run-scoped destinations', () => {
   });
 
   it('disables run-scoped destinations instead of linking to the catalogue', () => {
-    render(<OperationsRail />);
+    renderRail();
 
     expect(activeRunLink()).toBeNull();
     for (const testId of ['rail-pulse-disabled', 'rail-review-disabled']) {

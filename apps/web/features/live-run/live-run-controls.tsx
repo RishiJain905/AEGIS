@@ -6,6 +6,7 @@ import { Button } from '@aegis/ui';
 
 import { useLiveRun } from '@/features/live-run/live-run-provider';
 import { useRunCommands } from '@/features/live-run/use-run-commands';
+import { isRunTerminal } from '@/lib/run-status';
 
 /**
  * A labelled cluster of transport controls. The label is the same word the status rail
@@ -41,7 +42,7 @@ export function LiveRunControls() {
   // for: STEP advances a RUNNING run, and the API answers 409 for anything else. Deriving
   // the button's enabled state from the same rule is what keeps the two honest — offering
   // Step on a paused run just moved the rejection from the control to a toast.
-  const isTerminal = runStatus === 'stopped' || runStatus === 'completed';
+  const isTerminal = isRunTerminal(runStatus);
   const stepDisabledReason = isTerminal
     ? 'This run has ended — its timeline is read-only.'
     : isPaused
