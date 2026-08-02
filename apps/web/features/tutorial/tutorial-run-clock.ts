@@ -268,7 +268,7 @@ export type RunClockNotice = 'held' | 'ended' | null;
 
 export const RUN_HELD_NOTICE = `Sim held. The run was closing on its ${String(
   SIM_HORIZON_MINUTES,
-)}-minute horizon, so the walkthrough pressed Pause sim rather than let it finalize while you were still working. The world is frozen, not finished — nothing on this floor expires. Resume sim or Step in the control link whenever you want the clock moving again. It only does this once.`;
+)}-minute horizon, so the walkthrough pressed Pause sim rather than let it finalize while you were still working. The world is frozen, not finished — nothing on this floor expires. Resume sim or Step in the console’s SIM group whenever you want the clock moving again. It only does this once.`;
 
 export const RUN_ENDED_NOTICE =
   'This run has ended. No new telemetry, alerts or proposals will arrive, so any step here that waits on the world moving can no longer complete. Everything already on the floor stays readable, and the remaining chapters tour the rest of AEGIS — those do not need a live run. For the hands-on work, use Restart training run in the operations catalogue to take it from the top.';

@@ -50,15 +50,13 @@ const ORIENTATION: TutorialChapter = {
     {
       id: 'cockpit-regions',
       kind: 'learn',
-      title: 'Three regions',
+      title: 'One stage, no walls',
       body: [
-        'The centre is the stage: the operational graph, the operator command bar directly under it, and the run tape along the foot. Everything you act on lives there.',
-        'Two docks flank it. The left dock is the operator console — where you think and ask. The right dock is the context channel — where the run reports back to you.',
-        'Focus graph collapses the rail and both docks together so the stage takes the whole viewport; the same button then reads Restore panels. Use it when the map matters more than the paperwork.',
+        'The graph is the workspace, not a panel inside it. It runs edge to edge between the status rail at the top and the console along the foot, and it stays that way — nothing is parked permanently beside it.',
+        'Everything else is furniture on that stage, and every piece is visibly about something. The console is your hands: the SIM and LINK transport groups, the commands for whatever you have selected, the run tape, and the copilot chip. Signals holds the top-right corner, so attention pressure is readable without opening anything.',
+        'Deep material arrives when you name a subject and leaves when you are done with it. Select a node and the inspector slides in from the right. Summon the copilot and it comes from the left. Open the chronicle and the run’s history rises out of the tape.',
+        'There is no control that gives the graph the whole screen, because nothing is taking it. Dismiss what you summoned and the stage is already whole.',
       ],
-      // Cockpit rework: the Focus graph button died with the docks — the stage is
-      // full-bleed by default now. Anchors point at the shell and the console band.
-      // TODO(tutorial-prose): this beat still narrates "three regions" and "Focus graph".
       anchors: [
         '[data-testid="cockpit-console"]',
         '[data-testid="command-centre-shell"]',
@@ -69,17 +67,15 @@ const ORIENTATION: TutorialChapter = {
     {
       id: 'cockpit-docks',
       kind: 'learn',
-      title: 'The docks and their tabs',
+      title: 'Signals, sheets and keys',
       body: [
-        'Left dock, Operator console. Copilot is the agent chat. Evidence is a filtered search over the run’s raw event stream. Hypotheses is your ledger of working theories.',
-        'Right dock, Context channel. Inspector is everything about the current selection — entity detail, risk explanation, incident context, proposals, alerts. Ops feed is the room’s live heartbeat.',
-        'Collapse either dock and it narrows to a strip of its own tab names set sideways — Copilot, Evidence, Hypotheses read vertically, not icons. Click one and the dock reopens with that tab selected.',
-        'The collapse itself is remembered across runs and reloads. Which tab was active is not, so a dock you reopen after a refresh lands on its first tab.',
+        'Signals is the alerts surface. It opens into a stack of cards the moment a detector fires and folds back to a capsule when the floor is quiet — a count, the worst live severity as its tint, and an activity pulse, so you can tell whether anything is happening without opening it. It is never fully dismissible.',
+        'Two context sheets slide over the stage and leave again. The inspector comes in from the right the moment you name a subject — a node, the asset on an alert card, a case — and retracts when you deselect. The copilot comes from the left when you summon it, carrying Evidence and Hypotheses as its other two tabs. When the inspector takes the right side, Signals folds to its capsule against the sheet’s top edge and reopens over the sheet rather than over more of the stage.',
+        'The chronicle is the third. Collapsed it is the run tape in the console; expanded it is the run’s whole history rising out of that same timeline. Open it with the chevron at the tape’s end, or drag the handle above the strip upward.',
+        'Four letters do all of it: A for signals, I for the inspector, C for the copilot, T for the chronicle. Esc closes the topmost thing you opened, and with nothing open it clears the selection. The console is one Tab stop, with arrows moving between its controls — and an ordinary character typed while it has focus lands in the copilot composer, which makes the band a command line to the agents.',
       ],
-      // Cockpit rework: the docks are gone. Signals floats over the stage top-right
-      // (stack when alerts exist, capsule otherwise) and the console band holds the
-      // operator's hands. TODO(tutorial-prose): this beat still narrates dock tabs,
-      // vertical strips and the collapse-memory behaviour, none of which exist now.
+      // Signals is always mounted but renders as stack or capsule depending on alert
+      // volume, so both testids are listed before the always-present console band.
       anchors: [
         '[data-testid="signals-stack"]',
         '[data-testid="signals-capsule"]',
@@ -90,14 +86,16 @@ const ORIENTATION: TutorialChapter = {
     {
       id: 'control-link',
       kind: 'learn',
-      title: 'The control link',
+      title: 'The status rail',
       body: [
-        'The strip across the top is the control link. It opens with the connection badge — Live when the stream is healthy, and Reconnecting, Catching up, Gap, Resyncing, Sim paused, Updates paused or Stale when it is not. Read it before you trust anything below it.',
-        'Then the mono telemetry. RUN is the run id. STATUS is the run’s lifecycle state. SEED is the determinism anchor. SIM is the current simulation clock. SEQ is the last event sequence your browser has applied.',
+        'The strip across the top is the status rail: four instruments, four separate facts, and no instrument answering another one’s question.',
+        'LINK is delivery to this screen — Connected, Held, Reconnecting, Syncing, Recovering, Offline, Stale. SIM is whether simulated time is moving — Running, Paused, Standby, Complete, Stopped. POSTURE is the worst status on the estate you can actually see — Normal, Suspicious, Critical. REPORT is where the engagement stands as a record — Underway, Debrief pending, Report ready.',
+        'Read them apart. A healthy link with a frozen simulation is a real and ordinary state, and one badge trying to say both at once is how a cockpit lies to you.',
+        'Then the mono telemetry. RUN is the run id. SEED is the determinism anchor. CLOCK is the current simulation time. SEQ is the last event sequence your browser has applied.',
         'To the right sit the threat tempo meter — five bands, quiet, low, elevated, high, critical, warming upward through them as undetected attacker progress accumulates — the loadout chips for this run’s bias guard and threat tempo, the RoE dial, the SITREP button, and your operator identity.',
       ],
       anchors: ['[data-testid="status-strip"]'],
-      pointerLabel: 'the control link strip',
+      pointerLabel: 'the status rail',
     },
     {
       id: 'run-seed',
@@ -109,23 +107,24 @@ const ORIENTATION: TutorialChapter = {
         'Operation Silent Relay is deliberately the opposite. It launches seedless, the server draws a fresh seed, and the hidden root cause changes with it. Determinism is a training aid here, not a limit of the engine.',
       ],
       anchors: ['[data-testid="run-seed"]', '[data-testid="status-strip"]'],
-      pointerLabel: 'the SEED readout in the control link',
+      pointerLabel: 'the SEED readout in the status rail',
     },
     {
       id: 'live-run-controls',
       kind: 'do',
       title: 'Driving the simulation',
       body: [
+        'The transport sits at the left of the console in two labelled groups, SIM and LINK — the same two words the status rail uses, so every button is visibly wired to the instrument it moves. SIM holds Step, Pause sim and Stop. LINK holds Pause updates and Resync.',
         'Step advances the run one tick by hand. Resync reloads the authoritative snapshot and replays anything you missed. Stop ends the run for good.',
-        'The two pause buttons are not the same control, and this is the one operators get wrong. Pause sim is server-side: the simulation stops advancing and the world genuinely freezes. Pause updates is client-only: your view freezes while the run carries on without you.',
+        'The two pause buttons are not the same control, and this is the one operators get wrong. Pause sim is server-side: the simulation stops advancing and the world genuinely freezes. Pause updates is client-only: your view freezes while the run carries on without you. That is the whole reason they sit in different groups.',
         'Use Pause updates when the floor is moving faster than you can read and you do not want to distort the exercise. Use Pause sim when you want the world itself to wait. Both buttons re-label while they are holding — Resume sim and Resume updates — so one glance at the pair tells you which pause is actually in force.',
-        'Leave it running for now and watch SIM climb. The server ticks every two seconds of real time against a scenario horizon of twenty-five simulation minutes, so an uninterrupted run plays out in roughly ten minutes at the desk.',
+        'Leave it running for now and watch CLOCK climb. The server ticks every two seconds of real time against a scenario horizon of twenty-five simulation minutes, so an uninterrupted run plays out in roughly ten minutes at the desk.',
       ],
       anchors: ['[data-testid="live-run-controls"]', '[data-testid="status-strip"]'],
       pointerLabel: 'the live run controls',
       objective: {
         evidence: 'telemetryFlowing',
-        pending: 'Watch the SIM clock advance in the control link.',
+        pending: 'Watch CLOCK advance in the status rail.',
         done: 'Telemetry is flowing — the simulation is live.',
         requirement: 'required',
       },
@@ -165,9 +164,9 @@ const READING_THE_FLOOR: TutorialChapter = {
       kind: 'do',
       title: 'Select an asset',
       body: [
-        'Click any node on the canvas, or any entry in the node index. Two things happen together: the inspector on the right fills with that asset’s detail and risk explanation, and the operator command bar under the graph arms with the commands available against it.',
+        'Click any node on the canvas, or any entry in the node index. Two things happen together: the inspector sheet slides in from the right with that asset’s detail and risk explanation, and the command cluster in the console arms with the commands available against it.',
         'Try Instructor Workstation Alpha — the endpoint the phishing email is about to reach. Read its risk score and criticality, and note the asset type badge; the command set you are offered is derived from it.',
-        'Clicking empty canvas clears the selection and disarms the bar.',
+        'Clicking empty canvas clears the selection: the bar disarms and the sheet retracts. Naming something is what summons it, so the stage is never carrying context you did not ask for.',
       ],
       anchors: [
         '[data-testid="operational-graph-canvas"]',
@@ -239,9 +238,10 @@ const READING_THE_FLOOR: TutorialChapter = {
       kind: 'learn',
       title: 'The run tape',
       body: [
-        'The strip along the foot of the stage is the run tape: one tick per significant event, oldest to newest, coloured by the status that event carried. It gives you the one thing a vertical feed cannot — density and position across the whole run.',
+        'The strip inside the console is the run tape: one tick per significant event, oldest to newest, coloured by the status that event carried. It gives you the one thing a vertical feed cannot — density and position across the whole run.',
         'A quiet tape is a quiet floor. A dense band of red is an attack accelerating, and you can see that without reading a line of text.',
         'Click a tick to pin its label and simulation time in the readout; click it again to unpin and follow the newest beat. The tape is a probe, not a scrubber — time travel belongs to the replay route.',
+        'It is also a handle. The chevron at its end opens the chronicle, which is this same timeline at full size; the next chapter works there.',
       ],
       anchors: ['[data-testid="run-tape"]', '[data-testid="run-tape-readout"]'],
       pointerLabel: 'the run tape',
@@ -256,7 +256,7 @@ const READING_THE_FLOOR: TutorialChapter = {
 const SIGNALS_AND_CASES: TutorialChapter = {
   id: 'signals-and-cases',
   title: 'Signals and cases',
-  summary: 'Alerts, incidents, the inspector, evidence search, hypotheses and the ops feed.',
+  summary: 'Alerts, incidents, the inspector, evidence search, hypotheses and the chronicle.',
   section: 'cockpit',
   beats: [
     {
@@ -264,13 +264,14 @@ const SIGNALS_AND_CASES: TutorialChapter = {
       kind: 'do',
       title: 'Reading an alert',
       body: [
-        'Detections land in the Alerts panel in the inspector. An alert is a claim, not a verdict — read all of it before you act.',
+        'Detections land in Signals, over the stage’s top-right, a short glance from the nodes they name. An alert is a claim, not a verdict — read all of it before you act.',
         'Severity is how bad this would be if true. Confidence is how sure the detector is, as a percentage. The mono string beside them is the detector version, which is what makes a detection reproducible and auditable months later.',
         'Expand Explanation for the detector’s own account of why it fired, what it compared against, and the evidence window. Anomaly-model alerts carry a second Anomaly model disclosure with the observed score.',
+        'The asset name on the card is a button: press it and the stage focuses that node and opens the inspector on it. Once an alert has correlated, Open case takes you to the incident instead.',
         'A single alert in isolation is rarely the whole story. The question is always whether it corroborates: does the endpoint signal line up with identity activity, or is this the benign patch-window noise you were warned about.',
       ],
-      // Cockpit rework: alerts live in the signals stack over the stage, not an
-      // inspector tab. TODO(tutorial-prose): body says "Alerts panel in the inspector".
+      // The list and its panel only exist once an alert has landed; the capsule is what a
+      // quiet floor shows, so it is the last resort rather than a lie about an empty stack.
       anchors: [
         '[data-tutorial-id="alerts-list"]',
         '[data-testid="alerts-panel"]',
@@ -294,7 +295,7 @@ const SIGNALS_AND_CASES: TutorialChapter = {
       title: 'Alerts correlate into an incident',
       body: [
         'When related alerts line up, the correlation layer rolls them into an incident. That incident is your case file: investigation, proposals, approvals and the final report all hang off it.',
-        'Incidents appear as a clickable list in the inspector. Select one and the inspector deepens — triage timeline, linked alerts and evidence with provenance, the agent roster, and the response proposals raised against it.',
+        'Incidents appear as a clickable list at the foot of the inspector. Select one and the inspector deepens — triage timeline, linked alerts and evidence with provenance, the agent roster, and the response proposals raised against it.',
         'The incident state shows as a badge. It is a lifecycle, not a label; it moves as investigation and containment progress.',
       ],
       // Cockpit rework: the inspector is a summoned right sheet now (only in the DOM
@@ -321,11 +322,12 @@ const SIGNALS_AND_CASES: TutorialChapter = {
       kind: 'learn',
       title: 'What the inspector stacks',
       body: [
-        'The inspector is not one panel; it is an ordered stack that changes with the selection. Entity detail and risk score come first, then the risk explanation, which separates the asset’s own detection score from risk propagated to it by its neighbours.',
-        'Below that: incident context for the selection, the investigation workspace, BASTION response proposals, the SCRIBE reports panel, and finally the raw Incidents and Alerts lists.',
+        'The inspector is not one panel; it is an ordered stack that changes with the selection, arriving as a sheet on the right the moment you name something. Entity detail and risk score come first, then the risk explanation, which separates the asset’s own detection score from risk propagated to it by its neighbours.',
+        'Below that: incident context for the selection, the case file — investigation workspace and BASTION response proposals — then the SCRIBE reports panel, and finally the run’s Incidents list.',
         'The ordering is the argument. What is this, how risky is it, why, what case is it part of, and what are we proposing to do about it.',
+        'Press I to dismiss the sheet or bring it back. Dismissing it holds until you name a subject again, so a stage you cleared on purpose stays clear.',
       ],
-      // Cockpit rework: dock-tab-inspector died; the sheet is the inspector's home.
+      // The sheet is only in the DOM while open, so the panel inside it anchors first.
       anchors: ['[data-testid="inspector-panel"]', '[data-testid="inspector-sheet"]'],
       pointerLabel: 'the inspector stack',
     },
@@ -334,14 +336,13 @@ const SIGNALS_AND_CASES: TutorialChapter = {
       kind: 'learn',
       title: 'Evidence and hypotheses',
       body: [
-        'Evidence, in the left dock, searches the run’s raw event stream — free text against event type or payload, plus filters for a specific asset, an event-type prefix such as telemetry., and a simulation-time range. Go here when you distrust a summary and want the underlying events.',
-        'Hypotheses is your ledger. Pin a statement with the assets it implicates and your confidence, and it anchors the investigation instead of living in your head.',
-        'Each card shows its origin — Operator for yours, ORACLE for the agent’s. When the bias guard finds evidence contradicting a pinned hypothesis, the card gains a Challenged badge; expand it to read why.',
+        'Both ride with the copilot. Press C, or the chip on the console, and the sheet opens with Copilot, Evidence and Hypotheses as its three tabs — they are operator-console material, so they live with the colleague rather than in a column of their own.',
+        'Evidence searches the run’s raw event stream — free text against event type or payload, plus filters for a specific asset, an event-type prefix such as telemetry., and a simulation-time range. Go here when you distrust a summary and want the underlying events.',
+        'Hypotheses is your ledger. Pin a statement with the assets it implicates and your confidence, and it anchors the investigation instead of living in your head. Each card shows its origin — Operator for yours, ORACLE for the agent’s. When the bias guard finds evidence contradicting a pinned hypothesis, the card gains a Challenged badge; expand it to read why.',
         'Being challenged is not a failure. It is the system doing the one thing a lone analyst cannot reliably do for themselves: arguing against the theory you already like.',
       ],
-      // Cockpit rework: Evidence and Hypotheses are the copilot sheet's secondary tabs
-      // (only in the DOM while the sheet is open). TODO(tutorial-prose): body says
-      // "in the left dock".
+      // Both tabs only render while the copilot sheet is open and on that tab; the sheet
+      // itself is the fallback, and it too leaves the DOM when dismissed.
       anchors: [
         '[data-testid="console-event-search"]',
         '[data-testid="operator-hypotheses"]',
@@ -352,14 +353,15 @@ const SIGNALS_AND_CASES: TutorialChapter = {
     {
       id: 'ops-feed',
       kind: 'learn',
-      title: 'The ops feed',
+      title: 'The chronicle',
       body: [
-        'The ops feed merges everything that happens on the run into one newest-first stream: agent findings, detections, policy decisions, approvals, executions, RoE changes, and your own actions.',
+        'The chronicle is the tape opened out — the run’s history at full size instead of one tick per event. Open it with the chevron at the end of the tape, with T, or by dragging the handle above the strip upward. Esc closes it again.',
+        'Inside, the Ops feed merges everything that happens on the run into one newest-first stream: agent findings, detections, policy decisions, approvals, executions, RoE changes, and your own actions.',
         'Two badges are loud on purpose. Detection marks the moment the run reveals attacker activity. Bias check marks the bias guard challenging a hypothesis. Everything else stays quiet, and routine autonomy entries that changed nothing collapse.',
         'Agent entries carry an initiator badge: Tasked means you asked for it, Autonomy means the background worker did it under the current rules of engagement. When you cannot remember whether you ordered something, that badge is the answer.',
       ],
-      // Cockpit rework: the feed is the Chronicle — a drawer over the console, opened by
-      // the tape's chevron or T. The toggle is always in the DOM; the panel only while open.
+      // The feed and its drawer only exist while the chronicle is open; the tape's toggle
+      // is always mounted, so a closed chronicle still points at the way in.
       anchors: [
         '[data-testid="ops-feed-panel"]',
         '[data-testid="chronicle"]',
@@ -398,7 +400,7 @@ const COMMANDING_ASSETS: TutorialChapter = {
       kind: 'learn',
       title: 'Three surfaces, one execution path',
       body: [
-        'The same command menu lives in three places. The command bar under the graph promotes the first three commands to one-click buttons with All actions behind them. Right-clicking a node opens the identical menu where you found it. Deep dive opens the asset drawer, which carries the menu again under Direct action.',
+        'The same command menu lives in three places. The command cluster in the console promotes the first three commands to one-click buttons with All actions behind them. Right-clicking a node opens the identical menu where you found it. Deep dive opens the asset drawer, which carries the menu again under Direct action.',
         'All three run through one execution path, so policy, confirmation and audit behave identically no matter where you clicked.',
         'Inside the menu, commands group by tier: Read & monitor for Class 0 and 1, Containment · needs confirm for Class 2, Critical · needs confirm for Class 3. The tier heading is the warning.',
       ],
@@ -500,12 +502,13 @@ const THE_COPILOT: TutorialChapter = {
       kind: 'learn',
       title: 'Who you are talking to',
       body: [
-        'The Copilot tab holds four agents, and the role tabs are not cosmetic — each targets a different thread with a different job. WATCHTOWER sweeps current alerts and telemetry and recommends what to triage first. TRACE investigates a specific asset, hypothesis or lead across the run.',
+        'The copilot sheet holds four agents — press C, or the chip at the end of the console — and its role tabs are not cosmetic. Each targets a different thread with a different job. WATCHTOWER sweeps current alerts and telemetry and recommends what to triage first. TRACE investigates a specific asset, hypothesis or lead across the run.',
         'ORACLE weighs competing explanations for what you are seeing. BASTION drafts proportionate containment, and needs an open incident before it can propose actions.',
-        'Two more agents exist without a chat tab. WARDEN is the policy layer that judges every proposal — you meet it as a decision, not a conversation. SCRIBE compiles briefs and reports, and is reached through the SITREP button in the control link.',
+        'You do not have to sit with the sheet open. The chip reports the agents while they work and carries an unread badge when a reply lands, and that badge waits for you however long the turn took.',
+        'Two more agents exist without a chat tab. WARDEN is the policy layer that judges every proposal — you meet it as a decision, not a conversation. SCRIBE compiles briefs and reports, and is reached through the SITREP button in the status rail.',
       ],
-      // Cockpit rework: the copilot lives in a summoned left sheet; its presence chip on
-      // the console is the always-visible anchor when the sheet is closed.
+      // The chat only exists while the copilot sheet is open; the console's presence chip
+      // is the always-visible anchor, and pressing it is also the way to open the sheet.
       anchors: [
         '[data-tutorial-id="agent-chat"]',
         '[data-testid="agent-chat-panel"]',
@@ -563,7 +566,7 @@ const THE_COPILOT: TutorialChapter = {
       title: 'Four ways to engage',
       body: [
         'There is no button that tasks an agent from an alert. There are four genuine paths, and knowing them saves you hunting for a fifth.',
-        'One, a free-text directive in the composer. Two, the role tabs, which switch which agent and thread the composer targets. Three, the RoE dial in the control link. Four, SITREP, which opens the comms desk — press Request SITREP there and SCRIBE compiles a leadership-ready brief from the run’s live evidence.',
+        'One, a free-text directive in the composer. Two, the role tabs, which switch which agent and thread the composer targets. Three, the RoE dial in the status rail. Four, SITREP, which opens the comms desk — press Request SITREP there and SCRIBE compiles a leadership-ready brief from the run’s live evidence.',
         'The RoE dial is the one people miss. It is standing doctrine, not a one-off request. Observe means agents watch and report, and open nothing without your word. Investigate means they autonomously triage new alerts and surface findings to the feed. Forward-deployed means they proactively draft containment proposals for your approval.',
         'Changing it mid-run is audited and takes effect immediately. Anything the agents then do on their own appears in the ops feed marked Autonomy.',
       ],
@@ -686,7 +689,7 @@ const THE_CALL: TutorialChapter = {
       title: 'Play it out',
       body: [
         'The call is made. Let the run reach its horizon — twenty-five simulation minutes — and it finalizes on its own. You can also end it early with Stop, which finalizes it where it stands.',
-        'STATUS in the control link is the authority on this. When it reads completed or stopped, the after-action review and your score unlock.',
+        'SIM in the status rail is the authority on this. When it reads Complete or Stopped, the after-action review and your score unlock — and REPORT beside it turns from Underway to Report ready once the record has actually been written.',
         'Nothing you do after that point changes the run. It becomes a record: replayable, exportable, and gradeable.',
       ],
       anchors: [
@@ -762,7 +765,7 @@ const INCIDENTS_AND_REPORTS: TutorialChapter = {
       body: [
         'The Incidents route is the case-centric view: open cases across all of your active runs, not just this one. It is where you work when you are managing several engagements rather than watching one floor.',
         'Opening an incident gives you its full workspace — summary and next action, triage timeline, linked alerts and evidence with provenance, candidate affected assets, the agent roster, and its response proposals behind the same approval gate you used in the cockpit.',
-        'This route deliberately runs outside the command centre shell, so it has no control link, no identity badge and no keyboard shortcuts. It is a queue, not a cockpit.',
+        'This route deliberately runs outside the command centre shell, so it has no status rail, no identity badge and no keyboard shortcuts. It is a queue, not a cockpit.',
       ],
       anchors: ['[data-testid="incident-queue-list"]', '[data-testid="incident-queue-summary"]'],
       pointerLabel: 'the incident queue',
@@ -863,7 +866,7 @@ const REPLAY_AND_THE_REST: TutorialChapter = {
       body: [
         'Admin gates on the admin:manage permission and holds three sections: Users & Roles, Policy — the enforced rules, shown as they run — and Platform. Design system is the live component reference.',
         'The command palette opens on ⌘K or Ctrl+K and searches every destination and toggle by name. Run-scoped destinations only appear when there is a run to go to.',
-        'Three shortcuts are worth memorising: ⌘B toggles the operations rail, ⌘J the operator console dock, ⌘I the context channel dock. Together they are the fastest way to give the graph the whole screen and take it back.',
+        '⌘B toggles the operations rail, which is the one shortcut that reaches outside the cockpit. Inside it the vocabulary is single letters — A, I, C, T, and Esc — and the stage is full-bleed to begin with, so there is nothing to clear before the map has the screen.',
       ],
       anchors: [
         '[data-testid="command-palette"]',
