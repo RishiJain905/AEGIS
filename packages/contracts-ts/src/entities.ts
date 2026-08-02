@@ -244,7 +244,10 @@ export const evidenceSchema = z
     runId: runIdSchema,
     sourceEventId: eventIdSchema,
     summary: z.string().min(1),
-    assetId: assetIdSchema.optional(),
+    // Nullable for the same reason as GraphNodeV1.clusterId: the Python contract declares
+    // `asset_id: AssetId | None` and serializes evidence with no asset as `null`. Evidence
+    // rides inside the replay state payload, so rejecting the null discarded the whole run.
+    assetId: assetIdSchema.nullish(),
     createdAt: utcTimestampSchema,
   })
   .strict();

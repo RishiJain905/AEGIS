@@ -56,7 +56,11 @@ export const graphNodeSchema = z
     entityType: z.enum(['asset', 'cluster']),
     assetType: z.enum(['service', 'device', 'user', 'identity', 'database', 'control', 'ai_model']),
     label: z.string().min(1),
-    clusterId: clusterIdSchema.optional(),
+    // Nullable, not merely optional: the Python contract declares `cluster_id: ClusterId |
+    // None` and serializes an unclustered node as `"clusterId": null`. A node reconstructed
+    // from events alone (replay) never has a cluster, so a schema that only tolerated
+    // `undefined` rejected every replayed graph — and with it the whole replay payload.
+    clusterId: clusterIdSchema.nullish(),
     riskScore: z.number().min(0).max(1),
     criticality: z.number().min(0).max(1),
     // The asset's composed operator-facing status: a containing control reads

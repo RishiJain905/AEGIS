@@ -4,9 +4,17 @@
  * The range was `max(reconstructed cursor, REPLAY_FIXTURE_MAX_SEQUENCE)` — a 500 borrowed
  * from the demo fixture — so scrubbing to End asked the server for a sequence the run had
  * never reached.
+ *
+ * BUG-036: every real run then replayed as "0 of 0 · range 0–0" with no graph. The range
+ * derivation was already correct; the payload never survived contract parsing, because a
+ * graph node reconstructed from events carries `clusterId: null` and the TS schema only
+ * accepted `undefined`. The payload tests below run through the real schema for that reason
+ * — a mocked client that hands back an unparsed object cannot catch a parsing bug.
  */
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { parseContract, replayStateSchema } from '@aegis/contracts-ts';
 
 const { getReplayState, listReplaySnapshots, push } = vi.hoisted(() => ({
   getReplayState: vi.fn(),
@@ -29,13 +37,45 @@ import { useReplayStore } from '@/stores/replay-store';
 const RUN_ID = 'run_8024W2GZ4PMQ02P8FXTH840AY6';
 const MAX_SEQUENCE = 327;
 
+/**
+ * Shaped like a real reconstruction: nodes discovered from the event stream alone, so they
+ * carry no cluster and the server sends `clusterId: null`.
+ */
+function reconstructedGraph(sequence: number) {
+  return {
+    schemaVersion: 1,
+    runId: RUN_ID,
+    sequence,
+    capturedAt: '2026-01-01T00:25:00Z',
+    nodes: [
+      {
+        schemaVersion: 1,
+        id: 'asset:svc-logistics-api',
+        entityType: 'asset',
+        assetType: 'service',
+        label: 'asset:svc-logistics-api',
+        clusterId: null,
+        riskScore: 0,
+        criticality: 0.5,
+        status: 'normal',
+        revision: 1,
+        appliedControls: [],
+        disclosed: true,
+      },
+    ],
+    edges: [],
+    clusters: [],
+    revision: 1,
+  };
+}
+
 function replayState(sequence: number) {
   return {
     schemaVersion: 1,
     runId: RUN_ID,
     cursor: { schemaVersion: 1, runId: RUN_ID, sequence, simTime: null, incidentId: null },
     run: null,
-    graph: null,
+    graph: reconstructedGraph(sequence),
     incidents: [],
     evidence: [],
     riskScores: [],
@@ -71,7 +111,9 @@ describe('ReplayProvider timeline range', () => {
 
   it('derives the range from the run’s own event maximum', async () => {
     getReplayState.mockImplementation((_runId: string, params?: { sequence?: number }) =>
-      Promise.resolve(replayState(params?.sequence ?? MAX_SEQUENCE)),
+      Promise.resolve(
+        parseContract(replayStateSchema, replayState(params?.sequence ?? MAX_SEQUENCE)),
+      ),
     );
     listReplaySnapshots.mockResolvedValue([]);
 
@@ -81,6 +123,37 @@ describe('ReplayProvider timeline range', () => {
       expect(useReplayStore.getState().maxSequence).toBe(MAX_SEQUENCE);
     });
     expect(useReplayStore.getState().cursor?.sequence).toBe(MAX_SEQUENCE);
+  });
+
+  it('replays a run that persisted no snapshot manifests', async () => {
+    getReplayState.mockImplementation((_runId: string, params?: { sequence?: number }) =>
+      Promise.resolve(
+        parseContract(replayStateSchema, replayState(params?.sequence ?? MAX_SEQUENCE)),
+      ),
+    );
+    // Snapshots are an optimisation, never the source of the timeline range: a live run
+    // persists none, and the run must still scrub across its full event history.
+    listReplaySnapshots.mockResolvedValue([]);
+
+    render(<ReplayProvider runId={RUN_ID}>{null}</ReplayProvider>);
+
+    await waitFor(() => {
+      expect(useReplayStore.getState().loadStatus).toBe('ready');
+    });
+    const state = useReplayStore.getState();
+    expect(state.snapshots).toEqual([]);
+    expect(state.minSequence).toBe(0);
+    expect(state.maxSequence).toBe(MAX_SEQUENCE);
+    expect(state.reconstructedState?.graph?.nodes).toHaveLength(1);
+    expect(state.historicalGraph).not.toBeNull();
+    expect(state.errorCode).toBeNull();
+  });
+
+  it('accepts a reconstructed graph whose nodes have no cluster', () => {
+    // Regression for BUG-036: the server sends clusterId: null for event-derived nodes.
+    // Rejecting that here discarded the entire replay payload, leaving range 0–0.
+    const parsed = parseContract(replayStateSchema, replayState(MAX_SEQUENCE));
+    expect(parsed.graph?.nodes[0]?.clusterId).toBeNull();
   });
 
   it('does not invent a range when the run cannot be reconstructed', async () => {

@@ -68,7 +68,9 @@ export function validateGraphConsistency(
       });
       continue;
     }
-    if (node.clusterId !== undefined) {
+    // Nullish, not just undefined: an unclustered node arrives from the API as
+    // `clusterId: null`, and it has no cluster reference to resolve either way.
+    if (node.clusterId != null) {
       const clusterHasMember = [...clusters.values()].some(
         (cluster) => cluster.id === node.clusterId || cluster.memberNodeIds.includes(nodeId),
       );
