@@ -13,21 +13,63 @@ import {
 
 const ASSET = 'asset:svc-comms-gateway';
 
+/**
+ * A real-shaped rule alert.
+ *
+ * The field that matters here is `deduplicationKey`: the server builds it as
+ * `{run}:{rule}:{entity}:{window_start_epoch}`, so it changes on every repeat. An earlier
+ * fixture invented a stable `asset:rule` key, which is why the collapsing bug passed its
+ * own tests while never once firing against a live run. Repeats are produced by
+ * {@link repeatOf}, which varies exactly what the server varies.
+ */
 function alert(overrides: Partial<AlertV1> & { id: string }): AlertV1 {
   return {
     schemaVersion: 1,
     runId: 'run_x',
-    title: 'Unseen source activity detected',
+    title: 'Unseen device or source activity',
     severity: 'medium',
     sourceEventId: `evt-${overrides.id}`,
     assetId: ASSET,
     createdAt: '2026-01-01T00:00:24.000Z',
     confidence: 0.75,
-    detectorId: 'first-seen',
+    ruleId: 'rule-unseen-source',
+    ruleVersion: '1.0.0',
+    detectorId: 'rule-unseen-source',
     detectorVersion: '1.0.0',
-    deduplicationKey: `${ASSET}:first-seen`,
+    deduplicationKey: `run_x:rule-unseen-source:${ASSET}:1767225600`,
     ...overrides,
   } as AlertV1;
+}
+
+/**
+ * The same rule firing again on the same asset one window later — identical in every way
+ * an operator can see, and different in exactly the fields the server advances.
+ */
+function repeatOf(
+  base: AlertV1,
+  {
+    id,
+    sequence,
+    simTime,
+    windowStartEpoch,
+  }: {
+    id: string;
+    sequence: number;
+    simTime: string;
+    windowStartEpoch: number;
+  },
+): AlertV1 {
+  return withEvidence(
+    {
+      ...base,
+      id,
+      sourceEventId: `evt-${id}`,
+      createdAt: simTime,
+      deduplicationKey: `run_x:rule-unseen-source:${ASSET}:${String(windowStartEpoch)}`,
+    } as AlertV1,
+    sequence,
+    simTime,
+  );
 }
 
 function withEvidence(base: AlertV1, sequence: number, simTime: string): AlertV1 {
@@ -65,10 +107,40 @@ const assets = new Map<string, AssetFacts>([
 ]);
 
 describe('alertGroupKey', () => {
-  it('prefers the detector dedup key and falls back to asset + title + detector', () => {
-    expect(alertGroupKey(alert({ id: 'a1' }))).toBe(`${ASSET}:first-seen`);
-    const undeduped = { ...alert({ id: 'a2' }), deduplicationKey: undefined };
-    expect(alertGroupKey(undeduped)).toBe(`${ASSET}|Unseen source activity detected|first-seen`);
+  it('keys on rule and asset, ignoring the window-scoped server dedup key', () => {
+    const first = alert({ id: 'a1' });
+    const later = repeatOf(first, {
+      id: 'a2',
+      sequence: 130,
+      simTime: '2026-01-01T00:02:24.000Z',
+      windowStartEpoch: 1767225660,
+    });
+
+    // The server key differs between these two — that is what it is for.
+    expect(later.deduplicationKey).not.toBe(first.deduplicationKey);
+    expect(alertGroupKey(later)).toBe(alertGroupKey(first));
+    expect(alertGroupKey(first)).toBe(`${ASSET}|rule-unseen-source`);
+  });
+
+  it('separates different rules on one asset, and one rule across different assets', () => {
+    const unseenSource = alert({ id: 'a1' });
+    const otherRule = alert({
+      id: 'b1',
+      ruleId: 'rule-unusual-login',
+      detectorId: 'rule-unusual-login',
+    });
+    const otherAsset = alert({ id: 'c1', assetId: 'asset:svc-identity-broker' });
+
+    expect(alertGroupKey(otherRule)).not.toBe(alertGroupKey(unseenSource));
+    expect(alertGroupKey(otherAsset)).not.toBe(alertGroupKey(unseenSource));
+  });
+
+  it('falls back to the detector, then the title, when the alert names no rule', () => {
+    const model = alert({ id: 'm1', ruleId: undefined, detectorId: 'isolation-forest' });
+    expect(alertGroupKey(model)).toBe(`${ASSET}|isolation-forest`);
+
+    const anonymous = alert({ id: 'x1', ruleId: undefined, detectorId: undefined });
+    expect(alertGroupKey(anonymous)).toBe(`${ASSET}|Unseen device or source activity`);
   });
 });
 
@@ -80,12 +152,25 @@ describe('simClock', () => {
 });
 
 describe('buildAlertCards', () => {
-  it('collapses exact duplicates into one card carrying the count and sequence range', () => {
+  it('collapses repeats that differ only in window, sequence and time', () => {
+    // The live defect: one rule firing across three feature windows on one asset rendered
+    // three separate identical cards, because each carried its own server dedup key.
+    const first = withEvidence(alert({ id: 'a1' }), 14, '2026-01-01T00:00:24.000Z');
     const cards = buildAlertCards({
       alerts: [
-        withEvidence(alert({ id: 'a1' }), 14, '2026-01-01T00:00:24.000Z'),
-        withEvidence(alert({ id: 'a2' }), 27, '2026-01-01T00:00:40.000Z'),
-        withEvidence(alert({ id: 'a3' }), 72, '2026-01-01T00:01:30.000Z'),
+        first,
+        repeatOf(first, {
+          id: 'a2',
+          sequence: 27,
+          simTime: '2026-01-01T00:00:40.000Z',
+          windowStartEpoch: 1767225660,
+        }),
+        repeatOf(first, {
+          id: 'a3',
+          sequence: 72,
+          simTime: '2026-01-01T00:01:30.000Z',
+          windowStartEpoch: 1767225720,
+        }),
       ],
       incidents: [],
       assets,
@@ -95,8 +180,50 @@ describe('buildAlertCards', () => {
     expect(cards[0]?.count).toBe(3);
     expect(cards[0]?.firstSequence).toBe(14);
     expect(cards[0]?.lastSequence).toBe(72);
+    // The card speaks for the newest sighting, and says when that was.
+    expect(cards[0]?.alert.id).toBe('a3');
+    expect(cards[0]?.lastSimTime).toBe('2026-01-01T00:01:30.000Z');
     expect(cards[0]?.assetLabel).toBe('Communications Gateway');
     expect(cards[0]?.whyItMatters).toContain('3 sightings on Communications Gateway');
+  });
+
+  it('shows the newest severity when a repeating rule escalates', () => {
+    const first = withEvidence(alert({ id: 'a1' }), 14, '2026-01-01T00:00:24.000Z');
+    const escalated = {
+      ...repeatOf(first, {
+        id: 'a2',
+        sequence: 90,
+        simTime: '2026-01-01T00:01:30.000Z',
+        windowStartEpoch: 1767225660,
+      }),
+      severity: 'high',
+    } as AlertV1;
+
+    const cards = buildAlertCards({ alerts: [first, escalated], incidents: [], assets });
+
+    expect(cards).toHaveLength(1);
+    expect(cards[0]?.alert.severity).toBe('high');
+  });
+
+  it('orders model-alert repeats by creation time, since they all carry sequence 0', () => {
+    // `model_promotion` persists isolation-forest alerts with sequence_start/end = 0.
+    const base = alert({ id: 'm1', ruleId: undefined, detectorId: 'isolation-forest' });
+    const older = withEvidence(
+      { ...base, createdAt: '2026-01-01T00:01:00.000Z' },
+      0,
+      '2026-01-01T00:01:00.000Z',
+    );
+    const newer = withEvidence(
+      { ...base, id: 'm2', createdAt: '2026-01-01T00:04:00.000Z' } as AlertV1,
+      0,
+      '2026-01-01T00:04:00.000Z',
+    );
+
+    const cards = buildAlertCards({ alerts: [newer, older], incidents: [], assets });
+
+    expect(cards).toHaveLength(1);
+    expect(cards[0]?.count).toBe(2);
+    expect(cards[0]?.alert.id).toBe('m2');
   });
 
   it('names the asset by display label and keeps the raw id off the card copy', () => {
@@ -139,7 +266,8 @@ describe('buildAlertCards', () => {
       alerts: [alert({ id: 'a1' })],
       incidents: [],
       assets,
-      openedKeys: new Set([`${ASSET}:first-seen`]),
+      // Derived, not hardcoded: the panel opens cards by the same key the model builds.
+      openedKeys: new Set([alertGroupKey(alert({ id: 'a1' }))]),
     });
     expect(cards[0]?.lifecycle).toBe('investigated');
   });
@@ -162,8 +290,10 @@ describe('buildAlertCards', () => {
         withEvidence(
           alert({
             id: 'b1',
-            title: 'Authentication failure burst',
-            deduplicationKey: `${ASSET}:auth-burst`,
+            title: 'Unusual login pattern',
+            ruleId: 'rule-unusual-login',
+            detectorId: 'rule-unusual-login',
+            deduplicationKey: `run_x:rule-unusual-login:${ASSET}:1767225660`,
           }),
           130,
           '2026-01-01T00:02:24.000Z',

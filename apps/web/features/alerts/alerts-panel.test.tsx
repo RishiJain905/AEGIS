@@ -21,6 +21,7 @@ function toggleDisclosure(summaryTestId: string, open: boolean) {
 }
 
 const ASSET = 'asset:svc-comms-gateway';
+const OTHER_ASSET = 'asset:svc-identity-broker';
 
 const focusAsset = vi.fn();
 vi.mock('@/features/operational-graph', () => ({
@@ -44,28 +45,41 @@ function quietActivity() {
   };
 }
 
-function alert(overrides: Partial<AlertV1> & { id: string }): AlertV1 {
+/**
+ * A real-shaped rule alert. `deduplicationKey` carries the server's window epoch, exactly
+ * as `aegis_incidents.rules.dedup` builds it — repeats differ in it, so a fixture that
+ * held it constant could never catch the collapsing bug QA found.
+ */
+function alert(
+  overrides: Partial<AlertV1> & { id: string },
+  window?: { sequence: number; simTime: string; windowStartEpoch: number },
+): AlertV1 {
+  const sequence = window?.sequence ?? 14;
+  const simTime = window?.simTime ?? '2026-01-01T00:00:24.000Z';
+  const epoch = window?.windowStartEpoch ?? 1767225600;
   return {
     schemaVersion: 1,
     runId: 'run_x',
-    title: 'Unseen source activity detected',
+    title: 'Unseen device or source activity',
     severity: 'medium',
     sourceEventId: `evt-${overrides.id}`,
     assetId: ASSET,
-    createdAt: '2026-01-01T00:00:24.000Z',
+    createdAt: simTime,
     confidence: 0.75,
-    detectorId: 'first-seen',
+    ruleId: 'rule-unseen-source',
+    ruleVersion: '1.0.0',
+    detectorId: 'rule-unseen-source',
     detectorVersion: '1.0.0',
-    deduplicationKey: `${ASSET}:first-seen`,
+    deduplicationKey: `run_x:rule-unseen-source:${ASSET}:${String(epoch)}`,
     evidence: {
       featureSchemaVersion: 1,
       featureValues: {},
       sourceEventIds: [`evt-${overrides.id}`],
-      windowKey: `run_x:${ASSET}:1767225600`,
-      sequenceStart: 14,
-      sequenceEnd: 14,
-      simTimeStart: '2026-01-01T00:00:24.000Z',
-      simTimeEnd: '2026-01-01T00:00:24.000Z',
+      windowKey: `run_x:${ASSET}:${String(epoch)}`,
+      sequenceStart: sequence,
+      sequenceEnd: sequence,
+      simTimeStart: simTime,
+      simTimeEnd: simTime,
     },
     ...overrides,
   } as AlertV1;
@@ -88,6 +102,17 @@ function snapshot(status = 'normal'): GraphSnapshotV1 {
         riskScore: 0.4,
         criticality: 0.8,
         status,
+        revision: 1,
+      },
+      {
+        schemaVersion: 1,
+        id: OTHER_ASSET,
+        entityType: 'asset',
+        assetType: 'service',
+        label: 'Identity Broker',
+        riskScore: 0.5,
+        criticality: 0.9,
+        status: 'normal',
         revision: 1,
       },
     ],
@@ -151,18 +176,51 @@ describe('AlertsPanel', () => {
     expect(focusAsset).toHaveBeenCalledWith(ASSET);
   });
 
-  it('folds exact repeats into one card with a count', () => {
+  it('folds repeats of one rule on one asset into a single counted card', () => {
+    // Regression for the live defect: Identity Broker and Comms Gateway each showed two
+    // identical uncollapsed cards, because every repeat carried its own server dedup key.
     activity.mockReturnValue(quietActivity());
     render(
       <AlertsPanel
-        alerts={[alert({ id: 'a1' }), alert({ id: 'a2' }), alert({ id: 'a3' })]}
+        alerts={[
+          alert(
+            { id: 'a1' },
+            { sequence: 14, simTime: '2026-01-01T00:00:24.000Z', windowStartEpoch: 1767225600 },
+          ),
+          alert(
+            { id: 'a2' },
+            { sequence: 27, simTime: '2026-01-01T00:00:40.000Z', windowStartEpoch: 1767225660 },
+          ),
+          alert(
+            { id: 'a3' },
+            { sequence: 72, simTime: '2026-01-01T00:02:30.000Z', windowStartEpoch: 1767225720 },
+          ),
+        ]}
         incidents={[]}
         snapshot={snapshot()}
       />,
     );
 
     expect(screen.getAllByTestId(/^alert-item-/)).toHaveLength(1);
-    expect(screen.getByTestId('alert-repeat-a3')).toHaveTextContent('×3');
+    const badge = screen.getByTestId('alert-repeat-a3');
+    expect(badge).toHaveTextContent('×3');
+    expect(badge).toHaveAttribute('title', 'Seen 3 times, last at 00:02:30');
+  });
+
+  it('keeps one rule on two different assets as two cards', () => {
+    // The other half of the same judgement: identical wording about different assets is
+    // not a repeat, and collapsing it would hide an asset from the operator.
+    activity.mockReturnValue(quietActivity());
+    render(
+      <AlertsPanel
+        alerts={[alert({ id: 'a1' }), alert({ id: 'b1', assetId: OTHER_ASSET })]}
+        incidents={[]}
+        snapshot={snapshot()}
+      />,
+    );
+
+    expect(screen.getAllByTestId(/^alert-item-/)).toHaveLength(2);
+    expect(screen.queryByTestId(/^alert-repeat-/)).not.toBeInTheDocument();
   });
 
   it('shows the status transition the alert preceded', () => {

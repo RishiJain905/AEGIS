@@ -57,7 +57,7 @@ export interface AnomalyDetail {
 }
 
 export interface AlertCard {
-  /** Stable across polls: the detector's dedup key when it has one. */
+  /** Stable across polls and across windows: see {@link alertGroupKey}. */
   key: string;
   /** The newest alert in the group — the one whose wording and confidence we show. */
   alert: AlertV1;
@@ -97,12 +97,21 @@ export interface BuildAlertCardsInput {
 const TRIAGED_STATUSES = new Set(['under_investigation', 'contained']);
 
 /**
- * Group key for exact-duplicate collapsing. The detector's `deduplicationKey` is the
- * authoritative answer; the composite fallback keeps pre-dedup alerts from each other's
- * cards while still folding a repeating detector into one.
+ * Group key for repeat collapsing: the rule that fired, and the asset it fired on.
+ *
+ * Deliberately *not* `alert.deduplicationKey`. That is the server's suppression key, built
+ * as `{run}:{rule}:{entity}:{window_start_epoch}` in `aegis_incidents.rules.dedup` (and the
+ * same shape in `aegis_ml.inference.scorer`), and its job is the opposite of this one: it
+ * stops a rule firing twice *inside* one feature window while deliberately letting it fire
+ * afresh in the next. Every genuine repeat therefore carries a different dedup key, so
+ * treating it as "the authoritative answer" meant identical alerts never collapsed at all.
+ *
+ * Rule plus asset is the honest identity of "this, again". `detectorId` equals `ruleId` for
+ * rule alerts; model alerts carry only `detectorId` (`isolation-forest`). Title is the last
+ * resort, for an alert that names neither.
  */
 export function alertGroupKey(alert: AlertV1): string {
-  return alert.deduplicationKey ?? `${alert.assetId}|${alert.title}|${alert.detectorId ?? 'rule'}`;
+  return `${alert.assetId}|${alert.ruleId ?? alert.detectorId ?? alert.title}`;
 }
 
 /** `2026-01-01T00:02:30.000Z` -> `00:02:30`. Falls back to the raw value. */
@@ -116,6 +125,12 @@ export function simClock(timestamp: string | null | undefined): string {
 /** Human status wording, for prose rather than the status chip. */
 function statusWord(status: string): string {
   return status.replace(/_/g, ' ');
+}
+
+/** Milliseconds for sorting; an unparseable stamp sorts as the epoch rather than throwing. */
+function epochMs(timestamp: string | null | undefined): number {
+  const parsed = timestamp != null ? Date.parse(timestamp) : Number.NaN;
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 function alertSequence(alert: AlertV1): number | null {
@@ -248,9 +263,13 @@ export function buildAlertCards(input: BuildAlertCardsInput): AlertCard[] {
   }
 
   const draft = [...groups.entries()].map(([key, members]) => {
-    const ordered = [...members].sort(
-      (left, right) => (alertSequence(left) ?? 0) - (alertSequence(right) ?? 0),
-    );
+    // Sequence orders repeats where it is real. Model alerts are all persisted with
+    // sequence 0 (`aegis_incidents.model_promotion`), so their creation time is the only
+    // thing that can say which of two repeats is the newer one.
+    const ordered = [...members].sort((left, right) => {
+      const bySequence = (alertSequence(left) ?? 0) - (alertSequence(right) ?? 0);
+      return bySequence !== 0 ? bySequence : epochMs(left.createdAt) - epochMs(right.createdAt);
+    });
     const newest = ordered[ordered.length - 1] as AlertV1;
     const oldest = ordered[0] as AlertV1;
     const facts = assets.get(newest.assetId) ?? null;
