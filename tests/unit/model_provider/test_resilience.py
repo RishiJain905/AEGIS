@@ -127,3 +127,53 @@ def test_retryable_error_classification() -> None:
         )
     )
     assert is_retryable_error(error)
+
+
+async def _always_fails(ctx: ResilienceContext, code: ProviderErrorCode) -> None:
+    async def failing() -> str:
+        raise ProviderRuntimeError(make_provider_error(code=code, message="nope"))
+
+    with pytest.raises(ProviderRuntimeError):
+        await run_with_resilience(ctx, trace_id=None, timeout_ms=1000, operation=failing)
+
+
+@pytest.mark.asyncio
+async def test_malformed_model_output_never_opens_the_circuit() -> None:
+    """A model that cannot follow its schema must not lock out a healthy endpoint.
+
+    The breaker's job is to stop hammering a provider that is down. Counting
+    model-output faults against it meant a local model missing its schema five
+    turns running would fail every unrelated call for the reset window — while
+    the endpoint it was protecting had answered all five requests correctly.
+    """
+    ctx = ResilienceContext(
+        ProviderSettings(
+            AEGIS_PROVIDER_MAX_RETRIES=0,
+            AEGIS_PROVIDER_CIRCUIT_BREAKER_THRESHOLD=2,
+        )
+    )
+
+    for _ in range(4):
+        await _always_fails(ctx, ProviderErrorCode.STRUCTURED_OUTPUT_INVALID)
+
+    assert not ctx.circuit_breaker.is_open()
+    ctx.assert_circuit_closed(trace_id=None)
+
+
+@pytest.mark.asyncio
+async def test_a_genuinely_sick_endpoint_still_opens_the_circuit() -> None:
+    """The protection the breaker actually exists for is untouched."""
+    ctx = ResilienceContext(
+        ProviderSettings(
+            AEGIS_PROVIDER_MAX_RETRIES=0,
+            AEGIS_PROVIDER_CIRCUIT_BREAKER_THRESHOLD=2,
+        )
+    )
+
+    for _ in range(2):
+        await _always_fails(ctx, ProviderErrorCode.PROVIDER_UNAVAILABLE)
+
+    assert ctx.circuit_breaker.is_open()
+    with pytest.raises(ProviderRuntimeError) as exc_info:
+        ctx.assert_circuit_closed(trace_id=None)
+    assert exc_info.value.error.code is ProviderErrorCode.CIRCUIT_OPEN

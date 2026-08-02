@@ -71,6 +71,33 @@ def is_retryable_error(error: ProviderRuntimeError) -> bool:
     }
 
 
+#: Failures that say nothing about whether the endpoint is healthy: the call
+#: reached the provider and the provider answered. What went wrong was the
+#: caller's request or the model's own output.
+_HEALTHY_ENDPOINT_CODES = frozenset(
+    {
+        ProviderErrorCode.STRUCTURED_OUTPUT_INVALID,
+        ProviderErrorCode.OUTPUT_LIMIT_EXCEEDED,
+        ProviderErrorCode.VALIDATION_FAILED,
+        ProviderErrorCode.CAPABILITY_UNSUPPORTED,
+    }
+)
+
+
+def counts_against_endpoint_health(error: ProviderRuntimeError) -> bool:
+    """Whether this failure is evidence the provider itself is sick.
+
+    The breaker exists to stop hammering an endpoint that is down. Feeding it
+    model-output faults instead inverts that: a local model that misses its
+    schema five turns running would trip the breaker and lock out every caller
+    for the reset window, while the endpoint it was "protecting" answered all
+    five requests perfectly. That is the same misdiagnosis as reporting malformed
+    JSON as ``PROVIDER_FAILURE``, one layer down and with a much wider blast
+    radius, because an open circuit fails calls that had nothing to do with it.
+    """
+    return error.error.code not in _HEALTHY_ENDPOINT_CODES
+
+
 # Below this much remaining budget there is no point starting another attempt:
 # the model would be cut off before it could produce anything usable, and the
 # turn is better spent reporting an honest timeout.
@@ -141,7 +168,8 @@ async def run_with_resilience[T](
             except ProviderRuntimeError as exc:
                 last_error = exc
                 if not is_retryable_error(exc) or attempt >= max_attempts:
-                    ctx.circuit_breaker.record_failure()
+                    if counts_against_endpoint_health(exc):
+                        ctx.circuit_breaker.record_failure()
                     raise
             except asyncio.CancelledError:
                 # Not ours to convert — see the docstring.
@@ -159,7 +187,8 @@ async def run_with_resilience[T](
                 ctx.circuit_breaker.record_failure()
                 raise last_error from exc
 
-            ctx.circuit_breaker.record_failure()
+            if counts_against_endpoint_health(last_error):
+                ctx.circuit_breaker.record_failure()
             backoff = (
                 ctx.settings.AEGIS_PROVIDER_COLD_START_BACKOFF_SECONDS
                 if _is_warming_up(last_error)

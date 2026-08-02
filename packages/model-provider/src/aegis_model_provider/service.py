@@ -24,9 +24,16 @@ from aegis_model_provider.registry import ProviderRegistry
 from aegis_model_provider.resilience import ResilienceContext, run_with_resilience
 from aegis_model_provider.structured_output import (
     build_repair_messages,
-    parse_json_content,
+    parse_structured_content,
     validate_structured_output,
 )
+
+#: Repair rounds this service will ever spend on one call, whatever a request
+#: asks for. A model that cannot produce its schema when shown the exact
+#: complaint will not produce it on the third try either, and each round is a
+#: full model call against a caller's deadline — on the local endpoint, tens of
+#: seconds. One retry is the whole budget.
+MAX_REPAIR_ROUNDS = 1
 
 
 class GenerationService:
@@ -155,6 +162,20 @@ class GenerationService:
         provider: ModelProvider,
         request: GenerationRequestV1,
     ) -> GenerationResponseV1:
+        """Generate, and give a malformed structured answer exactly one second chance.
+
+        Adapters deliberately do not fail a call over a schema-invalid payload —
+        they return the raw content with ``structured_data`` unset, which is the
+        signal that lands here. This method owns the contract instead: recover the
+        object from whatever the model wrapped it in, validate it, and on failure
+        re-prompt once with the model's own rejected output and the specific
+        complaint. That bound is hard (:data:`MAX_REPAIR_ROUNDS`) so a model that
+        cannot follow its schema costs one extra call, never a loop.
+
+        If the repair also fails, the ORIGINAL error is what the caller sees —
+        flagged with ``repairAttempted`` — because the first failure is the one
+        that describes what the model actually got wrong.
+        """
         response = await provider.generate(request)
         if request.structured_output is None:
             return response
@@ -170,35 +191,63 @@ class GenerationService:
                 )
             )
         try:
-            parsed = parse_json_content(response.content)
+            parsed = parse_structured_content(response.content)
             validate_structured_output(parsed, request.structured_output)
             return response.model_copy(update={"structured_data": parsed})
         except ProviderRuntimeError as exc:
-            if request.structured_output.max_repair_attempts < 1:
+            rounds = min(MAX_REPAIR_ROUNDS, request.structured_output.max_repair_attempts)
+            if rounds < 1:
                 raise
-            repair_request = request.model_copy(
-                update={
-                    "messages": build_repair_messages(
-                        request,
-                        invalid_content=response.content,
-                        validation_message=exc.error.message,
-                    )
-                }
-            )
-            repaired = await provider.generate(repair_request)
-            if repaired.structured_data is None and repaired.content:
-                repaired = repaired.model_copy(
-                    update={
-                        "structured_data": validate_structured_output(
-                            parse_json_content(repaired.content),
-                            request.structured_output,
-                        )
-                    }
+            repaired = await self._repair_once(provider, request, response, error=exc)
+            if repaired is not None:
+                return repaired
+            raise ProviderRuntimeError(
+                make_provider_error(
+                    code=exc.error.code,
+                    message=exc.error.message,
+                    retryable=exc.error.retryable,
+                    details={**exc.error.details, "repairAttempted": True},
+                    trace_id=request.trace_id,
                 )
-            if repaired.structured_data is None:
-                raise
-            validate_structured_output(repaired.structured_data, request.structured_output)
-            return repaired
+            ) from exc
+
+    async def _repair_once(
+        self,
+        provider: ModelProvider,
+        request: GenerationRequestV1,
+        response: GenerationResponseV1,
+        *,
+        error: ProviderRuntimeError,
+    ) -> GenerationResponseV1 | None:
+        """One corrective round-trip; ``None`` when it did not produce a valid answer.
+
+        Every failure mode of the repair itself — the provider erroring, the
+        second answer being just as malformed — resolves to ``None`` rather than
+        an exception, so a repair attempt can only ever improve the outcome. The
+        caller still owns reporting the original failure.
+        """
+        assert request.structured_output is not None
+        repair_request = request.model_copy(
+            update={
+                "messages": build_repair_messages(
+                    request,
+                    invalid_content=response.content or "",
+                    validation_message=error.error.message,
+                    validation_details=error.error.details,
+                )
+            }
+        )
+        try:
+            repaired = await provider.generate(repair_request)
+            payload = repaired.structured_data
+            if payload is None and repaired.content:
+                payload = parse_structured_content(repaired.content)
+            if payload is None:
+                return None
+            validate_structured_output(payload, request.structured_output)
+        except ProviderRuntimeError:
+            return None
+        return repaired.model_copy(update={"structured_data": payload})
 
     async def get_artifact(self, request_id: str) -> GenerationArtifactV1 | None:
         return await self._artifact_repository.get_by_request_id(request_id)

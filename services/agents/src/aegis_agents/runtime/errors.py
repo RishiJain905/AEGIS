@@ -18,6 +18,13 @@ class AgentRuntimeErrorCode(StrEnum):
     TASK_NOT_FOUND = "TASK_NOT_FOUND"
     INCIDENT_NOT_FOUND = "INCIDENT_NOT_FOUND"
     PROVIDER_FAILURE = "PROVIDER_FAILURE"
+    # The provider worked; the MODEL's answer did not conform. Malformed or
+    # truncated JSON, a payload that misses its schema, or an identifier the model
+    # invented rather than read from the run. Distinct from PROVIDER_FAILURE
+    # because the remedy is different: nothing is wrong with the endpoint, and
+    # asking again can plausibly succeed, so this is retryable where a genuine
+    # provider fault usually is not.
+    STRUCTURED_OUTPUT_INVALID = "STRUCTURED_OUTPUT_INVALID"
     INTERNAL = "INTERNAL"
 
 

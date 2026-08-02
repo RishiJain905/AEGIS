@@ -411,6 +411,104 @@ async def test_a_real_401_is_still_classified_as_missing_credentials() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("label", "content"),
+    [
+        ("fenced block", '```json\n{"summary": "fenced", "confidence": 0.5}\n```'),
+        ("prose preamble", 'Here is the result:\n{"summary": "fenced", "confidence": 0.5}'),
+        (
+            "trailing commentary",
+            '{"summary": "fenced", "confidence": 0.5}\nTell me if you need more.',
+        ),
+        ("trailing comma", '{"summary": "fenced", "confidence": 0.5,}'),
+        (
+            "think block then a fenced object",
+            '<think>weighing it up</think>\n```json\n{"summary": "fenced", "confidence": 0.5}\n```',
+        ),
+    ],
+)
+async def test_near_miss_json_shapes_are_recovered_rather_than_failed(
+    label: str, content: str
+) -> None:
+    """The prompt says "no code fences, no prose" and the model does it anyway.
+
+    With no server-side grammar the model is only *asked* to emit bare JSON, so
+    every one of these shapes shows up live. Each wraps an answer that is present
+    and correct, and failing the turn over the wrapper throws away a model call
+    that already succeeded — on this endpoint, a minute of one.
+    """
+    provider = _provider(local_settings(), _completion(content=content))
+
+    response = await provider.generate(sample_request())
+
+    assert response.structured_data == {"summary": "fenced", "confidence": 0.5}, label
+
+
+@pytest.mark.asyncio
+async def test_schema_invalid_output_is_returned_for_repair_not_raised() -> None:
+    """The adapter must not fail the call over a payload the model could fix.
+
+    This is the bug that made ``max_repair_attempts`` dead configuration: the
+    adapter validated and raised, so ``GenerationService`` never saw a response
+    there was anything to repair. Handing the raw content back with
+    ``structured_data`` unset is the signal the repair path keys on.
+    """
+    provider = _provider(
+        local_settings(),
+        _completion(content='{"summary": "no confidence field"}'),
+    )
+
+    response = await provider.generate(sample_request())
+
+    assert response.structured_data is None
+    assert response.content == '{"summary": "no confidence field"}'
+
+
+@pytest.mark.asyncio
+async def test_a_truncated_object_is_named_as_a_token_budget_fault() -> None:
+    """Measured live: a WATCHTOWER turn spends its whole output budget and stops.
+
+    ``finish_reason=length`` with an unfinished object is a token-budget fault,
+    and the operator can act on that. Reporting it as "Model output is not valid
+    JSON" — which is what happened before, because the truncated text simply
+    failed to parse — sends them to look at the schema instead. Repair is also
+    pointless here: the same budget truncates the same way.
+    """
+    provider = _provider(
+        local_settings(),
+        _completion(
+            content='{"summary": "the identity broker was com',
+            finish_reason="length",
+        ),
+    )
+
+    with pytest.raises(ProviderRuntimeError) as exc_info:
+        await provider.generate(sample_request())
+
+    error = exc_info.value.error
+    assert error.code is ProviderErrorCode.OUTPUT_LIMIT_EXCEEDED
+    assert error.retryable is False
+    assert error.details.get("truncated") is True
+    assert error.details.get("maxOutputTokens")
+
+
+@pytest.mark.asyncio
+async def test_a_complete_object_followed_by_truncated_prose_still_succeeds() -> None:
+    """Only a turn with no *usable* payload is a budget fault."""
+    provider = _provider(
+        local_settings(),
+        _completion(
+            content='{"summary": "done", "confidence": 0.9}\nAdditionally I would rec',
+            finish_reason="length",
+        ),
+    )
+
+    response = await provider.generate(sample_request())
+
+    assert response.structured_data == {"summary": "done", "confidence": 0.9}
+
+
+@pytest.mark.asyncio
 async def test_client_is_built_with_a_bounded_timeout_and_no_hidden_sdk_retries(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

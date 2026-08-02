@@ -64,6 +64,7 @@ from aegis_contracts.agent_runtime import (
     ToolInvocationStatus,
 )
 from aegis_contracts.entities import AutonomyInitiatorV1
+from aegis_contracts.errors import ContractValidationError
 from aegis_contracts.generation import (
     GenerationMessageRole,
     GenerationMessageV1,
@@ -156,6 +157,67 @@ def _with_provider_budget(
     budget_ms = int((wait_for_seconds - PROVIDER_BUDGET_HEADROOM_SECONDS) * 1000)
     clamped = max(_MIN_PROVIDER_BUDGET_MS, min(_MAX_PROVIDER_BUDGET_MS, budget_ms))
     return request.model_copy(update={"timeout_ms": clamped})
+
+
+# Provider codes meaning the endpoint or the network let us down, so a later
+# attempt has a real chance. OUTPUT_LIMIT_EXCEEDED is deliberately absent:
+# retrying under the same token budget truncates the same way.
+_RETRYABLE_PROVIDER_CODES = frozenset({"TIMEOUT", "RETRY_EXHAUSTED", "PROVIDER_UNAVAILABLE"})
+
+
+def _provider_failure(error: Any, *, trace_id: str | None) -> AgentRuntimeError:
+    """The runtime error an operator should read for a failed generation.
+
+    ``STRUCTURED_OUTPUT_INVALID`` is separated from ``PROVIDER_FAILURE`` because
+    collapsing them is a misdiagnosis with a real cost: it tells the operator the
+    provider is at fault and sends them to check the endpoint, when what actually
+    happened is that the model wrote something its own schema rejects. That is a
+    property of the answer, not of the provider — and unlike most provider faults
+    it is worth simply asking again, so it is reported retryable.
+    """
+    code = error.code.value
+    details: dict[str, Any] = {"providerCode": code, **dict(error.details or {})}
+    if code == "STRUCTURED_OUTPUT_INVALID":
+        return AgentRuntimeError(
+            code=AgentRuntimeErrorCode.STRUCTURED_OUTPUT_INVALID,
+            message=f"Model returned malformed output: {error.message}",
+            details=details,
+            trace_id=trace_id,
+            retryable=True,
+        )
+    return AgentRuntimeError(
+        code=AgentRuntimeErrorCode.PROVIDER_FAILURE,
+        message=error.message,
+        details=details,
+        trace_id=trace_id,
+        retryable=code in _RETRYABLE_PROVIDER_CODES,
+    )
+
+
+def _invalid_model_output(
+    exc: ContractValidationError,
+    *,
+    trace_id: str | None,
+    summary: str,
+) -> AgentRuntimeError:
+    """A contract violation caused by the model's own answer, made presentable.
+
+    A local model routinely invents identifiers — ``EVT-ALERT-001``,
+    ``LOG-2024-0892-001`` — that are not AEGIS ids at all. Those reach the
+    authored-id validators inside the domain contracts, which raise
+    :class:`ContractValidationError` from deep in persistence. Left uncaught it
+    surfaced as an opaque ``INTERNAL`` "Agent task failed" that named neither the
+    id nor the model as the cause. The task still fails — a hallucinated citation
+    must never be persisted as grounding — but it fails as a named, retryable
+    model-output fault with the offending value in the error.
+    """
+    return AgentRuntimeError(
+        code=AgentRuntimeErrorCode.STRUCTURED_OUTPUT_INVALID,
+        message=f"{summary}: {exc.message}",
+        details={"contractCode": exc.code.value, **dict(exc.details or {})},
+        trace_id=trace_id,
+        retryable=True,
+    )
 
 
 @dataclass
@@ -480,11 +542,7 @@ class TaskExecutor:
                     timeout=max(1.0, remaining),
                 )
                 if next_response.error is not None:
-                    raise AgentRuntimeError(
-                        code=AgentRuntimeErrorCode.PROVIDER_FAILURE,
-                        message=next_response.error.message,
-                        trace_id=prepared.task.trace_id,
-                    )
+                    raise _provider_failure(next_response.error, trace_id=prepared.task.trace_id)
             except Exception:  # noqa: BLE001 - timeout, provider error, or budget
                 # Fail soft: keep the last good answer. The tools we ran are
                 # already committed, so the trail survives even though the model
@@ -1031,23 +1089,29 @@ class TaskExecutor:
         request = outcome.request
 
         if response.error is not None:
-            raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.PROVIDER_FAILURE,
-                message=response.error.message,
-                details={"providerCode": response.error.code.value},
-                trace_id=task.trace_id,
-                retryable=response.error.code.value
-                in {"TIMEOUT", "RETRY_EXHAUSTED", "PROVIDER_UNAVAILABLE"},
-            )
+            raise _provider_failure(response.error, trace_id=task.trace_id)
         assert response.response is not None
         structured = response.response.structured_data
         if structured is None and response.response.content:
-            structured = json.loads(response.response.content)
-        if structured is None:
+            # The provider stack normally hands over a validated payload; this is
+            # the last-resort read for a response that carried only text. A model
+            # that wrote prose here is a malformed-output fault, not a crash.
+            try:
+                structured = json.loads(response.response.content)
+            except (TypeError, ValueError) as exc:
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.STRUCTURED_OUTPUT_INVALID,
+                    message="Model returned malformed output: response was not valid JSON",
+                    details={"error": str(exc)},
+                    trace_id=task.trace_id,
+                    retryable=True,
+                ) from exc
+        if not isinstance(structured, dict):
             raise AgentRuntimeError(
-                code=AgentRuntimeErrorCode.PROVIDER_FAILURE,
-                message="Provider returned no structured agent step output",
+                code=AgentRuntimeErrorCode.STRUCTURED_OUTPUT_INVALID,
+                message="Model returned no structured agent step output",
                 trace_id=task.trace_id,
+                retryable=True,
             )
 
         # Every model call the task made counts against the session budget, not
@@ -1063,6 +1127,14 @@ class TaskExecutor:
         await uow.agent_sessions.update(session, budget=budget)
 
         raw_citations = structured.get("evidenceCitations", [])
+        malformed_citations = not isinstance(raw_citations, list)
+        if malformed_citations:
+            # The schema asks for a list of objects; a local model sometimes sends
+            # a bare object, a string, or null. Iterating that raised TypeError out
+            # of the loop as an opaque INTERNAL crash. Each path below now gets the
+            # answer its own contract calls for: the chat drops the grounding and
+            # keeps the reply, the audit path reports a named model-output fault.
+            raw_citations = []
         if run_scoped:
             # A local model frequently invents citation ids (e.g. "CIT_001") that
             # aren't well-formed namespaced evidence ids, or cites evidence that
@@ -1074,6 +1146,8 @@ class TaskExecutor:
             citations = []
             kept: list[dict[str, Any]] = []
             for item in raw_citations:
+                if not isinstance(item, dict):
+                    continue
                 evidence_id = item.get("evidenceId")
                 if not evidence_id or evidence_id not in visible_ids:
                     continue
@@ -1090,14 +1164,45 @@ class TaskExecutor:
                 kept.append(item)
             structured["evidenceCitations"] = kept
         else:
-            citations = [
-                EvidenceCitationV1(
-                    schema_version=EVIDENCE_CITATION_SCHEMA_VERSION,
-                    evidence_id=item["evidenceId"],
-                    rationale=item.get("rationale", ""),
+            # The strict audit path. A citation id the model invented is rejected
+            # here rather than allowed to raise out of the contract layer: the
+            # turn still fails (hallucinated grounding must never be persisted as
+            # if it were real), but as a named model-output fault naming the id,
+            # not as an opaque INTERNAL error from inside persistence.
+            if malformed_citations:
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.STRUCTURED_OUTPUT_INVALID,
+                    message=(
+                        "Model returned evidenceCitations that is not a list of "
+                        "citation objects"
+                    ),
+                    details={"receivedType": type(structured["evidenceCitations"]).__name__},
+                    trace_id=task.trace_id,
+                    retryable=True,
                 )
-                for item in raw_citations
-            ]
+            try:
+                citations = [
+                    EvidenceCitationV1(
+                        schema_version=EVIDENCE_CITATION_SCHEMA_VERSION,
+                        evidence_id=item["evidenceId"],
+                        rationale=item.get("rationale", ""),
+                    )
+                    for item in raw_citations
+                ]
+            except ContractValidationError as exc:
+                raise _invalid_model_output(
+                    exc,
+                    trace_id=task.trace_id,
+                    summary="Model cited an evidence id that is not a valid AEGIS identifier",
+                ) from exc
+            except (KeyError, TypeError, AttributeError) as exc:
+                raise AgentRuntimeError(
+                    code=AgentRuntimeErrorCode.STRUCTURED_OUTPUT_INVALID,
+                    message="Model returned malformed evidence citations",
+                    details={"error": str(exc)},
+                    trace_id=task.trace_id,
+                    retryable=True,
+                ) from exc
             if citations:
                 validate_citations(
                     citations, visible_evidence_ids=visible_ids, trace_id=task.trace_id
@@ -1220,19 +1325,34 @@ class TaskExecutor:
         # tasks. Run-scoped tasks still produce the STEP_RESULT artifact below,
         # which is what the chat renders.
         if role_handler is not None and not run_scoped:
-            await role_handler.post_process(
-                ctx=PostProcessContext(
-                    uow=uow,
-                    session_id=session.id,
-                    task_id=task.id,
-                    incident_id=task.incident_id or "",
-                    run_id=run_id,
+            # Role post-processing feeds the model's own payload into domain
+            # contracts (alert ids, asset ids, evidence ids). Every one of those
+            # fields is authored-id validated, so a hallucinated value raises out
+            # of the contract layer mid-write. Containing it here covers all six
+            # roles at once and keeps the failure legible instead of INTERNAL.
+            try:
+                await role_handler.post_process(
+                    ctx=PostProcessContext(
+                        uow=uow,
+                        session_id=session.id,
+                        task_id=task.id,
+                        incident_id=task.incident_id or "",
+                        run_id=run_id,
+                        trace_id=task.trace_id,
+                        idempotency_key=task.idempotency_key,
+                        visible_evidence_ids=visible_ids,
+                    ),
+                    structured=structured,
+                )
+            except ContractValidationError as exc:
+                raise _invalid_model_output(
+                    exc,
                     trace_id=task.trace_id,
-                    idempotency_key=task.idempotency_key,
-                    visible_evidence_ids=visible_ids,
-                ),
-                structured=structured,
-            )
+                    summary=(
+                        "Model output contained an identifier this run does not "
+                        f"recognise for {session.role.value} results"
+                    ),
+                ) from exc
 
         artifact = AgentArtifactV1(
             schema_version=AGENT_ARTIFACT_SCHEMA_VERSION,

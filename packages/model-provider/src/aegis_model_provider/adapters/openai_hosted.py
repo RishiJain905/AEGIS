@@ -27,7 +27,11 @@ from aegis_model_provider.cost import with_estimated_cost
 from aegis_model_provider.egress import assert_provider_destination_allowed
 from aegis_model_provider.errors import ProviderRuntimeError, make_provider_error
 from aegis_model_provider.redaction import redact_string
-from aegis_model_provider.structured_output import parse_json_content, validate_structured_output
+from aegis_model_provider.structured_output import (
+    recover_json_object,
+    recover_json_text,
+    validate_structured_output,
+)
 
 
 def _map_finish_reason(value: str | None) -> ProviderFinishReason:
@@ -71,40 +75,6 @@ def _split_think_blocks(text: str) -> tuple[str, str]:
         scratch.append(tail)
         visible = head
     return visible.strip(), "\n".join(part.strip() for part in scratch if part.strip())
-
-
-def _extract_json_object(text: str) -> str | None:
-    """The outermost balanced ``{...}`` in ``text``, if there is one.
-
-    A reasoning model that answers inside its scratchpad wraps the payload in
-    prose. Scanning for a balanced object recovers it without guessing at
-    delimiters; ``None`` means there was nothing object-shaped to recover.
-    """
-    start = text.find("{")
-    if start < 0:
-        return None
-    depth = 0
-    in_string = False
-    escaped = False
-    for index in range(start, len(text)):
-        char = text[index]
-        if in_string:
-            if escaped:
-                escaped = False
-            elif char == "\\":
-                escaped = True
-            elif char == '"':
-                in_string = False
-            continue
-        if char == '"':
-            in_string = True
-        elif char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return text[start : index + 1]
-    return None
 
 
 MAX_PROVIDER_MESSAGE_CHARS = 512
@@ -229,6 +199,64 @@ class OpenAIHostedProvider:
     #: extraction + validation pipeline enforces the contract either way.
     _use_server_response_format = True
 
+    @staticmethod
+    def _structured_data(
+        request: GenerationRequestV1,
+        *,
+        content: str,
+        finish_reason: ProviderFinishReason,
+        max_output_tokens: int,
+    ) -> dict[str, Any] | None:
+        """The validated payload, or ``None`` to hand the turn to the repair path.
+
+        Recovery covers the formatting slips a prompt-side schema invites — a
+        fenced block, a sentence of preamble, commentary after the closing brace,
+        a trailing comma — because each of those wraps an answer that is present
+        and correct.
+
+        What this must NOT do is raise on a *schema-invalid* payload. A model that
+        dropped a required field can usually put it back when told which one, and
+        ``GenerationService`` owns that one bounded repair round-trip. Raising here
+        is what made repair unreachable: the adapter failed the call before the
+        service ever saw a response there was anything to repair.
+
+        Truncation is the exception. ``finish_reason=length`` with no *usable*
+        payload — nothing recoverable, or a fragment that fails the schema —
+        means the answer was cut off mid-write, so re-prompting under the same
+        budget would only truncate again. Measured against the live local model,
+        a WATCHTOWER-sized turn spent all 4096 output tokens inside its own
+        scratchpad and emitted no JSON at all; naming that as a token-budget
+        fault is the diagnosis operators were missing when it surfaced as the
+        far more mysterious "Model output is not valid JSON".
+        """
+        assert request.structured_output is not None
+        recovered = recover_json_object(content)
+        if recovered is not None:
+            try:
+                return validate_structured_output(recovered, request.structured_output)
+            except ProviderRuntimeError:
+                # Well-formed but schema-invalid: repairable, unless the reason it
+                # is wrong is that the model ran out of room to finish it.
+                pass
+        if finish_reason is ProviderFinishReason.LENGTH:
+            raise ProviderRuntimeError(
+                make_provider_error(
+                    code=ProviderErrorCode.OUTPUT_LIMIT_EXCEEDED,
+                    message=(
+                        "Provider output was truncated before it finished the JSON "
+                        "object; raise the output token budget"
+                    ),
+                    retryable=False,
+                    details={
+                        "finishReason": "length",
+                        "maxOutputTokens": max_output_tokens,
+                        "truncated": True,
+                    },
+                    trace_id=request.trace_id,
+                )
+            )
+        return None
+
     async def generate(self, request: GenerationRequestV1) -> GenerationResponseV1:
         client = self._client()
         model_id = self._resolve_model_id(request)
@@ -326,7 +354,7 @@ class OpenAIHostedProvider:
             # prose recovers as-is; a structured request takes the JSON object out
             # of the surrounding thinking.
             recovered = (
-                _extract_json_object(reasoning)
+                recover_json_text(reasoning)
                 if request.structured_output is not None
                 else reasoning.strip()
             )
@@ -354,9 +382,11 @@ class OpenAIHostedProvider:
             )
         structured_data = None
         if request.structured_output is not None and content:
-            structured_data = validate_structured_output(
-                parse_json_content(content),
-                request.structured_output,
+            structured_data = self._structured_data(
+                request,
+                content=content,
+                finish_reason=finish_reason,
+                max_output_tokens=int(kwargs["max_tokens"]),
             )
         usage = with_estimated_cost(
             model_id=model_id,
