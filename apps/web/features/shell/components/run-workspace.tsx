@@ -6,11 +6,10 @@ import { AgentChatPanel } from '@/features/agent-chat';
 import { Console } from '@/features/console';
 import { EventSearch, HypothesisLedger } from '@/features/operator-console';
 import { OpsFeedPanel } from '@/features/ops-feed';
-import { AlertsTab } from '@/features/shell/components/alerts-tab';
 import { InspectorPanel } from '@/features/shell/components/inspector-panel';
 import { VisualizationSlot } from '@/features/shell/components/visualization-slot';
 import { WorkspaceDock } from '@/features/shell/components/workspace-dock';
-import { useRunAlerts } from '@/features/shell/hooks/use-shell-queries';
+import { SignalsStack } from '@/features/signals';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 export interface RunWorkspaceProps {
@@ -25,19 +24,17 @@ export interface RunWorkspaceProps {
  * fills the viewport between the status rail and the Console, and everything else is
  * furniture on or around it. The Console is the operator's hands: one fused band across
  * the foot of the stage holding transport (SIM/LINK), the selected-asset command cluster
- * and the run tape. The docks flanking the stage are the last remnant of the old
- * three-column cockpit; they dissolve into the signals stack and context sheets over the
- * next phases of the rework.
+ * and the run tape. Signals — the alerts surface — floats over the stage's top-right as
+ * ambient attention pressure. The docks flanking the stage are the last remnant of the
+ * old three-column cockpit; they dissolve into context sheets over the next phases of
+ * the rework.
  */
 export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
-  const alertsQuery = useRunAlerts(runId);
-  const alertCount = alertsQuery.data?.length ?? 0;
-
   const selectedEntityId = useWorkspaceUiStore((state) => state.workspace.selectedEntityId);
   const selectedIncidentId = useWorkspaceUiStore((state) => state.workspace.selectedIncidentId);
   const activeIncidentId = incidentId ?? selectedIncidentId;
 
-  const [rightTab, setRightTab] = useState('alerts');
+  const [rightTab, setRightTab] = useState('inspector');
 
   // The dock follows the operator's focus: naming a node (from the graph, an alert card,
   // or the feed) or opening a case is a statement of "show me this", so the Inspector
@@ -84,6 +81,7 @@ export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2.5">
         <div className="relative flex min-h-0 flex-1 flex-col" data-testid="cockpit-stage">
           <VisualizationSlot runId={runId} incidentId={incidentId} />
+          <SignalsStack runId={runId} />
         </div>
         <Console runId={runId} />
       </div>
@@ -96,12 +94,6 @@ export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
         activeTab={rightTab}
         onActiveTabChange={setRightTab}
         tabs={[
-          {
-            id: 'alerts',
-            label: 'Alerts',
-            badge: alertCount,
-            content: <AlertsTab runId={runId} />,
-          },
           {
             id: 'inspector',
             label: 'Inspector',

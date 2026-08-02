@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { useGraphVisualStore } from '@/features/operational-graph/stores/graph-visual-store';
+import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 
 import {
   defaultOperatorWorkspaceState,
@@ -217,6 +218,7 @@ export const useWorkspaceUiStore = create<WorkspaceUiState>()(
           return;
         }
         useGraphVisualStore.getState().resetVisualState();
+        useCockpitUiStore.getState().resetCockpitUi();
         set({
           activeRunId: runId,
           workspace: {
