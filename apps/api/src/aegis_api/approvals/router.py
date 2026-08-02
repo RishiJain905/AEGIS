@@ -23,9 +23,11 @@ from aegis_api.approvals.errors import ApprovalWorkflowError
 from aegis_api.approvals.service import ApprovalWorkflowService
 from aegis_api.auth.deps import require_actor
 from aegis_api.db.session import get_db_session_maker
+from aegis_api.runs.service import get_run_command_service
 
 router = APIRouter(prefix="/api/v1", tags=["approvals"])
 _service = ApprovalWorkflowService()
+_run_service = get_run_command_service()
 
 
 def _error_response(exc: ApprovalWorkflowError) -> JSONResponse:
@@ -49,15 +51,41 @@ async def approve_proposal(
 ) -> ApproveProposalResponseV1 | JSONResponse:
     if request.proposal_id != proposal_id:
         raise HTTPException(status_code=400, detail="proposalId mismatch")
-    try:
-        async with PostgresUnitOfWork(get_db_session_maker()) as uow:
-            return await _service.approve(
-                uow,
-                request,
-                authenticated_actor=actor,
-            )
-    except ApprovalWorkflowError as exc:
-        return _error_response(exc)
+    # Approving executes the command, which mutates the run's shared cached runtime — the
+    # same object the tick engine steps. The run is resolved first (read-only) so the write
+    # transaction can be serialized on that run's lock, exactly as the lifecycle routes and
+    # the operator-action route are. A proposal whose run cannot be resolved never reaches
+    # execution; the write path below reports the real error.
+    async with PostgresUnitOfWork(get_db_session_maker()) as lookup_uow:
+        run_id = await _service.resolve_run_id(lookup_uow, proposal_id)
+    if run_id is None:
+        try:
+            return await _approve_in_transaction(request, actor)
+        except ApprovalWorkflowError as exc:
+            return _error_response(exc)
+    async with _run_service.lock_for(run_id):
+        try:
+            return await _approve_in_transaction(request, actor)
+        except ApprovalWorkflowError as exc:
+            # A failed execution rolls the transaction back; the runtime it mutated must not
+            # outlive it, and eviction stays inside the lock so no tick can see the interim.
+            _run_service.evict(run_id)
+            return _error_response(exc)
+        except Exception:
+            _run_service.evict(run_id)
+            raise
+
+
+async def _approve_in_transaction(
+    request: ApproveProposalRequestV1,
+    actor: AuthenticatedActorV1,
+) -> ApproveProposalResponseV1:
+    async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        return await _service.approve(
+            uow,
+            request,
+            authenticated_actor=actor,
+        )
 
 
 @router.post(

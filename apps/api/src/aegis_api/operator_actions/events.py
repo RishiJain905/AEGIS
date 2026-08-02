@@ -36,6 +36,7 @@ def build_operator_action_proposed_event(
     scenario_command: str,
     action_class: str,
     target_asset_id: str,
+    justification: str,
 ) -> DomainEventEnvelopeV1:
     now = datetime.now(UTC)
     payload: dict[str, Any] = {
@@ -45,6 +46,12 @@ def build_operator_action_proposed_event(
         "scenarioCommand": scenario_command,
         "actionClass": action_class,
         "targetAssetId": target_asset_id,
+        # The reason the operator gave — typed into the consequence gate for Class 2/3,
+        # synthesized by the console for auto-executing Class 0/1. It lived only on the
+        # proposal row, so the audit trail — the feed, replay, the after-action — recorded
+        # *that* a Class 2 containment ran but never *why*, which is the one thing an audit
+        # trail exists for. Never empty: the request contract requires a non-blank reason.
+        "justification": justification,
         "initiator": "operator",
     }
     return DomainEventEnvelopeV1(

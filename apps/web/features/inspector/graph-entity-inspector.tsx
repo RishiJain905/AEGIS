@@ -20,6 +20,30 @@ import {
   InspectorMonoValue,
 } from './inspector-primitives';
 
+/**
+ * Operator-facing names for the applied-control vocabulary.
+ *
+ * The world stores the response toolkit's own terms; the inspector is where an operator
+ * reads what was done to the asset, and "observed" is a state the machine is in, not a
+ * sentence about the estate. Unknown values fall back to the raw term rather than being
+ * hidden — a control we have no copy for still has to be visible.
+ */
+const CONTROL_LABEL: Record<string, string> = {
+  observed: 'Under observation',
+  heightened_monitoring: 'Heightened monitoring',
+  isolated: 'Isolated',
+  access_restricted: 'Access restricted',
+  credentials_revoked: 'Credentials revoked',
+  restarting: 'Restarting',
+  rolling_back: 'Rolling back',
+  contained: 'Contained',
+  quarantined: 'Quarantined',
+};
+
+function controlLabel(control: string): string {
+  return CONTROL_LABEL[control] ?? control.replace(/_/g, ' ');
+}
+
 export interface GraphEntityInspectorProps {
   snapshot: GraphSnapshotV1;
   selectedEntityId: string | null;
@@ -77,7 +101,7 @@ export function GraphEntityInspector({
             <Badge variant="outline">{node.status.replace(/_/g, ' ')}</Badge>
             {appliedControls.map((control) => (
               <Badge key={control} variant="outline" data-testid="applied-control-badge">
-                {control.replace(/_/g, ' ')}
+                {controlLabel(control)}
               </Badge>
             ))}
             {pending && !pendingResolved ? (

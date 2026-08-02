@@ -77,6 +77,7 @@ async def _seed_feed_events(uow, run_id: str) -> None:
             scenario_command="isolate",
             action_class="class_2",
             target_asset_id="asset:device-workstation-01",
+            justification="Workstation is beaconing; cutting it off.",
         ),
     )
     seq = await uow.events.next_sequence(run_id)

@@ -7,6 +7,7 @@ import {
   IncidentContextInspector,
   InspectorLabel,
   InspectorMonoValue,
+  useInspectorGraph,
 } from '@/features/inspector';
 import { InvestigationPanel } from '@/features/investigation';
 import { ProposalsPanel } from '@/features/proposals/proposals-panel';
@@ -15,7 +16,6 @@ import { RiskExplanationPanel } from '@/features/risk';
 import {
   useIncident,
   useRunAlerts,
-  useRunGraph,
   useRunIncidents,
   useRunRiskScores,
 } from '@/features/shell/hooks/use-shell-queries';
@@ -102,7 +102,9 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
   const incidentsQuery = useRunIncidents(runId ?? '');
   const alertsQuery = useRunAlerts(runId ?? '');
   const riskScoresQuery = useRunRiskScores(runId ?? '');
-  const graphQuery = useRunGraph(runId ?? '');
+  // Live runs read the mutable graph store, fixture views the REST snapshot — an executed
+  // control has to reach the inspector either way. See `useInspectorGraph`.
+  const graphQuery = useInspectorGraph(runId ?? '');
 
   // Only the run-level queries gate the whole panel; the case file reports its own progress
   // below, so opening an incident never swaps the inspector out for a spinner.
@@ -119,7 +121,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
       riskScoresQuery.isError ||
       graphQuery.isError);
 
-  const snapshot = graphQuery.data?.snapshot ?? null;
+  const snapshot = graphQuery.snapshot;
   const selectedRiskScore =
     riskScoresQuery.data?.find((score) => score.assetId === selectedEntityId) ?? null;
   const selectedAlert = alertsQuery.data?.find((alert) => alert.assetId === selectedEntityId);
@@ -135,7 +137,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
               void incidentsQuery.refetch();
               void alertsQuery.refetch();
               void riskScoresQuery.refetch();
-              void graphQuery.refetch();
+              graphQuery.refetch();
             }}
           />
         ) : null}

@@ -48,7 +48,12 @@ export interface ActionCardModel {
 }
 
 /** Feed categories whose entries are command traffic rather than commentary. */
-const ACTION_CATEGORIES = new Set(['operator_action', 'execution', 'approval', 'proposal']);
+export const ACTION_CATEGORIES: ReadonlySet<string> = new Set([
+  'operator_action',
+  'execution',
+  'approval',
+  'proposal',
+]);
 
 function payloadText(payload: Record<string, unknown>, ...keys: string[]): string | null {
   for (const key of keys) {

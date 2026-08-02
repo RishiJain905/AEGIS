@@ -78,7 +78,7 @@ describe('OpsFeedPanel', () => {
     expect(screen.getByText(/Quiet on the floor/i)).toBeInTheDocument();
   });
 
-  it('renders command traffic as an auditable action card naming its target', () => {
+  it('renders one order as one card, folding its whole event trail into the disclosure', () => {
     useRunFeed.mockReturnValue(
       feedResult([
         entry({
@@ -93,6 +93,7 @@ describe('OpsFeedPanel', () => {
             scenarioCommand: 'isolate',
             actionClass: 'class_2',
             targetAssetId: 'asset:svc-identity-broker',
+            justification: 'Broker is beaconing; cutting it off.',
           },
         }),
         entry({
@@ -113,13 +114,19 @@ describe('OpsFeedPanel', () => {
     render(<OpsFeedPanel runId="run_x" />);
 
     const cards = screen.getAllByTestId('ops-feed-action');
-    expect(cards).toHaveLength(2);
+    expect(cards).toHaveLength(1);
     expect(cards[0]).toHaveAttribute('data-stage', 'executed');
     expect(cards[0]).toHaveTextContent('Isolate');
     expect(cards[0]).toHaveTextContent('Class 2 · Operational');
     expect(cards[0]).toHaveTextContent('Severs the asset from the network');
+    // The reason the operator gave rides on the proposed event; the surviving card is the
+    // executed one, so this only reads if the fold carried it across.
+    expect(cards[0]).toHaveTextContent('Broker is beaconing; cutting it off.');
     expect(screen.getAllByText('Identity Broker')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Raw event')[0]).toBeInTheDocument();
+    const disclosure = screen.getByText('Raw events (2)');
+    expect(disclosure).toBeInTheDocument();
+    expect(cards[0]).toHaveTextContent('operator.action.proposed');
+    expect(cards[0]).toHaveTextContent('action.executed');
   });
 
   it('hands the operator to the target node when an action target is clicked', () => {

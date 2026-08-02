@@ -11,6 +11,9 @@ import {
   cn,
 } from '@aegis/ui';
 
+import { useLiveRun } from '@/features/live-run';
+import { isRunTerminal } from '@/lib/run-status';
+
 import { AssetDetailDrawer } from './asset-detail-drawer';
 import { CommandMenuItems } from './command-menu-items';
 import { useAssetActionRunner } from './use-asset-action-runner';
@@ -19,6 +22,9 @@ import { useSelectedAsset } from './use-selected-asset';
 
 /** How many commands get their own button before the rest fall back to the dropdown. */
 const QUICK_ACTION_LIMIT = 3;
+
+/** Why the controls are dead, on hover, for anyone who missed the ribbon above the bar. */
+const RUN_ENDED_HINT = 'The run has ended — commands can no longer execute.';
 
 export interface AssetCommandBarProps {
   runId: string;
@@ -109,6 +115,13 @@ function SelectedAssetCommandBar({
   const runner = useAssetActionRunner({ runId, assetId, assetLabel });
   const quickActions = commands.slice(0, QUICK_ACTION_LIMIT);
 
+  // A finished run accepts no commands. The ribbon directly above says so, but saying it
+  // while every button still invites a click is worse than not saying it at all — the
+  // operator learns the sentence is decoration. Read-only affordances (Deep dive) stay live:
+  // examining an asset after the fact is most of what an ended run is for.
+  const liveRun = useLiveRun();
+  const commandsDisabled = runner.isPending || isRunTerminal(liveRun?.state.runStatus);
+
   return (
     <div
       className="flex min-h-[3.25rem] shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-accent-line)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_86%,transparent)] px-4 py-2 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl"
@@ -143,9 +156,9 @@ function SelectedAssetCommandBar({
             key={command.command}
             variant="outline"
             size="sm"
-            disabled={runner.isPending}
+            disabled={commandsDisabled}
             data-testid={`command-bar-action-${command.command}`}
-            title={command.summary}
+            title={isRunTerminal(liveRun?.state.runStatus) ? RUN_ENDED_HINT : command.summary}
             onClick={() => {
               runner.select(command);
             }}
@@ -164,7 +177,8 @@ function SelectedAssetCommandBar({
                 variant="secondary"
                 size="sm"
                 className="text-xs"
-                disabled={runner.isPending}
+                disabled={commandsDisabled}
+                title={isRunTerminal(liveRun?.state.runStatus) ? RUN_ENDED_HINT : undefined}
                 data-testid="command-bar-all-actions"
               >
                 <span>All actions</span>

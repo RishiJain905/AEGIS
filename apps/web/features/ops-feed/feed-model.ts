@@ -8,6 +8,8 @@
 
 import type { RunFeedEntry } from '@/features/command-surface';
 
+import { ACTION_CATEGORIES } from './action-model';
+
 export type FeedRow =
   | {
       kind: 'entry';
@@ -15,6 +17,11 @@ export type FeedRow =
       entry: RunFeedEntry;
       detection: boolean;
       biasCheck: boolean;
+      /**
+       * The other events of the same command order, oldest first, when this row stands for a
+       * whole proposal. Empty for ordinary rows.
+       */
+      trail: RunFeedEntry[];
     }
   | { kind: 'collapsed'; key: string; entries: RunFeedEntry[]; count: number };
 
@@ -75,12 +82,61 @@ export function isBiasCheck(entry: RunFeedEntry): boolean {
   return haystacks.some((text) => text.includes('bias') || text.includes('contradict'));
 }
 
+/** The proposal a command-traffic entry belongs to, or `null` when it names none. */
+function proposalIdOf(entry: RunFeedEntry): string | null {
+  if (!ACTION_CATEGORIES.has(entry.category)) {
+    return null;
+  }
+  const value = entry.payload['proposalId'];
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
 /**
- * Build newest-first render rows, collapsing runs of routine autonomy no-change reports.
- * Detections are always standalone `entry` rows flagged `detection: true`.
+ * One order, one card.
+ *
+ * A single command order emits several events that all render as the same action card —
+ * `operator.action.proposed` when it is ordered, `action.executed` when it runs — so the
+ * feed showed the same isolation twice, at the same timestamp, both reading "executed"
+ * (the card folds the whole proposal's facts, so the earlier event's card already knew the
+ * later outcome). Keeping only the newest event per proposal makes the card a state
+ * transition instead of a duplicate; the ones dropped here ride along as its `trail` so no
+ * raw event becomes unreadable.
+ */
+function collapseProposalTrails(ordered: RunFeedEntry[]): {
+  rendered: RunFeedEntry[];
+  trails: Map<string, RunFeedEntry[]>;
+} {
+  const seen = new Set<string>();
+  const rendered: RunFeedEntry[] = [];
+  const trails = new Map<string, RunFeedEntry[]>();
+  for (const entry of ordered) {
+    const proposalId = proposalIdOf(entry);
+    if (proposalId === null) {
+      rendered.push(entry);
+      continue;
+    }
+    if (seen.has(proposalId)) {
+      // `ordered` is newest-first, so anything arriving after the first sighting is older.
+      trails.get(proposalId)?.unshift(entry);
+      continue;
+    }
+    seen.add(proposalId);
+    trails.set(proposalId, []);
+    rendered.push(entry);
+  }
+  return { rendered, trails };
+}
+
+/**
+ * Build newest-first render rows, collapsing runs of routine autonomy no-change reports and
+ * folding each command order's events into a single card. Detections are always standalone
+ * `entry` rows flagged `detection: true`.
  */
 export function buildFeedRows(entries: RunFeedEntry[]): FeedRow[] {
-  const ordered = [...entries].sort((a, b) => b.sequence - a.sequence);
+  const { rendered, trails } = collapseProposalTrails(
+    [...entries].sort((a, b) => b.sequence - a.sequence),
+  );
+  const ordered = rendered;
   const rows: FeedRow[] = [];
   let pendingNoChange: RunFeedEntry[] = [];
 
@@ -98,6 +154,7 @@ export function buildFeedRows(entries: RunFeedEntry[]): FeedRow[] {
         entry: first,
         detection: false,
         biasCheck: false,
+        trail: [],
       });
     } else {
       rows.push({
@@ -115,12 +172,14 @@ export function buildFeedRows(entries: RunFeedEntry[]): FeedRow[] {
       continue;
     }
     flush();
+    const proposalId = proposalIdOf(entry);
     rows.push({
       kind: 'entry',
       key: entry.eventId,
       entry,
       detection: isDetection(entry),
       biasCheck: isBiasCheck(entry),
+      trail: (proposalId !== null ? trails.get(proposalId) : undefined) ?? [],
     });
   }
   flush();

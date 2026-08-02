@@ -35,6 +35,7 @@ from aegis_contracts.versioning import (
     RESPONSE_OPTION_SCHEMA_VERSION,
 )
 from aegis_persistence.engine import create_engine, dispose_engine, get_session_maker
+from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_policy import PolicyEngine
 from aegis_policy.authz import build_actor
@@ -300,6 +301,24 @@ async def test_approval_workflow_accept_criteria() -> None:
         assert "action.proposal.approved" in event_types
         assert "action.executed" in event_types
         assert "action.proposal.modified" in event_types
+
+        # The containment has to land on the runtime the ticker steps, not on a private copy
+        # the executor then discards. When it did not, isolating an asset changed nothing:
+        # the world kept no record of the control, the disruption model never saw the
+        # foothold severed, and the graph never showed a badge.
+        cached = run_service.runtime_cache.get(run_id)
+        assert cached is not None, "execution must run on the shared cached runtime"
+        isolated_asset = cached.runtime.world.assets["asset:svc-api-gateway"]
+        assert "isolated" in isolated_asset.applied_controls
+        assert isolated_asset.status == "normal", "a control must not overwrite the posture"
+
+        # ...and it has to be durable straight away, because a paused run never ticks again.
+        snapshot = await PostgresGraphSnapshotRepository(uow.session).get_latest_for_run(run_id)
+        assert snapshot is not None
+        snapshot_node = next(
+            node for node in snapshot.nodes if node.id == "asset:svc-api-gateway"
+        )
+        assert "isolated" in snapshot_node.applied_controls
 
         # Reject path on a second pending proposal.
         reject_proposal = await _seed_approval_required_proposal(

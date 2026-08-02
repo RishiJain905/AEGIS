@@ -28,6 +28,14 @@ vi.mock('./asset-detail-drawer', () => ({
   AssetDetailDrawer: () => null,
 }));
 
+// The bar reads the run's lifecycle to decide whether commands can execute at all. `null`
+// stands for "no live run context", which is what every case below except the terminal-run
+// ones renders under.
+let liveRunStatus: string | null = null;
+vi.mock('@/features/live-run', () => ({
+  useLiveRun: () => (liveRunStatus === null ? null : { state: { runStatus: liveRunStatus } }),
+}));
+
 vi.mock('@aegis/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@aegis/ui')>();
   return {
@@ -62,6 +70,7 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   selected = null;
+  liveRunStatus = null;
 });
 
 function renderBar() {
@@ -182,5 +191,39 @@ describe('AssetCommandBar', () => {
     const dialog = await screen.findByTestId('action-consequences-dialog');
     expect(dialog).toHaveTextContent('Kill malicious process');
     expect(dialog).not.toHaveTextContent('Restart service');
+  });
+
+  describe('once the run is over', () => {
+    // The workspace already shows "RUN ENDED — commands can no longer execute" directly above
+    // this bar. Saying that while every button still invites a click teaches the operator the
+    // sentence is decoration; the controls have to agree with the ribbon.
+    it.each(['stopped', 'completed', 'failed', 'aborted'])(
+      'disables the command controls when the run is %s',
+      (runStatus) => {
+        selected = CUSTOMER_DATABASE;
+        liveRunStatus = runStatus;
+        renderBar();
+
+        expect(screen.getByTestId('command-bar-action-restrict_access')).toBeDisabled();
+        expect(screen.getByTestId('command-bar-all-actions')).toBeDisabled();
+      },
+    );
+
+    it('leaves the read-only deep dive reachable', () => {
+      // Examining what happened is most of what an ended run is for.
+      selected = VPN_GATEWAY;
+      liveRunStatus = 'stopped';
+      renderBar();
+
+      expect(screen.getByTestId('open-asset-deep-dive')).toBeEnabled();
+    });
+
+    it.each(['running', 'paused'])('keeps commands live while the run is %s', (runStatus) => {
+      selected = VPN_GATEWAY;
+      liveRunStatus = runStatus;
+      renderBar();
+
+      expect(screen.getByTestId('command-bar-action-observe')).toBeEnabled();
+    });
   });
 });

@@ -126,6 +126,7 @@ class OperatorActionService:
                 scenario_command=command.value,
                 action_class=action_class.value,
                 target_asset_id=request.target_asset_id,
+                justification=request.reason,
             )
         )
 

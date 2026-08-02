@@ -84,15 +84,19 @@ const STAGE_LABEL: Record<string, string> = {
  */
 function ActionCard({
   entry,
+  trail,
   action,
   assetLabel,
   onFocusAsset,
 }: {
   entry: RunFeedEntry;
+  trail: RunFeedEntry[];
   action: ActionCardModel;
   assetLabel: string | null;
   onFocusAsset: (assetId: string) => void;
 }) {
+  // Oldest first: the order as it was given, then what policy and execution did with it.
+  const events = [...trail, entry];
   return (
     <li
       className="flex items-start gap-3 rounded-[var(--aegis-radius-md)] border border-[var(--aegis-border-subtle)] bg-[var(--aegis-surface-raised)] px-3 py-2"
@@ -165,12 +169,12 @@ function ActionCard({
 
         <details className="mt-0.5">
           <summary className="cursor-pointer font-mono text-[9px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
-            Raw event
+            {events.length > 1 ? `Raw events (${String(events.length)})` : 'Raw event'}
           </summary>
           <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded-[var(--aegis-radius-sm)] bg-[var(--aegis-surface-base)] p-2 font-mono text-[10px] leading-4 text-[var(--aegis-text-muted)]">
-            {entry.type}
-            {'\n'}
-            {JSON.stringify(entry.payload, null, 2)}
+            {events
+              .map((event) => `${event.type}\n${JSON.stringify(event.payload, null, 2)}`)
+              .join('\n\n')}
           </pre>
         </details>
       </div>
@@ -303,6 +307,7 @@ function FeedRowView({
     return (
       <ActionCard
         entry={row.entry}
+        trail={row.trail}
         action={action}
         assetLabel={assetLabel}
         onFocusAsset={onFocusAsset}

@@ -11,7 +11,7 @@ import { GraphEntityInspector } from './graph-entity-inspector';
 
 const ASSET = 'asset:svc-comms-gateway';
 
-function snapshot(appliedControls: string[] = []): GraphSnapshotV1 {
+function snapshot(appliedControls: string[] = [], status = 'normal'): GraphSnapshotV1 {
   return {
     schemaVersion: 1,
     runId: 'run_x',
@@ -27,7 +27,7 @@ function snapshot(appliedControls: string[] = []): GraphSnapshotV1 {
         label: 'Communications Gateway',
         riskScore: 0.4,
         criticality: 0.8,
-        status: 'normal',
+        status,
         revision: 1,
         appliedControls,
       },
@@ -57,8 +57,21 @@ describe('GraphEntityInspector observation acknowledgment', () => {
     render(<GraphEntityInspector snapshot={snapshot(['observed'])} selectedEntityId={ASSET} />);
 
     expect(screen.queryByTestId('pending-control-badge')).not.toBeInTheDocument();
-    expect(screen.getByTestId('applied-control-badge')).toHaveTextContent('observed');
+    // Named the way an operator would say it, not the way the world stores it.
+    expect(screen.getByTestId('applied-control-badge')).toHaveTextContent('Under observation');
     expect(usePendingControlStore.getState().pending[ASSET]).toBeUndefined();
+  });
+
+  it('names a containment control and keeps it beside the composed status', () => {
+    render(
+      <GraphEntityInspector
+        snapshot={snapshot(['isolated'], 'contained')}
+        selectedEntityId={ASSET}
+      />,
+    );
+
+    expect(screen.getByTestId('applied-control-badge')).toHaveTextContent('Isolated');
+    expect(screen.getByText('contained')).toBeInTheDocument();
   });
 
   it('drops an acknowledgment that was never answered', () => {

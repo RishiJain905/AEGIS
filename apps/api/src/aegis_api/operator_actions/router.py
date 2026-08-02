@@ -30,9 +30,11 @@ from aegis_api.auth.run_authz import require_run_access
 from aegis_api.db.session import get_db_session_maker
 from aegis_api.operator_actions.events import build_run_roe_changed_event
 from aegis_api.operator_actions.service import OperatorActionError, OperatorActionService
+from aegis_api.runs.service import get_run_command_service
 
 router = APIRouter(prefix="/api/v1", tags=["operator"])
 _service = OperatorActionService()
+_run_service = get_run_command_service()
 
 _WRITE = [Depends(require_permission(PermissionV1.RUNS_WRITE))]
 
@@ -56,14 +58,24 @@ async def submit_operator_action(
     request: OperatorActionRequestV1,
     actor: Annotated[AuthenticatedActorV1, Depends(require_actor)],
 ) -> OperatorActionResponseV1 | JSONResponse:
-    try:
-        async with PostgresUnitOfWork(get_db_session_maker()) as uow:
-            await require_run_access(uow, run_id, actor)
-            return await _service.submit_action(
-                uow, run_id=run_id, request=request, actor=actor
-            )
-    except OperatorActionError as exc:
-        return _error_response(exc)
+    # An executed action mutates the run's shared cached runtime, so it serializes with the
+    # tick engine and the manual lifecycle routes on the same per-run lock, held across the
+    # commit. Eviction on failure happens inside the lock too: a rolled-back transaction may
+    # have left a control on the in-memory world that no event stream records, and a tick
+    # that observed it would checkpoint the divergence.
+    async with _run_service.lock_for(run_id):
+        try:
+            async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+                await require_run_access(uow, run_id, actor)
+                return await _service.submit_action(
+                    uow, run_id=run_id, request=request, actor=actor
+                )
+        except OperatorActionError as exc:
+            _run_service.evict(run_id)
+            return _error_response(exc)
+        except Exception:
+            _run_service.evict(run_id)
+            raise
 
 
 @router.patch("/runs/{run_id}/roe", response_model=RunV1, dependencies=_WRITE)

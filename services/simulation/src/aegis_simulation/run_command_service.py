@@ -337,13 +337,40 @@ class RunCommandService:
     def evict(self, run_id: str) -> None:
         """Drop a run's cached runtime so the next access re-restores from durable state.
 
-        Used after a failed command (which may have left the in-memory runtime mutated but
-        unpersisted) and by the tick engine when an out-of-band writer — e.g. an approved
-        action executed on an isolated runtime — has appended effect events the cached
-        runtime has not observed. Restore replays the checkpoint plus post-checkpoint sim
-        events, so eviction is always safe and never loses persisted state.
+        Used after a failed command or a rolled-back transaction, either of which may have
+        left the in-memory runtime mutated but unpersisted. Restore replays the checkpoint
+        plus post-checkpoint sim events, so eviction is always safe and never loses
+        persisted state.
+
+        It is *not* a way to reconcile an executed action applied to some other runtime:
+        every command that mutates a run's world — lifecycle steps and authorized action
+        execution alike — runs on this cache's runtime under :meth:`lock_for`, because a
+        checkpoint written after an unobserved effect event permanently strands that
+        effect (restore only replays events at or after the checkpoint's sequence).
         """
         self.runtime_cache.pop(run_id, None)
+
+    async def persist_executed_action_state(
+        self,
+        uow: PostgresUnitOfWork,
+        runtime: SimulationRuntime,
+        *,
+        sequence: int,
+    ) -> None:
+        """Make an authorized action's world mutation durable in its own transaction.
+
+        Lifecycle commands checkpoint and snapshot on their way out; an authorized action
+        executes through :class:`SimulationApplicationService` directly and so has to do
+        the same explicitly. Without it the mutation lives only in the cached runtime until
+        the next tick — which never comes for a paused run — and the operator-facing graph
+        keeps serving a snapshot that does not know the asset was contained.
+
+        ``sequence`` is the last sequence the execution itself claimed, so the snapshot can
+        never collide with a stepping command's on ``uq_graph_snapshots_run_sequence``.
+        """
+        snapshot = build_graph_snapshot_from_runtime(runtime, sequence=sequence)
+        await PostgresGraphSnapshotRepository(uow.session).add(snapshot)
+        await self._persist_runtime_checkpoint(uow, runtime)
 
     def resolve_package_dir(self, *, package_path: str | None, scenario_version_id: str) -> Path:
         relative = package_path or SCENARIO_PACKAGE_BY_VERSION.get(scenario_version_id)

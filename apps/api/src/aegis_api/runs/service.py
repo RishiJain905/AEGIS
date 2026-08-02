@@ -7,12 +7,14 @@ Both serialize on the service's per-run locks (``lock_for``) before mutating a c
 runtime, which is what makes the single-writer guarantee hold across concurrent requests
 and ticks.
 
-Approval execution (``aegis_api.approvals.service``) deliberately keeps its own isolated
-:class:`RunCommandService` instance: an approval transaction can roll back, and a rolled
-back mutation must not dirty the shared cached runtime. Because approvals mutate a
-separate runtime object, they never interleave on the *same* runtime; the tick engine
-reconciles any externally-appended effect events by evicting and re-restoring the run on
-the next cycle (see :mod:`aegis_api.runs.tick_engine`).
+Approval execution (``aegis_api.approvals.service``) shares this instance too. It used to
+keep an isolated one so a rolled-back approval could not dirty the shared runtime, but an
+executed containment then mutated a runtime nobody stepped and nothing ever recovered it:
+a cached runtime advances its ``next_sequence`` past out-of-band events without applying
+them, so the next checkpoint stranded the effect behind the restore cursor permanently.
+Isolating an asset changed neither the world nor the graph. Rollback isolation is provided
+instead by the executing routes, which hold ``lock_for(run_id)`` across their transaction
+and evict the cached runtime — inside the lock — if it fails.
 """
 
 from __future__ import annotations

@@ -109,6 +109,7 @@ async def _seed_graph(uow, run_id: str) -> None:
             scenario_command="isolate",
             action_class="class_2",
             target_asset_id=_ASSET,
+            justification="Seeded operator order for the asset-detail projection.",
         )
     )
 

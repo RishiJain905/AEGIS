@@ -93,6 +93,49 @@ describe('feed-model', () => {
     expect(isNoChangeAutonomyReport(tasked)).toBe(false);
   });
 
+  it('folds one command order into a single row carrying its older events as a trail', () => {
+    const rows = buildFeedRows([
+      entry({
+        sequence: 5,
+        category: 'operator_action',
+        type: 'operator.action.proposed',
+        payload: { proposalId: 'prp_1', scenarioCommand: 'isolate' },
+      }),
+      entry({
+        sequence: 6,
+        category: 'execution',
+        type: 'action.executed',
+        payload: { proposalId: 'prp_1' },
+      }),
+      entry({
+        sequence: 7,
+        category: 'operator_action',
+        type: 'operator.action.proposed',
+        payload: { proposalId: 'prp_2', scenarioCommand: 'observe' },
+      }),
+    ]);
+    expect(rows).toHaveLength(2);
+    // Newest-first: the observe order, then the isolate order folded down to its execution.
+    const [observed, executed] = rows;
+    if (observed?.kind !== 'entry' || executed?.kind !== 'entry') {
+      throw new Error('expected two entry rows');
+    }
+    expect(observed.entry.sequence).toBe(7);
+    expect(observed.trail).toEqual([]);
+    // The newest event of the order is what renders; the older one rides along.
+    expect(executed.entry.sequence).toBe(6);
+    expect(executed.trail.map((item) => item.sequence)).toEqual([5]);
+  });
+
+  it('leaves entries without a proposal — and non-command traffic — unfolded', () => {
+    const rows = buildFeedRows([
+      entry({ sequence: 1, category: 'alert', payload: { proposalId: 'prp_1' } }),
+      entry({ sequence: 2, category: 'alert', payload: { proposalId: 'prp_1' } }),
+      entry({ sequence: 3, category: 'execution', type: 'action.executed', payload: {} }),
+    ]);
+    expect(rows).toHaveLength(3);
+  });
+
   it('latestDetection returns the highest-sequence reveal', () => {
     const latest = latestDetection([
       entry({ sequence: 1, category: 'reveal', type: 'reveal.asset' }),

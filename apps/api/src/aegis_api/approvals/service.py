@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from aegis_agents.roles.warden.evaluation import build_policy_input
@@ -77,11 +76,27 @@ from aegis_api.commands.mapping import (
     APPROVAL_IDEMPOTENCY_SCOPE,
     map_scenario_command_to_authorized,
 )
-
-WORKSPACE_ROOT = Path(__file__).resolve().parents[5]
+from aegis_api.runs.service import get_run_command_service
 
 
 class ApprovalWorkflowService:
+    """Approve/reject/modify proposals and execute the authorized ones.
+
+    Execution mutates the run's world, so it runs on the **process-wide shared**
+    :class:`RunCommandService` — the same runtime cache the tick engine steps and
+    checkpoints. An earlier design gave this service its own isolated instance so a
+    rolled-back approval could not dirty the shared runtime; the cost was that every
+    executed containment mutated a throwaway world and was silently discarded. Nothing
+    downstream could recover it either: the shared runtime advances its ``next_sequence``
+    past out-of-band events without applying them, so the very next checkpoint stranded the
+    effect behind the restore cursor for good. Isolating an asset changed nothing about the
+    simulation, and the graph never showed the control.
+
+    Rollback isolation is preserved by the callers instead: the routes that execute hold
+    ``lock_for(run_id)`` across the whole transaction and evict the cached runtime if it
+    fails, so a mutation whose events never committed cannot be observed by a tick.
+    """
+
     def __init__(
         self,
         *,
@@ -89,7 +104,7 @@ class ApprovalWorkflowService:
         run_command_service: RunCommandService | None = None,
     ) -> None:
         self._policy = policy_engine or PolicyEngine()
-        self._run_commands = run_command_service or RunCommandService(workspace_root=WORKSPACE_ROOT)
+        self._run_commands = run_command_service or get_run_command_service()
 
     async def approve(
         self,
@@ -848,6 +863,14 @@ class ApprovalWorkflowService:
                 incident_id=incident_id,
             )
         )
+        if emitted:
+            # Same transaction as the effect events: the mutation is now in the shared
+            # runtime's world, and this is what makes it durable and visible. A run that is
+            # paused (or simply between ticks) writes no other snapshot, so without this the
+            # operator-facing graph keeps serving an asset with no control on it.
+            await self._run_commands.persist_executed_action_state(
+                uow, runtime, sequence=emitted[-1].sequence
+            )
         return ExecutionResultV1(
             schema_version=EXECUTION_RESULT_SCHEMA_VERSION,
             executed_action=executed,
@@ -915,6 +938,20 @@ class ApprovalWorkflowService:
                 status_code=404,
             )
         return proposal
+
+    async def resolve_run_id(self, uow: PostgresUnitOfWork, proposal_id: str) -> str | None:
+        """The run a proposal belongs to, or ``None`` when it cannot be resolved.
+
+        Read-only and deliberately forgiving: the approve route needs the run id *before* it
+        opens its write transaction, so it can serialize on that run's lock. A proposal that
+        does not resolve is not this method's problem to report — the write path raises the
+        real 404 — so it simply declines to name a run to lock.
+        """
+        proposal = await uow.proposals.get_proposal(proposal_id)
+        if proposal is None:
+            return None
+        incident = await uow.incidents.get_by_id(proposal.incident_id)
+        return None if incident is None else str(incident.run_id)
 
     async def _lock_proposal(self, uow: PostgresUnitOfWork, proposal_id: str) -> Any:
         """Load and row-lock a proposal so concurrent decisions serialize on its identity.
