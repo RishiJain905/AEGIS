@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useLiveRun } = vi.hoisted(() => ({
@@ -19,8 +19,12 @@ vi.mock('@/features/timeline', () => ({
     <div data-testid="run-tape" data-chrome={chrome} />
   ),
 }));
+vi.mock('./copilot-chip', () => ({
+  CopilotChip: () => <button type="button" data-testid="copilot-chip" />,
+}));
 
 import { Console } from './console';
+import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 
 const RUN_ID = 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV';
 
@@ -34,10 +38,12 @@ function liveRunWithStatus(runStatus: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   useLiveRun.mockReturnValue(null);
+  useCockpitUiStore.getState().resetCockpitUi();
 });
 
 afterEach(() => {
   cleanup();
+  useCockpitUiStore.getState().resetCockpitUi();
 });
 
 describe('Console band', () => {
@@ -63,6 +69,33 @@ describe('Console band', () => {
     render(<Console runId={RUN_ID} />);
     expect(screen.getByTestId('asset-command-bar')).toHaveAttribute('data-chrome', 'console');
     expect(screen.getByTestId('run-tape')).toHaveAttribute('data-chrome', 'console');
+  });
+
+  it('carries the copilot presence chip', () => {
+    render(<Console runId={RUN_ID} />);
+    expect(screen.getByTestId('cockpit-console')).toContainElement(
+      screen.getByTestId('copilot-chip'),
+    );
+  });
+});
+
+describe('Console as a command line to the agents', () => {
+  it('routes a printable keystroke into the copilot composer', () => {
+    render(<Console runId={RUN_ID} />);
+    const band = screen.getByRole('group', { name: 'Console' });
+    fireEvent.keyDown(band, { key: 'w' });
+
+    const state = useCockpitUiStore.getState();
+    expect(state.copilotSheetOpen).toBe(true);
+    expect(state.copilotSeed).toMatchObject({ text: 'w' });
+  });
+
+  it('leaves space, modifier chords and typing contexts alone', () => {
+    render(<Console runId={RUN_ID} />);
+    const band = screen.getByRole('group', { name: 'Console' });
+    fireEvent.keyDown(band, { key: ' ' });
+    fireEvent.keyDown(band, { key: 'k', ctrlKey: true });
+    expect(useCockpitUiStore.getState().copilotSheetOpen).toBe(false);
   });
 });
 

@@ -1,13 +1,15 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import { cn } from '@aegis/ui';
 
 import { useRunActivity } from '@/features/live-run';
 import { AlertsTab } from '@/features/shell/components/alerts-tab';
 import { useRunAlerts } from '@/features/shell/hooks/use-shell-queries';
+import { isTypingTarget } from '@/lib/keyboard';
 import { resolveSignalsState, useCockpitUiStore } from '@/stores/cockpit-ui-store';
+import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 /** Severity order for the capsule's worst-severity tint; first match wins. */
 const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low'] as const;
@@ -26,19 +28,6 @@ function worstSeverity(alerts: readonly { severity: string }[]): string | null {
     }
   }
   return alerts.length > 0 ? 'medium' : null;
-}
-
-/** True when the key event belongs to a typing context, not the cockpit. */
-function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-  return (
-    target.tagName === 'INPUT' ||
-    target.tagName === 'TEXTAREA' ||
-    target.tagName === 'SELECT' ||
-    target.isContentEditable
-  );
 }
 
 /**
@@ -111,6 +100,38 @@ export function SignalsStack({ runId }: SignalsStackProps) {
   const showExpandedStack = !inspectorSheetOpen && resolved === 'expanded';
   const showOverlay = inspectorSheetOpen && overlayOpen;
 
+  const capsuleRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+
+  // Overlay focus contract: opening moves focus into the stack; closing (while the sheet
+  // stays open) hands it back to the capsule.
+  const wasOverlayRef = useRef(false);
+  useEffect(() => {
+    if (showOverlay && !wasOverlayRef.current) {
+      panelRef.current?.focus();
+    } else if (!showOverlay && wasOverlayRef.current && inspectorSheetOpen) {
+      capsuleRef.current?.focus();
+    }
+    wasOverlayRef.current = showOverlay;
+  }, [showOverlay, inspectorSheetOpen]);
+
+  // Acting on a card (focus asset, open case) re-aims the sheet itself, so the overlay
+  // closes rather than lingering over the context the action just summoned.
+  const selectedEntityId = useWorkspaceUiStore((state) => state.workspace.selectedEntityId);
+  const selectedIncidentId = useWorkspaceUiStore((state) => state.workspace.selectedIncidentId);
+  const lastSubjectRef = useRef<{ entity: string | null; incident: string | null }>({
+    entity: selectedEntityId,
+    incident: selectedIncidentId,
+  });
+  useEffect(() => {
+    const last = lastSubjectRef.current;
+    const changed = last.entity !== selectedEntityId || last.incident !== selectedIncidentId;
+    lastSubjectRef.current = { entity: selectedEntityId, incident: selectedIncidentId };
+    if (changed && showOverlay) {
+      setOverlayOpen(false);
+    }
+  }, [selectedEntityId, selectedIncidentId, showOverlay, setOverlayOpen]);
+
   const expand = useCallback(() => {
     if (inspectorSheetOpen) {
       setOverlayOpen(true);
@@ -160,6 +181,7 @@ export function SignalsStack({ runId }: SignalsStackProps) {
   if (!isOpen) {
     return (
       <button
+        ref={capsuleRef}
         type="button"
         data-testid="signals-capsule"
         data-severity={worst ?? 'none'}
@@ -167,7 +189,12 @@ export function SignalsStack({ runId }: SignalsStackProps) {
         aria-expanded={false}
         title="Signals (A)"
         onClick={expand}
-        className="absolute right-3 top-24 z-30 flex items-center gap-2.5 rounded-full border bg-[color-mix(in_srgb,var(--aegis-surface-panel)_92%,transparent)] px-3 py-1.5 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl transition-colors hover:bg-[var(--aegis-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]"
+        className={cn(
+          'absolute flex items-center gap-2.5 rounded-full border bg-[color-mix(in_srgb,var(--aegis-surface-panel)_92%,transparent)] px-3 py-1.5 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl transition-colors hover:bg-[var(--aegis-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]',
+          // Docked to the open sheet's top edge — attention pressure stays visible right
+          // beside the context being read; otherwise it floats over the stage.
+          inspectorSheetOpen ? 'right-5 top-3 z-50' : 'right-3 top-24 z-30',
+        )}
         style={{
           borderColor: `color-mix(in srgb, ${tint} 45%, transparent)`,
           color: tint,
@@ -187,14 +214,29 @@ export function SignalsStack({ runId }: SignalsStackProps) {
     );
   }
 
+  const handleOverlayKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape' && showOverlay) {
+      // The overlay is topmost: this Escape is its alone. The next one, bubbling from the
+      // capsule, reaches the cockpit handler and closes the sheet.
+      event.stopPropagation();
+      setOverlayOpen(false);
+    }
+  };
+
   return (
     <section
+      ref={panelRef}
       role="region"
       aria-label="Signals"
+      tabIndex={showOverlay ? -1 : undefined}
       data-testid="signals-stack"
       data-mode={showOverlay ? 'overlay' : 'stack'}
+      onKeyDown={handleOverlayKeyDown}
       className={cn(
-        'absolute right-3 top-24 z-30 flex max-h-[40vh] w-[min(22rem,86%)] flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_92%,transparent)] shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl',
+        'absolute flex max-h-[40vh] w-[min(22rem,86%)] flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_92%,transparent)] shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl',
+        // As an overlay it sits over the sheet's claim, never widening the combination's
+        // footprint on the stage.
+        showOverlay ? 'right-5 top-14 z-50' : 'right-3 top-24 z-30',
       )}
     >
       <div className="flex items-center gap-2 border-b border-[var(--aegis-border-subtle)] px-3 py-2">

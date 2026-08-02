@@ -13,6 +13,13 @@ import { create } from 'zustand';
  */
 export type SignalsPreference = 'expanded' | 'capsule';
 
+/** One keystroke routed from the console into the copilot composer. */
+export interface CopilotSeed {
+  text: string;
+  /** Monotonic token so the composer applies each seed exactly once. */
+  token: number;
+}
+
 interface CockpitUiState {
   signalsPreference: SignalsPreference | null;
   /** Signals expanded as a popover OVER an open right sheet (the collision rule). */
@@ -20,11 +27,18 @@ interface CockpitUiState {
   inspectorSheetOpen: boolean;
   copilotSheetOpen: boolean;
   chronicleOpen: boolean;
+  copilotSeed: CopilotSeed | null;
   setSignalsPreference: (preference: SignalsPreference | null) => void;
   setSignalsOverlayOpen: (open: boolean) => void;
   setInspectorSheetOpen: (open: boolean) => void;
   setCopilotSheetOpen: (open: boolean) => void;
   setChronicleOpen: (open: boolean) => void;
+  /**
+   * Route a keystroke typed on the console into the copilot composer: opens the copilot
+   * sheet and hands the composer the character, making the console literally a command
+   * line to the agents.
+   */
+  seedCopilotComposer: (text: string) => void;
   /** Back to the default reading of the room. Called when the run changes. */
   resetCockpitUi: () => void;
 }
@@ -35,9 +49,10 @@ const DEFAULTS = {
   inspectorSheetOpen: false,
   copilotSheetOpen: false,
   chronicleOpen: false,
+  copilotSeed: null,
 } as const;
 
-export const useCockpitUiStore = create<CockpitUiState>()((set) => ({
+export const useCockpitUiStore = create<CockpitUiState>()((set, get) => ({
   ...DEFAULTS,
 
   setSignalsPreference: (preference) => {
@@ -59,6 +74,14 @@ export const useCockpitUiStore = create<CockpitUiState>()((set) => ({
 
   setChronicleOpen: (open) => {
     set({ chronicleOpen: open });
+  },
+
+  seedCopilotComposer: (text) => {
+    const previous = get().copilotSeed;
+    set({
+      copilotSheetOpen: true,
+      copilotSeed: { text, token: (previous?.token ?? 0) + 1 },
+    });
   },
 
   resetCockpitUi: () => {

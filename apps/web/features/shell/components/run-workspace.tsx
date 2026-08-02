@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
-import { AgentChatPanel } from '@/features/agent-chat';
-import { Console } from '@/features/console';
-import { EventSearch, HypothesisLedger } from '@/features/operator-console';
+import { Console, CopilotSheet } from '@/features/console';
 import { OpsFeedPanel } from '@/features/ops-feed';
-import { InspectorPanel } from '@/features/shell/components/inspector-panel';
+import { InspectorSheet } from '@/features/shell/components/inspector-sheet';
 import { VisualizationSlot } from '@/features/shell/components/visualization-slot';
 import { WorkspaceDock } from '@/features/shell/components/workspace-dock';
+import { useCockpitShortcuts } from '@/features/shell/hooks/use-cockpit-shortcuts';
 import { SignalsStack } from '@/features/signals';
+import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 export interface RunWorkspaceProps {
@@ -22,66 +22,51 @@ export interface RunWorkspaceProps {
  *
  * The operational graph is the subject of the app, so it is the workspace — the stage
  * fills the viewport between the status rail and the Console, and everything else is
- * furniture on or around it. The Console is the operator's hands: one fused band across
- * the foot of the stage holding transport (SIM/LINK), the selected-asset command cluster
- * and the run tape. Signals — the alerts surface — floats over the stage's top-right as
- * ambient attention pressure. The docks flanking the stage are the last remnant of the
- * old three-column cockpit; they dissolve into context sheets over the next phases of
- * the rework.
+ * furniture on or over it, each piece visibly about something. The Console is the
+ * operator's hands (transport, selected-asset commands, tape, copilot chip). Signals —
+ * the alerts surface — floats over the stage's top-right as ambient attention pressure.
+ * Deep material arrives as context sheets tethered to their subject: the inspector on
+ * the right, summoned by selection; the copilot on the left, summoned from the console.
+ * The one remaining dock tab (the ops feed) becomes the Chronicle in the next phase.
  */
 export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
   const selectedEntityId = useWorkspaceUiStore((state) => state.workspace.selectedEntityId);
   const selectedIncidentId = useWorkspaceUiStore((state) => state.workspace.selectedIncidentId);
   const activeIncidentId = incidentId ?? selectedIncidentId;
 
-  const [rightTab, setRightTab] = useState('inspector');
+  const setInspectorSheetOpen = useCockpitUiStore((state) => state.setInspectorSheetOpen);
 
-  // The dock follows the operator's focus: naming a node (from the graph, an alert card,
-  // or the feed) or opening a case is a statement of "show me this", so the Inspector
-  // surfaces without a second click. Deliberate tab choices still stick — the effects only
-  // fire when the selection itself changes.
+  useCockpitShortcuts();
+
+  // Attention summons the inspector sheet: naming a node (from the graph, an alert card,
+  // or the feed) or opening a case is a statement of "show me this". The effects fire on
+  // selection *changes* only, so dismissing the sheet sticks until the operator names
+  // something again (or presses I).
   useEffect(() => {
     if (selectedEntityId !== null) {
-      setRightTab('inspector');
+      setInspectorSheetOpen(true);
     }
-  }, [selectedEntityId]);
+  }, [selectedEntityId, setInspectorSheetOpen]);
   useEffect(() => {
     if (activeIncidentId) {
-      setRightTab('inspector');
+      setInspectorSheetOpen(true);
     }
-  }, [activeIncidentId]);
+  }, [activeIncidentId, setInspectorSheetOpen]);
+  // ...and the sheet leaves when its subject deselects (a stage click, Escape).
+  useEffect(() => {
+    if (selectedEntityId === null && !activeIncidentId) {
+      setInspectorSheetOpen(false);
+    }
+  }, [selectedEntityId, activeIncidentId, setInspectorSheetOpen]);
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col gap-3 xl:flex-row">
-      <WorkspaceDock
-        region="leftDock"
-        side="left"
-        label="Operator console"
-        data-testid="left-dock"
-        tabs={[
-          {
-            id: 'copilot',
-            label: 'Copilot',
-            fill: true,
-            content: <AgentChatPanel runId={runId} />,
-          },
-          {
-            id: 'evidence',
-            label: 'Evidence',
-            content: <EventSearch runId={runId} />,
-          },
-          {
-            id: 'hypotheses',
-            label: 'Hypotheses',
-            content: <HypothesisLedger runId={runId} />,
-          },
-        ]}
-      />
-
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2.5">
         <div className="relative flex min-h-0 flex-1 flex-col" data-testid="cockpit-stage">
           <VisualizationSlot runId={runId} incidentId={incidentId} />
           <SignalsStack runId={runId} />
+          <InspectorSheet runId={runId} incidentId={incidentId} />
+          <CopilotSheet runId={runId} />
         </div>
         <Console runId={runId} />
       </div>
@@ -91,14 +76,7 @@ export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
         side="right"
         label="Situation channel"
         data-testid="right-dock"
-        activeTab={rightTab}
-        onActiveTabChange={setRightTab}
         tabs={[
-          {
-            id: 'inspector',
-            label: 'Inspector',
-            content: <InspectorPanel runId={runId} incidentId={incidentId} />,
-          },
           {
             id: 'feed',
             label: 'Ops feed',

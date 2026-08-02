@@ -669,3 +669,50 @@ describe('AgentChatPanel BASTION incident prerequisite', () => {
     expect(screen.getByLabelText<HTMLTextAreaElement>(/Message to BASTION/)).toBeEnabled();
   });
 });
+
+describe('AgentChatPanel composer seeding (console command line)', () => {
+  beforeEach(() => {
+    apiFetch.mockReset();
+  });
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('applies each seed token exactly once: appends the text and focuses the composer', async () => {
+    apiFetch.mockResolvedValue(jsonResponse({ sessions: [] }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = render(
+      <QueryClientProvider client={client}>
+        <AgentChatPanel runId={RUN_ID} composerSeed={null} />
+      </QueryClientProvider>,
+    );
+    const composer = await screen.findByLabelText<HTMLTextAreaElement>(/Message to WATCHTOWER/);
+
+    view.rerender(
+      <QueryClientProvider client={client}>
+        <AgentChatPanel runId={RUN_ID} composerSeed={{ text: 'w', token: 1 }} />
+      </QueryClientProvider>,
+    );
+    await waitFor(() => {
+      expect(composer.value).toBe('w');
+    });
+    expect(composer).toHaveFocus();
+
+    // The same token again is a no-op — a re-render must not double-type the character.
+    view.rerender(
+      <QueryClientProvider client={client}>
+        <AgentChatPanel runId={RUN_ID} composerSeed={{ text: 'w', token: 1 }} />
+      </QueryClientProvider>,
+    );
+    expect(composer.value).toBe('w');
+
+    view.rerender(
+      <QueryClientProvider client={client}>
+        <AgentChatPanel runId={RUN_ID} composerSeed={{ text: 'h', token: 2 }} />
+      </QueryClientProvider>,
+    );
+    await waitFor(() => {
+      expect(composer.value).toBe('wh');
+    });
+  });
+});

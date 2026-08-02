@@ -33,6 +33,59 @@
   transition: transform var(--aegis-motion-duration-normal) var(--aegis-motion-ease-decelerate);
 }
 
+/* Context sheets and the chronicle drawer enter with a short settle; the global
+   reduced-motion block above zeroes the durations, so entry becomes instant. */
+@keyframes aegis-sheet-in-right {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes aegis-sheet-in-left {
+  from {
+    transform: translateX(-16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes aegis-sheet-in-up {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.aegis-sheet-enter-right {
+  animation: aegis-sheet-in-right var(--aegis-motion-duration-normal)
+    var(--aegis-motion-ease-decelerate);
+}
+
+.aegis-sheet-enter-left {
+  animation: aegis-sheet-in-left var(--aegis-motion-duration-normal)
+    var(--aegis-motion-ease-decelerate);
+}
+
+.aegis-sheet-enter-up {
+  animation: aegis-sheet-in-up var(--aegis-motion-duration-normal)
+    var(--aegis-motion-ease-decelerate);
+}
+
 .aegis-motion-pulse {
   animation: aegis-pulse var(--aegis-motion-duration-slow) var(--aegis-motion-ease-standard)
     infinite;

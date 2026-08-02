@@ -338,6 +338,12 @@ function TurnView({
 
 export interface AgentChatPanelProps {
   runId: string;
+  /**
+   * A keystroke routed here from outside (the cockpit console's command-line behaviour):
+   * each new `token` appends `text` to the draft and focuses the composer. Monotonic
+   * tokens make application exactly-once.
+   */
+  composerSeed?: { text: string; token: number } | null;
 }
 
 /** Turn an unknown mutation rejection into something an operator can act on. */
@@ -362,7 +368,7 @@ function toClientError(error: unknown): CopilotClientError {
   return { code: null, message: 'The request failed.', traceId: null };
 }
 
-export function AgentChatPanel({ runId }: AgentChatPanelProps) {
+export function AgentChatPanel({ runId, composerSeed }: AgentChatPanelProps) {
   // Operator threads only — the autonomy worker's background triage sessions are not
   // this conversation and must not appear in it.
   const sessionsQuery = useRunAgentSessions(runId, 'operator');
@@ -378,6 +384,19 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
   // terminal transition is a no-op by construction (BUG-024).
   const [localTasks, dispatch] = useReducer(copilotTaskReducer, initialCopilotTaskMap);
   const draftRef = useRef<HTMLTextAreaElement>(null);
+  const turnListRef = useRef<HTMLDivElement>(null);
+
+  // Apply a routed keystroke exactly once per token: append it and hand the composer focus,
+  // so typing on the console flows straight into the conversation.
+  const lastSeedTokenRef = useRef(0);
+  useEffect(() => {
+    if (!composerSeed || composerSeed.token === lastSeedTokenRef.current) {
+      return;
+    }
+    lastSeedTokenRef.current = composerSeed.token;
+    setDraft((current) => current + composerSeed.text);
+    draftRef.current?.focus();
+  }, [composerSeed]);
 
   // One entry per role: its newest operator session plus the derived state of the turn
   // that role owns. Computed for *every* role, not just the selected one, so a task that
@@ -457,6 +476,15 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
   // renders once, not twice.
   const showOptimisticTurn = view.phase === 'sending';
   const lastTurn = turns.length > 0 ? turns[turns.length - 1] : undefined;
+
+  // Keep the newest turn in view: on mount (the sheet just opened) and whenever a turn
+  // lands, the log scrolls to its end. Instant, so reduced motion has nothing to suppress.
+  useEffect(() => {
+    const list = turnListRef.current;
+    if (list) {
+      list.scrollTop = list.scrollHeight;
+    }
+  }, [turns.length, showOptimisticTurn, role]);
 
   const send = useCallback(
     (instructions: string, target: ChatRole) => {
@@ -577,6 +605,7 @@ export function AgentChatPanel({ runId }: AgentChatPanelProps) {
         ) : null}
 
         <div
+          ref={turnListRef}
           className="flex min-h-[8rem] flex-1 flex-col gap-3 overflow-y-auto pr-1"
           aria-live="polite"
           aria-busy={pending}
