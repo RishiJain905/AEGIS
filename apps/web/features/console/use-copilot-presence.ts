@@ -10,7 +10,11 @@ import {
   latestSessionForRole,
   latestTaskOf,
 } from '@/features/agent-chat/copilot-task-state';
-import { CHAT_ROLES, useRunAgentSessions, type ChatRole } from '@/features/agent-chat/use-agent-chat';
+import {
+  CHAT_ROLES,
+  useRunAgentSessions,
+  type ChatRole,
+} from '@/features/agent-chat/use-agent-chat';
 import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 
 /** How long the one-line reply preview stays beside the chip before folding into the badge. */
@@ -97,11 +101,7 @@ export function useCopilotPresence(runId: string): CopilotPresence {
       for (const task of detail.tasks) {
         next.set(task.id, task.status);
         const was = previous.get(task.id);
-        if (
-          was !== undefined &&
-          !isTerminalTaskStatus(was) &&
-          isTerminalTaskStatus(task.status)
-        ) {
+        if (was !== undefined && !isTerminalTaskStatus(was) && isTerminalTaskStatus(task.status)) {
           events.push({ role: detail.session.role as ChatRole, detail, task });
         }
       }

@@ -65,7 +65,11 @@ export const useCockpitUiStore = create<CockpitUiState>()((set, get) => ({
 
   setInspectorSheetOpen: (open) => {
     // Closing the sheet also closes anything the sheet owned.
-    set(open ? { inspectorSheetOpen: true } : { inspectorSheetOpen: false, signalsOverlayOpen: false });
+    set(
+      open
+        ? { inspectorSheetOpen: true }
+        : { inspectorSheetOpen: false, signalsOverlayOpen: false },
+    );
   },
 
   setCopilotSheetOpen: (open) => {

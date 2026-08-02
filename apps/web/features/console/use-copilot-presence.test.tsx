@@ -44,9 +44,7 @@ function detail({
         traceId: null,
       },
     ],
-    artifacts: rationale
-      ? [{ artifactType: 'step_result', taskId, payload: { rationale } }]
-      : [],
+    artifacts: rationale ? [{ artifactType: 'step_result', taskId, payload: { rationale } }] : [],
     toolInvocations: [],
   };
 }

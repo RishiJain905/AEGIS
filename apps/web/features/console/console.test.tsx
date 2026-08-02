@@ -15,9 +15,7 @@ vi.mock('@/features/operator-actions', () => ({
   ),
 }));
 vi.mock('@/features/timeline', () => ({
-  RunTape: ({ chrome }: { chrome?: string }) => (
-    <div data-testid="run-tape" data-chrome={chrome} />
-  ),
+  RunTape: ({ chrome }: { chrome?: string }) => <div data-testid="run-tape" data-chrome={chrome} />,
 }));
 vi.mock('./copilot-chip', () => ({
   CopilotChip: () => <button type="button" data-testid="copilot-chip" />,
@@ -82,7 +80,7 @@ describe('Console band', () => {
 describe('Console as a command line to the agents', () => {
   it('routes a printable keystroke into the copilot composer', () => {
     render(<Console runId={RUN_ID} />);
-    const band = screen.getByRole('group', { name: 'Console' });
+    const band = screen.getByRole('toolbar', { name: 'Console' });
     fireEvent.keyDown(band, { key: 'w' });
 
     const state = useCockpitUiStore.getState();
@@ -92,7 +90,7 @@ describe('Console as a command line to the agents', () => {
 
   it('leaves space, modifier chords and typing contexts alone', () => {
     render(<Console runId={RUN_ID} />);
-    const band = screen.getByRole('group', { name: 'Console' });
+    const band = screen.getByRole('toolbar', { name: 'Console' });
     fireEvent.keyDown(band, { key: ' ' });
     fireEvent.keyDown(band, { key: 'k', ctrlKey: true });
     expect(useCockpitUiStore.getState().copilotSheetOpen).toBe(false);

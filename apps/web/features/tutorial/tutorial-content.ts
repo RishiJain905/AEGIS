@@ -56,12 +56,15 @@ const ORIENTATION: TutorialChapter = {
         'Two docks flank it. The left dock is the operator console — where you think and ask. The right dock is the context channel — where the run reports back to you.',
         'Focus graph collapses the rail and both docks together so the stage takes the whole viewport; the same button then reads Restore panels. Use it when the map matters more than the paperwork.',
       ],
+      // Cockpit rework: the Focus graph button died with the docks — the stage is
+      // full-bleed by default now. Anchors point at the shell and the console band.
+      // TODO(tutorial-prose): this beat still narrates "three regions" and "Focus graph".
       anchors: [
-        '[data-testid="focus-stage"]',
+        '[data-testid="cockpit-console"]',
         '[data-testid="command-centre-shell"]',
         '#command-centre-content',
       ],
-      pointerLabel: 'the cockpit layout and the Focus graph control',
+      pointerLabel: 'the cockpit layout and the console band',
     },
     {
       id: 'cockpit-docks',
@@ -73,8 +76,16 @@ const ORIENTATION: TutorialChapter = {
         'Collapse either dock and it narrows to a strip of its own tab names set sideways — Copilot, Evidence, Hypotheses read vertically, not icons. Click one and the dock reopens with that tab selected.',
         'The collapse itself is remembered across runs and reloads. Which tab was active is not, so a dock you reopen after a refresh lands on its first tab.',
       ],
-      anchors: ['[data-testid="left-dock"]', '[data-testid="right-dock"]'],
-      pointerLabel: 'the operator console and context channel docks',
+      // Cockpit rework: the docks are gone. Signals floats over the stage top-right
+      // (stack when alerts exist, capsule otherwise) and the console band holds the
+      // operator's hands. TODO(tutorial-prose): this beat still narrates dock tabs,
+      // vertical strips and the collapse-memory behaviour, none of which exist now.
+      anchors: [
+        '[data-testid="signals-stack"]',
+        '[data-testid="signals-capsule"]',
+        '[data-testid="cockpit-console"]',
+      ],
+      pointerLabel: 'the signals stack and the console band',
     },
     {
       id: 'control-link',
@@ -258,13 +269,15 @@ const SIGNALS_AND_CASES: TutorialChapter = {
         'Expand Explanation for the detector’s own account of why it fired, what it compared against, and the evidence window. Anomaly-model alerts carry a second Anomaly model disclosure with the observed score.',
         'A single alert in isolation is rarely the whole story. The question is always whether it corroborates: does the endpoint signal line up with identity activity, or is this the benign patch-window noise you were warned about.',
       ],
+      // Cockpit rework: alerts live in the signals stack over the stage, not an
+      // inspector tab. TODO(tutorial-prose): body says "Alerts panel in the inspector".
       anchors: [
         '[data-tutorial-id="alerts-list"]',
         '[data-testid="alerts-panel"]',
-        '[data-testid="inspector-panel"]',
-        '[data-testid="right-dock"]',
+        '[data-testid="signals-stack"]',
+        '[data-testid="signals-capsule"]',
       ],
-      pointerLabel: 'the alerts list in the inspector',
+      pointerLabel: 'the alerts list in the signals stack',
       objective: {
         // BUG-005: this used to key on `alertRaised`, so the objective read as met the moment
         // an alert merely existed — before its Explanation was ever opened. `alertExplanationOpened`
@@ -284,10 +297,12 @@ const SIGNALS_AND_CASES: TutorialChapter = {
         'Incidents appear as a clickable list in the inspector. Select one and the inspector deepens — triage timeline, linked alerts and evidence with provenance, the agent roster, and the response proposals raised against it.',
         'The incident state shows as a badge. It is a lifecycle, not a label; it moves as investigation and containment progress.',
       ],
+      // Cockpit rework: the inspector is a summoned right sheet now (only in the DOM
+      // while open); the panel testid survives inside it.
       anchors: [
         '[data-testid="incidents-panel"]',
         '[data-testid="inspector-panel"]',
-        '[data-testid="right-dock"]',
+        '[data-testid="inspector-sheet"]',
       ],
       pointerLabel: 'the incident list in the inspector',
       objective: {
@@ -310,7 +325,8 @@ const SIGNALS_AND_CASES: TutorialChapter = {
         'Below that: incident context for the selection, the investigation workspace, BASTION response proposals, the SCRIBE reports panel, and finally the raw Incidents and Alerts lists.',
         'The ordering is the argument. What is this, how risky is it, why, what case is it part of, and what are we proposing to do about it.',
       ],
-      anchors: ['[data-testid="inspector-panel"]', '[data-testid="dock-tab-inspector"]'],
+      // Cockpit rework: dock-tab-inspector died; the sheet is the inspector's home.
+      anchors: ['[data-testid="inspector-panel"]', '[data-testid="inspector-sheet"]'],
       pointerLabel: 'the inspector stack',
     },
     {
@@ -323,12 +339,15 @@ const SIGNALS_AND_CASES: TutorialChapter = {
         'Each card shows its origin — Operator for yours, ORACLE for the agent’s. When the bias guard finds evidence contradicting a pinned hypothesis, the card gains a Challenged badge; expand it to read why.',
         'Being challenged is not a failure. It is the system doing the one thing a lone analyst cannot reliably do for themselves: arguing against the theory you already like.',
       ],
+      // Cockpit rework: Evidence and Hypotheses are the copilot sheet's secondary tabs
+      // (only in the DOM while the sheet is open). TODO(tutorial-prose): body says
+      // "in the left dock".
       anchors: [
         '[data-testid="console-event-search"]',
         '[data-testid="operator-hypotheses"]',
-        '[data-testid="left-dock"]',
+        '[data-testid="copilot-sheet"]',
       ],
-      pointerLabel: 'the Evidence and Hypotheses tabs',
+      pointerLabel: 'the Evidence and Hypotheses tabs in the copilot sheet',
     },
     {
       id: 'ops-feed',
@@ -339,8 +358,14 @@ const SIGNALS_AND_CASES: TutorialChapter = {
         'Two badges are loud on purpose. Detection marks the moment the run reveals attacker activity. Bias check marks the bias guard challenging a hypothesis. Everything else stays quiet, and routine autonomy entries that changed nothing collapse.',
         'Agent entries carry an initiator badge: Tasked means you asked for it, Autonomy means the background worker did it under the current rules of engagement. When you cannot remember whether you ordered something, that badge is the answer.',
       ],
-      anchors: ['[data-testid="ops-feed-panel"]', '[data-testid="dock-tab-feed"]'],
-      pointerLabel: 'the ops feed',
+      // Cockpit rework: the feed is the Chronicle — a drawer over the console, opened by
+      // the tape's chevron or T. The toggle is always in the DOM; the panel only while open.
+      anchors: [
+        '[data-testid="ops-feed-panel"]',
+        '[data-testid="chronicle"]',
+        '[data-testid="chronicle-toggle"]',
+      ],
+      pointerLabel: 'the chronicle',
     },
   ],
 };
@@ -479,10 +504,12 @@ const THE_COPILOT: TutorialChapter = {
         'ORACLE weighs competing explanations for what you are seeing. BASTION drafts proportionate containment, and needs an open incident before it can propose actions.',
         'Two more agents exist without a chat tab. WARDEN is the policy layer that judges every proposal — you meet it as a decision, not a conversation. SCRIBE compiles briefs and reports, and is reached through the SITREP button in the control link.',
       ],
+      // Cockpit rework: the copilot lives in a summoned left sheet; its presence chip on
+      // the console is the always-visible anchor when the sheet is closed.
       anchors: [
         '[data-tutorial-id="agent-chat"]',
         '[data-testid="agent-chat-panel"]',
-        '[data-testid="dock-tab-copilot"]',
+        '[data-testid="copilot-chip"]',
       ],
       pointerLabel: 'the agent role tabs',
     },

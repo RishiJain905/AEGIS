@@ -81,9 +81,9 @@ export function CommandCentreShell({
     <div
       className={cn(
         'aegis-command-shell flex min-h-screen flex-col',
-        // The run workspace is a fixed-height cockpit on desktop so the graph can claim the
-        // viewport; below xl there is not enough width for three columns, so the page falls
-        // back to normal scrolling flow.
+        // The run workspace is a fixed-height cockpit on desktop so the stage can claim the
+        // viewport; below xl there is not enough width for the stage model, so the page
+        // falls back to the stacked scrolling flow.
         isRunWorkspace && 'xl:h-[100dvh] xl:min-h-0 xl:overflow-hidden',
       )}
       data-testid="command-centre-shell"

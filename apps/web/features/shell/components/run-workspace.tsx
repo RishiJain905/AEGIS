@@ -2,10 +2,18 @@
 
 import { useEffect } from 'react';
 
+import { cn, typographyTokens } from '@aegis/ui';
+
+import { AgentChatPanel } from '@/features/agent-chat';
 import { Chronicle, Console, CopilotSheet } from '@/features/console';
+import { EventSearch, HypothesisLedger } from '@/features/operator-console';
+import { OpsFeedPanel } from '@/features/ops-feed';
+import { AlertsTab } from '@/features/shell/components/alerts-tab';
+import { InspectorPanel } from '@/features/shell/components/inspector-panel';
 import { InspectorSheet } from '@/features/shell/components/inspector-sheet';
 import { VisualizationSlot } from '@/features/shell/components/visualization-slot';
 import { useCockpitShortcuts } from '@/features/shell/hooks/use-cockpit-shortcuts';
+import { useStackedViewport } from '@/features/shell/hooks/use-stacked-viewport';
 import { SignalsStack } from '@/features/signals';
 import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
@@ -13,6 +21,48 @@ import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 export interface RunWorkspaceProps {
   runId: string;
   incidentId?: string;
+}
+
+function StackedSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <section aria-label={label} className="flex min-w-0 flex-col gap-3">
+      <h2 className={cn(typographyTokens.eyebrow, 'text-[var(--aegis-text-muted)]')}>{label}</h2>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * Below xl the stage model degrades gracefully to stacked page flow: the graph on top,
+ * the console as a sticky footer under it, and every summoned surface as a full-width
+ * section in the cockpit's attention order — signals, inspector, copilot material,
+ * chronicle. Same capabilities, no floating furniture, normal scrolling.
+ */
+function StackedRunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
+  return (
+    <div className="flex w-full flex-col gap-5" data-testid="stacked-workspace">
+      <div className="flex h-[60vh] min-h-[24rem] flex-col">
+        <VisualizationSlot runId={runId} incidentId={incidentId} />
+      </div>
+      <div className="sticky bottom-2 z-30">
+        <Console runId={runId} />
+      </div>
+      <StackedSection label="Signals">
+        <AlertsTab runId={runId} />
+      </StackedSection>
+      <StackedSection label="Inspector">
+        <InspectorPanel runId={runId} incidentId={incidentId} />
+      </StackedSection>
+      <StackedSection label="Copilot">
+        <AgentChatPanel runId={runId} />
+        <EventSearch runId={runId} />
+        <HypothesisLedger runId={runId} />
+      </StackedSection>
+      <StackedSection label="Chronicle">
+        <OpsFeedPanel runId={runId} />
+      </StackedSection>
+    </div>
+  );
 }
 
 /**
@@ -34,6 +84,7 @@ export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
   const activeIncidentId = incidentId ?? selectedIncidentId;
 
   const setInspectorSheetOpen = useCockpitUiStore((state) => state.setInspectorSheetOpen);
+  const stacked = useStackedViewport();
 
   useCockpitShortcuts();
 
@@ -57,6 +108,10 @@ export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
       setInspectorSheetOpen(false);
     }
   }, [selectedEntityId, activeIncidentId, setInspectorSheetOpen]);
+
+  if (stacked) {
+    return <StackedRunWorkspace runId={runId} incidentId={incidentId} />;
+  }
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2.5">

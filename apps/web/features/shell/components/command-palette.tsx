@@ -13,6 +13,7 @@ import {
 } from '@aegis/ui';
 
 import { useActiveRunId } from '@/features/shell/hooks/use-active-run';
+import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 interface CommandItem {
@@ -99,25 +100,33 @@ export function CommandPalette() {
         togglePanelCollapsed('operationsRail');
       },
     },
-    // The two run-cockpit docks, named as the workspace names them ("Operator console" on
-    // the left, "Context channel" on the right) and carrying the shortcuts that actually
-    // drive them. The ⌘I entry previously toggled the `inspector` region — a different
-    // region, used only by the replay surface — so the advertised shortcut did not match
-    // what the command did.
+    // The run-cockpit summons, named as the cockpit names them, carrying the single-letter
+    // vocabulary that actually drives them (see use-cockpit-shortcuts).
     {
-      id: 'toggle-right-dock',
-      label: 'Toggle context channel',
-      shortcut: '⌘I',
+      id: 'toggle-inspector-sheet',
+      label: 'Toggle inspector sheet',
+      shortcut: 'I',
       action: () => {
-        togglePanelCollapsed('rightDock');
+        const cockpit = useCockpitUiStore.getState();
+        cockpit.setInspectorSheetOpen(!cockpit.inspectorSheetOpen);
       },
     },
     {
-      id: 'toggle-left-dock',
-      label: 'Toggle operator console',
-      shortcut: '⌘J',
+      id: 'toggle-copilot-sheet',
+      label: 'Toggle copilot sheet',
+      shortcut: 'C',
       action: () => {
-        togglePanelCollapsed('leftDock');
+        const cockpit = useCockpitUiStore.getState();
+        cockpit.setCopilotSheetOpen(!cockpit.copilotSheetOpen);
+      },
+    },
+    {
+      id: 'toggle-chronicle',
+      label: 'Toggle chronicle',
+      shortcut: 'T',
+      action: () => {
+        const cockpit = useCockpitUiStore.getState();
+        cockpit.setChronicleOpen(!cockpit.chronicleOpen);
       },
     },
     // Replay-only regions. No shortcut is advertised because none is bound to them.

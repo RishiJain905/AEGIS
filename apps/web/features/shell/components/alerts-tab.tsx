@@ -41,10 +41,10 @@ export interface AlertsTabProps {
 }
 
 /**
- * The right dock's first tab: what needs the operator's attention. Wraps the alerts rail
- * (activity strip, dedupe, lifecycle, outcomes) with run-scoped data and a live quiet
- * state, so triage has a permanent, first-position home instead of living at the bottom
- * of the inspector stack.
+ * The alerts surface's content: what needs the operator's attention. Wraps the alerts
+ * rail (activity strip, dedupe, lifecycle, outcomes) with run-scoped data and a live
+ * quiet state. The signals stack re-containers this over the stage; the <xl stacked
+ * fallback renders it as a full-width section.
  */
 export function AlertsTab({ runId }: AlertsTabProps) {
   const liveRun = useLiveRun();

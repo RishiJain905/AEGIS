@@ -19,16 +19,6 @@ export function useKeyboardShortcuts() {
       if (isMeta && event.key.toLowerCase() === 'b') {
         event.preventDefault();
         togglePanelCollapsed('operationsRail');
-        return;
-      }
-      if (isMeta && event.key.toLowerCase() === 'i') {
-        event.preventDefault();
-        togglePanelCollapsed('rightDock');
-        return;
-      }
-      if (isMeta && event.key.toLowerCase() === 'j') {
-        event.preventDefault();
-        togglePanelCollapsed('leftDock');
       }
     }
 

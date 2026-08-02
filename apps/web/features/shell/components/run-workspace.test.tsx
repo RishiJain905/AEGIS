@@ -1,10 +1,22 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/agent-chat', () => ({ AgentChatPanel: () => <p>copilot stub</p> }));
 vi.mock('@/features/console', () => ({
   Chronicle: () => <div data-testid="chronicle-stub" />,
   Console: () => <div data-testid="cockpit-console" />,
   CopilotSheet: () => <div data-testid="copilot-sheet-stub" />,
+}));
+vi.mock('@/features/operator-console', () => ({
+  EventSearch: () => null,
+  HypothesisLedger: () => null,
+}));
+vi.mock('@/features/ops-feed', () => ({ OpsFeedPanel: () => <p>feed stub</p> }));
+vi.mock('@/features/shell/components/alerts-tab', () => ({
+  AlertsTab: () => <p>alerts stub</p>,
+}));
+vi.mock('@/features/shell/components/inspector-panel', () => ({
+  InspectorPanel: () => <p>inspector stub</p>,
 }));
 vi.mock('@/features/shell/components/inspector-sheet', () => ({
   InspectorSheet: () => <div data-testid="inspector-sheet-stub" />,
@@ -29,7 +41,6 @@ beforeEach(() => {
     workspace: { ...defaultOperatorWorkspaceState },
     activeRunId: RUN_ID,
   });
-  useWorkspaceUiStore.getState().setPanelCollapsed('rightDock', false);
   useCockpitUiStore.getState().resetCockpitUi();
 });
 
@@ -54,6 +65,35 @@ describe('RunWorkspace stage', () => {
     render(<RunWorkspace runId={RUN_ID} />);
     expect(screen.queryByTestId('left-dock')).not.toBeInTheDocument();
     expect(screen.queryByTestId('right-dock')).not.toBeInTheDocument();
+  });
+
+  it('degrades below xl to stacked page flow with every capability as a section', () => {
+    const original = window.matchMedia;
+    window.matchMedia = (query: string): MediaQueryList =>
+      ({
+        matches: query.includes('max-width'),
+        media: query,
+        onchange: null,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        dispatchEvent: () => false,
+      }) as MediaQueryList;
+    try {
+      render(<RunWorkspace runId={RUN_ID} />);
+      expect(screen.getByTestId('stacked-workspace')).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Signals' })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Inspector' })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Copilot' })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Chronicle' })).toBeInTheDocument();
+      expect(screen.getByTestId('cockpit-console')).toBeInTheDocument();
+      // The floating furniture stays desktop-only.
+      expect(screen.queryByTestId('signals-stack-stub')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('inspector-sheet-stub')).not.toBeInTheDocument();
+    } finally {
+      window.matchMedia = original;
+    }
   });
 });
 

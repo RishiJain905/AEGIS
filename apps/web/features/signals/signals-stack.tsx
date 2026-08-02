@@ -176,7 +176,7 @@ export function SignalsStack({ runId }: SignalsStackProps) {
     };
   }, [isOpen, expand, collapse]);
 
-  const tint = worst ? SEVERITY_TINT[worst] : 'var(--aegis-text-muted)';
+  const tint = (worst ? SEVERITY_TINT[worst] : undefined) ?? 'var(--aegis-text-muted)';
 
   if (!isOpen) {
     return (
