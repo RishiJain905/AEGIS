@@ -28,6 +28,12 @@ const RUN_ENDED_HINT = 'The run has ended — commands can no longer execute.';
 
 export interface AssetCommandBarProps {
   runId: string;
+  /**
+   * `panel` (default) renders the bar as its own bordered band; `console` drops the outer
+   * chrome so the bar fuses into the cockpit console, which owns the frame. Content,
+   * testids and behaviour are identical in both.
+   */
+  chrome?: 'panel' | 'console';
 }
 
 /**
@@ -40,14 +46,18 @@ export interface AssetCommandBarProps {
  * replaces them without touching this layout; everything else stays reachable in the
  * dropdown, and the same commands are one right-click away on the graph itself.
  */
-export function AssetCommandBar({ runId }: AssetCommandBarProps) {
+export function AssetCommandBar({ runId, chrome = 'panel' }: AssetCommandBarProps) {
   const selected = useSelectedAsset(runId);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   if (!selected) {
     return (
       <div
-        className="flex min-h-[3.25rem] shrink-0 items-center gap-3 rounded-[var(--aegis-radius-lg)] border border-dashed border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_60%,transparent)] px-4 py-2"
+        className={cn(
+          'flex min-h-[3.25rem] shrink-0 items-center gap-3',
+          chrome === 'panel' &&
+            'rounded-[var(--aegis-radius-lg)] border border-dashed border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_60%,transparent)] px-4 py-2',
+        )}
         data-testid="asset-command-bar"
         data-state="empty"
       >
@@ -65,6 +75,7 @@ export function AssetCommandBar({ runId }: AssetCommandBarProps) {
   return (
     <SelectedAssetCommandBar
       key={selected.node.id}
+      chrome={chrome}
       runId={runId}
       assetId={selected.node.id}
       assetLabel={selected.node.label}
@@ -87,6 +98,7 @@ export function AssetCommandBar({ runId }: AssetCommandBarProps) {
 }
 
 interface SelectedAssetCommandBarProps {
+  chrome: 'panel' | 'console';
   runId: string;
   assetId: string;
   assetLabel: string;
@@ -102,6 +114,7 @@ interface SelectedAssetCommandBarProps {
  * pending confirmation must never survive the operator selecting a different node.
  */
 function SelectedAssetCommandBar({
+  chrome,
   runId,
   assetId,
   assetLabel,
@@ -124,7 +137,11 @@ function SelectedAssetCommandBar({
 
   return (
     <div
-      className="flex min-h-[3.25rem] shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-accent-line)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_86%,transparent)] px-4 py-2 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl"
+      className={cn(
+        'flex min-h-[3.25rem] shrink-0 flex-wrap items-center gap-x-3 gap-y-2',
+        chrome === 'panel' &&
+          'rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-accent-line)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_86%,transparent)] px-4 py-2 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl',
+      )}
       data-testid="asset-command-bar"
       data-state="selected"
       aria-label={`Operator command · ${assetLabel}`}

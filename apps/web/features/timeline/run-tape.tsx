@@ -38,7 +38,15 @@ function clockOf(timestamp: string): string {
  * readout. Live time-travel belongs to the replay route, so the tape does not pretend to
  * scrub the simulation.
  */
-export function RunTape() {
+export interface RunTapeProps {
+  /**
+   * `panel` (default) renders the tape as its own bordered strip; `console` drops the
+   * outer chrome so it fuses into the cockpit console band, which owns the frame.
+   */
+  chrome?: 'panel' | 'console';
+}
+
+export function RunTape({ chrome = 'panel' }: RunTapeProps) {
   const liveRun = useLiveRun();
   const cursorSequence = useWorkspaceUiStore((state) => state.workspace.timelineCursorSequence);
   const setCursorSequence = useWorkspaceUiStore((state) => state.setTimelineCursorSequence);
@@ -60,7 +68,11 @@ export function RunTape() {
 
   return (
     <div
-      className="flex shrink-0 items-center gap-3 rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_78%,transparent)] px-3 py-2 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl"
+      className={cn(
+        'flex shrink-0 items-center gap-3',
+        chrome === 'panel' &&
+          'rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_78%,transparent)] px-3 py-2 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl',
+      )}
       data-testid="run-tape"
     >
       <span className="shrink-0 font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-[var(--aegis-text-muted)]">
