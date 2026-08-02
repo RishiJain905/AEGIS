@@ -2,10 +2,10 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/features/console', () => ({
+  Chronicle: () => <div data-testid="chronicle-stub" />,
   Console: () => <div data-testid="cockpit-console" />,
   CopilotSheet: () => <div data-testid="copilot-sheet-stub" />,
 }));
-vi.mock('@/features/ops-feed', () => ({ OpsFeedPanel: () => <p>feed stub</p> }));
 vi.mock('@/features/shell/components/inspector-sheet', () => ({
   InspectorSheet: () => <div data-testid="inspector-sheet-stub" />,
 }));
@@ -39,23 +39,21 @@ afterEach(() => {
 });
 
 describe('RunWorkspace stage', () => {
-  it('mounts signals and both context sheets over the stage, console at its foot', () => {
+  it('mounts signals, both context sheets and the chronicle over the stage, console at its foot', () => {
     render(<RunWorkspace runId={RUN_ID} />);
     const stage = screen.getByTestId('cockpit-stage');
     expect(stage).toContainElement(screen.getByTestId('visualization-slot'));
     expect(stage).toContainElement(screen.getByTestId('signals-stack-stub'));
     expect(stage).toContainElement(screen.getByTestId('inspector-sheet-stub'));
     expect(stage).toContainElement(screen.getByTestId('copilot-sheet-stub'));
+    expect(stage).toContainElement(screen.getByTestId('chronicle-stub'));
     expect(screen.getByTestId('cockpit-console')).toBeInTheDocument();
   });
 
-  it('keeps only the ops feed in the remaining dock — alerts, inspector and copilot moved to the stage', () => {
+  it('has no docks left — one stage, no walls', () => {
     render(<RunWorkspace runId={RUN_ID} />);
-    expect(screen.getByTestId('dock-tab-feed')).toBeInTheDocument();
-    expect(screen.queryByTestId('dock-tab-alerts')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('dock-tab-inspector')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('dock-tab-copilot')).not.toBeInTheDocument();
     expect(screen.queryByTestId('left-dock')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('right-dock')).not.toBeInTheDocument();
   });
 });
 
@@ -119,6 +117,14 @@ describe('RunWorkspace keyboard vocabulary', () => {
 
     fireEvent.keyDown(window, { key: 'c' });
     expect(useCockpitUiStore.getState().copilotSheetOpen).toBe(true);
+  });
+
+  it('toggles the chronicle on T', () => {
+    render(<RunWorkspace runId={RUN_ID} />);
+    fireEvent.keyDown(window, { key: 't' });
+    expect(useCockpitUiStore.getState().chronicleOpen).toBe(true);
+    fireEvent.keyDown(window, { key: 'T' });
+    expect(useCockpitUiStore.getState().chronicleOpen).toBe(false);
   });
 
   it('Escape closes the topmost summoned surface, then deselects', () => {

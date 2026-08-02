@@ -32,7 +32,7 @@ vi.mock('@/features/live-run/live-run-provider', () => ({
   }),
 }));
 
-import { RunTape } from './run-tape';
+import { RunTape, interpretTapeDrag, TAPE_DRAG_THRESHOLD_PX } from './run-tape';
 
 afterEach(() => {
   cleanup();
@@ -59,5 +59,46 @@ describe('RunTape', () => {
     await user.click(screen.getByTestId('run-tape-unpin'));
     expect(useWorkspaceUiStore.getState().workspace.timelineCursorSequence).toBeNull();
     expect(screen.getByTestId('run-tape-readout')).toHaveTextContent('Payments API compromised');
+  });
+});
+
+describe('RunTape as the Chronicle handle', () => {
+  it('shows no chronicle affordances unless it is handed the handle role', () => {
+    render(<RunTape />);
+    expect(screen.queryByTestId('chronicle-toggle')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('chronicle-grab')).not.toBeInTheDocument();
+  });
+
+  it('offers a labelled chevron that toggles the chronicle without touching tick semantics', async () => {
+    const user = userEvent.setup();
+    const setOpen = vi.fn();
+    render(<RunTape chronicle={{ open: false, setOpen }} />);
+
+    const toggle = screen.getByTestId('chronicle-toggle');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveAccessibleName('Open chronicle');
+
+    await user.click(toggle);
+    expect(setOpen).toHaveBeenCalledWith(true);
+
+    // Tick clicks still pin; the handle is a separate hit target.
+    await user.click(screen.getByTestId('run-tape-beat-4'));
+    expect(useWorkspaceUiStore.getState().workspace.timelineCursorSequence).toBe(4);
+  });
+
+  it('announces the close affordance while open', () => {
+    render(<RunTape chronicle={{ open: true, setOpen: vi.fn() }} />);
+    const toggle = screen.getByTestId('chronicle-toggle');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).toHaveAccessibleName('Close chronicle');
+    expect(screen.getByTestId('chronicle-grab')).toBeInTheDocument();
+  });
+
+  it('interprets grab drags: up past the threshold opens, down closes, less is noise', () => {
+    expect(interpretTapeDrag(-TAPE_DRAG_THRESHOLD_PX)).toBe('open');
+    expect(interpretTapeDrag(TAPE_DRAG_THRESHOLD_PX)).toBe('close');
+    expect(interpretTapeDrag(-(TAPE_DRAG_THRESHOLD_PX - 1))).toBeNull();
+    expect(interpretTapeDrag(TAPE_DRAG_THRESHOLD_PX - 1)).toBeNull();
+    expect(interpretTapeDrag(0)).toBeNull();
   });
 });

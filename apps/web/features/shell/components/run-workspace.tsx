@@ -2,11 +2,9 @@
 
 import { useEffect } from 'react';
 
-import { Console, CopilotSheet } from '@/features/console';
-import { OpsFeedPanel } from '@/features/ops-feed';
+import { Chronicle, Console, CopilotSheet } from '@/features/console';
 import { InspectorSheet } from '@/features/shell/components/inspector-sheet';
 import { VisualizationSlot } from '@/features/shell/components/visualization-slot';
-import { WorkspaceDock } from '@/features/shell/components/workspace-dock';
 import { useCockpitShortcuts } from '@/features/shell/hooks/use-cockpit-shortcuts';
 import { SignalsStack } from '@/features/signals';
 import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
@@ -27,7 +25,8 @@ export interface RunWorkspaceProps {
  * the alerts surface — floats over the stage's top-right as ambient attention pressure.
  * Deep material arrives as context sheets tethered to their subject: the inspector on
  * the right, summoned by selection; the copilot on the left, summoned from the console.
- * The one remaining dock tab (the ops feed) becomes the Chronicle in the next phase.
+ * And the run's history is the Chronicle: collapsed it is the console's tape, expanded
+ * it is the full ops feed rising out of that same timeline. No walls remain.
  */
 export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
   const selectedEntityId = useWorkspaceUiStore((state) => state.workspace.selectedEntityId);
@@ -60,31 +59,15 @@ export function RunWorkspace({ runId, incidentId }: RunWorkspaceProps) {
   }, [selectedEntityId, activeIncidentId, setInspectorSheetOpen]);
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col gap-3 xl:flex-row">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2.5">
-        <div className="relative flex min-h-0 flex-1 flex-col" data-testid="cockpit-stage">
-          <VisualizationSlot runId={runId} incidentId={incidentId} />
-          <SignalsStack runId={runId} />
-          <InspectorSheet runId={runId} incidentId={incidentId} />
-          <CopilotSheet runId={runId} />
-        </div>
-        <Console runId={runId} />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2.5">
+      <div className="relative flex min-h-0 flex-1 flex-col" data-testid="cockpit-stage">
+        <VisualizationSlot runId={runId} incidentId={incidentId} />
+        <SignalsStack runId={runId} />
+        <InspectorSheet runId={runId} incidentId={incidentId} />
+        <CopilotSheet runId={runId} />
+        <Chronicle runId={runId} />
       </div>
-
-      <WorkspaceDock
-        region="rightDock"
-        side="right"
-        label="Situation channel"
-        data-testid="right-dock"
-        tabs={[
-          {
-            id: 'feed',
-            label: 'Ops feed',
-            fill: true,
-            content: <OpsFeedPanel runId={runId} />,
-          },
-        ]}
-      />
+      <Console runId={runId} />
     </div>
   );
 }

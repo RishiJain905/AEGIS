@@ -33,7 +33,7 @@ function focusableWithin(root: HTMLElement): HTMLElement[] {
 
 export interface ContextSheetProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   /** Which edge of the stage the sheet slides over. */
-  side: 'left' | 'right';
+  side: 'left' | 'right' | 'bottom';
   open: boolean;
   /** Called for the close button and Escape. The owner drops `open`. */
   onClose: () => void;
@@ -139,10 +139,13 @@ export function ContextSheet({
       data-side={side}
       onKeyDown={handleKeyDown}
       className={cn(
-        'absolute inset-y-0 z-40 flex flex-col overflow-hidden border border-[var(--aegis-border-strong)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_94%,transparent)] shadow-[var(--aegis-shadow-dialog)] backdrop-blur-xl',
-        side === 'right'
-          ? 'right-0 rounded-l-[var(--aegis-radius-lg)] aegis-sheet-enter-right'
-          : 'left-0 rounded-r-[var(--aegis-radius-lg)] aegis-sheet-enter-left',
+        'absolute z-40 flex flex-col overflow-hidden border border-[var(--aegis-border-strong)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_94%,transparent)] shadow-[var(--aegis-shadow-dialog)] backdrop-blur-xl',
+        side === 'right' &&
+          'inset-y-0 right-0 rounded-l-[var(--aegis-radius-lg)] aegis-sheet-enter-right',
+        side === 'left' &&
+          'inset-y-0 left-0 rounded-r-[var(--aegis-radius-lg)] aegis-sheet-enter-left',
+        side === 'bottom' &&
+          'inset-x-0 bottom-0 rounded-t-[var(--aegis-radius-lg)] aegis-sheet-enter-up',
         focusTokens.ring,
         className,
       )}

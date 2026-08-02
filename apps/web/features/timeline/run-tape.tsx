@@ -1,11 +1,29 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 
 import { cn } from '@aegis/ui';
 
 import { useLiveRun } from '@/features/live-run/live-run-provider';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
+
+/** Vertical travel (px) before a grab-handle drag commits to opening or closing. */
+export const TAPE_DRAG_THRESHOLD_PX = 24;
+
+/**
+ * Interpret a grab-handle drag: up past the threshold opens the chronicle, down past it
+ * closes, anything less is noise. Pure so the gesture arithmetic is testable without
+ * synthesizing pointer streams.
+ */
+export function interpretTapeDrag(deltaY: number): 'open' | 'close' | null {
+  if (deltaY <= -TAPE_DRAG_THRESHOLD_PX) {
+    return 'open';
+  }
+  if (deltaY >= TAPE_DRAG_THRESHOLD_PX) {
+    return 'close';
+  }
+  return null;
+}
 
 /** Beat colour by the status the event carried, so a red run of beats reads at a glance. */
 const STATUS_COLOR: Record<string, string> = {
@@ -44,9 +62,16 @@ export interface RunTapeProps {
    * outer chrome so it fuses into the cockpit console band, which owns the frame.
    */
   chrome?: 'panel' | 'console';
+  /**
+   * When set, the tape is also the Chronicle's handle: a labelled chevron beside the
+   * readout is the primary affordance, and a grab handle above the strip supports
+   * drag-up/drag-down as a pointer enhancement. Tick clicks are untouched either way —
+   * the handle is a distinct hit target, so probing and dragging can never collide.
+   */
+  chronicle?: { open: boolean; setOpen: (open: boolean) => void };
 }
 
-export function RunTape({ chrome = 'panel' }: RunTapeProps) {
+export function RunTape({ chrome = 'panel', chronicle }: RunTapeProps) {
   const liveRun = useLiveRun();
   const cursorSequence = useWorkspaceUiStore((state) => state.workspace.timelineCursorSequence);
   const setCursorSequence = useWorkspaceUiStore((state) => state.setTimelineCursorSequence);
@@ -66,15 +91,57 @@ export function RunTape({ chrome = 'panel' }: RunTapeProps) {
     trackRef.current.scrollLeft = trackRef.current.scrollWidth;
   }, [entries.length, pinned]);
 
+  // Grab-handle drag (pointer enhancement only; the chevron and `T` are the accessible
+  // paths). Window-level move/up listeners so the gesture survives leaving the handle.
+  const dragStartYRef = useRef<number | null>(null);
+  const handleGrabPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!chronicle) {
+      return;
+    }
+    event.preventDefault();
+    dragStartYRef.current = event.clientY;
+    const onMove = (move: globalThis.PointerEvent) => {
+      const startY = dragStartYRef.current;
+      if (startY === null) {
+        return;
+      }
+      const verdict = interpretTapeDrag(move.clientY - startY);
+      if (verdict === 'open' && !chronicle.open) {
+        chronicle.setOpen(true);
+        finish();
+      } else if (verdict === 'close' && chronicle.open) {
+        chronicle.setOpen(false);
+        finish();
+      }
+    };
+    const finish = () => {
+      dragStartYRef.current = null;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', finish);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', finish);
+  };
+
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center gap-3',
+        'relative flex shrink-0 items-center gap-3',
         chrome === 'panel' &&
           'rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_78%,transparent)] px-3 py-2 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl',
       )}
       data-testid="run-tape"
     >
+      {chronicle ? (
+        <div
+          aria-hidden="true"
+          data-testid="chronicle-grab"
+          onPointerDown={handleGrabPointerDown}
+          className="absolute -top-2.5 left-1/2 flex h-4 w-20 -translate-x-1/2 cursor-grab touch-none items-center justify-center"
+        >
+          <span className="h-1 w-12 rounded-full bg-[var(--aegis-border-strong)]" />
+        </div>
+      ) : null}
       <span className="shrink-0 font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-[var(--aegis-text-muted)]">
         Run tape
       </span>
@@ -142,6 +209,31 @@ export function RunTape({ chrome = 'panel' }: RunTapeProps) {
             className="rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)] transition-colors hover:border-[var(--aegis-border-strong)] hover:text-[var(--aegis-text-primary)]"
           >
             Follow live
+          </button>
+        ) : null}
+        {chronicle ? (
+          <button
+            type="button"
+            data-testid="chronicle-toggle"
+            aria-expanded={chronicle.open}
+            aria-label={chronicle.open ? 'Close chronicle' : 'Open chronicle'}
+            title={`${chronicle.open ? 'Close' : 'Open'} chronicle (T)`}
+            onClick={() => {
+              chronicle.setOpen(!chronicle.open);
+            }}
+            className="flex items-center gap-1.5 rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)] transition-colors hover:border-[var(--aegis-border-strong)] hover:text-[var(--aegis-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]"
+          >
+            Chronicle
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 12 12"
+              className={cn('h-2.5 w-2.5 transition-transform', chronicle.open && 'rotate-180')}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+            >
+              <path d="m2.5 7.5 3.5-3.5 3.5 3.5" />
+            </svg>
           </button>
         ) : null}
       </div>

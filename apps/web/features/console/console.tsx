@@ -119,6 +119,8 @@ export interface ConsoleProps {
  */
 export function Console({ runId }: ConsoleProps) {
   const seedCopilotComposer = useCockpitUiStore((state) => state.seedCopilotComposer);
+  const chronicleOpen = useCockpitUiStore((state) => state.chronicleOpen);
+  const setChronicleOpen = useCockpitUiStore((state) => state.setChronicleOpen);
 
   // Printable keystrokes on console furniture route to the copilot. Space and Enter stay
   // with whatever button is focused; modified chords and typing contexts pass through.
@@ -153,7 +155,7 @@ export function Console({ runId }: ConsoleProps) {
         </div>
         <ClusterRule />
         <div className="min-w-[16rem] flex-1 basis-[20rem]">
-          <RunTape chrome="console" />
+          <RunTape chrome="console" chronicle={{ open: chronicleOpen, setOpen: setChronicleOpen }} />
         </div>
         <CopilotChip runId={runId} />
         <FocusStageButton />

@@ -1,3 +1,4 @@
+export { Chronicle } from './chronicle';
 export { Console } from './console';
 export { CopilotChip } from './copilot-chip';
 export { CopilotSheet } from './copilot-sheet';
