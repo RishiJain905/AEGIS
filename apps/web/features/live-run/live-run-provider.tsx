@@ -14,13 +14,14 @@ import {
 
 import type {
   DomainEventEnvelopeV1,
+  GraphDeltaV1,
   GraphSnapshotV1,
   RealtimeMessageEnvelopeV1,
   RunReplicatedState,
   SnapshotBootstrapPayloadV1,
 } from '@aegis/contracts-ts';
 import { ConnectionHealthState } from '@aegis/contracts-ts';
-import { createGraphStore, type GraphStore } from '@aegis/graph-domain';
+import { createGraphStore, GraphDeltaApplyStatus, type GraphStore } from '@aegis/graph-domain';
 import { RealtimeTransport } from '@aegis/realtime-client';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -204,6 +205,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
 
     let markedGap = false;
     let applied = false;
+    const graphDeltas: GraphDeltaV1[] = [];
     for (const action of actions) {
       dispatch(action);
       if (action.type === 'mark_gap') {
@@ -224,13 +226,27 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       }
       applied = true;
       if (action.type === 'apply_graph_delta') {
-        graphStoreRef.current.applyDelta(action.delta);
-        setGraphRevision((value) => value + 1);
+        graphDeltas.push(action.delta);
       }
       if (action.type === 'load_graph_snapshot') {
         graphStoreRef.current.loadSnapshot(action.snapshot);
         knownNodesRef.current = new Map(action.snapshot.nodes.map((node) => [node.id, node]));
         setBootstrapSnapshot(action.snapshot);
+        setGraphRevision((value) => value + 1);
+      }
+    }
+
+    // One event, one cursor position — and every delta it produced applied at that
+    // position. Handing these to `applyDelta` one at a time asked the store to treat a run
+    // sequence as a delta sequence: the store's cursor sits where the last graph-relevant
+    // event left it, the run head races ahead on telemetry and agent traffic, and the next
+    // real delta — the one carrying an executed containment — arrived hundreds of sequences
+    // later and was refused as a gap. Nothing read the refusal, so the board simply stopped
+    // moving while the API had already settled on `contained`. Stream contiguity is checked
+    // above by the projector, which is the only place that sees every event.
+    if (graphDeltas.length > 0) {
+      const results = graphStoreRef.current.applyEventDeltas(event.sequence, graphDeltas);
+      if (results.some((result) => result.status === GraphDeltaApplyStatus.APPLIED)) {
         setGraphRevision((value) => value + 1);
       }
     }
@@ -503,6 +519,18 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         type: 'set_connection_health',
         connectionHealth: ConnectionHealthState.CONNECTED,
         isStale: false,
+      });
+      // Re-anchor the server-side subscription on the cursor this resync just established.
+      // A resync exists because the cursor moved discontinuously, and `subscribe` is the
+      // only way the gateway hears about it: after the gateway pauses a subscription (its
+      // response to an outbound queue it could not fill, announced as `snapshot_required`),
+      // nothing else ever un-pauses it, so the socket stayed open and silent and every
+      // later update reached the operator only through another resync. The backfill this
+      // costs is empty by construction — the cursor is the head we just caught up to.
+      transportRef.current?.subscribe({
+        runId: forRunId,
+        channel: 'events',
+        lastAppliedSequence: lastAppliedSequenceRef.current,
       });
       succeeded = true;
     } catch {

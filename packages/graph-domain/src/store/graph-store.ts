@@ -64,6 +64,31 @@ export class InMemoryGraphStore implements GraphStore {
     return result;
   }
 
+  applyEventDeltas(sequence: number, deltas: readonly GraphDeltaV1[]): GraphDeltaApplyResult[] {
+    if (this.runId === null) {
+      throw new Error('GraphStore has no loaded snapshot');
+    }
+    if (deltas.length === 0) {
+      this.lastAppliedSequence = Math.max(this.lastAppliedSequence, sequence);
+      return [];
+    }
+    const cursorBefore = this.lastAppliedSequence;
+    const results: GraphDeltaApplyResult[] = [];
+    for (const delta of deltas) {
+      // Every delta of one event occupies that event's position, so each is judged against
+      // the cursor as it stood *before* the event. Letting the first advance the cursor
+      // made each later sibling look like a duplicate of itself, which is how a risk
+      // projection covering four assets only ever moved the first one.
+      const ctx = this.createContext();
+      ctx.lastAppliedSequence = cursorBefore;
+      ctx.enforceContiguity = false;
+      results.push(applyDeltaToContext(ctx, { ...delta, sequence }));
+      this.syncFromContext(ctx);
+    }
+    this.lastAppliedSequence = Math.max(cursorBefore, sequence);
+    return results;
+  }
+
   applyDeltas(deltas: GraphDeltaV1[]): GraphDeltaApplyResult[] {
     const results: GraphDeltaApplyResult[] = [];
     for (const delta of deltas) {

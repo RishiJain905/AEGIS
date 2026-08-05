@@ -9,7 +9,7 @@ from typing import Any, cast
 
 from aegis_contracts import RealtimeMessageEnvelopeV1
 from aegis_event_streaming.config import StreamingConfig
-from aegis_event_streaming.envelope import redis_fields_to_envelope
+from aegis_event_streaming.envelope import decode_stream_message_id, redis_fields_to_envelope
 from aegis_event_streaming.stream_names import DOMAIN_EVENTS_STREAM
 from redis.asyncio import Redis
 from redis.exceptions import ResponseError
@@ -93,6 +93,7 @@ class GatewayStreamConsumer:
         processed = 0
         for _stream, messages in cast(StreamReadResponse, response):
             for message_id, raw_fields in messages:
+                message_id = decode_stream_message_id(message_id)
                 fields = _coerce_redis_fields(raw_fields)
                 envelope = redis_fields_to_envelope(fields)
                 envelope = envelope.model_copy(update={"stream_message_id": message_id})

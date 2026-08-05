@@ -8,6 +8,7 @@ import {
   agentSessionDetailSchema,
   parseContract,
   type AgentSessionDetailV1,
+  type AgentTaskV1,
   type AutonomyInitiatorV1,
 } from '@aegis/contracts-ts';
 
@@ -67,10 +68,57 @@ async function requestJson<T>(
 /** Task statuses that are still in flight (the turn is not yet resolved). */
 const NON_TERMINAL_TASK_STATUSES = new Set(['queued', 'running']);
 
-function hasInFlightTask(details: AgentSessionDetailV1[] | undefined): boolean {
-  return (details ?? []).some((detail) =>
-    detail.tasks.some((task) => NON_TERMINAL_TASK_STATUSES.has(task.status)),
+/** Cadence while the backend still owns a turn somebody is waiting on. */
+const WORKING_POLL_MS = 2_500;
+
+/**
+ * Cadence for consumers that only read slow-moving background agent state.
+ *
+ * The hypothesis ledger reads the *unfiltered* session list so it can see the autonomy
+ * worker's bias-guard challenges. Those sessions run long — legitimately minutes on the
+ * local reasoning model — so sharing the operator turn's 2.5s cadence meant the cockpit
+ * held a permanent fast poll for data that changes a few times a run.
+ */
+const BACKGROUND_POLL_MS = 20_000;
+
+/**
+ * How long a task may sit in flight before it stops earning a fast poll.
+ *
+ * A turn the backend never resolves — a worker that died mid-task, a provider call that
+ * dropped — leaves its row `running` forever. Keyed on status alone, one such row pinned
+ * the cockpit to a 2.5s poll for the rest of the session, and no reply was ever coming.
+ * Matches the client-side turn deadline: past it the panel has already given up on the
+ * turn, so polling for its result is pointless.
+ */
+const IN_FLIGHT_POLL_HORIZON_MS = 600_000;
+
+function isRecentInFlightTask(task: AgentTaskV1, now: number): boolean {
+  if (!NON_TERMINAL_TASK_STATUSES.has(task.status)) {
+    return false;
+  }
+  const startedAt = Date.parse(task.startedAt ?? task.createdAt);
+  return Number.isNaN(startedAt) || now - startedAt < IN_FLIGHT_POLL_HORIZON_MS;
+}
+
+export type AgentSessionsPollCadence = 'operator-turn' | 'background';
+
+/**
+ * How often the run's agent sessions should be re-read, or `false` for not at all.
+ *
+ * Exported so the request budget is pinned by tests rather than inferred from behaviour.
+ */
+export function agentSessionsPollIntervalMs(
+  details: AgentSessionDetailV1[] | undefined,
+  cadence: AgentSessionsPollCadence = 'operator-turn',
+  now: number = Date.now(),
+): number | false {
+  const working = (details ?? []).some((detail) =>
+    detail.tasks.some((task) => isRecentInFlightTask(task, now)),
   );
+  if (!working) {
+    return false;
+  }
+  return cadence === 'background' ? BACKGROUND_POLL_MS : WORKING_POLL_MS;
 }
 
 /**
@@ -89,7 +137,7 @@ function hasInFlightTask(details: AgentSessionDetailV1[] | undefined): boolean {
 export function useRunAgentSessions(
   runId: string,
   origin?: AutonomyInitiatorV1,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; cadence?: 'operator-turn' | 'background' },
 ) {
   return useQuery({
     queryKey: queryKeys.agentSessions.listForRun(runId, origin),
@@ -108,10 +156,11 @@ export function useRunAgentSessions(
       const raw = Array.isArray(body.sessions) ? body.sessions : [];
       return raw.map((entry) => parseContract(agentSessionDetailSchema, entry));
     },
-    // Poll while any task is still queued/running so a turn that reaches a terminal
-    // state on the backend surfaces here even if the originating request is slow or a
-    // realtime invalidation was missed. Idle threads do not poll.
-    refetchInterval: (query) => (hasInFlightTask(query.state.data) ? 2500 : false),
+    // Poll while a task is still queued/running so a turn that reaches a terminal state on
+    // the backend surfaces here even if the originating request is slow or a realtime
+    // invalidation was missed. Idle threads do not poll at all — the provider's `agent.*`
+    // handler invalidates this key, so the poll is a backstop, not the delivery mechanism.
+    refetchInterval: (query) => agentSessionsPollIntervalMs(query.state.data, options?.cadence),
   });
 }
 

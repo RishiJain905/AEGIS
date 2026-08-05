@@ -4,22 +4,29 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
+from typing import Any
 
 import pytest
 from aegis_api.websocket.auth import AuthenticatedPrincipal, DevWebSocketAuthenticator
 from aegis_api.websocket.config import GatewayConfig as GatewayConfigCls
 from aegis_api.websocket.connection import ConnectionState, SubscriptionState, new_connection_id
-from aegis_api.websocket.consumer import _coerce_redis_fields
+from aegis_api.websocket.consumer import GatewayStreamConsumer, _coerce_redis_fields
 from aegis_api.websocket.errors import GatewayError
 from aegis_api.websocket.recovery import RecoveryPlan, SubscriptionRecoveryService
 from aegis_contracts import (
+    ActorRef,
+    ActorType,
+    DomainEventEnvelopeV1,
+    EventTypeRegistry,
     WebSocketDeliveryMode,
     WebSocketErrorCode,
     WebSocketFrameV1,
     WebSocketMessageType,
     build_websocket_frame,
 )
+from aegis_contracts.versioning import DOMAIN_EVENT_SCHEMA_VERSION
 from aegis_contracts.websocket import WebSocketHelloPayloadV1
+from aegis_event_streaming.envelope import build_realtime_envelope, envelope_to_redis_fields
 
 
 def _gateway_config(**overrides: object) -> GatewayConfigCls:
@@ -76,6 +83,97 @@ def test_gateway_consumer_decodes_redis_bytes() -> None:
         "payload": "{}",
         "sequence": "7",
     }
+
+
+class _FakeGatewayRedis:
+    """Minimal stand-in for redis.asyncio.Redis with decode_responses=False.
+
+    Mirrors production: WebSocketGatewayManager.start() constructs its Redis
+    client with decode_responses=False, so XREADGROUP hands back both the
+    message id and field map as bytes.
+    """
+
+    def __init__(self, message_id: bytes, fields: dict[bytes, bytes]) -> None:
+        self._message_id = message_id
+        self._fields = fields
+        self._delivered = False
+        self.acked: list[str] = []
+
+    async def xgroup_create(self, *_args: object, **_kwargs: object) -> bool:
+        return True
+
+    async def xreadgroup(
+        self,
+        *,
+        groupname: str,
+        consumername: str,
+        streams: dict[str, str],
+        count: int,
+        block: int,
+    ) -> list[tuple[str, list[tuple[bytes, dict[bytes, bytes]]]]]:
+        if self._delivered:
+            return []
+        self._delivered = True
+        stream_key = next(iter(streams))
+        return [(stream_key, [(self._message_id, self._fields)])]
+
+    async def xack(self, _stream_key: str, _group: str, message_id: str) -> int:
+        self.acked.append(message_id)
+        return 1
+
+
+@pytest.mark.asyncio
+async def test_gateway_stream_consumer_decodes_bytes_message_id() -> None:
+    """Regression test: bytes message ids must reach the handler as plain str.
+
+    Previously ``message_id`` was passed straight from ``xreadgroup`` into
+    ``envelope.model_copy(update={"stream_message_id": message_id})`` without
+    decoding, so a decode_responses=False Redis client (as used by
+    WebSocketGatewayManager) fed raw bytes into the ``str`` contract field,
+    producing Pydantic serializer warnings.
+    """
+    now = datetime(2026, 6, 30, 12, 0, tzinfo=UTC)
+    event = DomainEventEnvelopeV1(
+        event_id="evt_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+        run_id="run_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        sequence=1,
+        type="sim.run.started",
+        schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
+        sim_time=now,
+        recorded_at=now,
+        actor=ActorRef(type=ActorType.SYSTEM, id="asset:operator-console"),
+        subject=ActorRef(type=ActorType.SYSTEM, id="asset:operator-console"),
+        payload={"schemaVersion": EventTypeRegistry.payload_schema_version("sim.run.started")},
+        trace_id="trc_01ARZ3NDEKTSV4RRFFQ69G5FAX",
+    )
+    envelope = build_realtime_envelope(event)
+    str_fields = envelope_to_redis_fields(envelope)
+    bytes_fields = {key.encode("utf-8"): value.encode("utf-8") for key, value in str_fields.items()}
+    raw_message_id = b"1730000000000-0"
+
+    redis = _FakeGatewayRedis(raw_message_id, bytes_fields)
+
+    received: list[Any] = []
+
+    async def handler(received_envelope: Any) -> None:
+        received.append(received_envelope)
+
+    consumer = GatewayStreamConsumer(
+        redis,  # type: ignore[arg-type]
+        handler,
+        consumer_name="test-gateway-consumer",
+        consumer_group="test-gateway-group",
+    )
+
+    processed = await consumer._process_once()
+
+    assert processed == 1
+    assert len(received) == 1
+    delivered = received[0].stream_message_id
+    assert delivered == "1730000000000-0"
+    assert isinstance(delivered, str)
+    assert delivered != "b'1730000000000-0'"
+    assert redis.acked == ["1730000000000-0"]
 
 
 def test_gateway_error_to_frame() -> None:

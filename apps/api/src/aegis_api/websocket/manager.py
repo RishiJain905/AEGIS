@@ -313,11 +313,23 @@ class WebSocketGatewayManager:
         from_sequence = payload.last_applied_sequence
         for event in plan.events:
             envelope = envelope_from_domain_event(event, channel=payload.channel)
-            await self._enqueue_event(connection, subscription, envelope)
+            # Backpressure, not overrun. The backfill is as long as the client's cursor is
+            # stale, so on any run older than `max_queue_depth` events it used to fill the
+            # queue outright: the overflow path paused the subscription, and the
+            # resync-complete frame below then failed to enqueue and closed the socket. The
+            # client reconnected with the same stale cursor and hit it again — every socket
+            # dying inside a second, forever, with the operator's board only ever advancing
+            # via the HTTP resync each reconnect triggered.
+            if not await self._enqueue_event(
+                connection, subscription, envelope, wait_for_capacity=True
+            ):
+                break
             delivered += 1
-            subscription.last_applied_sequence = event.sequence
 
-        if delivered > 0:
+        # A paused subscription did not finish its backfill, so there is no resync to
+        # announce — and announcing it would mean enqueuing onto the queue that just
+        # overflowed. The client has already been sent `snapshot_required`.
+        if delivered > 0 and not subscription.paused:
             self._metrics.record_resync()
             await self._send_frame(
                 connection,
@@ -417,7 +429,11 @@ class WebSocketGatewayManager:
                 )
             for gap_event in gap_events:
                 gap_envelope = envelope_from_domain_event(gap_event, channel=envelope.channel)
-                await self._enqueue_event(connection, subscription, gap_envelope)
+                if not await self._enqueue_event(connection, subscription, gap_envelope):
+                    # The subscription is paused and the client has been told to take a
+                    # snapshot; pushing the rest of the fill at a full queue only repeats
+                    # that message.
+                    return
 
         await self._enqueue_event(connection, subscription, envelope)
 
@@ -426,17 +442,22 @@ class WebSocketGatewayManager:
         connection: ConnectionState,
         subscription: SubscriptionState,
         envelope: RealtimeMessageEnvelopeV1,
-    ) -> None:
+        *,
+        wait_for_capacity: bool = False,
+    ) -> bool:
         # Single choke point for every operator-bound event (live, resync backfill, and gap
         # fill). Fog-of-war redaction rewrites undisclosed attacker status changes here so no
         # raw frame ever leaks truth, regardless of delivery path.
+        #
+        # Returns False only when the queue overflowed, meaning the caller must stop feeding
+        # this subscription; a suppressed duplicate is a successful no-op.
         tracker = self._run_trackers.get(envelope.event.run_id)
         if tracker is not None:
             envelope = tracker.redact(envelope)
 
         if not connection.remember_event_id(envelope.event.event_id):
             self._metrics.record_duplicate()
-            return
+            return True
 
         frame = build_websocket_frame(
             message_type=WebSocketMessageType.EVENT,
@@ -445,11 +466,22 @@ class WebSocketGatewayManager:
             payload=WebSocketEventPayloadV1(envelope=envelope),
         )
         try:
-            connection.outbound_queue.put_nowait(frame)
-            subscription.last_applied_sequence = envelope.event.sequence
-            self._metrics.update_queue_depth(connection.outbound_queue.qsize())
-        except asyncio.QueueFull:
+            if wait_for_capacity:
+                # Yields to the sender loop, which is the only thing that drains this queue.
+                # Live fan-out must never wait here — it runs on the shared Redis consumer
+                # task, where one slow client would stall every other connection.
+                await asyncio.wait_for(
+                    connection.outbound_queue.put(frame),
+                    timeout=self._config.backfill_enqueue_timeout_seconds,
+                )
+            else:
+                connection.outbound_queue.put_nowait(frame)
+        except (asyncio.QueueFull, TimeoutError):
             await self._handle_queue_overflow(connection, subscription, envelope.event.sequence)
+            return False
+        subscription.last_applied_sequence = envelope.event.sequence
+        self._metrics.update_queue_depth(connection.outbound_queue.qsize())
+        return True
 
     async def _handle_queue_overflow(
         self,

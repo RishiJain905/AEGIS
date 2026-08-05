@@ -20,6 +20,19 @@ export interface DeltaApplicationContext {
   lastAppliedSequence: number;
   snapshotRevision: number;
   capturedAt: string;
+  /**
+   * Whether a delta more than one sequence past the cursor is a gap.
+   *
+   * True (the default) for a dense delta channel, where every sequence the store is meant
+   * to see produces a delta and a hole therefore means one went missing.
+   *
+   * False when the deltas are derived from a *sparse* stream. A run's event sequence is
+   * shared by telemetry, alerts, agent turns and approvals, almost none of which mutate a
+   * graph entity, so consecutive graph deltas are routinely hundreds of sequences apart
+   * and "contiguous" is not a property this layer can test. A caller that clears this flag
+   * is asserting that it owns contiguity over the full stream and has already checked it.
+   */
+  enforceContiguity?: boolean;
 }
 
 function isStaleRevision(storedRevision: number, incomingRevision: number): boolean {
@@ -202,7 +215,7 @@ export function applyDeltaToContext(
     };
   }
 
-  if (delta.sequence > ctx.lastAppliedSequence + 1) {
+  if ((ctx.enforceContiguity ?? true) && delta.sequence > ctx.lastAppliedSequence + 1) {
     return {
       status: GraphDeltaApplyStatus.GAP_DETECTED,
       sequence: delta.sequence,

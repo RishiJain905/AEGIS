@@ -94,8 +94,9 @@ export function useHypothesisLedger(runId: string): {
   const hypotheses = useConsoleHypotheses(runId);
   // Unfiltered on purpose: bias-guard challenges come from the autonomy worker's own
   // ORACLE sessions, so narrowing this to operator threads would empty the ledger's
-  // CHALLENGED badges.
-  const sessions = useRunAgentSessions(runId);
+  // CHALLENGED badges. That breadth is why the cadence is lazy — an autonomy sweep is
+  // in flight for minutes at a time, and nobody is watching this ledger for a reply.
+  const sessions = useRunAgentSessions(runId, undefined, { cadence: 'background' });
 
   const ledger = useMemo(
     () => buildHypothesisLedger(hypotheses.data ?? [], sessions.data ?? []),

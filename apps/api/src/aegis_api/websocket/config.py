@@ -21,6 +21,17 @@ class GatewayConfig:
     consumer_group: str
     snapshot_gap_threshold: int
     hello_timeout_seconds: int = 10
+    # How long a subscribe backfill may wait for room in the connection's outbound queue.
+    #
+    # The backfill is a burst the *server* generates, sized by how far behind the client's
+    # cursor is, and it is written from the connection's own receive-loop task — so waiting
+    # for the sender to drain costs nothing but that one connection's turnaround. Refusing
+    # to wait instead made every subscribe past `max_queue_depth` events overrun the queue
+    # and close the socket, which no client can recover from by reconnecting: the cursor it
+    # reconnects with is the same one that overran the queue. Only a client that has stopped
+    # reading at all can exhaust this, and that is the slow-client case the overflow path
+    # already handles.
+    backfill_enqueue_timeout_seconds: float = 5.0
 
     @classmethod
     def from_settings(cls, settings: AegisSettings) -> GatewayConfig:
