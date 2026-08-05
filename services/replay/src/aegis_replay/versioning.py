@@ -6,7 +6,11 @@ from typing import Final
 
 from aegis_contracts.versioning import WORKSPACE_VERSION
 
-REPLAY_PROJECTOR_VERSION: Final[str] = "0.0.0-phase25"
+#: Bumped when the projector's output changes shape or content, which makes archives an
+#: earlier projector wrote unusable as a seed. Moved to ``.1`` when replay began seeding the
+#: run's baseline topology: archives written before that carry only event-derived stub nodes
+#: and no edges, so seeding from one would keep serving the graph this pin exists to retire.
+REPLAY_PROJECTOR_VERSION: Final[str] = "0.0.0-phase25.1"
 DEFAULT_RETENTION_CLASS: Final[str] = "standard"
 DEFAULT_SNAPSHOT_INTERVAL: Final[int] = 50
 

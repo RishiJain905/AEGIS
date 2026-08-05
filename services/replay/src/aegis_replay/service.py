@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 
 from aegis_contracts import (
     DomainEventEnvelopeV1,
+    GraphSnapshotV1,
     ReplayCursorV1,
     ReplayEquivalenceResultV1,
     ReplayModeV1,
@@ -20,6 +21,7 @@ from aegis_contracts.versioning import (
     REPLAY_EQUIVALENCE_RESULT_SCHEMA_VERSION,
 )
 from aegis_persistence.object_storage import ObjectStoragePort
+from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
@@ -159,6 +161,9 @@ class ReplayService:
                 applied_count=0,
             )
             projector = ReplayProjector(run_id)
+            baseline = await self._load_topology_baseline(uow, run_id)
+            if baseline is not None and baseline.sequence == 0:
+                projector.seed_topology(baseline)
             return projector.to_replay_state(provenance=provenance, incident_id=incident_id)
 
         target_sequence = self._resolve_target_sequence(
@@ -225,16 +230,25 @@ class ReplayService:
                     else:
                         raise
 
-        if snapshot_state is not None:
-            projector = ReplayProjector.from_replay_state(snapshot_state)
-        else:
-            projector = ReplayProjector(run_id)
-
         applied: list[DomainEventEnvelopeV1] = [
             event
             for event in events
             if apply_from <= event.sequence <= target_sequence
         ]
+
+        if snapshot_state is not None:
+            # A replay snapshot already carries the topology it was reconstructed with.
+            projector = ReplayProjector.from_replay_state(snapshot_state)
+        else:
+            projector = ReplayProjector(run_id)
+            baseline = await self._load_topology_baseline(uow, run_id)
+            if baseline is not None and self._baseline_precedes(
+                baseline,
+                applied,
+                target_sequence=target_sequence,
+            ):
+                projector.seed_topology(baseline)
+
         for event in applied:
             projector.apply_event(event)
 
@@ -442,6 +456,38 @@ class ReplayService:
             sim_time=sim_time,
             incident_id=incident_id,  # type: ignore[arg-type]
         )
+
+    async def _load_topology_baseline(
+        self,
+        uow: PostgresUnitOfWork,
+        run_id: str,
+    ) -> GraphSnapshotV1 | None:
+        """Load the run's earliest graph projection — the topology its events assume.
+
+        The graph projection written alongside run creation is a pure function of the
+        scenario and seed, so reading it keeps reconstruction deterministic while supplying
+        what the event stream structurally cannot: the assets that never changed and the
+        relationships between them. Read-only, like every other replay query.
+        """
+        repository = PostgresGraphSnapshotRepository(uow.session)
+        return await repository.get_earliest_for_run(run_id)
+
+    @staticmethod
+    def _baseline_precedes(
+        baseline: GraphSnapshotV1,
+        applied: list[DomainEventEnvelopeV1],
+        *,
+        target_sequence: int,
+    ) -> bool:
+        """Whether a graph projection predates every event about to be applied.
+
+        A projection captured mid-run is a *result*, not a baseline: replaying earlier
+        events onto it would rewind statuses it already reflects. Reconstruction degrades
+        to the event-derived projection rather than answering with rewound state.
+        """
+        if applied:
+            return baseline.sequence < applied[0].sequence
+        return baseline.sequence <= target_sequence
 
     async def _load_all_events(
         self,

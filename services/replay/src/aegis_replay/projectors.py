@@ -100,6 +100,10 @@ class ProjectorState:
     asset_postures: dict[str, str] = field(default_factory=dict)
     graph_edges: list[dict[str, Any]] = field(default_factory=list)
     graph_revision: int = 0
+    #: ``capturedAt`` of the graph projection this state was seeded from. Used only when no
+    #: event has been applied yet, so a topology-only reconstruction still carries a
+    #: deterministic timestamp instead of wall-clock time (which the state digest hashes).
+    graph_captured_at: datetime | None = None
     incidents: dict[str, IncidentV1] = field(default_factory=dict)
     evidence: dict[str, EvidenceV1] = field(default_factory=dict)
     risk_scores: dict[str, ReplayRiskScoreV1] = field(default_factory=dict)
@@ -155,6 +159,35 @@ class ReplayProjector:
         projector.state.last_sequence = state.cursor.sequence
         projector.state.last_sim_time = state.cursor.sim_time
         return projector
+
+    def seed_topology(self, snapshot: GraphSnapshotV1) -> None:
+        """Seed the run's baseline topology before any event is applied.
+
+        The domain event stream carries only *changes* to the graph: an asset whose status
+        never moves emits nothing, and relationships are never emitted at all. Reconstructing
+        from events alone therefore yields one stub node per asset an event happened to name,
+        labelled with its own id, and no edges whatsoever — which is what the operator saw in
+        the replay inspector while the live board showed the full estate. The run's graph
+        projection at sequence 0 is the topology those events assume, so replay starts from it
+        and lets the events evolve it, exactly as the live projection does.
+
+        Only valid on a projection that has not yet consumed events beyond the snapshot's
+        sequence; the caller owns that ordering check.
+        """
+        self._adopt_graph_snapshot(snapshot)
+
+    def _adopt_graph_snapshot(self, snapshot: GraphSnapshotV1) -> None:
+        self.state.graph_nodes = {node.id: node for node in snapshot.nodes}
+        # A persisted projection is authoritative for the nodes it carries; reseed posture
+        # from it so status changes after this point compose against the right baseline.
+        self.state.asset_postures.update(
+            {node.id: node.status.value for node in snapshot.nodes}
+        )
+        self.state.graph_edges = [
+            edge.model_dump(mode="json", by_alias=True) for edge in snapshot.edges
+        ]
+        self.state.graph_revision = snapshot.revision
+        self.state.graph_captured_at = snapshot.captured_at
 
     def apply_event(self, event: DomainEventEnvelopeV1) -> None:
         if event.run_id != self.state.run_id:
@@ -332,7 +365,7 @@ class ReplayProjector:
     def _build_graph_snapshot(self) -> GraphSnapshotV1 | None:
         if not self.state.graph_nodes and not self.state.graph_edges:
             return None
-        captured = self.state.last_sim_time or _utc_now()
+        captured = self.state.last_sim_time or self.state.graph_captured_at or _utc_now()
         nodes = sorted(self.state.graph_nodes.values(), key=lambda item: item.id)
         return GraphSnapshotV1.model_validate(
             {
@@ -510,16 +543,7 @@ class ReplayProjector:
             snapshot = GraphSnapshotV1.model_validate(snapshot_payload)
         except Exception:
             return
-        self.state.graph_nodes = {node.id: node for node in snapshot.nodes}
-        # A persisted snapshot is authoritative for the nodes it carries; reseed posture
-        # from it so status changes after this point compose against the right baseline.
-        self.state.asset_postures.update(
-            {node.id: node.status.value for node in snapshot.nodes}
-        )
-        self.state.graph_edges = [
-            edge.model_dump(mode="json", by_alias=True) for edge in snapshot.edges
-        ]
-        self.state.graph_revision = snapshot.revision
+        self._adopt_graph_snapshot(snapshot)
 
     def _on_alert_created(self, event: DomainEventEnvelopeV1) -> None:
         # Alerts feed evidence; incident correlation may arrive later.

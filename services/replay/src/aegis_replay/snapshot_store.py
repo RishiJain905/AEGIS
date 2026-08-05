@@ -56,8 +56,17 @@ class SnapshotStore:
     ) -> tuple[SnapshotManifestV1, ReplaySnapshotV1]:
         existing = await uow.replay_snapshots.get_at_sequence(state.run_id, state.cursor.sequence)
         if existing is not None:
-            snapshot = await self.load_snapshot(uow, existing.snapshot_id)
-            return existing, snapshot
+            try:
+                snapshot = await self.load_snapshot(uow, existing.snapshot_id)
+            except ReplayEngineError:
+                # A manifest whose archive is unreadable, or which an older projector wrote,
+                # is not a usable acceleration artifact. Raising here would fail every
+                # re-snapshot of that sequence forever — including the snapshot worker's
+                # terminal snapshot, taking the worker down with it — so the dead manifest
+                # is discarded and rebuilt from the authoritative event stream instead.
+                await uow.replay_snapshots.delete(existing.snapshot_id)
+            else:
+                return existing, snapshot
 
         snapshot_id = new_runtime_id("rps")
         created_at = datetime.now(tz=UTC)
