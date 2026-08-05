@@ -2,7 +2,10 @@
 
 import { ContextSheet } from '@aegis/ui';
 
+import { useInspectorGraph } from '@/features/inspector';
 import { InspectorPanel } from '@/features/shell/components/inspector-panel';
+import { resolveCockpitFallbackFocus } from '@/lib/cockpit-focus';
+import { inspectorSheetWidth } from '@/lib/cockpit-space';
 import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
@@ -28,6 +31,15 @@ export function InspectorSheet({ runId, incidentId }: InspectorSheetProps) {
   const selectedEntityId = useWorkspaceUiStore((state) => state.workspace.selectedEntityId);
   const shared = open && copilotOpen;
 
+  // The subject is a thing in the estate, not a row key: the operator reads the name they
+  // see on the graph, with the id kept underneath for anyone who needs to quote it.
+  const graph = useInspectorGraph(runId ?? '');
+  const selectedNode = selectedEntityId
+    ? (graph.snapshot?.nodes.find((node) => node.id === selectedEntityId) ?? null)
+    : null;
+  const subject = selectedNode?.label ?? selectedEntityId;
+  const subjectDetail = selectedNode ? selectedEntityId : null;
+
   return (
     <ContextSheet
       side="right"
@@ -36,10 +48,14 @@ export function InspectorSheet({ runId, incidentId }: InspectorSheetProps) {
         setOpen(false);
       }}
       label="Inspector"
-      subject={selectedEntityId}
+      subject={subject}
+      subjectDetail={subjectDetail}
+      // Summoning the sheet folds the signals stack that may have held the invoker, so the
+      // capsule (or the console) is where a keyboard operator lands when it closes.
+      restoreFocusTo={resolveCockpitFallbackFocus}
       data-testid="inspector-sheet"
       data-budget={shared ? 'shared' : 'solo'}
-      className={shared ? 'w-[min(26rem,32%)]' : 'w-[min(30rem,42%)]'}
+      style={{ width: inspectorSheetWidth(shared) }}
     >
       <InspectorPanel runId={runId} incidentId={incidentId} />
     </ContextSheet>

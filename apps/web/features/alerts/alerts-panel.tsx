@@ -124,7 +124,7 @@ function ActivityStrip() {
 }
 
 /** The durable, explained hidden-condition reveal. */
-function RevealCard({ note }: { note: RevealNote }) {
+function RevealCard({ note, sole }: { note: RevealNote; sole: boolean }) {
   return (
     <li
       className="rounded-[var(--aegis-radius-md)] border border-[color-mix(in_srgb,var(--aegis-risk-critical)_55%,transparent)] bg-[color-mix(in_srgb,var(--aegis-risk-critical)_10%,var(--aegis-surface-elevated))] px-3 py-3"
@@ -142,11 +142,72 @@ function RevealCard({ note }: { note: RevealNote }) {
         {note.cause}
       </p>
       <p className="mt-1.5 text-xs leading-5 text-[var(--aegis-text-secondary)]">
+        {/* Only claim to be *the* cause when it is the only one on the board. With several
+            revealed, each card saying "this is what was driving it" is four contradictions. */}
+        {sole
+          ? 'This is what was driving the activity you have been chasing.'
+          : 'The most recent cause the scenario stopped hiding.'}{' '}
         {note.assetLabels.length > 0
-          ? `This is what was driving the activity you have been chasing. It moved ${note.assetLabels.join(', ')}.`
-          : 'This is what was driving the activity you have been chasing. The board now shows what the fog was holding back.'}
+          ? `It moved ${note.assetLabels.join(', ')}.`
+          : 'The board now shows what the fog was holding back.'}
       </p>
     </li>
+  );
+}
+
+/**
+ * The reveals on the board: the newest cause in full, everything revealed before it behind
+ * one line. Four equally loud cards each announcing itself as the cause is four claims the
+ * operator has to reconcile; one card and a count is the same information, ranked.
+ */
+function Reveals({ notes }: { notes: RevealNote[] }) {
+  const [showEarlier, setShowEarlier] = useState(false);
+  const [newest, ...earlier] = notes;
+  if (!newest) {
+    return null;
+  }
+  return (
+    <>
+      <RevealCard note={newest} sole={earlier.length === 0} />
+      {earlier.length > 0 ? (
+        <li
+          className="rounded-[var(--aegis-radius-md)] border border-dashed border-[color-mix(in_srgb,var(--aegis-risk-critical)_35%,transparent)] px-3 py-2"
+          data-testid="alert-reveals-earlier"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setShowEarlier((open) => !open);
+            }}
+            aria-expanded={showEarlier}
+            className="flex w-full items-center gap-2 text-left text-xs text-[var(--aegis-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]"
+          >
+            <span aria-hidden="true" className="font-mono text-[10px]">
+              {showEarlier ? '▾' : '▸'}
+            </span>
+            {earlier.length === 1
+              ? '1 earlier cause revealed'
+              : `${String(earlier.length)} earlier causes revealed`}
+          </button>
+          {showEarlier ? (
+            <ul className="mt-2 flex flex-col gap-1 border-t border-[var(--aegis-border-subtle)] pt-2">
+              {earlier.map((note) => (
+                <li
+                  key={note.key}
+                  data-testid={`alert-reveal-earlier-${String(note.sequence)}`}
+                  className="flex items-baseline gap-2 text-[11px] text-[var(--aegis-text-secondary)]"
+                >
+                  <span className="shrink-0 font-mono tabular-nums text-[var(--aegis-text-muted)]">
+                    {simClock(note.simTime)}
+                  </span>
+                  <span className="min-w-0">{note.cause}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </li>
+      ) : null}
+    </>
   );
 }
 
@@ -420,9 +481,7 @@ export function AlertsPanel({ alerts, incidents, snapshot, timelineEntries }: Al
       <div className="flex flex-col gap-3">
         <ActivityStrip />
         <ul className="flex flex-col gap-2" data-tutorial-id="alerts-list">
-          {reveals.map((note) => (
-            <RevealCard key={note.key} note={note} />
-          ))}
+          <Reveals notes={reveals} />
           {cards.map((card) => (
             <AlertCardView
               key={card.key}

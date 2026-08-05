@@ -494,8 +494,13 @@ export function OperationalGraphView({
     (adapter: SigmaOperationalGraphAdapter) => {
       adapterRef.current = adapter;
       instrumentationRef.current = new PerformanceInstrumentation();
+      // The visual store survives this component, so a 2D/3D/2D round trip
+      // hands the settled layout straight back rather than re-deriving one.
+      const restoredPositions = useGraphVisualStore.getState().visualState.nodePositions;
+      workerPositionsRef.current = { ...restoredPositions };
       layoutCoordinatorRef.current = new LayoutCoordinator({
         instrumentation: instrumentationRef.current,
+        initialPositions: restoredPositions,
         onPositionsUpdated: (positions) => {
           // Positions arrive pre-shaped by the zone sector layout; no aspect
           // correction — stretching would tear nodes out of their zone frames.
@@ -707,7 +712,13 @@ export function OperationalGraphView({
           onNodeHover={setHoveredNodeId}
         />
 
-        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-wrap items-start justify-between gap-2">
+        {/* The stage's top edge is shared furniture: the cockpit's signals capsule floats
+            over the same corner and measures this row so it can start below it. The test id
+            is that contract — see `GRAPH_CHROME_ROW_TESTID` in `lib/cockpit-space`. */}
+        <div
+          data-testid="graph-chrome-row"
+          className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-wrap items-start justify-between gap-2"
+        >
           <div className="graph-command-bar pointer-events-auto flex items-center gap-2">
             <GraphSearchInput
               value={searchQuery}

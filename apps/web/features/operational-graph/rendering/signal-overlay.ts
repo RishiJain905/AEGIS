@@ -1,6 +1,8 @@
 import type Graph from 'graphology';
 import type Sigma from 'sigma';
 
+import { overlayCanvasMetrics, syncOverlayCanvas } from './overlay-canvas';
+
 /** Statuses that emit a persistent halo. `normal` nodes stay quiet. */
 export type SignalStatus = 'suspicious' | 'under_investigation' | 'contained' | 'compromised';
 
@@ -146,12 +148,7 @@ export class SignalOverlay {
   }
 
   private resizeCanvas(): void {
-    const { width, height } = this.sigma.getDimensions();
-    const ratio = window.devicePixelRatio || 1;
-    this.canvas.width = width * ratio;
-    this.canvas.height = height * ratio;
-    const context = this.canvas.getContext('2d');
-    context?.setTransform(ratio, 0, 0, ratio, 0, 0);
+    syncOverlayCanvas(this.canvas, overlayCanvasMetrics(this.sigma));
   }
 
   private nodeViewpoint(nodeId: string): { x: number; y: number; sizePx: number } | null {
@@ -170,7 +167,11 @@ export class SignalOverlay {
     if (!context) {
       return;
     }
+    // Sigma emits no 'resize' when the container size is unchanged, so the
+    // canvas is re-checked here: on a 2D/3D remount the renderer mounts at its
+    // final size and this is the only place the overlay learns its geometry.
     const { width, height } = this.sigma.getDimensions();
+    this.resizeCanvas();
     context.clearRect(0, 0, width, height);
 
     for (const signal of this.signals) {

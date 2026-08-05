@@ -5,6 +5,7 @@ import {
   paintLabelPill,
   type LabelPillLayout,
 } from './aegis-canvas-renderers';
+import { overlayCanvasMetrics, syncOverlayCanvas } from './overlay-canvas';
 
 interface LabelSourceData {
   label?: string;
@@ -122,12 +123,7 @@ export class LabelTopcoat {
   }
 
   private resizeCanvas(): void {
-    const { width, height } = this.sigma.getDimensions();
-    const ratio = window.devicePixelRatio || 1;
-    this.canvas.width = width * ratio;
-    this.canvas.height = height * ratio;
-    const context = this.canvas.getContext('2d');
-    context?.setTransform(ratio, 0, 0, ratio, 0, 0);
+    syncOverlayCanvas(this.canvas, overlayCanvasMetrics(this.sigma));
   }
 
   draw(): void {
@@ -135,7 +131,11 @@ export class LabelTopcoat {
     if (!context) {
       return;
     }
+    // Sigma emits no 'resize' when the container size is unchanged, so the
+    // canvas is re-checked here: on a 2D/3D remount the renderer mounts at its
+    // final size and this is the only place the overlay learns its geometry.
     const { width, height } = this.sigma.getDimensions();
+    this.resizeCanvas();
     context.clearRect(0, 0, width, height);
 
     const settings = this.sigma.getSettings();

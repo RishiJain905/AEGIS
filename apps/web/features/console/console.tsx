@@ -3,8 +3,9 @@
 import { useRef, type KeyboardEvent } from 'react';
 
 import { LiveRunControls, useLiveRun } from '@/features/live-run';
-import { AssetCommandBar } from '@/features/operator-actions';
+import { ActionResultSlot, AssetCommandBar } from '@/features/operator-actions';
 import { RunTape } from '@/features/timeline';
+import { isCockpitShortcutKey } from '@/lib/cockpit-keys';
 import { isTypingTarget } from '@/lib/keyboard';
 import { isRunTerminal } from '@/lib/run-status';
 import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
@@ -106,6 +107,12 @@ export function Console({ runId }: ConsoleProps) {
     if (isTypingTarget(event.target)) {
       return;
     }
+    // A bound shortcut always wins over composing. The console is the cockpit's single Tab
+    // stop, so seeding every letter here made `A`/`I`/`C`/`T` unreachable from the one place
+    // a keyboard operator stands; letting them bubble is what makes them reachable at all.
+    if (isCockpitShortcutKey(event.key)) {
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     seedCopilotComposer(event.key);
@@ -114,6 +121,7 @@ export function Console({ runId }: ConsoleProps) {
   return (
     <div className="flex shrink-0 flex-col gap-2" data-testid="cockpit-console">
       <TimelineSemanticsNotice />
+      <ActionResultSlot />
       <div
         ref={bandRef}
         role="toolbar"

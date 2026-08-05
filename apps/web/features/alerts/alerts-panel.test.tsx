@@ -1,5 +1,6 @@
 import type { AlertV1, GraphSnapshotV1, IncidentV1 } from '@aegis/contracts-ts';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
@@ -347,6 +348,49 @@ describe('AlertsPanel', () => {
     expect(reveal).toHaveTextContent('Cause revealed');
     expect(reveal).toHaveTextContent('Vendor key reuse');
     expect(reveal).not.toHaveTextContent('hidden_condition');
+    // The only cause on the board, so it may claim to be the cause.
+    expect(reveal).toHaveTextContent('This is what was driving the activity');
+    expect(screen.queryByTestId('alert-reveals-earlier')).not.toBeInTheDocument();
+  });
+
+  // Several causes, each in a card claiming to be *the* one, is a contradiction the operator
+  // has to resolve. One card, ranked, plus a count of the rest.
+  it('leads with the newest cause and folds the earlier ones behind a count', async () => {
+    const user = userEvent.setup();
+    activity.mockReturnValue(quietActivity());
+    render(
+      <AlertsPanel
+        alerts={[alert({ id: 'a1' })]}
+        incidents={[]}
+        snapshot={snapshot()}
+        timelineEntries={[
+          {
+            eventType: 'sim.hidden_condition.revealed',
+            label: 'Underlying cause revealed: Vendor key reuse',
+            sequence: 247,
+            timestamp: '2026-01-01T00:05:00.000Z',
+          },
+          {
+            eventType: 'sim.hidden_condition.revealed',
+            label: 'Underlying cause revealed: Stale service account',
+            sequence: 310,
+            timestamp: '2026-01-01T00:06:00.000Z',
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId('alert-reveal-310')).toHaveTextContent('Stale service account');
+    expect(screen.queryByTestId('alert-reveal-247')).not.toBeInTheDocument();
+    // No card claims exclusivity while another cause is on the board.
+    expect(screen.getByTestId('alert-reveal-310')).not.toHaveTextContent(
+      'This is what was driving the activity',
+    );
+
+    const earlier = screen.getByTestId('alert-reveals-earlier');
+    expect(earlier).toHaveTextContent('1 earlier cause revealed');
+    await user.click(within(earlier).getByRole('button'));
+    expect(screen.getByTestId('alert-reveal-earlier-247')).toHaveTextContent('Vendor key reuse');
   });
 
   it('reports the run cadence so a fogged operator can tell idle from active', () => {

@@ -9,6 +9,7 @@ import { useRunGraph } from '@/features/shell/hooks/use-shell-queries';
 import { useFocusAsset } from '@/features/operational-graph';
 
 import { buildProposalFacts, describeAction, type ActionCardModel } from './action-model';
+import { describeEntry } from './entry-vocabulary';
 import { buildFeedRows, latestDetection, type FeedRow } from './feed-model';
 
 /** Category → short human label + accent token for the left rail + chip. */
@@ -243,7 +244,7 @@ function EntryRow({
               : 'text-[var(--aegis-text-secondary)]',
           )}
         >
-          {entry.summary}
+          {describeEntry(entry)}
         </p>
       </div>
     </li>
@@ -280,7 +281,7 @@ function CollapsedRow({ entries, count }: { entries: RunFeedEntry[]; count: numb
               className="flex items-center gap-2 text-[11px] text-[var(--aegis-text-muted)]"
             >
               <span className="font-mono tabular-nums">{simTimeShort(entry.simTime)}</span>
-              <span className="truncate">{entry.summary}</span>
+              <span className="truncate">{describeEntry(entry)}</span>
             </li>
           ))}
         </ul>
@@ -390,7 +391,7 @@ export function OpsFeedPanel({ runId }: OpsFeedPanelProps) {
         )}
       </div>
       <span className="sr-only" role="status" aria-live="assertive">
-        {detection ? `Detection: ${detection.summary}` : ''}
+        {detection ? `Detection: ${describeEntry(detection)}` : ''}
       </span>
     </Panel>
   );

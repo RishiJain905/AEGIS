@@ -11,6 +11,7 @@ export { BlastRadiusSummary } from './blast-radius-summary';
 export { useBlastRadius } from './use-blast-radius';
 export { ActionResultToast } from './action-result-toast';
 export type { ActionResult } from './action-result-toast';
+export { ACTION_RESULT_SLOT_ID, ActionResultSlot } from './action-result-slot';
 export { useAssetActionRunner } from './use-asset-action-runner';
 export { useAssetCommands } from './use-asset-commands';
 export { useSelectedAsset } from './use-selected-asset';

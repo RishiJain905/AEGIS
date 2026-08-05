@@ -17,6 +17,37 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
+/**
+ * The last element the operator actually focused, tracked document-wide.
+ *
+ * A sheet cannot learn its invoker from `document.activeElement` at effect time: the store
+ * update that opens the sheet is the same one that can fold the surface the invoker lived on
+ * (an alert card's asset button dies when the signals stack collapses for the sheet), and by
+ * the time effects run the DOM is already re-committed with focus back on `<body>`. Watching
+ * `focusin` in the capture phase records the invoker while it is still real.
+ */
+let lastFocusedElement: HTMLElement | null = null;
+let focusTrackerInstalled = false;
+
+function trackFocus(event: FocusEvent) {
+  if (event.target instanceof HTMLElement && event.target !== document.body) {
+    lastFocusedElement = event.target;
+  }
+}
+
+function installFocusTracker(): void {
+  if (focusTrackerInstalled || typeof document === 'undefined') {
+    return;
+  }
+  focusTrackerInstalled = true;
+  document.addEventListener('focusin', trackFocus, true);
+}
+
+/** Exported for tests; the tracker is process-wide and otherwise never reset. */
+export function resetSheetFocusTracking(): void {
+  lastFocusedElement = null;
+}
+
 function focusableWithin(root: HTMLElement): HTMLElement[] {
   // `hidden` is the only visibility signal that survives jsdom (no layout there), and
   // in the browser anything display:none also has no client rects.
@@ -41,6 +72,17 @@ export interface ContextSheetProps extends Omit<HTMLAttributes<HTMLDivElement>, 
   label: string;
   /** Optional subject line under the eyebrow — what the sheet is currently about. */
   subject?: string | null;
+  /**
+   * The subject's identity, when its display name is not it. Rendered under the subject as
+   * a quiet mono line so the operator reads the name first and can still copy the id.
+   */
+  subjectDetail?: string | null;
+  /**
+   * Where focus goes when the sheet closes and the element that summoned it no longer
+   * exists — a card that folded away while the sheet was open. Without it focus falls to
+   * `<body>` and the keyboard operator loses their place.
+   */
+  restoreFocusTo?: () => HTMLElement | null;
   /**
    * True when the content fills the sheet and scrolls internally (a chat log);
    * false (default) lets the sheet scroll a stack of panels.
@@ -67,6 +109,8 @@ export function ContextSheet({
   onClose,
   label,
   subject,
+  subjectDetail,
+  restoreFocusTo,
   fill = false,
   children,
   className,
@@ -75,6 +119,10 @@ export function ContextSheet({
 }: ContextSheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const restoreFocusToRef = useRef(restoreFocusTo);
+  restoreFocusToRef.current = restoreFocusTo;
+
+  useEffect(installFocusTracker, []);
 
   // Dialog focus contract: remember where the operator was, move focus into the sheet,
   // and hand it back when the sheet leaves.
@@ -82,14 +130,24 @@ export function ContextSheet({
     if (!open) {
       return;
     }
-    restoreFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    panelRef.current?.focus();
+    const panel = panelRef.current;
+    const active = document.activeElement;
+    const invoker =
+      active instanceof HTMLElement && active !== document.body ? active : lastFocusedElement;
+    restoreFocusRef.current = invoker && !panel?.contains(invoker) ? invoker : null;
+    // Content inside the sheet may have claimed focus already — a composer seeded by the
+    // keystroke that summoned the sheet. Children's effects run first, so pulling focus
+    // back to the panel here would swallow the operator's next keystrokes.
+    if (panel && !panel.contains(document.activeElement)) {
+      panel.focus();
+    }
     return () => {
       const restore = restoreFocusRef.current;
-      if (restore && restore.isConnected) {
+      if (restore?.isConnected) {
         restore.focus();
+        return;
       }
+      restoreFocusToRef.current?.()?.focus();
     };
   }, [open]);
 
@@ -157,8 +215,19 @@ export function ContextSheet({
             {label}
           </p>
           {subject ? (
-            <p className="mt-0.5 truncate text-sm font-semibold text-[var(--aegis-text-primary)]">
+            <p
+              data-testid={testId ? `${testId}-subject` : undefined}
+              className="mt-0.5 truncate text-sm font-semibold text-[var(--aegis-text-primary)]"
+            >
               {subject}
+            </p>
+          ) : null}
+          {subjectDetail ? (
+            <p
+              data-testid={testId ? `${testId}-subject-detail` : undefined}
+              className="truncate font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] leading-4 text-[var(--aegis-text-muted)]"
+            >
+              {subjectDetail}
             </p>
           ) : null}
         </div>

@@ -1,12 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 
 import { cn } from '@aegis/ui';
 
 import { useRunActivity } from '@/features/live-run';
 import { AlertsTab } from '@/features/shell/components/alerts-tab';
 import { useRunAlerts } from '@/features/shell/hooks/use-shell-queries';
+import { SIGNALS_CAPSULE_TESTID } from '@/lib/cockpit-focus';
+import {
+  resolveSignalsTopOffset,
+  signalsCapsuleRightOffset,
+  SIGNALS_DEFAULT_TOP_PX,
+} from '@/lib/cockpit-space';
 import { isTypingTarget } from '@/lib/keyboard';
 import { resolveSignalsState, useCockpitUiStore } from '@/stores/cockpit-ui-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
@@ -63,6 +76,50 @@ function CapsulePulse() {
   );
 }
 
+/**
+ * Where signals may start, measured rather than assumed.
+ *
+ * The stage's top edge belongs to two surfaces: the graph's own floating chrome row (search,
+ * View options, the zoom cluster) and this one. Signals used to rest at a fixed 6rem, which
+ * clears that row only while nothing wraps — and the stage header and the chrome row both
+ * wrap. When they did, the capsule rendered on top of the +/−/Reset buttons and ate their
+ * clicks. Re-measuring on every resize is what makes "never occludes graph chrome" true at
+ * every width instead of at the width it was eyeballed on.
+ */
+function useSignalsTopOffset(): number {
+  const [top, setTop] = useState(SIGNALS_DEFAULT_TOP_PX);
+
+  useEffect(() => {
+    const measure = () => {
+      setTop((current) => {
+        const next = resolveSignalsTopOffset();
+        return next === current ? current : next;
+      });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+
+    // The chrome row reflows without the window changing size — a layout badge appears, the
+    // search field grows — so watch the row itself where the browser allows it.
+    const observer =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver(() => {
+            measure();
+          })
+        : null;
+    const row = document.querySelector('[data-testid="graph-chrome-row"]');
+    if (observer && row) {
+      observer.observe(row);
+    }
+    return () => {
+      window.removeEventListener('resize', measure);
+      observer?.disconnect();
+    };
+  }, []);
+
+  return top;
+}
+
 export interface SignalsStackProps {
   runId: string;
 }
@@ -91,6 +148,7 @@ export function SignalsStack({ runId }: SignalsStackProps) {
   const preference = useCockpitUiStore((state) => state.signalsPreference);
   const setPreference = useCockpitUiStore((state) => state.setSignalsPreference);
   const inspectorSheetOpen = useCockpitUiStore((state) => state.inspectorSheetOpen);
+  const copilotSheetOpen = useCockpitUiStore((state) => state.copilotSheetOpen);
   const overlayOpen = useCockpitUiStore((state) => state.signalsOverlayOpen);
   const setOverlayOpen = useCockpitUiStore((state) => state.setSignalsOverlayOpen);
 
@@ -102,6 +160,7 @@ export function SignalsStack({ runId }: SignalsStackProps) {
 
   const capsuleRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+  const topOffset = useSignalsTopOffset();
 
   // Overlay focus contract: opening moves focus into the stack; closing (while the sheet
   // stays open) hands it back to the capsule.
@@ -183,7 +242,7 @@ export function SignalsStack({ runId }: SignalsStackProps) {
       <button
         ref={capsuleRef}
         type="button"
-        data-testid="signals-capsule"
+        data-testid={SIGNALS_CAPSULE_TESTID}
         data-severity={worst ?? 'none'}
         data-docked={inspectorSheetOpen ? 'sheet' : 'stage'}
         aria-expanded={false}
@@ -191,14 +250,26 @@ export function SignalsStack({ runId }: SignalsStackProps) {
         onClick={expand}
         className={cn(
           'absolute flex items-center gap-2.5 rounded-full border bg-[color-mix(in_srgb,var(--aegis-surface-panel)_92%,transparent)] px-3 py-1.5 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl transition-colors hover:bg-[var(--aegis-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]',
-          // Docked to the open sheet's top edge — attention pressure stays visible right
-          // beside the context being read; otherwise it floats over the stage.
-          inspectorSheetOpen ? 'right-5 top-3 z-50' : 'right-3 top-24 z-30',
+          // Docked against the open sheet's leading edge — attention pressure stays visible
+          // right beside the context being read, without floating over the sheet's own
+          // header and covering the subject line when the sheet narrows.
+          inspectorSheetOpen ? 'z-50' : 'z-30',
         )}
-        style={{
-          borderColor: `color-mix(in srgb, ${tint} 45%, transparent)`,
-          color: tint,
-        }}
+        style={
+          {
+            // Through a custom property rather than `right` directly: the offset is a
+            // `calc()` over the sheet's own `min()` clamp, and that nesting is what keeps
+            // the two in step no matter which budget the sheet is on.
+            '--aegis-signals-dock': signalsCapsuleRightOffset(inspectorSheetOpen, copilotSheetOpen),
+            right: 'var(--aegis-signals-dock)',
+            // Below the graph's chrome row wherever that row currently ends — in both
+            // docked states, because the row spans the whole stage whether a sheet covers
+            // part of it or not.
+            top: `${String(topOffset)}px`,
+            borderColor: `color-mix(in srgb, ${tint} 45%, transparent)`,
+            color: tint,
+          } as CSSProperties
+        }
       >
         <span className="font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.16em]">
           Signals
@@ -236,8 +307,12 @@ export function SignalsStack({ runId }: SignalsStackProps) {
         'absolute flex max-h-[40vh] w-[min(22rem,86%)] flex-col overflow-hidden rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_92%,transparent)] shadow-[var(--aegis-shadow-panel)] backdrop-blur-xl',
         // As an overlay it sits over the sheet's claim, never widening the combination's
         // footprint on the stage.
-        showOverlay ? 'right-5 top-14 z-50' : 'right-3 top-24 z-30',
+        showOverlay ? 'right-5 top-14 z-50' : 'right-3 z-30',
       )}
+      // Over the stage the stack clears the graph's chrome row like the capsule does. As an
+      // overlay it is over the sheet, which already covers that chrome, so it keeps the
+      // offset that tucks it under the sheet's own header.
+      style={showOverlay ? undefined : { top: `${String(topOffset)}px` }}
     >
       <div className="flex items-center gap-2 border-b border-[var(--aegis-border-subtle)] px-3 py-2">
         <span className="font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-[var(--aegis-text-muted)]">

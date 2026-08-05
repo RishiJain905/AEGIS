@@ -16,14 +16,18 @@ vi.mock('@/features/live-run', () => ({
   ),
   useLiveRun,
 }));
-vi.mock('@/features/operator-actions', () => ({
-  AssetCommandBar: () => (
-    <div>
-      <span>Operator command</span>
-      <button type="button">Isolate host</button>
-    </div>
-  ),
-}));
+vi.mock('@/features/operator-actions', async () => {
+  const slot = await import('@/features/operator-actions/action-result-slot');
+  return {
+    AssetCommandBar: () => (
+      <div>
+        <span>Operator command</span>
+        <button type="button">Isolate host</button>
+      </div>
+    ),
+    ActionResultSlot: slot.ActionResultSlot,
+  };
+});
 vi.mock('@/features/timeline', () => ({
   RunTape: () => (
     <div role="group" aria-label="Run event tape">

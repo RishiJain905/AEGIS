@@ -459,6 +459,89 @@ describe('readReveals', () => {
     );
     expect(notes[0]?.assetLabels).toEqual([]);
   });
+
+  // The simulation re-emits a reveal whenever the condition is re-evaluated. Four identical
+  // cards, each announcing itself as *the* cause, is four claims to reconcile.
+  it('folds a re-revealed cause into its first sighting', () => {
+    const notes = readReveals(
+      [
+        {
+          eventType: 'sim.hidden_condition.revealed',
+          label: 'Underlying cause revealed: Vendor key reuse',
+          sequence: 247,
+          timestamp: '2026-01-01T00:05:00.000Z',
+        },
+        {
+          eventType: 'sim.hidden_condition.revealed',
+          label: 'Underlying cause revealed: Vendor key reuse',
+          sequence: 260,
+          timestamp: '2026-01-01T00:06:00.000Z',
+        },
+        {
+          eventType: 'sim.hidden_condition.revealed',
+          label: 'Underlying cause revealed: Vendor key reuse',
+          sequence: 275,
+          timestamp: '2026-01-01T00:07:00.000Z',
+        },
+      ],
+      assets,
+    );
+
+    expect(notes).toHaveLength(1);
+    // The first sighting is the reveal — that is when the operator could first have known.
+    expect(notes[0]?.sequence).toBe(247);
+  });
+
+  it('carries fallout that only the later repeats saw', () => {
+    const notes = readReveals(
+      [
+        {
+          eventType: 'sim.hidden_condition.revealed',
+          label: 'Underlying cause revealed: Vendor key reuse',
+          sequence: 247,
+          timestamp: '2026-01-01T00:05:00.000Z',
+        },
+        {
+          eventType: 'sim.hidden_condition.revealed',
+          label: 'Underlying cause revealed: Vendor key reuse',
+          sequence: 400,
+          timestamp: '2026-01-01T00:08:00.000Z',
+        },
+        {
+          eventType: 'sim.asset.status_changed',
+          label: `Asset ${ASSET} → compromised`,
+          sequence: 403,
+          timestamp: '2026-01-01T00:08:10.000Z',
+        },
+      ],
+      assets,
+    );
+
+    expect(notes).toHaveLength(1);
+    expect(notes[0]?.assetLabels).toEqual(['Communications Gateway']);
+  });
+
+  it('keeps genuinely different causes apart, newest first', () => {
+    const notes = readReveals(
+      [
+        {
+          eventType: 'sim.hidden_condition.revealed',
+          label: 'Underlying cause revealed: Vendor key reuse',
+          sequence: 247,
+          timestamp: '2026-01-01T00:05:00.000Z',
+        },
+        {
+          eventType: 'sim.hidden_condition.revealed',
+          label: 'Underlying cause revealed: Stale service account',
+          sequence: 310,
+          timestamp: '2026-01-01T00:06:00.000Z',
+        },
+      ],
+      assets,
+    );
+
+    expect(notes.map((note) => note.cause)).toEqual(['Stale service account', 'Vendor key reuse']);
+  });
 });
 
 describe('readAnomalyDetail', () => {

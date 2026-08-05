@@ -15,10 +15,12 @@ import { ReportsPanel } from '@/features/reports/reports-panel';
 import { RiskExplanationPanel } from '@/features/risk';
 import {
   useIncident,
+  useRun,
   useRunAlerts,
   useRunIncidents,
   useRunRiskScores,
 } from '@/features/shell/hooks/use-shell-queries';
+import { isRunTerminal } from '@/lib/run-status';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
 
 interface InspectorPanelProps {
@@ -99,6 +101,13 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
   // statement of intent, and it is not something a button in here can clear.
   const activeIncidentId = incidentId ?? selectedIncidentId;
 
+  const runQuery = useRun(runId ?? '');
+  // The after-action report only exists once the run is over. While one is live the section
+  // has nothing to say: it rendered an "After-action report not ready" empty state that told
+  // the operator something they already knew and, on any run the gate let through, fired a
+  // guaranteed-404 request that was the cockpit's only console error. A section with no
+  // content yet is a section that should not be there.
+  const showReports = isRunTerminal(runQuery.data?.status);
   const incidentsQuery = useRunIncidents(runId ?? '');
   const alertsQuery = useRunAlerts(runId ?? '');
   const riskScoresQuery = useRunRiskScores(runId ?? '');
@@ -182,7 +191,7 @@ export function InspectorPanel({ runId, incidentId }: InspectorPanelProps) {
               />
             ) : null}
 
-            {runId ? <ReportsPanel runId={runId} /> : null}
+            {runId && showReports ? <ReportsPanel runId={runId} /> : null}
 
             {incidentsQuery.data && incidentsQuery.data.length > 0 ? (
               <Panel title="Incidents" density="compact" data-testid="incidents-panel">

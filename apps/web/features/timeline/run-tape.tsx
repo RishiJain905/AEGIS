@@ -126,7 +126,7 @@ export function RunTape({ chrome = 'panel', chronicle }: RunTapeProps) {
   return (
     <div
       className={cn(
-        'relative flex shrink-0 items-center gap-3',
+        'relative flex min-w-0 shrink-0 items-center gap-3',
         chrome === 'panel' &&
           'rounded-[var(--aegis-radius-lg)] border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-panel)_78%,transparent)] px-3 py-2 shadow-[var(--aegis-shadow-control)] backdrop-blur-xl',
       )}
@@ -181,21 +181,25 @@ export function RunTape({ chrome = 'panel', chronicle }: RunTapeProps) {
         )}
       </div>
 
+      {/* The readout shrinks before the band does. It used to be `shrink-0` around a 16rem
+          label, so below ~1200px it pushed the chronicle control past the viewport and the
+          whole page scrolled sideways. Its prose gives way first; the clock and the
+          chronicle control keep their size, because they are the parts that get used. */}
       <div
-        className="flex min-w-0 shrink-0 items-center gap-3 border-l border-[var(--aegis-border-subtle)] pl-3"
+        className="flex min-w-0 shrink items-center gap-3 border-l border-[var(--aegis-border-subtle)] pl-3"
         data-testid="run-tape-readout"
       >
         {readout ? (
           <>
-            <span className="max-w-[16rem] truncate text-xs text-[var(--aegis-text-secondary)]">
+            <span className="min-w-0 max-w-[16rem] shrink truncate text-xs text-[var(--aegis-text-secondary)]">
               {readout.label}
             </span>
-            <span className="font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] tabular-nums text-[var(--aegis-text-muted)]">
+            <span className="shrink-0 font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] tabular-nums text-[var(--aegis-text-muted)]">
               {clockOf(readout.timestamp)} · SEQ {readout.sequence}
             </span>
           </>
         ) : (
-          <span className="font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] text-[var(--aegis-text-muted)]">
+          <span className="shrink-0 font-[family-name:var(--aegis-font-mono)] text-[0.6875rem] text-[var(--aegis-text-muted)]">
             SEQ —
           </span>
         )}
@@ -206,7 +210,7 @@ export function RunTape({ chrome = 'panel', chronicle }: RunTapeProps) {
             onClick={() => {
               setCursorSequence(null);
             }}
-            className="rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)] transition-colors hover:border-[var(--aegis-border-strong)] hover:text-[var(--aegis-text-primary)]"
+            className="shrink-0 rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)] transition-colors hover:border-[var(--aegis-border-strong)] hover:text-[var(--aegis-text-primary)]"
           >
             Follow live
           </button>
@@ -221,7 +225,7 @@ export function RunTape({ chrome = 'panel', chronicle }: RunTapeProps) {
             onClick={() => {
               chronicle.setOpen(!chronicle.open);
             }}
-            className="flex items-center gap-1.5 rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)] transition-colors hover:border-[var(--aegis-border-strong)] hover:text-[var(--aegis-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]"
+            className="flex shrink-0 items-center gap-1.5 rounded-[var(--aegis-radius-sm)] border border-[var(--aegis-border-subtle)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)] transition-colors hover:border-[var(--aegis-border-strong)] hover:text-[var(--aegis-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aegis-focus-ring)]"
           >
             Chronicle
             <svg

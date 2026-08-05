@@ -36,6 +36,9 @@ export function useAfterActionReport(runId: string, options?: { enabled?: boolea
     queryKey: queryKeys.runs.afterActionReport(runId),
     queryFn: ({ signal }) => client.getAfterActionReport(runId, signal),
     enabled: Boolean(runId) && (options?.enabled ?? true),
+    // A terminal run whose SCRIBE pass has not run yet answers 404, and that is an answer,
+    // not a flake: retrying turns one honest "not ready" into four console errors.
+    retry: false,
   });
 }
 
@@ -45,5 +48,6 @@ export function useReportVersions(runId: string, options?: { enabled?: boolean }
     queryKey: queryKeys.runs.reportVersions(runId),
     queryFn: ({ signal }) => client.listAfterActionReportVersions(runId, signal),
     enabled: Boolean(runId) && (options?.enabled ?? true),
+    retry: false,
   });
 }

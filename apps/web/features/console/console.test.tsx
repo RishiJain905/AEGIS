@@ -9,11 +9,15 @@ vi.mock('@/features/live-run', () => ({
   LiveRunControls: () => <div data-testid="live-run-controls" />,
   useLiveRun,
 }));
-vi.mock('@/features/operator-actions', () => ({
-  AssetCommandBar: ({ chrome }: { chrome?: string }) => (
-    <div data-testid="asset-command-bar" data-chrome={chrome} />
-  ),
-}));
+vi.mock('@/features/operator-actions', async () => {
+  const slot = await import('@/features/operator-actions/action-result-slot');
+  return {
+    AssetCommandBar: ({ chrome }: { chrome?: string }) => (
+      <div data-testid="asset-command-bar" data-chrome={chrome} />
+    ),
+    ActionResultSlot: slot.ActionResultSlot,
+  };
+});
 vi.mock('@/features/timeline', () => ({
   RunTape: ({ chrome }: { chrome?: string }) => <div data-testid="run-tape" data-chrome={chrome} />,
 }));
@@ -94,6 +98,41 @@ describe('Console as a command line to the agents', () => {
     fireEvent.keyDown(band, { key: ' ' });
     fireEvent.keyDown(band, { key: 'k', ctrlKey: true });
     expect(useCockpitUiStore.getState().copilotSheetOpen).toBe(false);
+  });
+
+  // The console is the cockpit's single Tab stop, so seeding *every* letter from here made
+  // the cockpit's own vocabulary unreachable from the only place a keyboard operator stands.
+  it.each([['a'], ['i'], ['c'], ['t'], ['T']])(
+    'lets the bound shortcut %s through instead of composing with it',
+    (key) => {
+      render(<Console runId={RUN_ID} />);
+      const band = screen.getByRole('toolbar', { name: 'Console' });
+      const event = fireEvent.keyDown(band, { key });
+
+      // Not consumed by the band: it reaches the window handlers that own the shortcut.
+      expect(event).toBe(true);
+      expect(useCockpitUiStore.getState().copilotSeed).toBeNull();
+    },
+  );
+
+  it('still composes with printable keys that are not shortcuts', () => {
+    render(<Console runId={RUN_ID} />);
+    const band = screen.getByRole('toolbar', { name: 'Console' });
+    fireEvent.keyDown(band, { key: 'h' });
+    expect(useCockpitUiStore.getState().copilotSeed).toMatchObject({ text: 'h' });
+  });
+});
+
+describe('Console result rail', () => {
+  it('gives action results a laid-out row above the band, not a floating card over it', () => {
+    render(<Console runId={RUN_ID} />);
+    const slot = screen.getByTestId('action-result-slot');
+    const band = screen.getByRole('toolbar', { name: 'Console' });
+
+    expect(screen.getByTestId('cockpit-console')).toContainElement(slot);
+    expect(slot).not.toContainElement(band);
+    // Above the band in reading order, so a result can never sit over its own controls.
+    expect(slot.compareDocumentPosition(band) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
 

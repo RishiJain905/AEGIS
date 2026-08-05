@@ -4,6 +4,8 @@ import { ContextSheet, Tabs, TabsContent, TabsList, TabsTrigger } from '@aegis/u
 
 import { AgentChatPanel } from '@/features/agent-chat';
 import { EventSearch, HypothesisLedger } from '@/features/operator-console';
+import { resolveCockpitFallbackFocus } from '@/lib/cockpit-focus';
+import { copilotSheetWidth } from '@/lib/cockpit-space';
 import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 
 export interface CopilotSheetProps {
@@ -35,10 +37,11 @@ export function CopilotSheet({ runId }: CopilotSheetProps) {
         setOpen(false);
       }}
       label="Copilot"
+      restoreFocusTo={resolveCockpitFallbackFocus}
       fill
       data-testid="copilot-sheet"
       data-budget={shared ? 'shared' : 'solo'}
-      className={shared ? 'w-[min(26rem,32%)]' : 'w-[min(28rem,40%)]'}
+      style={{ width: copilotSheetWidth(shared) }}
     >
       <Tabs defaultValue="copilot" className="flex min-h-0 flex-1 flex-col">
         <TabsList aria-label="Copilot views" className="mb-2">

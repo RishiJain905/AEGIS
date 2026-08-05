@@ -1,18 +1,27 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { fetchIncident, useIncident, useRunIncidents, useRunAlerts, useRunRiskScores, useRunGraph } =
-  vi.hoisted(() => ({
-    fetchIncident: vi.fn(),
-    useIncident: vi.fn(),
-    useRunIncidents: vi.fn(),
-    useRunAlerts: vi.fn(),
-    useRunRiskScores: vi.fn(),
-    useRunGraph: vi.fn(),
-  }));
+const {
+  fetchIncident,
+  useIncident,
+  useRun,
+  useRunIncidents,
+  useRunAlerts,
+  useRunRiskScores,
+  useRunGraph,
+} = vi.hoisted(() => ({
+  fetchIncident: vi.fn(),
+  useIncident: vi.fn(),
+  useRun: vi.fn(),
+  useRunIncidents: vi.fn(),
+  useRunAlerts: vi.fn(),
+  useRunRiskScores: vi.fn(),
+  useRunGraph: vi.fn(),
+}));
 
 vi.mock('@/features/shell/hooks/use-shell-queries', () => ({
   useIncident,
+  useRun,
   useRunIncidents,
   useRunAlerts,
   useRunRiskScores,
@@ -77,6 +86,7 @@ describe('InspectorPanel', () => {
       fetchIncident(incidentId);
       return settled(incidentRecords[incidentId]);
     });
+    useRun.mockReturnValue(settled({ id: 'run_1', status: 'running' }));
     useRunIncidents.mockReturnValue(settled(incidents));
     useRunAlerts.mockReturnValue(settled([]));
     useRunRiskScores.mockReturnValue(settled([]));
@@ -164,4 +174,22 @@ describe('InspectorPanel', () => {
     expect(screen.getByTestId('incidents-panel')).toBeInTheDocument();
     expect(screen.getByTestId('incident-case-file')).toBeInTheDocument();
   });
+
+  // The after-action report does not exist until the run is over. Mounting the section on a
+  // live run showed an "After-action report not ready" empty state that said nothing, and
+  // put a guaranteed 404 on the wire.
+  it('mounts no after-action section while the run is live', () => {
+    useRun.mockReturnValue(settled({ id: 'run_1', status: 'running' }));
+    render(<InspectorPanel runId="run_1" />);
+    expect(screen.queryByTestId('reports-panel-stub')).not.toBeInTheDocument();
+  });
+
+  it.each(['completed', 'stopped', 'failed', 'aborted'])(
+    'mounts the after-action section once the run is %s',
+    (status) => {
+      useRun.mockReturnValue(settled({ id: 'run_1', status }));
+      render(<InspectorPanel runId="run_1" />);
+      expect(screen.getByTestId('reports-panel-stub')).toBeInTheDocument();
+    },
+  );
 });

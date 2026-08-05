@@ -94,6 +94,18 @@ describe('RunTape as the Chronicle handle', () => {
     expect(screen.getByTestId('chronicle-grab')).toBeInTheDocument();
   });
 
+  // Below ~1200px the readout used to refuse to give ground, pushing the chronicle control
+  // past the viewport and scrolling the whole page sideways. The prose yields first; the
+  // controls never do.
+  it('lets the readout shrink so the chronicle control stays on screen', () => {
+    render(<RunTape chrome="console" chronicle={{ open: false, setOpen: vi.fn() }} />);
+
+    const readout = screen.getByTestId('run-tape-readout');
+    expect(readout.className).toContain('min-w-0');
+    expect(readout.className).not.toContain('shrink-0');
+    expect(screen.getByTestId('chronicle-toggle').className).toContain('shrink-0');
+  });
+
   it('interprets grab drags: up past the threshold opens, down closes, less is noise', () => {
     expect(interpretTapeDrag(-TAPE_DRAG_THRESHOLD_PX)).toBe('open');
     expect(interpretTapeDrag(TAPE_DRAG_THRESHOLD_PX)).toBe('close');

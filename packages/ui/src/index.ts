@@ -72,7 +72,7 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
 } from './primitives/dropdown-menu';
-export { ContextSheet } from './primitives/sheet';
+export { ContextSheet, resetSheetFocusTracking } from './primitives/sheet';
 export type { ContextSheetProps } from './primitives/sheet';
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './primitives/tooltip';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './primitives/tabs';

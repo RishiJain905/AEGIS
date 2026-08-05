@@ -381,38 +381,47 @@ const REVEAL_FALLOUT_SEQUENCES = 12;
  * operator can connect the alerts they were chasing to the cause underneath them. The graph
  * already flashes a six-second pulse when an asset becomes visible (`RevealAnnouncer`); this
  * is the durable, explained counterpart that survives the operator looking away.
+ *
+ * One cause, one note. The simulation re-emits a reveal whenever the condition is
+ * re-evaluated, which stacked four identical "CAUSE REVEALED" cards on the signals stack,
+ * each stating it was *the* thing driving the run. The earliest sighting is the reveal —
+ * that is when the operator could first have known — so later repeats of the same cause
+ * fold into it and only the assets they moved are carried across.
  */
 export function readReveals(
   entries: readonly { eventType: string; label: string; sequence: number; timestamp: string }[],
   assets: Map<string, AssetFacts>,
 ): RevealNote[] {
   const transitions = readStatusTransitions(entries);
-  const notes: RevealNote[] = [];
+  const byCause = new Map<string, RevealNote>();
   for (const entry of entries) {
     if (entry.eventType !== 'sim.hidden_condition.revealed') {
       continue;
     }
     const cause = entry.label.replace(/^Underlying cause revealed:\s*/i, '');
-    const assetLabels = [
-      ...new Set(
-        transitions
-          .filter(
-            (transition) =>
-              transition.sequence >= entry.sequence &&
-              transition.sequence <= entry.sequence + REVEAL_FALLOUT_SEQUENCES,
-          )
-          .map((transition) => assets.get(transition.assetId)?.label ?? transition.assetId),
-      ),
-    ];
-    notes.push({
+    const fallout = transitions
+      .filter(
+        (transition) =>
+          transition.sequence >= entry.sequence &&
+          transition.sequence <= entry.sequence + REVEAL_FALLOUT_SEQUENCES,
+      )
+      .map((transition) => assets.get(transition.assetId)?.label ?? transition.assetId);
+    const existing = byCause.get(cause);
+    if (existing) {
+      // A repeat of a cause already revealed: keep the first sighting's moment, but let it
+      // carry everything that has moved since.
+      existing.assetLabels = [...new Set([...existing.assetLabels, ...fallout])];
+      continue;
+    }
+    byCause.set(cause, {
       key: `${String(entry.sequence)}:${cause}`,
       sequence: entry.sequence,
       simTime: entry.timestamp,
       cause,
-      assetLabels,
+      assetLabels: [...new Set(fallout)],
     });
   }
-  return notes.sort((left, right) => right.sequence - left.sequence);
+  return [...byCause.values()].sort((left, right) => right.sequence - left.sequence);
 }
 
 /**

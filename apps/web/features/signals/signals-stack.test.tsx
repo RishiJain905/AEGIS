@@ -113,6 +113,27 @@ describe('SignalsStack × inspector sheet collision', () => {
     expect(capsule).toHaveAttribute('data-docked', 'sheet');
   });
 
+  // Docked *against* the sheet's leading edge, not floating over its header — where it used
+  // to cover the subject line as soon as the sheet narrowed.
+  it('steps clear of the sheet it docks to, and of both sheets when they share', () => {
+    render(<SignalsStack runId={RUN_ID} />);
+    const dock = () =>
+      screen.getByTestId('signals-capsule').style.getPropertyValue('--aegis-signals-dock');
+
+    expect(dock()).toBe('0.75rem');
+
+    act(() => {
+      useCockpitUiStore.getState().setInspectorSheetOpen(true);
+    });
+    // The inspector's own solo width, so the capsule sits beside it rather than on it.
+    expect(dock()).toBe('calc(min(30rem, 42%) + 0.75rem)');
+
+    act(() => {
+      useCockpitUiStore.getState().setCopilotSheetOpen(true);
+    });
+    expect(dock()).toBe('calc(min(26rem, 32%) + 0.75rem)');
+  });
+
   it('expands over the sheet as an overlay, not over the stage', async () => {
     const user = userEvent.setup();
     useRunAlerts.mockReturnValue(alertsOf(['critical']));
@@ -139,5 +160,83 @@ describe('SignalsStack × inspector sheet collision', () => {
       useCockpitUiStore.getState().setInspectorSheetOpen(false);
     });
     expect(screen.getByTestId('signals-stack')).toHaveAttribute('data-mode', 'stack');
+  });
+});
+
+/**
+ * The stage's top edge is shared with the graph's own chrome row — search on the left, View
+ * options and the +/−/Reset zoom cluster on the right. Signals rested at a fixed 6rem, which
+ * clears that row only while nothing wraps; the stage header and the chrome row both do, and
+ * when they did the capsule rendered on top of the zoom buttons and swallowed their clicks.
+ *
+ * jsdom has no layout, so the stage and the chrome row are given real rectangles here and the
+ * assertion is the geometry contract itself: signals starts at or below the row's bottom edge.
+ */
+describe('SignalsStack × graph chrome collision', () => {
+  const STAGE_TOP = 200;
+
+  /**
+   * The stage as the cockpit builds it: the graph's chrome row floating over it, and the
+   * signals furniture beside that. Signals mounts into its own child so the React root does
+   * not take the chrome row with it.
+   */
+  function stageWithChromeRow(rowBottom: number) {
+    const stage = document.createElement('div');
+    stage.setAttribute('data-testid', 'cockpit-stage');
+    const row = document.createElement('div');
+    row.setAttribute('data-testid', 'graph-chrome-row');
+    const mount = document.createElement('div');
+    stage.append(row, mount);
+    document.body.append(stage);
+
+    stage.getBoundingClientRect = () => ({ top: STAGE_TOP, bottom: STAGE_TOP + 800 }) as DOMRect;
+    row.getBoundingClientRect = () => ({ top: STAGE_TOP + 40, bottom: rowBottom }) as DOMRect;
+    return { stage, row, mount };
+  }
+
+  function topOf(element: HTMLElement): number {
+    return Number.parseFloat(element.style.top);
+  }
+
+  afterEach(() => {
+    document.querySelectorAll('[data-testid="cockpit-stage"]').forEach((node) => {
+      node.remove();
+    });
+  });
+
+  it('starts below a chrome row that has wrapped past its resting place', () => {
+    // A wrapped row whose zoom cluster ends 140px into the stage — past the old 6rem.
+    const { mount } = stageWithChromeRow(STAGE_TOP + 140);
+    render(<SignalsStack runId={RUN_ID} />, { container: mount, baseElement: document.body });
+
+    const capsule = screen.getByTestId('signals-capsule');
+    expect(topOf(capsule)).toBeGreaterThanOrEqual(140);
+  });
+
+  it('clears the chrome row in the docked state too, where a sheet holds the right side', () => {
+    const { mount } = stageWithChromeRow(STAGE_TOP + 140);
+    act(() => {
+      useCockpitUiStore.getState().setInspectorSheetOpen(true);
+    });
+    render(<SignalsStack runId={RUN_ID} />, { container: mount, baseElement: document.body });
+
+    const capsule = screen.getByTestId('signals-capsule');
+    expect(capsule).toHaveAttribute('data-docked', 'sheet');
+    expect(topOf(capsule)).toBeGreaterThanOrEqual(140);
+  });
+
+  it('keeps the expanded stack clear of the chrome row as well', () => {
+    const { mount } = stageWithChromeRow(STAGE_TOP + 140);
+    useRunAlerts.mockReturnValue(alertsOf(['critical']));
+    render(<SignalsStack runId={RUN_ID} />, { container: mount, baseElement: document.body });
+
+    expect(topOf(screen.getByTestId('signals-stack'))).toBeGreaterThanOrEqual(140);
+  });
+
+  it('never floats above its resting place when the row measures short or not at all', () => {
+    const { mount } = stageWithChromeRow(STAGE_TOP + 10);
+    render(<SignalsStack runId={RUN_ID} />, { container: mount, baseElement: document.body });
+    // A short (or unlaid-out) row must not pull signals up into the chrome it clears.
+    expect(topOf(screen.getByTestId('signals-capsule'))).toBe(96);
   });
 });
