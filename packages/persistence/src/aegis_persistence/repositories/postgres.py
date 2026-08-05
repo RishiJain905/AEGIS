@@ -316,6 +316,17 @@ class PostgresGraphSnapshotRepository:
         row = result.scalar_one_or_none()
         return graph_snapshot_to_domain(row) if row else None
 
+    async def get_earliest_for_run(self, run_id: str) -> GraphSnapshotV1 | None:
+        """The run's first graph projection — its topology before any event was applied."""
+        result = await self._session.execute(
+            select(GraphSnapshotRow)
+            .where(GraphSnapshotRow.run_id == run_id)
+            .order_by(GraphSnapshotRow.sequence.asc())
+            .limit(1)
+        )
+        row = result.scalar_one_or_none()
+        return graph_snapshot_to_domain(row) if row else None
+
     async def get_at_sequence(self, run_id: str, sequence: int) -> GraphSnapshotV1 | None:
         result = await self._session.execute(
             select(GraphSnapshotRow).where(

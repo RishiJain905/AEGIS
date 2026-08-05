@@ -24,16 +24,16 @@ def build_proposal_approved_event(
     revision_id: str,
     incident_id: str,
     comment: str = "",
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="action.proposal.approved",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_operator_actor(actor_id),
         subject=_operator_actor(actor_id),
         payload={
@@ -60,16 +60,16 @@ def build_proposal_rejected_event(
     revision_id: str,
     incident_id: str,
     reason: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="action.proposal.rejected",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_operator_actor(actor_id),
         subject=_operator_actor(actor_id),
         payload={
@@ -95,16 +95,16 @@ def build_proposal_modified_event(
     previous_revision_id: str,
     new_revision_id: str,
     incident_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="action.proposal.modified",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_operator_actor(actor_id),
         subject=_operator_actor(actor_id),
         payload={
@@ -129,16 +129,16 @@ def build_proposal_cancelled_event(
     revision_id: str,
     incident_id: str,
     reason: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="action.proposal.cancelled",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_operator_actor(actor_id),
         subject=_operator_actor(actor_id),
         payload={
@@ -164,16 +164,16 @@ def build_action_executed_event(
     executed_action_id: str,
     command_id: str,
     incident_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="action.executed",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_operator_actor(actor_id),
         subject=_operator_actor(actor_id),
         payload={

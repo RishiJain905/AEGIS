@@ -23,6 +23,7 @@ from aegis_contracts.versioning import (
     WORKSPACE_VERSION,
 )
 from aegis_persistence.mappers import report_export_artifact_to_domain
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 from aegis_reports.assembler import assemble_report_source
@@ -144,6 +145,10 @@ class ReportService:
             new_runtime_id_fn=new_runtime_id_fn,
         )
 
+        # Both report events land at the same instant on the run's virtual clock; the
+        # version row's ``created_at`` above stays wall-clock.
+        sim_time = await run_sim_time(uow, run_id)
+
         next_sequence = await uow.events.next_sequence(run_id)
         await uow.append_event(
             build_report_version_created_event(
@@ -157,6 +162,7 @@ class ReportService:
                 report_version_id=version.id,
                 version_number=version.version_number,
                 checksum=version.checksum,
+                sim_time=sim_time,
             )
         )
         next_sequence = await uow.events.next_sequence(run_id)
@@ -171,6 +177,7 @@ class ReportService:
                 incident_id=incident_id,
                 report_version_id=version.id,
                 grounding_fallback=grounding_fallback,
+                sim_time=sim_time,
             )
         )
         return report, version, exports

@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_contracts import CreateDirectiveRequestV1, StandingDirectiveV1
 from aegis_contracts.versioning import STANDING_DIRECTIVE_SCHEMA_VERSION
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 from aegis_api.directives.events import (
@@ -58,6 +59,7 @@ class DirectiveService:
                 text=directive.text,
                 scope_asset_ids=directive.scope_asset_ids,
                 scope_zone_ids=directive.scope_zone_ids,
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
         return directive
@@ -89,6 +91,7 @@ class DirectiveService:
                 actor_id=actor_id,
                 trace_id=new_runtime_id("trc"),
                 directive_id=directive_id,
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
         return deactivated

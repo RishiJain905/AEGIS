@@ -478,6 +478,7 @@ async def _run_loop(
         visible_ids=set(),
         role_handler=None,
         request=await _minimal_request(executor, task),
+        evidence_catalogue={"total": 0, "shown": 0, "truncated": False, "items": []},
     )
     outcome = await executor._run_tool_loop(uow, prepared)  # type: ignore[arg-type]
     return outcome, tools, generation, uow
@@ -493,7 +494,7 @@ async def _minimal_request(executor: TaskExecutor, task: AgentTaskV1) -> Any:
         agent_artifacts = _FakeRepo()
         tool_invocations = _FakeRepo()
 
-    request, _run_scoped, _visible, _handler = await executor._build_request(
+    request, _run_scoped, _visible, _handler, _catalogue = await executor._build_request(
         _BuildUow(),  # type: ignore[arg-type]
         task=task,
         session=_FakeSession(),
@@ -783,6 +784,7 @@ async def test_the_persist_phase_runs_exactly_the_requests_the_loop_refused() ->
         visible_ids=set(),
         role_handler=None,
         request=await _minimal_request(executor, task),
+        evidence_catalogue={"total": 0, "shown": 0, "truncated": False, "items": []},
     )
     deferred = {"name": "create_investigation_note", "arguments": {"text": "isolate the host"}}
     outcome = _LoopOutcome(

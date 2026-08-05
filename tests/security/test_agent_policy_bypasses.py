@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -130,11 +131,23 @@ class _EventRepository:
         return 1
 
 
+#: The run's VIRTUAL clock — not a wall-clock instant, so a regression would be visible.
+_RUN_SIM_TIME = datetime(2026, 1, 1, 0, 12, tzinfo=UTC)
+
+
+class _RunRepository:
+    """Serves the run's virtual clock — ``sim_time`` on the policy event comes from here."""
+
+    async def get_by_id(self, run_id: str) -> Any:
+        return SimpleNamespace(id=run_id, sim_time=_RUN_SIM_TIME)
+
+
 class _ApprovalUow:
     def __init__(self) -> None:
         self.proposals = _PolicyDecisionRepository()
         self.risk_scores = _RiskRepository()
         self.events = _EventRepository()
+        self.runs = _RunRepository()
         self.appended_events: list[Any] = []
 
     async def append_event(self, event: Any) -> None:

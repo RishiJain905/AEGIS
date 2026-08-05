@@ -24,16 +24,16 @@ def build_proposal_created_event(
     revision_id: str,
     incident_id: str,
     action_class: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="action.proposal.created",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={
@@ -61,16 +61,16 @@ def build_policy_evaluated_event(
     revision_id: str,
     incident_id: str,
     outcome: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="action.proposal.policy_evaluated",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={
@@ -96,16 +96,16 @@ def build_incident_state_changed_event(
     incident_id: str,
     previous_state: str,
     new_state: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="incident.state_changed",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=ActorRef(type=ActorType.SYSTEM, id=incident_id),
         payload={

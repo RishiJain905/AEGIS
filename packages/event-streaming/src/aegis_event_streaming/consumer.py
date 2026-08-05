@@ -29,6 +29,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from aegis_event_streaming.config import StreamingConfig
 from aegis_event_streaming.envelope import (
     build_realtime_envelope,
+    decode_stream_message_id,
     envelope_to_redis_fields,
     redis_fields_to_envelope,
 )
@@ -104,7 +105,7 @@ class IdempotentStreamConsumer:
         for _stream, messages in cast(StreamReadResponse, response):
             for message_id, raw_fields in messages:
                 fields = _coerce_redis_fields(raw_fields)
-                if await self._process_message(str(message_id), fields):
+                if await self._process_message(decode_stream_message_id(message_id), fields):
                     processed += 1
         await self._refresh_consumer_metrics()
         return processed
@@ -124,7 +125,7 @@ class IdempotentStreamConsumer:
             messages = cast(list[tuple[str, dict[str, Any]]], result[1])
             for message_id, raw_fields in messages:
                 if raw_fields and await self._process_message(
-                    str(message_id),
+                    decode_stream_message_id(message_id),
                     _coerce_redis_fields(raw_fields),
                 ):
                     reclaimed += 1

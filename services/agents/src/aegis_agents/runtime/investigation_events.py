@@ -24,16 +24,16 @@ def build_triage_completed_event(
     triage_id: str,
     incident_id: str,
     escalation: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="investigation.triage.completed",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={
@@ -58,16 +58,16 @@ def build_plan_created_event(
     trace_id: str,
     plan_id: str,
     incident_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="investigation.plan.created",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={
@@ -92,16 +92,16 @@ def build_evidence_attached_event(
     attachment_id: str,
     incident_id: str,
     is_contradiction: bool,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="investigation.evidence.attached",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={
@@ -128,8 +128,8 @@ def build_graph_overlay_event(
     incident_id: str,
     highlight_count: int,
     edge_highlight_count: int,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "schemaVersion": 1,
         "sessionId": session_id,
@@ -145,8 +145,8 @@ def build_graph_overlay_event(
         sequence=sequence,
         type="investigation.graph.overlay",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload=payload,
@@ -165,16 +165,16 @@ def build_hypothesis_created_event(
     hypothesis_id: str,
     revision_id: str,
     incident_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="investigation.hypothesis.created",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={
@@ -200,16 +200,16 @@ def build_hypothesis_revised_event(
     hypothesis_id: str,
     revision_id: str,
     incident_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="investigation.hypothesis.revised",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={
@@ -234,16 +234,16 @@ def build_hypothesis_comparison_event(
     trace_id: str,
     comparison_id: str,
     incident_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="investigation.hypothesis.comparison.created",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={
@@ -268,16 +268,16 @@ def build_verification_requested_event(
     verification_id: str,
     hypothesis_id: str,
     incident_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="investigation.verification.requested",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
         payload={

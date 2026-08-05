@@ -20,11 +20,13 @@ from aegis_contracts import (
     DomainEventEnvelopeV1,
     IncidentState,
     IncidentV1,
+    RunV1,
     deterministic_incident_id,
 )
 from aegis_contracts.versioning import (
     ALERT_SCHEMA_VERSION,
     DOMAIN_EVENT_SCHEMA_VERSION,
+    RUN_SCHEMA_VERSION,
 )
 from aegis_incidents.correlation import (
     DEFAULT_ALERT_THRESHOLD,
@@ -42,6 +44,22 @@ _TRACE = "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV"
 _ASSET = "asset:device-workstation-01"
 _OTHER_ASSET = "asset:svc-logistics-api"
 _NOW = datetime(2026, 1, 1, tzinfo=UTC)
+#: The run's virtual clock, twelve minutes into the scenario — deliberately not a
+#: wall-clock instant, so an event stamped with ``datetime.now()`` is visibly wrong.
+_SIM_TIME = datetime(2026, 1, 1, 0, 12, tzinfo=UTC)
+
+
+def _run() -> RunV1:
+    return RunV1(
+        schema_version=RUN_SCHEMA_VERSION,
+        id=_RUN,
+        scenario_version_id="scenario-version:silent-relay-v1",
+        seed=42,
+        status="running",
+        started_at=_NOW,
+        sim_time=_SIM_TIME,
+        revision=1,
+    )
 
 
 def _alert(suffix: str, asset_id: str = _ASSET) -> AlertV1:
@@ -110,6 +128,16 @@ class _FakeAlertRepository:
         return [alert for alert in self._alerts if alert.run_id == run_id]
 
 
+class _FakeRunRepository:
+    """Serves the run's VIRTUAL clock — the value ``sim_time`` on every event must carry."""
+
+    def __init__(self, run: RunV1) -> None:
+        self._run = run
+
+    async def get_by_id(self, run_id: str) -> RunV1 | None:
+        return self._run if self._run.id == run_id else None
+
+
 class _FakeUnitOfWork:
     """Records what the correlation step wrote, and how.
 
@@ -121,6 +149,7 @@ class _FakeUnitOfWork:
     def __init__(self, *, alerts: list[AlertV1], incidents: list[IncidentV1] | None = None):
         self.alerts = _FakeAlertRepository(alerts)
         self.incidents = _FakeIncidentRepository(incidents)
+        self.runs = _FakeRunRepository(_run())
         self.appended: list[DomainEventEnvelopeV1] = []
         self.events = _FakeEventRepository(self.appended)
 

@@ -12,6 +12,23 @@ from aegis_contracts.versioning import REALTIME_MESSAGE_SCHEMA_VERSION
 from aegis_event_streaming.stream_names import DEFAULT_CHANNEL
 
 
+def decode_stream_message_id(message_id: str | bytes) -> str:
+    """Normalize a raw Redis Streams message id to ``str``.
+
+    ``XREADGROUP``/``XAUTOCLAIM`` hand back message ids as ``bytes`` whenever
+    the Redis client is not configured with ``decode_responses=True`` (see
+    ``WebSocketGatewayManager`` in ``aegis_api.websocket.manager``, which
+    intentionally uses ``decode_responses=False`` for raw field handling).
+    Decode once here, at the boundary where the id is read off the stream —
+    never coerce a raw id via ``str(...)`` at each use site, since
+    ``str(b"1-0")`` yields the repr ``"b'1-0'"`` rather than the decoded id
+    and silently corrupts the id used for acking and redelivery.
+    """
+    if isinstance(message_id, bytes):
+        return message_id.decode("utf-8")
+    return message_id
+
+
 def build_realtime_envelope(
     event: DomainEventEnvelopeV1,
     *,

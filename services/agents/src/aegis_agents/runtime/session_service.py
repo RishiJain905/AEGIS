@@ -24,17 +24,19 @@ from aegis_contracts.versioning import (
     AGENT_SESSION_SCHEMA_VERSION,
     AGENT_STATE_TRANSITION_SCHEMA_VERSION,
 )
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 
 async def _run_sim_time(uow: PostgresUnitOfWork, run_id: str) -> datetime:
     """Current VIRTUAL sim-time of the run — the clock agent events must carry.
 
-    Falls back to wall-clock only if the run is somehow missing (it never is on a
-    live path); the event's ``recorded_at`` is always wall-clock separately.
+    Kept as a thin alias because ``executor`` and ``recovery`` import this name. The
+    implementation now lives in ``aegis_persistence.sim_clock`` so the detection engine,
+    the approval routes, and report generation resolve the same clock without any of
+    them importing the agent runtime.
     """
-    run = await uow.runs.get_by_id(run_id)
-    return run.sim_time if run is not None else datetime.now(UTC)
+    return await run_sim_time(uow, run_id)
 
 
 class AgentSessionService:

@@ -237,6 +237,20 @@ class PostgresUnitOfWork:
             raise RuntimeError(msg)
         return self._session
 
+    @property
+    def session_maker(self) -> async_sessionmaker[AsyncSession]:
+        """The maker this unit of work was built from, for INDEPENDENT sessions.
+
+        Exposed for the narrow case of a writer that must not share this unit of
+        work's session because it runs concurrently with it — the agent task
+        heartbeat, which refreshes ``updated_at`` while the executor's own session
+        is mid-transaction. Do not reach for this to avoid passing a unit of work
+        around: two sessions mean two transactions, so anything opened from here
+        commits independently of this one and gives up the atomicity that is the
+        whole point of the unit of work.
+        """
+        return self._session_maker
+
     async def append_event(self, envelope: DomainEventEnvelopeV1) -> DomainEventEnvelopeV1:
         stored = await self._events.append(envelope)
         self.session.add(create_outbox_row(stored))

@@ -15,6 +15,7 @@ from aegis_agents.runtime.proposal_events import (
 )
 from aegis_contracts.entities import AgentRole, IncidentState, ProposalStatus
 from aegis_contracts.proposals import PolicyOutcomeV1
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_policy import PolicyEngine
 
 
@@ -45,6 +46,10 @@ class WardenRoleHandler:
         if incident is None:
             msg = f"Incident not found: {ctx.incident_id}"
             raise KeyError(msg)
+
+        # Resolved once per turn: every event this post-process emits belongs to the same
+        # instant on the run's virtual clock, and the clock cannot advance mid-turn.
+        sim_time = await run_sim_time(ctx.uow, ctx.run_id)
 
         explanation_prose = structured.get("explanationProse", "")
         target_ids = set(structured.get("proposalIds", []))
@@ -107,6 +112,7 @@ class WardenRoleHandler:
                     revision_id=revision.id,
                     incident_id=ctx.incident_id,
                     outcome=decision.outcome.value,
+                    sim_time=sim_time,
                 )
             )
 
@@ -134,6 +140,7 @@ class WardenRoleHandler:
                     incident_id=ctx.incident_id,
                     previous_state=previous.value,
                     new_state=IncidentState.APPROVAL_PENDING.value,
+                    sim_time=sim_time,
                 )
             )
 

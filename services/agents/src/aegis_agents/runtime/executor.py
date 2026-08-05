@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import time
 from dataclasses import dataclass
@@ -20,7 +21,12 @@ from aegis_agents.runtime.events import (
     build_task_started_event,
     build_tool_invoked_event,
 )
-from aegis_agents.runtime.grounding import validate_citations
+from aegis_agents.runtime.grounding import (
+    build_evidence_catalogue,
+    catalogue_ids,
+    invalid_citation_ids,
+    validate_citations,
+)
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_agents.runtime.registry import (
     DEFAULT_AGENT_REGISTRY,
@@ -45,6 +51,8 @@ from aegis_agents.security.scenario_content import (
     MAX_SCENARIO_CONTENT_BYTES,
     build_available_tools_message,
     build_commander_intent_message,
+    build_evidence_catalogue_message,
+    build_grounding_correction_message,
     build_operator_directive_message,
     build_run_state_message,
     build_scenario_data_message,
@@ -81,6 +89,7 @@ from aegis_contracts.versioning import (
     STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION,
 )
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 AGENT_STEP_OUTPUT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -141,6 +150,30 @@ PROVIDER_BUDGET_HEADROOM_SECONDS = 2.0
 # The generation contract bounds timeoutMs to [100, 600000].
 _MIN_PROVIDER_BUDGET_MS = 100
 _MAX_PROVIDER_BUDGET_MS = 600_000
+
+# Grounding repair rounds a task will ever spend. Mirrors
+# ``aegis_model_provider.service.MAX_REPAIR_ROUNDS`` and for the same reason: a
+# model that cannot cite an id from a list it was just handed will not manage it
+# on the third try either, and every round is a full model call.
+MAX_GROUNDING_REPAIR_ROUNDS = 1
+
+# Floor on the window a grounding repair may take. It is a guarantee, not a
+# preference: a tool loop that spent the whole task budget would otherwise leave
+# no runway at all, and the turn would be *certain* to fail grounding rather than
+# merely at risk of it. So a repair can push a task this far past its nominal
+# timeout. Sized against a real local turn — the 27B endpoint takes 30-90s to
+# answer, and a floor below that buys a timeout instead of a repair (measured:
+# a 45s window cancelled a correction the model went on to get right). The
+# ceiling is the task's own timeout, so a repair can never cost more than one
+# whole task's budget. Overshooting the nominal timeout is safe because liveness
+# is now measured by the heartbeat rather than by elapsed time since the claim.
+GROUNDING_REPAIR_MIN_SECONDS = 60.0
+
+# How often a RUNNING task refreshes its ``updated_at`` while it executes.
+# ``updated_at`` is the liveness signal the stale-task sweep reads; without a
+# heartbeat it is written once at claim and once at the terminal transition, so a
+# task abandoned mid-flight is indistinguishable from one that is thinking.
+HEARTBEAT_INTERVAL_SECONDS = 10.0
 
 
 def _with_provider_budget(
@@ -241,6 +274,10 @@ class _LoopOutcome:
     extra_tokens: int = 0
     extra_latency_ms: int = 0
     extra_cost_usd: float = 0.0
+    #: ``time.monotonic()`` at which the task's wall-clock budget expires. Carried
+    #: out of the loop so the grounding-repair round that follows it knows how
+    #: much runway is left rather than assuming a fresh budget.
+    deadline_monotonic: float = 0.0
 
 
 @dataclass
@@ -265,6 +302,10 @@ class _PreparedTask:
     visible_ids: set[str]
     role_handler: Any
     request: GenerationRequestV1
+    #: The evidence ids the request offered the model, in the exact form it was
+    #: shown them. The grounding repair replays these as the "valid ids" list, so
+    #: what the repair promises and what the request delivered cannot drift.
+    evidence_catalogue: dict[str, Any]
 
 
 class TaskExecutor:
@@ -329,6 +370,7 @@ class TaskExecutor:
         agent_name = "unknown"
         status = "ok"
         tool_failure = False
+        prepared: _PreparedTask | None = None
         try:
             # Phase 1: claim, append started event, build request, commit.
             prepared = await self._claim_and_prepare(uow, task_id)
@@ -337,62 +379,35 @@ class TaskExecutor:
                 return
             agent_name = prepared.agent_name
 
-            # Phase 2: the model calls, with NO open transaction / advisory lock
-            # held across any of them. The loop may run read-only tools between
-            # calls; each of those commits its own short transaction before the
-            # next model call, so the per-run advisory lock is never held while a
-            # model is thinking. Only generation is time-boxed: it is the
-            # minutes-long step, and bounding it via cancellation while a
-            # transaction were open would risk poisoning the connection.
+            # From here the task is claimed RUNNING and committed, so it must reach
+            # a terminal state. The heartbeat runs for exactly that span, marking
+            # the row alive so the stale-task sweep can tell "still thinking" from
+            # "nobody is working this any more".
+            heartbeat = asyncio.ensure_future(self._heartbeat(uow.session_maker, prepared))
             try:
-                outcome = await self._run_tool_loop(uow, prepared)
-            except TimeoutError as exc:
-                await self._fail_and_commit(
-                    uow,
-                    prepared,
-                    code=AgentRuntimeErrorCode.TASK_TIMEOUT,
-                    message="Agent task timed out",
-                )
-                raise AgentRuntimeError(
-                    code=AgentRuntimeErrorCode.TASK_TIMEOUT,
-                    message="Agent task timed out",
-                    trace_id=prepared.task.trace_id,
-                ) from exc
-            except AgentRuntimeError as exc:
-                await self._fail_and_commit(uow, prepared, code=exc.code, message=exc.message)
-                raise
-            except Exception as exc:
-                await self._fail_and_commit(
-                    uow,
-                    prepared,
-                    code=AgentRuntimeErrorCode.INTERNAL,
-                    message=str(exc),
-                )
-                raise AgentRuntimeError(
-                    code=AgentRuntimeErrorCode.INTERNAL,
-                    message="Agent task failed",
-                    trace_id=prepared.task.trace_id,
-                ) from exc
-
-            # Phase 3: persist results / tool calls / completion in a short txn.
-            try:
-                await self._persist_result(uow, prepared, outcome)
-                await uow.commit()
-            except AgentRuntimeError as exc:
-                await self._fail_and_commit(uow, prepared, code=exc.code, message=exc.message)
-                raise
-            except Exception as exc:
-                await self._fail_and_commit(
-                    uow,
-                    prepared,
-                    code=AgentRuntimeErrorCode.INTERNAL,
-                    message=str(exc),
-                )
-                raise AgentRuntimeError(
-                    code=AgentRuntimeErrorCode.INTERNAL,
-                    message="Agent task failed",
-                    trace_id=prepared.task.trace_id,
-                ) from exc
+                await self._execute_claimed(uow, prepared)
+            finally:
+                heartbeat.cancel()
+                with contextlib.suppress(asyncio.CancelledError, Exception):
+                    await heartbeat
+        except asyncio.CancelledError:
+            # An abandoned inline execution — the HTTP client disconnected, or the
+            # process is shutting down — must not leave a claimed task stranded in
+            # 'running' with no terminal transition. That is how a chip spins
+            # forever with a frozen updated_at. Best-effort, because a cancelled
+            # task's own cleanup await can itself be cut short; the stale-running
+            # sweep in aegis_agents.runtime.recovery is the actual guarantee, and
+            # this is the fast path that usually beats it there.
+            status = "error"
+            if prepared is not None:
+                with contextlib.suppress(BaseException):
+                    await self._fail_and_commit(
+                        uow,
+                        prepared,
+                        code=AgentRuntimeErrorCode.TASK_CANCELLED,
+                        message="Agent task abandoned before completion",
+                    )
+            raise
         except Exception:
             status = "error"
             raise
@@ -408,6 +423,68 @@ class TaskExecutor:
                 )
             except Exception:  # noqa: BLE001
                 pass
+
+    async def _execute_claimed(self, uow: PostgresUnitOfWork, prepared: _PreparedTask) -> None:
+        """Phases 2, 2.5 and 3 for a task already claimed RUNNING and committed."""
+        # Phase 2: the model calls, with NO open transaction / advisory lock
+        # held across any of them. The loop may run read-only tools between
+        # calls; each of those commits its own short transaction before the
+        # next model call, so the per-run advisory lock is never held while a
+        # model is thinking. Only generation is time-boxed: it is the
+        # minutes-long step, and bounding it via cancellation while a
+        # transaction were open would risk poisoning the connection.
+        try:
+            outcome = await self._run_tool_loop(uow, prepared)
+            # Phase 2.5: still no transaction open, which is the only place a
+            # corrective model call may happen. See _repair_grounding.
+            outcome = await self._repair_grounding(prepared, outcome)
+        except TimeoutError as exc:
+            await self._fail_and_commit(
+                uow,
+                prepared,
+                code=AgentRuntimeErrorCode.TASK_TIMEOUT,
+                message="Agent task timed out",
+            )
+            raise AgentRuntimeError(
+                code=AgentRuntimeErrorCode.TASK_TIMEOUT,
+                message="Agent task timed out",
+                trace_id=prepared.task.trace_id,
+            ) from exc
+        except AgentRuntimeError as exc:
+            await self._fail_and_commit(uow, prepared, code=exc.code, message=exc.message)
+            raise
+        except Exception as exc:
+            await self._fail_and_commit(
+                uow,
+                prepared,
+                code=AgentRuntimeErrorCode.INTERNAL,
+                message=str(exc),
+            )
+            raise AgentRuntimeError(
+                code=AgentRuntimeErrorCode.INTERNAL,
+                message="Agent task failed",
+                trace_id=prepared.task.trace_id,
+            ) from exc
+
+        # Phase 3: persist results / tool calls / completion in a short txn.
+        try:
+            await self._persist_result(uow, prepared, outcome)
+            await uow.commit()
+        except AgentRuntimeError as exc:
+            await self._fail_and_commit(uow, prepared, code=exc.code, message=exc.message)
+            raise
+        except Exception as exc:
+            await self._fail_and_commit(
+                uow,
+                prepared,
+                code=AgentRuntimeErrorCode.INTERNAL,
+                message=str(exc),
+            )
+            raise AgentRuntimeError(
+                code=AgentRuntimeErrorCode.INTERNAL,
+                message="Agent task failed",
+                trace_id=prepared.task.trace_id,
+            ) from exc
 
     async def _run_tool_loop(
         self,
@@ -457,6 +534,7 @@ class TaskExecutor:
             pending_tool_requests=[],
             executed_tool_count=0,
             iterations=0,
+            deadline_monotonic=deadline,
         )
         if self._tool_loop_max_iterations < 1:
             outcome.pending_tool_requests = [
@@ -584,6 +662,124 @@ class TaskExecutor:
         defer(parse_tool_requests(self._safe_structured(outcome.response)))
         outcome.pending_tool_requests = [item.as_payload() for item in pending]
         return outcome
+
+    async def _repair_grounding(
+        self,
+        prepared: _PreparedTask,
+        outcome: _LoopOutcome,
+    ) -> _LoopOutcome:
+        """Phase 2.5: give an ungrounded answer exactly one chance to fix its ids.
+
+        Grounding is validated in the persist phase, which runs inside a
+        transaction — so a repair cannot live there. Re-prompting the model with a
+        transaction open would hold the per-run advisory lock across a 30-120s
+        model call, which is precisely the freeze the three-phase split exists to
+        prevent. The repair therefore belongs here, in the phase that already owns
+        every model call and holds no transaction, and the persist phase keeps its
+        validation unchanged as the authoritative gate. That ordering is what lets
+        this method be purely additive: it can improve an answer or leave it
+        alone, and it can never let a hallucinated citation through.
+
+        Every failure mode — no runway left, the provider erroring, the second
+        answer being just as ungrounded — returns the ORIGINAL outcome, exactly as
+        ``GenerationService._repair_once`` does, so the failure the operator reads
+        is still the one that describes what the model actually got wrong.
+        """
+        structured = self._safe_structured(outcome.response)
+        invalid = invalid_citation_ids(structured, visible_evidence_ids=prepared.visible_ids)
+        if not invalid:
+            return outcome
+        if MAX_GROUNDING_REPAIR_ROUNDS < 1:
+            return outcome
+
+        remaining = outcome.deadline_monotonic - time.monotonic() - LOOP_PERSIST_HEADROOM_SECONDS
+        window = min(self._timeout_seconds, max(GROUNDING_REPAIR_MIN_SECONDS, remaining))
+        repair_request = _with_provider_budget(
+            outcome.request.model_copy(
+                update={
+                    "request_id": new_runtime_id("gen"),
+                    "messages": [
+                        *outcome.request.messages,
+                        build_grounding_correction_message(
+                            invalid_ids=invalid,
+                            valid_ids=catalogue_ids(prepared.evidence_catalogue),
+                        ),
+                    ],
+                }
+            ),
+            wait_for_seconds=window,
+        )
+        try:
+            repaired = await asyncio.wait_for(
+                self._generation.generate(repair_request), timeout=window
+            )
+        except Exception:  # noqa: BLE001 - timeout or provider fault: keep the original
+            return outcome
+        if repaired.error is not None:
+            return outcome
+        repaired_structured = self._safe_structured(repaired)
+        if repaired_structured is None:
+            return outcome
+        if invalid_citation_ids(repaired_structured, visible_evidence_ids=prepared.visible_ids):
+            # Still ungrounded. Accepting a partially-fixed answer would only make
+            # the eventual failure describe a different id than the one the model
+            # actually could not get right, so the original stands.
+            return outcome
+
+        # Bank the superseded answer's usage, mirroring the tool loop: the persist
+        # phase adds the surviving response's own, so the task reports its true cost.
+        superseded = outcome.response.response if outcome.response.response else None
+        superseded_usage = superseded.usage if superseded else None
+        outcome.extra_tokens += superseded_usage.total_tokens if superseded_usage else 0
+        outcome.extra_latency_ms += superseded.latency_ms if superseded else 0
+        outcome.extra_cost_usd += (
+            superseded_usage.estimated_cost_usd
+            if superseded_usage and superseded_usage.estimated_cost_usd
+            else 0.0
+        )
+        outcome.request = repair_request
+        outcome.response = repaired
+        return outcome
+
+    async def _heartbeat(
+        self,
+        session_maker: async_sessionmaker[AsyncSession],
+        prepared: _PreparedTask,
+    ) -> None:
+        """Refresh ``updated_at`` on a RUNNING task until cancelled.
+
+        ``updated_at`` is what the stale-task sweep reads to tell a task that is
+        thinking from one whose executor is gone. Without this it is written once
+        at the claim and once at the terminal transition, so a task abandoned
+        mid-flight (a cancelled request, a killed process) looks exactly like a
+        healthy 90-second model call — which is how a task sat RUNNING with a
+        frozen timestamp while the worker moved on to later ones.
+
+        Runs on its own session, because the executor's own session is inside a
+        transaction for parts of the task and a second writer on it would corrupt
+        that. The write is the same status-guarded CAS every other transition
+        uses, so it can only ever touch a row that is still 'running': a heartbeat
+        racing the terminal commit loses harmlessly and stops.
+
+        Never fails the task. A heartbeat that cannot write leaves the sweep on
+        its pre-existing (conservative) footing, which is strictly better than
+        killing a working turn over a bookkeeping write.
+        """
+        while True:
+            await asyncio.sleep(HEARTBEAT_INTERVAL_SECONDS)
+            try:
+                async with PostgresUnitOfWork(session_maker) as beat_uow:
+                    alive = await beat_uow.agent_tasks.claim_transition(
+                        prepared.task.model_copy(update={"updated_at": datetime.now(UTC)}),
+                        from_statuses=(AgentTaskStatus.RUNNING.value,),
+                    )
+                    await beat_uow.commit()
+                if not alive:
+                    return
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001 - liveness bookkeeping, never fatal
+                return
 
     async def _execute_loop_tools(
         self,
@@ -817,7 +1013,13 @@ class TaskExecutor:
                     sim_time=await _run_sim_time(uow, run_id),
                 )
             )
-            request, run_scoped, visible_ids, role_handler = await self._build_request(
+            (
+                request,
+                run_scoped,
+                visible_ids,
+                role_handler,
+                evidence_catalogue,
+            ) = await self._build_request(
                 uow,
                 task=running,
                 session=session,
@@ -868,6 +1070,7 @@ class TaskExecutor:
             visible_ids=visible_ids,
             role_handler=role_handler,
             request=request,
+            evidence_catalogue=evidence_catalogue,
         )
 
     async def _build_request(
@@ -880,7 +1083,7 @@ class TaskExecutor:
         incident_title: str | None,
         definition: Any,
         budget: Any,
-    ) -> tuple[GenerationRequestV1, bool, set[str], Any]:
+    ) -> tuple[GenerationRequestV1, bool, set[str], Any, dict[str, Any]]:
         """Assemble the model request (reads only). Returns request + metadata.
 
         No event/lock-taking writes happen here, so it can share the claim
@@ -950,7 +1153,18 @@ class TaskExecutor:
                 "follow-up turn, so investigate first and answer once you have what "
                 "you need. When you can answer, return an empty toolRequests array. "
                 "Return grounded structured output: a concise rationale, a confidence "
-                "in [0,1], and evidence citations for any factual claim."
+                "in [0,1], and evidence citations for any factual claim, each citing "
+                "an id copied verbatim from AEGIS_EVIDENCE_CATALOGUE."
+            )
+        else:
+            # The audit path is asked for citations by a schema that requires the
+            # field, so it must be told where the citable ids come from. Saying so
+            # here as well as in the catalogue block is not redundant: this is the
+            # turn's own instruction, and the block below is data.
+            user_prompt = (
+                f"{user_prompt} Cite evidence only by ids copied verbatim from the "
+                "AEGIS_EVIDENCE_CATALOGUE block; return an empty evidenceCitations "
+                "array rather than citing an id that is not listed there."
             )
 
         # Scenario-data grounding: an incident title when incident-scoped, or a
@@ -1035,6 +1249,16 @@ class TaskExecutor:
         if task.instructions:
             messages.append(build_operator_directive_message(task.instructions))
 
+        # The citable-id catalogue goes LAST, for two reasons. It is the most
+        # recent thing the model reads before answering, which is where a rule it
+        # must follow character-for-character belongs; and it sits after the
+        # untrusted operator/scenario text, so nothing above it can reframe the
+        # citation contract. Injected for BOTH scopes: the strict audit path
+        # validates against exactly this set, and until now it was validating
+        # against a list the model had never been shown.
+        evidence_catalogue = build_evidence_catalogue(evidence)
+        messages.append(build_evidence_catalogue_message(evidence_catalogue))
+
         request = GenerationRequestV1(
             schema_version=GENERATION_REQUEST_SCHEMA_VERSION,
             request_id=new_runtime_id("gen"),
@@ -1055,7 +1279,7 @@ class TaskExecutor:
             ),
             capabilities_required=[ProviderCapability.STRUCTURED_OUTPUT],
         )
-        return request, run_scoped, visible_ids, role_handler
+        return request, run_scoped, visible_ids, role_handler, evidence_catalogue
 
     async def _persist_result(
         self,

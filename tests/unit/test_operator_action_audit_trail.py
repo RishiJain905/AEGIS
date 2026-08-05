@@ -7,6 +7,8 @@ still returns HTTP 200, and an audit event missing the operator's reason still v
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_api.approvals.service import ApprovalWorkflowService
 from aegis_api.operator_actions.events import build_operator_action_proposed_event
@@ -45,6 +47,7 @@ def test_proposed_event_records_the_operator_justification() -> None:
         action_class="class_2",
         target_asset_id="asset:svc-identity-broker",
         justification="Broker is beaconing to the staging bucket.",
+        sim_time=datetime(2026, 1, 1, 0, 12, tzinfo=UTC),
     )
     assert event.payload["justification"] == "Broker is beaconing to the staging bucket."
     assert event.payload["initiator"] == "operator"

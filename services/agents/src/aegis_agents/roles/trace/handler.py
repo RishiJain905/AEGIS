@@ -13,6 +13,7 @@ from aegis_contracts.investigation import (
 )
 from aegis_contracts.versioning import EVIDENCE_ATTACHMENT_SCHEMA_VERSION
 from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
+from aegis_persistence.sim_clock import run_sim_time
 
 from aegis_agents.roles.common.schemas import TRACE_STEP_OUTPUT_SCHEMA
 from aegis_agents.roles.registry import PostProcessContext
@@ -46,6 +47,10 @@ class TraceRoleHandler:
         ctx: PostProcessContext,
         structured: dict[str, Any],
     ) -> None:
+        # Resolved once per turn: every event this post-process emits belongs to the same
+        # instant on the run's virtual clock, and the clock cannot advance mid-turn.
+        sim_time = await run_sim_time(ctx.uow, ctx.run_id)
+
         alerts = await ctx.uow.alerts.list_by_run(ctx.run_id)
         triage_results = await ctx.uow.investigation.list_triage_for_incident(ctx.incident_id)
         triage = triage_results[-1] if triage_results else None
@@ -71,6 +76,7 @@ class TraceRoleHandler:
                 trace_id=ctx.trace_id,
                 plan_id=plan.id,
                 incident_id=ctx.incident_id,
+                sim_time=sim_time,
             )
         )
 
@@ -114,6 +120,7 @@ class TraceRoleHandler:
                     attachment_id=attachment.id,
                     incident_id=ctx.incident_id,
                     is_contradiction=attachment.is_contradiction,
+                    sim_time=sim_time,
                 )
             )
 
@@ -147,6 +154,7 @@ class TraceRoleHandler:
                 incident_id=ctx.incident_id,
                 highlight_count=len(overlay.highlights),
                 edge_highlight_count=len(overlay.edge_highlights),
+                sim_time=sim_time,
             )
         )
 

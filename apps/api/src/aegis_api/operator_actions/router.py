@@ -21,6 +21,7 @@ from aegis_contracts import (
     RunLoadoutV1,
     RunV1,
 )
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -105,6 +106,7 @@ async def change_run_roe(
                 trace_id=new_runtime_id("trc"),
                 previous_roe=previous_roe,
                 new_roe=request.roe.value,
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
         return updated

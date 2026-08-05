@@ -28,6 +28,7 @@ from typing import Any
 import pytest
 from aegis_agents.runtime.errors import AgentRuntimeError, AgentRuntimeErrorCode
 from aegis_agents.runtime.executor import TaskExecutor, _LoopOutcome, _PreparedTask
+from aegis_agents.runtime.grounding import build_evidence_catalogue
 from aegis_agents.runtime.registry import build_definition
 from aegis_contracts.agent_runtime import (
     AgentBudgetV1,
@@ -259,6 +260,7 @@ async def _persist(
         visible_ids={_VISIBLE_EVIDENCE_ID} if visible_ids is None else visible_ids,
         role_handler=role_handler,
         request=_request(),
+        evidence_catalogue=build_evidence_catalogue([]),
     )
     outcome = _LoopOutcome(
         response=response,

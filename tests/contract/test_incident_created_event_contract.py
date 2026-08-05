@@ -30,6 +30,9 @@ from aegis_incidents.correlation import open_correlated_incidents
 
 _RUN = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV"
 _TRACE = "trc_01ARZ3NDEKTSV4RRFFQ69G5FAV"
+#: The run's virtual clock at the moment the case opens — twelve minutes into the
+#: scenario, nothing like a wall-clock instant.
+_SIM_TIME = datetime(2026, 1, 1, 0, 12, tzinfo=UTC)
 
 
 @pytest.fixture
@@ -55,6 +58,7 @@ def _event(incident: IncidentV1):
         sequence=42,
         actor=ActorRef(type=ActorType.SYSTEM, id="asset:detection-engine"),
         trace_id=_TRACE,
+        sim_time=_SIM_TIME,
     )
 
 
@@ -87,6 +91,7 @@ def test_agent_and_operator_origins_are_distinguishable(incident: IncidentV1) ->
         sequence=43,
         actor=ActorRef(type=ActorType.OPERATOR, id="user:operator-alpha"),
         trace_id=_TRACE,
+        sim_time=_SIM_TIME,
     )
     assert system.actor.type == ActorType.SYSTEM
     assert operator.actor.type == ActorType.OPERATOR

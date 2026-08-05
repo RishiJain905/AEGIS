@@ -18,6 +18,7 @@ from aegis_agents.runtime.proposal_events import (
     build_proposal_created_event,
 )
 from aegis_contracts.entities import AgentRole, IncidentState
+from aegis_persistence.sim_clock import run_sim_time
 
 
 class BastionRoleHandler:
@@ -73,6 +74,10 @@ class BastionRoleHandler:
         await ctx.uow.proposals.add_proposal(proposal)
         await ctx.uow.proposals.add_revision(revision)
 
+        # Resolved once per turn: every event this post-process emits belongs to the same
+        # instant on the run's virtual clock, and the clock cannot advance mid-turn.
+        sim_time = await run_sim_time(ctx.uow, ctx.run_id)
+
         next_sequence = await ctx.uow.events.next_sequence(ctx.run_id)
         await ctx.uow.append_event(
             build_proposal_created_event(
@@ -86,6 +91,7 @@ class BastionRoleHandler:
                 revision_id=revision.id,
                 incident_id=ctx.incident_id,
                 action_class=proposal.action_class.value,
+                sim_time=sim_time,
             )
         )
 
@@ -115,5 +121,6 @@ class BastionRoleHandler:
                     incident_id=ctx.incident_id,
                     previous_state=incident.state.value,
                     new_state=IncidentState.CONTAINMENT_PROPOSED.value,
+                    sim_time=sim_time,
                 )
             )

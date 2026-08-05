@@ -29,6 +29,7 @@ from aegis_contracts.versioning import (
 )
 from aegis_persistence.mappers import domain_to_payload
 from aegis_persistence.orm.tables import EvidenceRow
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 _SCENARIO_ID = "scenario:watchtower-trace-test"
@@ -133,6 +134,7 @@ async def seed_investigation_run(
             sequence=await uow.events.next_sequence(run.id),
             actor=ActorRef(type=ActorType.SYSTEM, id=DETECTION_ENGINE_ACTOR_ID),
             trace_id=new_runtime_id("trc"),
+            sim_time=await run_sim_time(uow, run.id),
         )
     )
 

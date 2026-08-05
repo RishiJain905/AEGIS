@@ -12,6 +12,7 @@ from aegis_contracts.investigation import (
     WatchtowerTriageResultV1,
 )
 from aegis_contracts.versioning import WATCHTOWER_TRIAGE_RESULT_SCHEMA_VERSION
+from aegis_persistence.sim_clock import run_sim_time
 
 from aegis_agents.roles.common.schemas import WATCHTOWER_TRIAGE_OUTPUT_SCHEMA
 from aegis_agents.roles.registry import PostProcessContext
@@ -108,5 +109,8 @@ class WatchtowerRoleHandler:
                 triage_id=triage.id,
                 incident_id=ctx.incident_id,
                 escalation=triage.escalation.value,
+                # The run's virtual clock, not ``now``: ``created_at`` on the triage row
+                # above is wall-clock, but the chronicle sorts on the event's sim_time.
+                sim_time=await run_sim_time(ctx.uow, ctx.run_id),
             )
         )

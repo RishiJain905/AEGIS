@@ -24,6 +24,7 @@ from aegis_contracts.versioning import (
     DOMAIN_EVENT_SCHEMA_VERSION,
 )
 from aegis_persistence.engine import create_engine, get_session_maker
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 from tests.integration.agents.helpers import seed_investigation_run
@@ -78,6 +79,7 @@ async def _seed_feed_events(uow, run_id: str) -> None:
             action_class="class_2",
             target_asset_id="asset:device-workstation-01",
             justification="Workstation is beaconing; cutting it off.",
+            sim_time=await run_sim_time(uow, run_id),
         ),
     )
     seq = await uow.events.next_sequence(run_id)
@@ -91,6 +93,7 @@ async def _seed_feed_events(uow, run_id: str) -> None:
             trace_id=new_runtime_id("trc"),
             previous_roe="investigate",
             new_roe="forward_deployed",
+            sim_time=await run_sim_time(uow, run_id),
         ),
     )
     seq = await uow.events.next_sequence(run_id)

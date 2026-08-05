@@ -26,6 +26,7 @@ from aegis_contracts.versioning import (
 )
 from aegis_persistence.engine import create_engine, get_session_maker
 from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 from tests.integration.agents.helpers import seed_investigation_run
@@ -110,6 +111,7 @@ async def _seed_graph(uow, run_id: str) -> None:
             action_class="class_2",
             target_asset_id=_ASSET,
             justification="Seeded operator order for the asset-detail projection.",
+            sim_time=await run_sim_time(uow, run_id),
         )
     )
 

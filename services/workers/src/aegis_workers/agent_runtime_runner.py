@@ -61,6 +61,15 @@ async def _poll_once(
         # requested. The task already in flight below is awaited to completion.
         if stop_event is not None and stop_event.is_set():
             break
+        # Sweep again between tasks, not just once before the drain. A pass can
+        # legitimately execute ten tasks of up to the task timeout each, so a
+        # sweep that only ran at the top of the pass could be twenty minutes
+        # apart — which is exactly how a stranded task sat in 'running' with a
+        # frozen timestamp while this worker visibly processed later ones. The
+        # query is one indexed read against a small table; running it per task is
+        # cheap, and it is what bounds how long an abandoned turn can spin.
+        async with PostgresUnitOfWork(session_maker) as sweep_uow:
+            await recover_orphaned_tasks(sweep_uow, older_than_seconds=orphan_lease_seconds)
         async with PostgresUnitOfWork(session_maker) as uow:
             try:
                 await executor.execute(uow, task.id)

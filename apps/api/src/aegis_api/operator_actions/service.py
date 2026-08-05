@@ -53,6 +53,7 @@ from aegis_contracts.versioning import (
     PROPOSAL_REVISION_SCHEMA_VERSION,
     RESPONSE_OPTION_SCHEMA_VERSION,
 )
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_policy.authz import actor_has_permission
 from aegis_policy.commands import COMMAND_TO_ACTION_CLASS
@@ -127,6 +128,7 @@ class OperatorActionService:
                 action_class=action_class.value,
                 target_asset_id=request.target_asset_id,
                 justification=request.reason,
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
 
@@ -372,6 +374,7 @@ class OperatorActionService:
                 sequence=next_sequence,
                 actor=ActorRef(type=ActorType.OPERATOR, id=actor_id),
                 trace_id=trace_id,
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
         return created

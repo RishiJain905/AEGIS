@@ -38,6 +38,9 @@ from aegis_contracts.versioning import (
 
 RUN_ID = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV"
 INCIDENT_ID = "incident:inc_001"
+#: The run's VIRTUAL clock — what the report events must carry as ``sim_time``. Nothing
+#: like a wall-clock instant, so a builder that reached for ``datetime.now()`` would show.
+RUN_SIM_TIME = datetime(2026, 7, 30, 0, 12, tzinfo=UTC)
 TRACE_ID = "trc_01ARZ3NDEKTSV4RRFFQ69G5FB1"
 
 
@@ -123,6 +126,13 @@ class _FakeReports:
         return artifact
 
 
+class _FakeRuns:
+    """Serves the run's virtual clock; report events are stamped from it, not wall-clock."""
+
+    async def get_by_id(self, run_id: str) -> Any:
+        return SimpleNamespace(id=RUN_ID, sim_time=RUN_SIM_TIME) if run_id == RUN_ID else None
+
+
 class _FakeUow:
     def __init__(
         self,
@@ -137,6 +147,7 @@ class _FakeUow:
         self.alerts = _FakeAlerts()
         self.objects = _FakeObjects()
         self.reports = reports
+        self.runs = _FakeRuns()
         self.appended_events: list[Any] = []
 
     async def append_event(self, event: Any) -> Any:

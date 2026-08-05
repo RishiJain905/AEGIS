@@ -33,6 +33,7 @@ from aegis_contracts.versioning import (
     CREATE_AGENT_SESSION_REQUEST_SCHEMA_VERSION,
     CREATE_AGENT_TASK_REQUEST_SCHEMA_VERSION,
 )
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 from aegis_agents.autonomy.events import build_autonomy_task_enqueued_event
@@ -275,6 +276,9 @@ class AutonomyTriageService:
                 reason=reason,
                 alert_id=alert_id,
                 asset_id=asset_id,
+                # ``wall`` above drives cooldowns (real elapsed time); the event's place in
+                # the chronicle is the run's virtual clock.
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
         if asset_id is not None:

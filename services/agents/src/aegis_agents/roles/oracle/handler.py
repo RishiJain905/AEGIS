@@ -11,6 +11,7 @@ from aegis_contracts.hypothesis import (
     VerificationRequestV1,
 )
 from aegis_contracts.versioning import VERIFICATION_REQUEST_SCHEMA_VERSION
+from aegis_persistence.sim_clock import run_sim_time
 
 from aegis_agents.roles.oracle.comparison import build_hypothesis_comparison
 from aegis_agents.roles.oracle.grounding import build_grounding_context, ground_hypothesis_claims
@@ -54,6 +55,10 @@ class OracleRoleHandler:
         investigation = await ctx.uow.investigation.get_detail(ctx.incident_id, ctx.run_id)
         grounding_context = build_grounding_context(investigation, ctx.visible_evidence_ids)
         persisted_revisions = []
+
+        # Resolved once per turn: every event this post-process emits belongs to the same
+        # instant on the run's virtual clock, and the clock cannot advance mid-turn.
+        sim_time = await run_sim_time(ctx.uow, ctx.run_id)
 
         for item in structured.get("hypotheses", []):
             grounded = ground_hypothesis_claims(
@@ -108,6 +113,7 @@ class OracleRoleHandler:
                         hypothesis_id=hypothesis.id,
                         revision_id=revision.id,
                         incident_id=ctx.incident_id,
+                        sim_time=sim_time,
                     )
                 )
                 continue
@@ -143,6 +149,7 @@ class OracleRoleHandler:
                     hypothesis_id=hypothesis.id,
                     revision_id=revision.id,
                     incident_id=ctx.incident_id,
+                    sim_time=sim_time,
                 )
             )
 
@@ -166,6 +173,7 @@ class OracleRoleHandler:
                     trace_id=ctx.trace_id,
                     comparison_id=comparison.id,
                     incident_id=ctx.incident_id,
+                    sim_time=sim_time,
                 )
             )
 
@@ -205,5 +213,6 @@ class OracleRoleHandler:
                     verification_id=verification.id,
                     hypothesis_id=verification.hypothesis_id,
                     incident_id=ctx.incident_id,
+                    sim_time=sim_time,
                 )
             )

@@ -20,8 +20,8 @@ def build_autonomy_task_enqueued_event(
     reason: str,
     alert_id: str | None,
     asset_id: str | None,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     payload = {
         "schemaVersion": 1,
         "sessionId": session_id,
@@ -40,8 +40,8 @@ def build_autonomy_task_enqueued_event(
         sequence=sequence,
         type="autonomy.task.enqueued",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=ActorRef(type=ActorType.AGENT, id=session_id),
         subject=ActorRef(type=ActorType.AGENT, id=session_id),
         payload=payload,

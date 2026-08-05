@@ -25,6 +25,7 @@ from aegis_agents.runtime.ids import new_runtime_id
 from aegis_contracts import AegisSettings, AlertV1, RulesOfEngagementV1, RunV1, StandingDirectiveV1
 from aegis_contracts.simulation import SimulationRunStatus
 from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -205,6 +206,7 @@ class AutonomyPoller:
                     alert_id=alert.id,
                     asset_id=alert.asset_id,
                     task_id=task_id,
+                    sim_time=await run_sim_time(uow, run_id),
                 )
             )
 

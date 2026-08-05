@@ -23,16 +23,16 @@ def _operator_event(
     actor_id: str,
     trace_id: str,
     payload: dict[str, object],
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type=event_type,
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=ActorRef(type=ActorType.OPERATOR, id=actor_id),
         subject=ActorRef(type=ActorType.OPERATOR, id=actor_id),
         payload={"schemaVersion": 1, **payload},
@@ -51,6 +51,7 @@ def build_directive_created_event(
     text: str,
     scope_asset_ids: list[str],
     scope_zone_ids: list[str],
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
     return _operator_event(
         event_type="directive.created",
@@ -66,6 +67,7 @@ def build_directive_created_event(
             "scopeZoneIds": scope_zone_ids,
             "initiator": "operator",
         },
+        sim_time=sim_time,
     )
 
 
@@ -77,6 +79,7 @@ def build_directive_deleted_event(
     actor_id: str,
     trace_id: str,
     directive_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
     return _operator_event(
         event_type="directive.deleted",
@@ -86,6 +89,7 @@ def build_directive_deleted_event(
         actor_id=actor_id,
         trace_id=trace_id,
         payload={"directiveId": directive_id, "initiator": "operator"},
+        sim_time=sim_time,
     )
 
 
@@ -99,16 +103,16 @@ def build_directive_triggered_event(
     alert_id: str,
     asset_id: str,
     task_id: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="directive.triggered",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=ActorRef(type=ActorType.AGENT, id="agent-session:autonomy"),
         subject=ActorRef(type=ActorType.AGENT, id="agent-session:autonomy"),
         payload={

@@ -27,8 +27,14 @@ from aegis_agents.runtime.events import build_task_completed_event
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_agents.runtime.session_service import AgentSessionService, _run_sim_time
 from aegis_agents.runtime.state_machine import can_transition
-from aegis_contracts.agent_runtime import AgentTaskStatus, AgentTaskV1
+from aegis_contracts.agent_runtime import (
+    AgentArtifactType,
+    AgentArtifactV1,
+    AgentTaskStatus,
+    AgentTaskV1,
+)
 from aegis_contracts.entities import AgentSessionState
+from aegis_contracts.versioning import AGENT_ARTIFACT_SCHEMA_VERSION
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 # Mirror AgentTaskService.retry_task's cap (attempt >= 2 is non-retryable). The
@@ -38,8 +44,18 @@ DEFAULT_MAX_ATTEMPTS = 2
 
 
 def _task_age_seconds(task: AgentTaskV1, now: datetime) -> float:
-    anchor = task.started_at or task.updated_at
-    return (now - anchor).total_seconds()
+    """Seconds since this task last showed a sign of life.
+
+    Anchored on ``updated_at``, which the executor's heartbeat refreshes every few
+    seconds for as long as it is genuinely working the task (see
+    ``TaskExecutor._heartbeat``). ``started_at`` — the previous anchor — only ever
+    said when the claim happened, so it aged identically whether the executor was
+    thinking or had died in the meantime; a task really being worked and a task
+    abandoned mid-flight were indistinguishable. ``updated_at`` is never older
+    than ``started_at`` (the claim writes both), so this is strictly the better
+    signal even for a task whose heartbeat never got to run.
+    """
+    return (now - task.updated_at).total_seconds()
 
 
 async def recover_orphaned_tasks(
@@ -109,6 +125,36 @@ async def _terminate_orphan(
     )
     if not claimed:
         return False
+    # The CAS out of 'running' is what makes everything below run exactly once —
+    # a second sweep (or a racing worker) finds no row and returns here — so the
+    # artifact needs no idempotency key of its own.
+    #
+    # It exists because a terminated orphan otherwise produces a task that simply
+    # stops, with nothing in the session for the operator to read. The turn's
+    # panel shows artifacts; without one, a swept task looks the same as a task
+    # still thinking, which is the confusion this whole path is meant to end.
+    await uow.agent_artifacts.add(
+        AgentArtifactV1(
+            schema_version=AGENT_ARTIFACT_SCHEMA_VERSION,
+            id=new_runtime_id("aaf"),
+            task_id=task.id,
+            session_id=task.session_id,
+            artifact_type=AgentArtifactType.AUDIT,
+            payload={
+                "outcome": "task_timeout",
+                "reason": "stale_running_task_swept",
+                "detail": (
+                    "This turn was abandoned by its executor and never reached a "
+                    "terminal state on its own. It was failed by the stale-task "
+                    "sweep after exceeding its timeout with no sign of life."
+                ),
+                "attempt": task.attempt,
+                "staleForSeconds": round(_task_age_seconds(task, now), 1),
+                "lastHeartbeatAt": task.updated_at.isoformat(),
+            },
+            created_at=now,
+        )
+    )
     # Incident-scoped sessions go terminal; run-scoped lane/chat sessions survive
     # (mirrors TaskExecutor._fail_task). Guarded so an already-terminal session
     # never raises.

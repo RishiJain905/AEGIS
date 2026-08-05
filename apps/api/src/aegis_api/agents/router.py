@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 from typing import Annotated
 
@@ -40,6 +41,13 @@ _TRIGGER = [Depends(require_permission(PermissionV1.INVESTIGATION_TRIGGER))]
 _READ = [Depends(require_permission(PermissionV1.INVESTIGATION_READ))]
 
 
+async def _run_task(task_id: str) -> None:
+    executor = create_task_executor(force_in_memory=False)
+    async with PostgresUnitOfWork(get_db_session_maker()) as uow:
+        with contextlib.suppress(AgentRuntimeError):
+            await executor.execute(uow, task_id)
+
+
 async def _execute_committing_failure(task_id: str) -> None:
     """Run a task inline and persist terminal failures for these interactive routes.
 
@@ -50,11 +58,22 @@ async def _execute_committing_failure(task_id: str) -> None:
     returned rather than surfacing as a 500, so we swallow that runtime error here;
     the terminal state is already committed, and the route re-reads it. Non-runtime
     errors still propagate.
+
+    The run is SHIELDED from the request's cancellation. An agent turn is
+    persisted state, not a request-scoped computation: the chat re-reads it on the
+    next poll or page load, so finishing it is useful even once the caller has
+    gone. Unshielded, an operator navigating away mid-turn cancelled the handler,
+    and because ``CancelledError`` is a ``BaseException`` it flew straight through
+    the executor's failure handling — leaving a task claimed RUNNING with no
+    terminal transition and a chip spinning until a sweep noticed. Shielding
+    removes that at the source; the executor's own cancellation handling and the
+    stale-task sweep remain as the backstops for a real shutdown.
+
+    The unit of work lives INSIDE the shielded coroutine deliberately. Wrapping
+    only ``execute`` would let the cancellation unwind this function's ``async
+    with`` — closing the session — while the shielded work was still using it.
     """
-    executor = create_task_executor(force_in_memory=False)
-    async with PostgresUnitOfWork(get_db_session_maker()) as uow:
-        with contextlib.suppress(AgentRuntimeError):
-            await executor.execute(uow, task_id)
+    await asyncio.shield(_run_task(task_id))
 
 
 @router.get("/agents/registry")

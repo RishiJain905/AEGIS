@@ -93,6 +93,20 @@ class PostgresReplaySnapshotRepository:
         )
         return [snapshot_manifest_to_domain(row) for row in result.scalars().all()]
 
+    async def delete(self, snapshot_id: str) -> None:
+        """Discard a manifest whose archive can no longer be reconstructed from.
+
+        Snapshots accelerate replay; ``domain_events`` stays authoritative, so dropping an
+        unusable manifest loses nothing. It also frees the ``(run_id, sequence)`` row so a
+        replacement can be written — without this a single unreadable archive would make
+        that sequence permanently un-snapshottable.
+        """
+        row = await self._session.get(ReplaySnapshotManifestRow, snapshot_id)
+        if row is None:
+            return
+        await self._session.delete(row)
+        await self._session.flush()
+
     async def mark_incompatible(self, snapshot_id: str) -> None:
         row = await self._session.get(ReplaySnapshotManifestRow, snapshot_id)
         if row is None:

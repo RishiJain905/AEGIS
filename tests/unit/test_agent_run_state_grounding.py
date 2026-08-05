@@ -248,7 +248,7 @@ async def _build_operator_request(
 ) -> Any:
     executor = TaskExecutor(generation=None)  # type: ignore[arg-type]
     uow = _FakeUow(alerts=alerts, incidents=incidents or [], evidence=evidence or [])
-    request, run_scoped, _visible, _handler = await executor._build_request(
+    request, run_scoped, _visible, _handler, _catalogue = await executor._build_request(
         uow,  # type: ignore[arg-type]
         task=_operator_task(),
         session=_FakeSession(),
@@ -308,7 +308,7 @@ async def test_incident_scoped_request_is_unchanged() -> None:
     executor = TaskExecutor(generation=None)  # type: ignore[arg-type]
     uow = _FakeUow(alerts=[_alert(0)], incidents=[_incident()], evidence=[])
     task = _operator_task().model_copy(update={"incident_id": "incident:inc_0001"})
-    request, run_scoped, _visible, _handler = await executor._build_request(
+    request, run_scoped, _visible, _handler, _catalogue = await executor._build_request(
         uow,  # type: ignore[arg-type]
         task=task,
         session=_FakeSession(),

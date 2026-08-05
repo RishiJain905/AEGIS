@@ -37,8 +37,8 @@ def build_operator_action_proposed_event(
     action_class: str,
     target_asset_id: str,
     justification: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "schemaVersion": 1,
         "proposalId": proposal_id,
@@ -60,8 +60,8 @@ def build_operator_action_proposed_event(
         sequence=sequence,
         type="operator.action.proposed",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_operator_actor(actor_id),
         subject=_asset_subject(target_asset_id),
         payload=payload,
@@ -78,16 +78,16 @@ def build_run_roe_changed_event(
     trace_id: str,
     previous_roe: str,
     new_roe: str,
+    sim_time: datetime,
 ) -> DomainEventEnvelopeV1:
-    now = datetime.now(UTC)
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
         sequence=sequence,
         type="run.roe_changed",
         schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
-        sim_time=now,
-        recorded_at=now,
+        sim_time=sim_time,
+        recorded_at=datetime.now(UTC),
         actor=_operator_actor(actor_id),
         subject=_operator_actor(actor_id),
         payload={

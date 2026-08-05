@@ -57,6 +57,7 @@ from aegis_contracts.versioning import (
     REJECT_PROPOSAL_RESPONSE_SCHEMA_VERSION,
     SIMULATION_COMMAND_SCHEMA_VERSION,
 )
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_policy import PolicyEngine
 from aegis_policy.authz import actor_has_permission
@@ -256,6 +257,7 @@ class ApprovalWorkflowService:
                 revision_id=revision.id,
                 incident_id=incident.id,
                 comment=request.comment,
+                sim_time=await run_sim_time(uow, incident.run_id),
             )
         )
 
@@ -370,6 +372,7 @@ class ApprovalWorkflowService:
                 revision_id=revision.id,
                 incident_id=incident.id,
                 reason=request.reason,
+                sim_time=await run_sim_time(uow, incident.run_id),
             )
         )
         await self._transition_incident(
@@ -517,6 +520,7 @@ class ApprovalWorkflowService:
                 previous_revision_id=previous.id,
                 new_revision_id=new_revision.id,
                 incident_id=incident.id,
+                sim_time=await run_sim_time(uow, incident.run_id),
             )
         )
         next_sequence = await uow.events.next_sequence(incident.run_id)
@@ -532,6 +536,7 @@ class ApprovalWorkflowService:
                 revision_id=new_revision.id,
                 incident_id=incident.id,
                 outcome=decision.outcome.value,
+                sim_time=await run_sim_time(uow, incident.run_id),
             )
         )
         if proposal_status == ProposalStatus.PENDING:
@@ -655,6 +660,7 @@ class ApprovalWorkflowService:
                 revision_id=revision.id,
                 incident_id=incident.id,
                 reason=request.reason,
+                sim_time=await run_sim_time(uow, incident.run_id),
             )
         )
         await self._transition_incident(
@@ -736,6 +742,7 @@ class ApprovalWorkflowService:
                 revision_id=revision.id,
                 incident_id=proposal.incident_id,
                 outcome=decision.outcome.value,
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
         executable = decision.outcome in {
@@ -861,6 +868,7 @@ class ApprovalWorkflowService:
                 executed_action_id=executed.id,
                 command_id=authorized.command_id,
                 incident_id=incident_id,
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
         if emitted:
@@ -914,6 +922,7 @@ class ApprovalWorkflowService:
                 incident_id=incident_id,
                 previous_state=previous.value,
                 new_state=new_state.value,
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
 

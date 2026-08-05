@@ -26,6 +26,7 @@ from aegis_contracts.versioning import (
 )
 from aegis_persistence.mappers import agent_session_to_domain, incident_to_domain
 from aegis_persistence.orm.tables import AgentSessionRow, IncidentRow
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from sqlalchemy import select
 
@@ -187,6 +188,7 @@ class WatchtowerCoordinator:
                 sequence=next_sequence,
                 actor=ActorRef(type=ActorType.SYSTEM, id="asset:detection-engine"),
                 trace_id=trace_id,
+                sim_time=await run_sim_time(uow, run_id),
             )
         )
         return created
