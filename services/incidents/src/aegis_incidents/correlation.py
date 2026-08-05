@@ -38,6 +38,7 @@ from aegis_contracts import (
     deterministic_incident_id,
 )
 from aegis_contracts.versioning import INCIDENT_SCHEMA_VERSION
+from aegis_persistence.sim_clock import run_sim_time
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 from aegis_incidents.promotion import deterministic_event_id
@@ -249,6 +250,10 @@ async def open_correlated_incidents(
         return 0
 
     now = datetime.now(UTC)
+    # The run's VIRTUAL clock, not ``now``: a case that the chronicle timestamps at
+    # wall-clock sorts nowhere near the alerts that opened it. ``created_at`` on the row
+    # stays wall-clock; only the event's ``sim_time`` is the simulation instant.
+    sim_now = await run_sim_time(uow, run_id)
     for decision in result.opened:
         incident = IncidentV1(
             schema_version=INCIDENT_SCHEMA_VERSION,
@@ -269,6 +274,7 @@ async def open_correlated_incidents(
                 sequence=await uow.events.next_sequence(run_id),
                 actor=_detection_actor(),
                 trace_id=trace_id,
+                sim_time=sim_now,
             )
         )
 
@@ -298,6 +304,7 @@ async def open_correlated_incidents(
                 sequence=await uow.events.next_sequence(run_id),
                 actor=_detection_actor(),
                 trace_id=trace_id,
+                sim_time=sim_now,
             )
         )
 

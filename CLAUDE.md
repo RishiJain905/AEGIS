@@ -82,6 +82,23 @@ Fallback handling (Codex usage limits / zero credits):
 - **While credits are known-exhausted, skip Codex entirely** for subsequent tasks and route directly to Claude presets until a later dispatch (or the quoted reset time passing) proves Codex is back.
 - The orchestrator should still babysit every dispatch with a working-tree watcher: zero writes within ~8 minutes of a dispatch means inspect the newest Codex rollout file for the instant-fail signature rather than waiting longer.
 
+### Ollama models
+
+| model | intelligence | taste | effort | use for |
+|-------|--------------|-------|--------|---------|
+| deepseek-v4-flash:0731-cloud | 7.5 | 8 | max | Benchmarks it in the band spanning `sonnet-xhigh` through `opus-high` — and everything in between: compact well-specified single-file/single-feature work, up through multi-file features, cross-cutting integration, and clear-spec design/implementation with a settled spec. Not a fit for genuinely ambiguous or open-design-decision work — that stays on `opus-xhigh`/`opus-max`/Fable regardless. |
+
+How to apply:
+- **Strictly opt-in, never autonomous.** Unlike the Claude preset table and Codex routing above, do not decide on your own to reach for an Ollama cloud model. Route here only when the user's own request explicitly says "ollama cloud" — e.g. "you may use ollama cloud models alongside claude and codex models for this task." Absent that phrase, this table is informational only; treat the task as Claude/Codex-only.
+- Mechanics: dispatch via `/ollama-rescue --model deepseek-v4-flash:0731-cloud <task>` (defaults to `--effort max` and the 1,000,000-token context window — don't override either unless asked). Add `--background` for longer-running work, poll with `/ollama-check <jobId>`.
+- **Text-only — never route image-related work here.** The `ollama launch claude` proxy has no image/vision capability at all; the companion script automatically appends a fixed no-image caveat to every dispatched prompt, but that only prevents the model from *attempting* image work mid-task — it does not grant the capability. Don't send a task that inherently requires reading/generating an image in the first place; an attempt still ends the session with an unrecoverable API 400, and only a fresh dispatch (a new job, not a retry) can continue.
+
+Fallback handling (Ollama cloud rate limits / usage exhausted):
+- **Detection is the wrapper's job.** The companion script classifies every `is_error` result by HTTP status / message wording: `rate_limit` (HTTP 429, or "rate limit" wording), `billing` (HTTP 403, or subscription/upgrade/quota/credits wording), `auth` (HTTP 401, or "authenticate" wording). `/ollama-check <jobId>` and the `ollama-rescue` subagent's returned output surface it inline, e.g. `Error     api_error (HTTP 429)  [rate_limit]`.
+- **The subagent never performs the fallback itself.** On any of these classes it must not retry the same or a different Ollama model, and must not wait for a reset — it returns the classified result verbatim to the orchestrating session and stops, same discipline as the Codex wrapper above.
+- **The orchestrator owns the reroute.** On a `rate_limit`/`billing`/`auth` classification, tell the user the Ollama dispatch failed and why, then complete the underlying task via the normal (non-Ollama) routing — the Claude preset table or Codex per their own rules above — exactly as if "ollama cloud" had never been said.
+- **No session-wide "skip Ollama" state, unlike Codex.** Ollama cloud is opt-in per task, not autonomously chosen, so there's nothing to preemptively avoid: the next task that says "ollama cloud" again should simply be dispatched fresh (subscription/rate-limit state can change between calls) rather than skipped on the assumption it's still down.
+
 When Using Plan mode:
 - Inherited / current model the user is using will be the model that is used to create the plan for the task at hand. This will likely be Fable 5 or Opus 5
 - Once Fable 5 or Opus 5 has thought of a plan, spawn a subagent who will use `model: 'sonnet 5'` and the thinking effort will be based on complexity of task. This sonnet 5 model will create a HTML file using the frontend design skill. This HTML file should outline the entire plan and be presented to me (user).

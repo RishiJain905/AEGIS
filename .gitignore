@@ -71,3 +71,6 @@ dump.rdb
 
 # Stray release-e2e artifact (belongs only in dated evidence subdirs)
 /docs/release/evidence/e2e.json
+
+# Ollama cloud delegation job dirs (transient prompts/results/logs)
+.claude/.ollama-jobs/
