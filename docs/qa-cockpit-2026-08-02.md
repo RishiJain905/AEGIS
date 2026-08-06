@@ -328,3 +328,198 @@ The Playwright session captured these representative screenshots under `.playwri
 TRACE follow-up, BASTION execution, hypothesis pinning, a separately verified Reports page,
 the full outcome/debrief loop for every seed, Admin Alpha sign-out, Operator Alpha policy
 isolation, and Operator Alpha's own tutorial start. No conclusion is drawn for those paths.
+
+## Luna full playthrough — 2026-08-06
+
+### Driver
+
+Primary driver: visible computer-use via `@oai/sky`. It worked for the end-to-end playthrough,
+including sign-in, tutorial, live operations, actions, reports, replay, identity switching, and
+the responsive/theme checks. During a final read-only replay lookup, computer-use stopped with
+the runtime error that it could not determine the current browser URL with enough confidence.
+I then used the Playwright CLI only to confirm replay metadata and pin the tutorial event
+sequence. This fallback was explicit; Playwright was not used for gameplay before that error.
+
+### Previously-fixed blocker spot-checks
+
+- Live graph delta/backfill without Resync: PASS. Observe and Isolate changed the Inspector,
+  graph focus, posture, and Chronicle while Resync remained untouched.
+- Toast occlusion: PASS. Action toasts did not cover the console controls at the 1200px check.
+- Replay topology seed: PASS. Start, middle, and End reconstructed the real 38-node graph with
+  edges; the 2D -> 3D -> 2D round trip retained the topology.
+- Copilot grounding repair loop: REGRESSED. Working, failure, retry, and completion states were
+  visible, but completed answers still claimed an empty evidence catalogue when Evidence had
+  records. See the known P1 below.
+
+### Coverage checklist
+
+1. **Tutorial: PARTIAL / BLOCKED.** Admin Alpha completed all 10 chapters in
+   `run_E02AHM3GRDCYE9CDMM1PBTD3D1`, seed `1000`, through the clean terminal at sim
+   `00:25:00Z`, SEQ `412`. Early gating taught selection, graph controls, explanation, and
+   incident context well. The required Observe beat in chapter 4 would not advance after a
+   successful Observe; the final screen reported four skipped or unmet objectives. The tutorial
+   is therefore not completable through the intended path.
+2. **Silent Relay: PASS for the live board, NOT READY overall.** I deliberately used Bias guard
+   and Threat tempo. The main investigation used Forward-deployed ROE with intent to protect
+   student records, preserve evidence, and require approval for state changes. Alerts named
+   SSO Broker, clicking the asset focused the graph and opened Inspector, SIGNALS exposed cause
+   reveals, and Chronicle preserved event order and justification. A second run used Observe ROE
+   to test the unattended path; a third used Forward-deployed ROE and early containment.
+3. **Actions: PASS with a visible race.** In
+   `run_1QGA6JBQP0XHVTVETRFRSQT2S0`, seed `1327565196`, Observe executed at SEQ `423` and
+   Class 2 Isolate service executed at SEQ `428` after the audited justification was entered.
+   The modal showed class, target, reversibility, severed/dependent-service consequences, and
+   Stand down versus Confirm. Inspector and graph state persisted without Resync. Immediately
+   after confirmation, Inspector showed `contained`/`Isolated` while the command bar briefly
+   still showed `normal`.
+4. **Simulation integrity: PASS for termination, with an opaque live horizon.** Tutorial pause
+   and resume worked and reached sim `00:25:00Z` / SEQ `412`. Silent Relay consistently reached
+   a fixed-looking terminal boundary at sim `00:06:15Z`: the unattended
+   `run_V3B7K2HC4JYJ39WQHSNNH8P0C5`, seed `1427798730`, stopped at SEQ `284`; the controlled
+   `run_FY3RA94A9DBY3QWC38HMFTMRM3`, seed `872356573`, stopped at SEQ `297` after Observe at
+   SEQ `110` and Isolate at SEQ `183`. Both ended read-only with an outcome and generated a
+   report; there was no eternal spinner or dead run. The 6:15 live horizon is not labelled in
+   the cockpit and is much shorter than the tutorial horizon.
+5. **After-action, Reports, and replay: MIXED.** The first live run produced an after-action
+   score of `52.7 / 100` (F), hidden cause `Compromised service account credentials`, and a
+   separate immutable Reports v1. Replay scrubbed Start / middle / End with real topology and
+   the 3D round trip worked. The after-action Timeline & decisions omitted the executed Isolate;
+   the Reports page also reported zero evidence, proposals, policy decisions, and no agent
+   investigation artifacts despite the run having a completed copilot task and Chronicle
+   agent events.
+6. **Identity isolation: BLOCKED.** After signing out Admin Alpha and signing in Operator
+   Alpha, the role and navigation policy differed as expected. Starting the tutorial did not
+   create an Operator-owned run: the catalogue returned an error that the deterministic seed
+   run already belonged to another operator and only its owner or an administrator could
+   restart it. Operator Alpha could not briefly start the requested tutorial path.
+7. **Spot checks: PASS / USABLE.** Dark and light themes were readable. At a visible 1200px
+   window (below 1280px), the cockpit remained operable but the graph, Inspector, Signals, and
+   console were cramped. Replay 2D -> 3D -> 2D returned to the same real topology.
+
+### AI teammate emphasis
+
+- **WATCHTOWER triage:** Tutorial WATCHTOWER and the live WATCHTOWER both completed after the
+  local-model delay. In the live run, the first attempt failed at SEQ `432`, then the retry
+  completed at SEQ `437`. The answer said there were no evidence items and did not provide the
+  requested exact evidence IDs or two concrete next actions. Evidence search for `auth` in the
+  same run returned real `telemetry.authentication.succeeded` and `alert.created` records.
+  This is a direct contradiction, not an invented-ID problem: the answer cited no usable IDs.
+- **TRACE follow-up:** TRACE was reachable and started against the identity asset at SEQ `440`.
+  Its first task failed at SEQ `441` with provider JSON truncation. A bounded retry started at
+  SEQ `442` but produced no answer before the run stopped. There was no answer whose evidence
+  IDs could be validated.
+- **BASTION / proposal path:** BASTION was reachable. Its prompt requested a proportional
+  containment proposal with class, consequences, evidence preservation, and an explicit gate.
+  The task failed at SEQ `448` and never surfaced a proposal. No agent executed a state change
+  directly. The manual Class 2 gate did enforce operator approval correctly, but the agent
+  proposal/approve flow itself was not reached.
+- **Lifecycle honesty:** Working cards, attributed failures, retry/tool activity, and completion
+  were visible for WATCHTOWER. TRACE and BASTION exposed failure states, but BASTION remained
+  visually `Working`/spinning after the run stopped. The prior closed-sheet unread PASS was
+  spot-checked from the earlier run; in this pass the sheet was closed after the WATCHTOWER
+  answer, but no clear new unread badge appeared before the later run stop.
+- **Learning value:** The agent sometimes teaches the right triage structure - identify the
+  urgent asset, state uncertainty, request risk, and propose next steps. It is not trustworthy
+  as a blue-team teacher while it says the evidence catalogue is empty in the presence of
+  records and returns no IDs. A student could learn the vocabulary but would learn an unsafe
+  evidence workflow and would not receive an actionable triage answer.
+
+### Known defects rechecked
+
+- **P1 copilot evidence catalogue says zero while Evidence has records:** STILL PRESENT. In
+  `run_1QGA6JBQP0XHVTVETRFRSQT2S0`, seed `1327565196`, sim `00:10:08Z`, the completed answer at
+  SEQ `437` said the catalogue was empty while the Evidence tab contained authentication and
+  alert-created records.
+- **P1 after-action Timeline & decisions drops the executed isolate:** STILL PRESENT. In the
+  same run, Isolate executed at sim `00:10:08Z` / SEQ `428` and appeared in Chronicle, but the
+  after-action decision timeline omitted it; the Reports policy-decision count was zero.
+- **P2 transient Inspector/command-bar posture mismatch:** STILL PRESENT. In the same run at
+  SEQ `428`, Inspector showed `contained`/`Isolated` while the bottom command bar briefly showed
+  `normal`.
+- **P2 header debrief state lagged report generation:** STILL PRESENT. In
+  `run_V3B7K2HC4JYJ39WQHSNNH8P0C5`, seed `1427798730`, sim `00:06:15Z` / SEQ `284`, the
+  immediately-ended cockpit showed `DEBRIEF PENDING`; opening After-action refreshed it to
+  `REPORT READY`.
+- **P2 copilot first attempt fails before recovery:** STILL PRESENT. WATCHTOWER failed at SEQ
+  `432` before recovery at SEQ `437`; TRACE failed at SEQ `441`, and BASTION failed at SEQ
+  `448` in the same run.
+
+### New defects
+
+- **P1 - Tutorial required Observe objective cannot advance.** Repro in
+  `run_E02AHM3GRDCYE9CDMM1PBTD3D1`, seed `1000`, sim `00:21:40Z`, replay cursor/action
+  `SEQ 328`. In chapter 4, select Instructor Workstation Alpha from Node Index, reopen the
+  tutorial, and click Observe. The toast says `ACTION EXECUTED Observe`, Inspector changes to
+  under observation, and the timeline records `action.executed`, but the objective remains gold
+  and Next stays disabled. Repeating the action does not unlock the beat; the run ends at SEQ
+  `412` with the objective unmet. This makes the required tutorial path impossible to complete.
+- **P1 - Operator Alpha cannot start the deterministic tutorial after Admin owns it.** Repro
+  after Admin's `run_E02AHM3GRDCYE9CDMM1PBTD3D1` (seed `1000`, terminal sim `00:25:00Z` / SEQ
+  `412`) is stopped: sign out, sign in as Operator Alpha, click the tutorial start control.
+  The catalogue errors before launch with the message that the run belongs to another operator
+  and only its owner or an administrator can restart it. The new attempt has no run id, seed,
+  sim time, or SEQ because no run is created. This is a hard identity/training dead end.
+- **P2 - Copilot tasks can remain orphaned as Working after run termination.** Repro in
+  `run_1QGA6JBQP0XHVTVETRFRSQT2S0`, seed `1327565196`, sim `00:10:08Z`: TRACE retry is still
+  working after SEQ `442`; BASTION starts at SEQ `447`, fails at SEQ `448`, and remains a
+  Working/spinning card with no proposal or terminal state when the run stops at SEQ `452`
+  (replay extends to SEQ `453`). This violates the no-orphaned-running-task requirement and
+  gives the operator no honest answer about whether to wait.
+- **P2 - Separate Reports omits completed AI investigation artifacts.** Repro in
+  `run_1QGA6JBQP0XHVTVETRFRSQT2S0`, seed `1327565196`, sim `00:10:08Z`; WATCHTOWER completes
+  at SEQ `437` and Chronicle contains agent session/task/tool events. Reports v1 for sequences
+  `1-450` says `Evidence attachments: 0`, `Hypotheses: 0`, `Proposals: 0`, `Policy decisions:
+  0`, and `No agent investigation artifacts were recorded`. The separate report is therefore
+  not a faithful record of the AI teammate interaction.
+- **P3 - Silent Relay horizon is opaque.** The unattended run
+  `run_V3B7K2HC4JYJ39WQHSNNH8P0C5`, seed `1427798730`, and the controlled run
+  `run_FY3RA94A9DBY3QWC38HMFTMRM3`, seed `872356573`, both terminate at sim `00:06:15Z`
+  (SEQ `284` and `297`) with failed outcomes and reports. There is no visible horizon label or
+  terminal explanation in the live cockpit, so a student can read the fixed boundary as a
+  premature stop. This is not a hang, but it is confusing and much shorter than the 25:00
+  tutorial horizon.
+
+### UX observations, ranked
+
+1. The evidence contradiction is the highest-impact trust failure; an AI teammate that cannot
+   agree with its own Evidence tab is unsafe to learn from.
+2. The tutorial feels disciplined until the first required state-changing Observe beat, then
+   becomes impossible to finish. Shared deterministic-run ownership compounds that failure for
+   another operator.
+3. The consequence modal is excellent operator education: class, blast radius, reversibility,
+   downstream dependencies, justification, and Stand down/Confirm are all explicit.
+4. The graph -> Signals -> Inspector -> Chronicle flow is coherent. Alert asset links focus the
+   graph, cause reveals land visibly, and the board changes persist without Resync.
+5. The local-model UI makes latency visible, but provider failures and post-stop Working cards
+   do not give enough lifecycle truth. A task cancel/expired state is needed.
+6. Replay is the strongest audit surface: real topology at Start/middle/End, state digests,
+   incident bookmarks, and 2D/3D parity are all useful.
+7. Both themes are readable. At 1200px the page remains usable, but the graph/Inspector/console
+   competing for width makes investigation slower and increases scan cost.
+8. The unlabelled 6:15 live horizon should be explained as a scenario outcome or horizon in the
+   operator-facing UI.
+
+### Verdict
+
+**NOT READY.** The core graph, alert navigation, fog/reveal, consequence gate, durable actions,
+pause/resume, replay topology, and terminal report generation work. The product still fails the
+mission-critical teaching loop: the tutorial cannot complete, Operator Alpha cannot start the
+requested isolated tutorial path, the copilot contradicts Evidence and does not return actionable
+IDs, the agent proposal path fails before approval, and the debrief/Reports surfaces omit central
+operator and AI decisions. This is not GOOD or GREAT; there are two new P1s in addition to the
+known P1s.
+
+### Fix-first
+
+1. Make copilot and Evidence use one run-scoped catalogue; validate every cited ID before
+   completion and return concrete actions grounded in those records.
+2. Fix tutorial objective advancement for successful Observe and give each operator a safe
+   tutorial start/reset path without cross-operator ownership dead ends.
+3. Persist executed actions, consequences, justifications, and copilot sessions/tasks into both
+   After-action Timeline & decisions and the separate Reports page.
+4. Finalize or cancel all agent tasks on failure and run stop; expose provider errors and make
+   TRACE/BASTION retries produce a bounded terminal result and a real proposal/approval gate.
+5. Unify Inspector, command bar, header posture, and debrief/report readiness projections to
+   remove visible state races.
+6. Label the Silent Relay horizon/outcome and tighten the below-1280 layout after the blocking
+   correctness fixes.
