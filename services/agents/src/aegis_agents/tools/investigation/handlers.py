@@ -6,7 +6,11 @@ from datetime import UTC, datetime
 from typing import Any
 
 from aegis_agents.runtime.errors import AgentRuntimeError, AgentRuntimeErrorCode
-from aegis_agents.runtime.grounding import validate_citations
+from aegis_agents.runtime.grounding import (
+    MAX_CATALOGUE_EVIDENCE,
+    MAX_CATALOGUE_SOURCE_EVENTS,
+    validate_citations,
+)
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_agents.tools.context import ToolExecutionContext
 from aegis_agents.tools.investigation.graph_queries import (
@@ -15,7 +19,12 @@ from aegis_agents.tools.investigation.graph_queries import (
     query_paths_on_snapshot,
 )
 from aegis_contracts.agent_runtime import EvidenceCitationV1
-from aegis_contracts.entities import AlertV1, EvidenceV1
+from aegis_contracts.entities import AlertV1
+from aegis_contracts.event_query import (
+    event_asset_id,
+    event_evidence_summary,
+    event_matches_filters,
+)
 from aegis_contracts.graph import GraphEdgeV1, GraphNodeV1, GraphSnapshotV1
 from aegis_contracts.investigation import (
     EvidenceAttachmentV1,
@@ -65,15 +74,6 @@ def _serialize_alert(alert: AlertV1) -> dict[str, Any]:
         "sourceEventId": alert.source_event_id,
         "confidence": alert.confidence,
         "createdAt": alert.created_at.isoformat(),
-    }
-
-
-def _serialize_evidence(evidence: EvidenceV1) -> dict[str, Any]:
-    return {
-        "evidenceId": evidence.id,
-        "summary": evidence.summary,
-        "assetId": evidence.asset_id,
-        "sourceEventId": evidence.source_event_id,
     }
 
 
@@ -164,6 +164,20 @@ async def _validate_source_reference(
         )
 
 
+# Bounded window scanned per search before in-Python filtering, mirroring the
+# operator console's search (the two surfaces must answer the same queries the
+# same way). The model pages past it with fromSequence/toSequence.
+_SEARCH_SCAN_WINDOW = 2000
+
+
+def _parse_sim_time(value: Any) -> datetime | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value
+    return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+
+
 async def handle_search_events(
     ctx: ToolExecutionContext,
     payload: dict[str, Any],
@@ -175,8 +189,20 @@ async def handle_search_events(
         ctx.run_id,
         from_sequence=from_sequence,
         to_sequence=to_sequence,
-        limit=limit,
+        limit=_SEARCH_SCAN_WINDOW,
     )
+    matched = [
+        event
+        for event in events
+        if event_matches_filters(
+            event,
+            asset_id=payload.get("assetId"),
+            event_type_prefix=payload.get("eventTypePrefix"),
+            text=payload.get("text"),
+            from_sim_time=_parse_sim_time(payload.get("fromSimTime")),
+            to_sim_time=_parse_sim_time(payload.get("toSimTime")),
+        )
+    ][:limit]
     return {
         "events": [
             {
@@ -186,9 +212,9 @@ async def handle_search_events(
                 "simTime": event.sim_time.isoformat(),
                 "payload": event.payload,
             }
-            for event in events
+            for event in matched
         ],
-        "count": len(events),
+        "count": len(matched),
         "fromSequence": from_sequence,
         "toSequence": to_sequence,
     }
@@ -308,13 +334,45 @@ async def handle_get_alert(
     return {"alert": _serialize_alert(alert)}
 
 
+async def _visible_evidence_items(ctx: ToolExecutionContext) -> list[dict[str, Any]]:
+    """The evidence visible to the session, as the injected catalogue shows it.
+
+    The run's events (the Evidence tab's pool, newest window first) plus any
+    agent-created evidence records — the same items the request's
+    AEGIS_EVIDENCE_CATALOGUE block lists, so what the tool returns and what the
+    model was shown can never disagree.
+    """
+    events = await PostgresEventQueryRepository(ctx.uow.session).list_by_run(
+        ctx.run_id, limit=MAX_CATALOGUE_SOURCE_EVENTS
+    )
+    attachments = await ctx.uow.evidence.list_for_run(ctx.run_id)
+    visible_attachments = [
+        item for item in attachments if item.id in ctx.visible_evidence_ids
+    ]
+    return [
+        {
+            "evidenceId": event.event_id,
+            "summary": event_evidence_summary(event),
+            "assetId": event_asset_id(event),
+            "sourceEventId": event.event_id,
+        }
+        for event in events[-MAX_CATALOGUE_EVIDENCE:]
+    ] + [
+        {
+            "evidenceId": item.id,
+            "summary": item.summary,
+            "assetId": item.asset_id,
+            "sourceEventId": item.source_event_id,
+        }
+        for item in visible_attachments
+    ]
+
+
 async def handle_list_existing_evidence(
     ctx: ToolExecutionContext,
     _payload: dict[str, Any],
 ) -> dict[str, Any]:
-    evidence = await ctx.uow.evidence.list_for_run(ctx.run_id)
-    visible = [item for item in evidence if item.id in ctx.visible_evidence_ids]
-    return {"evidence": [_serialize_evidence(item) for item in visible]}
+    return {"evidence": await _visible_evidence_items(ctx)}
 
 
 async def handle_attach_evidence(

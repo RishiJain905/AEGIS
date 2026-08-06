@@ -39,6 +39,12 @@ function EventRow({ event }: { event: ConsoleEvent }) {
         <code className="font-mono text-[11px] text-[var(--aegis-accent-strong)]">
           {event.type}
         </code>
+        <code
+          className="font-mono text-[10px] text-[var(--aegis-text-muted)]"
+          data-testid="console-event-id"
+        >
+          {event.eventId}
+        </code>
         <span className="ml-auto font-mono text-[10px] tabular-nums text-[var(--aegis-text-muted)]">
           {event.simTime}
         </span>

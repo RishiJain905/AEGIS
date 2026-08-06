@@ -22,6 +22,8 @@ from aegis_agents.runtime.events import (
     build_tool_invoked_event,
 )
 from aegis_agents.runtime.grounding import (
+    MAX_CATALOGUE_SOURCE_EVENTS,
+    EvidenceCatalogueItem,
     build_evidence_catalogue,
     catalogue_ids,
     invalid_citation_ids,
@@ -73,6 +75,7 @@ from aegis_contracts.agent_runtime import (
 )
 from aegis_contracts.entities import AutonomyInitiatorV1
 from aegis_contracts.errors import ContractValidationError
+from aegis_contracts.event_query import event_evidence_summary
 from aegis_contracts.generation import (
     GenerationMessageRole,
     GenerationMessageV1,
@@ -1098,8 +1101,16 @@ class TaskExecutor:
             )
 
         run_scoped = task.incident_id is None
-        evidence = await uow.evidence.list_for_run(run_id)
-        visible_ids = {item.id for item in evidence}
+        # The evidence catalogue is the run's event pool — the same pool the
+        # operator's Evidence tab searches — plus any agent-created evidence
+        # records. Every fetched event id is a valid citation target, because
+        # the model can search the whole run via search_events; the catalogue
+        # block below shows the newest window of it.
+        attachments = await uow.evidence.list_for_run(run_id)
+        events = await uow.events.list_by_run(run_id, limit=MAX_CATALOGUE_SOURCE_EVENTS)
+        visible_ids = {item.id for item in attachments} | {
+            event.event_id for event in events
+        }
         check_budget(budget, trace_id=task.trace_id)
 
         role_handler = get_role_handler(session.role)
@@ -1186,7 +1197,7 @@ class TaskExecutor:
                     run_id=run_id,
                     alerts=alerts,
                     incidents=incidents,
-                    evidence=evidence,
+                    events=events,
                 )
             )
             scenario_data = build_scenario_data_message(
@@ -1256,7 +1267,23 @@ class TaskExecutor:
         # citation contract. Injected for BOTH scopes: the strict audit path
         # validates against exactly this set, and until now it was validating
         # against a list the model had never been shown.
-        evidence_catalogue = build_evidence_catalogue(evidence)
+        #
+        # The items are the run's events (the Evidence tab's pool) plus any
+        # agent-created evidence records, so the catalogue can never be empty
+        # while the run has events — the contradiction the QA playthroughs
+        # caught ("the evidence catalogue contains zero items" beside a full
+        # Evidence tab) was an empty table, not an empty run.
+        catalogue_items = [
+            EvidenceCatalogueItem(
+                id=event.event_id,
+                summary=event_evidence_summary(event),
+            )
+            for event in events
+        ] + [
+            EvidenceCatalogueItem(id=item.id, summary=item.summary or "")
+            for item in attachments
+        ]
+        evidence_catalogue = build_evidence_catalogue(catalogue_items)
         messages.append(build_evidence_catalogue_message(evidence_catalogue))
 
         request = GenerationRequestV1(

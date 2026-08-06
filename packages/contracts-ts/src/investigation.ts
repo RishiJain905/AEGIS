@@ -5,7 +5,7 @@ import {
   agentTaskIdSchema,
   alertIdSchema,
   assetIdSchema,
-  evidenceIdSchema,
+  citableEvidenceIdSchema,
   incidentIdSchema,
   runIdSchema,
   traceIdSchema,
@@ -79,7 +79,7 @@ export const watchtowerTriageResultSchema = z.object({
   ]),
   escalationRationale: z.string().min(1).max(2048),
   confidence: z.number().min(0).max(1),
-  evidenceIds: z.array(evidenceIdSchema).default([]),
+  evidenceIds: z.array(citableEvidenceIdSchema).default([]),
   idempotencyKey: z.string().min(1).max(256),
   createdAt: utcTimestampSchema,
 });
@@ -129,7 +129,7 @@ export const evidenceAttachmentSchema = z.object({
   sessionId: agentSessionIdSchema,
   taskId: agentTaskIdSchema,
   provenance: evidenceProvenanceSchema,
-  evidenceId: evidenceIdSchema.nullable().optional(),
+  evidenceId: citableEvidenceIdSchema.nullable().optional(),
   assetId: assetIdSchema.nullable().optional(),
   isContradiction: z.boolean().default(false),
   confidence: z.number().min(0).max(1),
@@ -143,7 +143,7 @@ export const candidateAffectedAssetSchema = z.object({
   incidentId: incidentIdSchema,
   assetId: assetIdSchema,
   confidence: z.number().min(0).max(1),
-  evidenceIds: z.array(evidenceIdSchema).default([]),
+  evidenceIds: z.array(citableEvidenceIdSchema).default([]),
   rationale: z.string().min(1).max(2048),
   createdAt: utcTimestampSchema,
 });
@@ -155,7 +155,7 @@ export const investigationNoteSchema = z.object({
   sessionId: agentSessionIdSchema,
   taskId: agentTaskIdSchema,
   note: z.string().min(1).max(4096),
-  evidenceIds: z.array(evidenceIdSchema).min(1),
+  evidenceIds: z.array(citableEvidenceIdSchema).min(1),
   createdAt: utcTimestampSchema,
 });
 

@@ -19,7 +19,7 @@ from aegis_contracts.primitives import (
     AgentTaskId,
     AlertId,
     AssetId,
-    EvidenceId,
+    CitableEvidenceId,
     IncidentId,
     RunId,
     TraceId,
@@ -81,7 +81,7 @@ class WatchtowerTriageResultV1(BaseModel):
     escalation: TriageEscalationLevel
     escalation_rationale: str = Field(alias="escalationRationale", min_length=1, max_length=2048)
     confidence: float = Field(ge=0.0, le=1.0)
-    evidence_ids: list[EvidenceId] = Field(alias="evidenceIds", default_factory=list)
+    evidence_ids: list[CitableEvidenceId] = Field(alias="evidenceIds", default_factory=list)
     idempotency_key: str = Field(alias="idempotencyKey", min_length=1, max_length=256)
     created_at: UtcTimestamp = Field(alias="createdAt")
 
@@ -163,7 +163,7 @@ class EvidenceAttachmentV1(BaseModel):
     session_id: AgentSessionId = Field(alias="sessionId")
     task_id: AgentTaskId = Field(alias="taskId")
     provenance: EvidenceProvenanceV1
-    evidence_id: EvidenceId | None = Field(default=None, alias="evidenceId")
+    evidence_id: CitableEvidenceId | None = Field(default=None, alias="evidenceId")
     asset_id: AssetId | None = Field(default=None, alias="assetId")
     is_contradiction: bool = Field(alias="isContradiction", default=False)
     confidence: float = Field(ge=0.0, le=1.0)
@@ -190,7 +190,7 @@ class CandidateAffectedAssetV1(BaseModel):
     incident_id: IncidentId = Field(alias="incidentId")
     asset_id: AssetId = Field(alias="assetId")
     confidence: float = Field(ge=0.0, le=1.0)
-    evidence_ids: list[EvidenceId] = Field(alias="evidenceIds", default_factory=list)
+    evidence_ids: list[CitableEvidenceId] = Field(alias="evidenceIds", default_factory=list)
     rationale: str = Field(min_length=1, max_length=2048)
     created_at: UtcTimestamp = Field(alias="createdAt")
 
@@ -215,7 +215,7 @@ class InvestigationNoteV1(BaseModel):
     session_id: AgentSessionId = Field(alias="sessionId")
     task_id: AgentTaskId = Field(alias="taskId")
     note: str = Field(min_length=1, max_length=4096)
-    evidence_ids: list[EvidenceId] = Field(alias="evidenceIds", min_length=1)
+    evidence_ids: list[CitableEvidenceId] = Field(alias="evidenceIds", min_length=1)
     created_at: UtcTimestamp = Field(alias="createdAt")
 
     @model_validator(mode="after")

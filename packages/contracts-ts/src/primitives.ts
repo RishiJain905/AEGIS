@@ -52,6 +52,26 @@ export const scenarioIdSchema = authoredIdSchema;
 export const clusterIdSchema = authoredIdSchema;
 export const edgeIdSchema = authoredIdSchema;
 
+/**
+ * An evidence reference: an authored id (`evidence:...`) or a run event id
+ * (`evt_...`). The agent evidence catalogue is the run's event pool — the same
+ * pool the operator's Evidence tab searches — so citations may point at either
+ * an agent-created evidence record or at the event that carries the fact.
+ */
+export const citableEvidenceIdSchema = z.string().superRefine((value, ctx) => {
+  try {
+    validateAuthoredId(value);
+  } catch (error) {
+    if (error instanceof ContractValidationError) {
+      try {
+        validateRuntimeId('evt', value);
+      } catch {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: error.message });
+      }
+    }
+  }
+});
+
 export const eventIdSchema = z.string().superRefine((value, ctx) => {
   try {
     validateRuntimeId('evt', value);

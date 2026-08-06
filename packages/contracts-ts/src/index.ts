@@ -371,6 +371,7 @@ export const FIXTURE_SCHEMA_MAP = {
   tool_invocation_v1: toolInvocationSchema,
   tool_result_v1: toolResultSchema,
   evidence_citation_v1: evidenceCitationSchema,
+  evidence_citation_event_v1: evidenceCitationSchema,
   agent_artifact_v1: agentArtifactSchema,
   create_agent_session_request_v1: createAgentSessionRequestSchema,
   create_agent_task_request_v1: createAgentTaskRequestSchema,

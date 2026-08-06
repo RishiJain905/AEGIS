@@ -18,7 +18,7 @@ from aegis_contracts.primitives import (
     AgentArtifactId,
     AgentSessionId,
     AgentTaskId,
-    EvidenceId,
+    CitableEvidenceId,
     GenerationRequestId,
     IncidentId,
     RunId,
@@ -157,7 +157,9 @@ class EvidenceCitationV1(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     schema_version: int = Field(alias="schemaVersion", ge=1)
-    evidence_id: EvidenceId = Field(alias="evidenceId")
+    #: An authored evidence id or a run event id — the catalogue is the run's
+    #: event pool, so the operator can verify either in the Evidence tab.
+    evidence_id: CitableEvidenceId = Field(alias="evidenceId")
     rationale: str = ""
 
     @model_validator(mode="after")

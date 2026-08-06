@@ -995,6 +995,10 @@
       "sha256": "cf5a80e9b13fa73418f0b9bf976c148aaebe793575f35f183dcb7101896a246c"
     },
     {
+      "path": "tests/contract/fixtures/valid/evidence_citation_event_v1.json",
+      "sha256": "3c20c86a93cbaf830ad7dbf49f6e85524e1f0cbbfbfa48c83d451a8bce0b4933"
+    },
+    {
       "path": "tests/contract/fixtures/valid/evidence_v1.json",
       "sha256": "5e013c6efe634facb460da28dcb64c4392de4d79840cecf56bb0f0b861d473d8"
     },

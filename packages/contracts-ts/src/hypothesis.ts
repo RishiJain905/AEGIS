@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   agentSessionIdSchema,
   agentTaskIdSchema,
-  evidenceIdSchema,
+  citableEvidenceIdSchema,
   hypothesisIdSchema,
   incidentIdSchema,
   runIdSchema,
@@ -60,7 +60,7 @@ export const hypothesisClaimSchema = z.object({
     ClaimKindV1.UNSUPPORTED_CLAIM,
   ]),
   text: z.string().min(1).max(2048),
-  evidenceIds: z.array(evidenceIdSchema).default([]),
+  evidenceIds: z.array(citableEvidenceIdSchema).default([]),
   attachmentIds: z.array(z.string()).default([]),
   isAssumption: z.boolean().default(false),
 });
@@ -77,8 +77,8 @@ export const confidenceAssessmentSchema = z.object({
 
 export const contradictionLinkSchema = z.object({
   schemaVersion: schemaVersionCheck(CONTRADICTION_LINK_SCHEMA_VERSION),
-  supportingEvidenceIds: z.array(evidenceIdSchema).default([]),
-  contradictingEvidenceIds: z.array(evidenceIdSchema).default([]),
+  supportingEvidenceIds: z.array(citableEvidenceIdSchema).default([]),
+  contradictingEvidenceIds: z.array(citableEvidenceIdSchema).default([]),
   supportingAttachmentIds: z.array(z.string()).default([]),
   contradictingAttachmentIds: z.array(z.string()).default([]),
   rationale: z.string().min(1).max(2048),
@@ -104,8 +104,8 @@ export const hypothesisRevisionSchema = z.object({
   confidence: confidenceAssessmentSchema,
   claims: z.array(hypothesisClaimSchema).default([]),
   assumptions: z.array(z.string()).default([]),
-  supportingEvidenceIds: z.array(evidenceIdSchema).default([]),
-  contradictingEvidenceIds: z.array(evidenceIdSchema).default([]),
+  supportingEvidenceIds: z.array(citableEvidenceIdSchema).default([]),
+  contradictingEvidenceIds: z.array(citableEvidenceIdSchema).default([]),
   unknowns: z.array(z.string()).default([]),
   predictions: z.array(z.string()).default([]),
   contradictionLinks: z.array(contradictionLinkSchema).default([]),
@@ -119,9 +119,9 @@ export const hypothesisRevisionSchema = z.object({
 export const hypothesisComparisonEntrySchema = z.object({
   hypothesisId: hypothesisIdSchema,
   revisionId: z.string().min(1).max(64),
-  sharedEvidenceIds: z.array(evidenceIdSchema).default([]),
-  uniqueEvidenceIds: z.array(evidenceIdSchema).default([]),
-  contradictingEvidenceIds: z.array(evidenceIdSchema).default([]),
+  sharedEvidenceIds: z.array(citableEvidenceIdSchema).default([]),
+  uniqueEvidenceIds: z.array(citableEvidenceIdSchema).default([]),
+  contradictingEvidenceIds: z.array(citableEvidenceIdSchema).default([]),
   confidencePoint: z.number().min(0).max(1),
 });
 
@@ -145,7 +145,7 @@ export const verificationRequestSchema = z.object({
   sessionId: agentSessionIdSchema,
   taskId: agentTaskIdSchema,
   purpose: z.string().min(1).max(2048),
-  targetEvidenceIds: z.array(evidenceIdSchema).default([]),
+  targetEvidenceIds: z.array(citableEvidenceIdSchema).default([]),
   idempotencyKey: z.string().min(1).max(256),
   createdAt: utcTimestampSchema,
 });

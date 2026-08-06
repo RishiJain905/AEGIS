@@ -325,6 +325,7 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "tool_invocation_v1": ToolInvocationV1,
     "tool_result_v1": ToolResultV1,
     "evidence_citation_v1": EvidenceCitationV1,
+    "evidence_citation_event_v1": EvidenceCitationV1,
     "agent_artifact_v1": AgentArtifactV1,
     "create_agent_session_request_v1": CreateAgentSessionRequestV1,
     "create_agent_task_request_v1": CreateAgentTaskRequestV1,

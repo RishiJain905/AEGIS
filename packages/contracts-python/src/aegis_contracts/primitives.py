@@ -113,11 +113,27 @@ def validate_runtime_id(prefix: str, value: Any) -> str:
     return _validate_runtime_id(prefix, value)
 
 
+def _validate_citable_evidence_id(value: Any) -> str:
+    """An evidence reference: an authored id (``evidence:...``) or a run event id.
+
+    The agent evidence catalogue is the run's event pool — the same pool the
+    operator's Evidence tab searches — so a citation may point at either an
+    agent-created evidence record or at the event that carries the fact. The
+    authored validator is tried first (it is the historical contract); the
+    ``evt_`` runtime validator is the event-derived half of the catalogue.
+    """
+    try:
+        return _validate_authored_id(value)
+    except ContractValidationError:
+        return _validate_runtime_id("evt", value)
+
+
 AuthoredId = Annotated[str, BeforeValidator(_validate_authored_id)]
 AssetId = AuthoredId
 IncidentId = Annotated[str, BeforeValidator(_validate_authored_id)]
 AlertId = Annotated[str, BeforeValidator(_validate_authored_id)]
 EvidenceId = Annotated[str, BeforeValidator(_validate_authored_id)]
+CitableEvidenceId = Annotated[str, BeforeValidator(_validate_citable_evidence_id)]
 AgentSessionId = Annotated[str, BeforeValidator(_validate_authored_id)]
 ScenarioId = Annotated[str, BeforeValidator(_validate_authored_id)]
 RelationshipId = AuthoredId

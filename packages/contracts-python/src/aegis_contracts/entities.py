@@ -16,6 +16,7 @@ from aegis_contracts.primitives import (
     ApprovalId,
     AssetId,
     AuthoredId,
+    CitableEvidenceId,
     EventId,
     EvidenceId,
     HypothesisId,
@@ -319,7 +320,7 @@ class HypothesisV1(BaseModel):
     status: str = Field(default="active", max_length=32)
     statement: str | None = Field(default=None, min_length=1)
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    evidence_ids: list[EvidenceId] = Field(alias="evidenceIds", default_factory=list)
+    evidence_ids: list[CitableEvidenceId] = Field(alias="evidenceIds", default_factory=list)
     created_at: UtcTimestamp = Field(alias="createdAt")
 
     @model_validator(mode="after")

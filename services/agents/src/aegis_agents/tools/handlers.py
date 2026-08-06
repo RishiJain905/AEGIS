@@ -9,7 +9,10 @@ from aegis_agents.runtime.grounding import validate_citations
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_agents.tools.context import ToolExecutionContext
 from aegis_agents.tools.hypothesis import HYPOTHESIS_TOOL_HANDLERS
-from aegis_agents.tools.investigation import INVESTIGATION_TOOL_HANDLERS
+from aegis_agents.tools.investigation import (
+    INVESTIGATION_TOOL_HANDLERS,
+    _visible_evidence_items,
+)
 from aegis_agents.tools.proposal import PROPOSAL_TOOL_HANDLERS
 from aegis_contracts import ActionClass, ActionProposalV1, HypothesisV1, ProposalStatus
 from aegis_contracts.agent_runtime import AgentArtifactType, AgentArtifactV1, EvidenceCitationV1
@@ -21,11 +24,14 @@ from aegis_contracts.versioning import (
 
 
 async def handle_list_evidence(ctx: ToolExecutionContext, _input: dict[str, Any]) -> dict[str, Any]:
-    evidence = await ctx.uow.evidence.list_for_run(ctx.run_id)
-    visible = [item for item in evidence if item.id in ctx.visible_evidence_ids]
+    # The same event-derived catalogue the request injected and
+    # list_existing_evidence returns — one evidence pool for every surface.
+    items = await _visible_evidence_items(ctx)
     return {
-        "evidenceIds": [item.id for item in visible],
-        "summaries": [{"id": item.id, "summary": item.summary} for item in visible],
+        "evidenceIds": [item["evidenceId"] for item in items],
+        "summaries": [
+            {"id": item["evidenceId"], "summary": item["summary"]} for item in items
+        ],
     }
 
 

@@ -267,8 +267,8 @@ class _FakeRepo:
     def __init__(self, items: list[Any] | None = None) -> None:
         self._items = items or []
 
-    async def list_by_run(self, _run_id: str) -> list[Any]:
-        return self._items
+    async def list_by_run(self, _run_id: str, *, limit: int = 10_000) -> list[Any]:
+        return self._items[:limit]
 
     async def list_for_run(self, _run_id: str) -> list[Any]:
         return self._items
@@ -489,6 +489,7 @@ async def _minimal_request(executor: TaskExecutor, task: AgentTaskV1) -> Any:
         alerts = _FakeRepo()
         incidents = _FakeRepo()
         evidence = _FakeRepo()
+        events = _FakeRepo()
         runs = _FakeRepo()
         agent_tasks = _FakeRepo()
         agent_artifacts = _FakeRepo()

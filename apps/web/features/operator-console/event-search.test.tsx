@@ -79,6 +79,8 @@ describe('EventSearch', () => {
     const user = userEvent.setup();
     render(<EventSearch runId="run_x" />);
     expect(screen.getByText('telemetry.auth.failed')).toBeInTheDocument();
+    // The event id is displayed so a copilot-cited id can be verified here.
+    expect(screen.getByText('evt-1')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Load more/i }));
     expect(loadMore).toHaveBeenCalledTimes(1);
   });

@@ -106,7 +106,8 @@ INVESTIGATION_TOOL_DEFINITIONS: list[ToolDefinitionV1] = [
         schema_version=TOOL_DEFINITION_SCHEMA_VERSION,
         name="search_events",
         description=(
-            "Search normalized domain events for the active run within a bounded sequence window"
+            "Search normalized domain events for the active run by asset, event type, "
+            "text, or sim-time window — the same search the operator's Evidence tab runs"
         ),
         tool_class=AgentToolClass.READ,
         model_visible=True,
@@ -115,6 +116,11 @@ INVESTIGATION_TOOL_DEFINITIONS: list[ToolDefinitionV1] = [
             "properties": {
                 "fromSequence": {"type": "integer", "minimum": 0},
                 "toSequence": {"type": "integer", "minimum": 0},
+                "assetId": {"type": "string", "minLength": 1},
+                "eventTypePrefix": {"type": "string", "minLength": 1},
+                "text": {"type": "string", "minLength": 1},
+                "fromSimTime": {"type": "string"},
+                "toSimTime": {"type": "string"},
                 "limit": {"type": "integer", "minimum": 1, "maximum": 200, "default": 200},
             },
             "additionalProperties": False,

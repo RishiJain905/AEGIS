@@ -5,7 +5,7 @@ import {
   agentArtifactIdSchema,
   agentSessionIdSchema,
   agentTaskIdSchema,
-  evidenceIdSchema,
+  citableEvidenceIdSchema,
   generationRequestIdSchema,
   incidentIdSchema,
   runIdSchema,
@@ -116,7 +116,9 @@ export const toolDefinitionSchema = z
 export const evidenceCitationSchema = z
   .object({
     schemaVersion: schemaVersionCheck(EVIDENCE_CITATION_SCHEMA_VERSION),
-    evidenceId: evidenceIdSchema,
+    // An authored evidence id or a run event id — the catalogue is the run's
+    // event pool, so the operator can verify either in the Evidence tab.
+    evidenceId: citableEvidenceIdSchema,
     rationale: z.string().default(''),
   })
   .strict();

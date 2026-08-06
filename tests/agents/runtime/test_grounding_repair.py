@@ -22,6 +22,7 @@ from aegis_agents.runtime.executor import (
 )
 from aegis_agents.runtime.grounding import (
     MAX_CATALOGUE_EVIDENCE,
+    EvidenceCatalogueItem,
     build_evidence_catalogue,
     catalogue_ids,
     invalid_citation_ids,
@@ -74,6 +75,13 @@ def _evidence(index: int) -> EvidenceV1:
         summary=f"Observation {index}",
         asset_id="asset:idp-primary",
         created_at=_NOW,
+    )
+
+
+def _catalogue_item(index: int) -> EvidenceCatalogueItem:
+    return EvidenceCatalogueItem(
+        id=f"evidence:evd_real_{index:03d}",
+        summary=f"Observation {index}",
     )
 
 
@@ -208,7 +216,7 @@ def _fixture(
         visible_ids={_VISIBLE, _OTHER_VISIBLE},
         role_handler=None,
         request=_request(),
-        evidence_catalogue=build_evidence_catalogue([_evidence(1), _evidence(2)]),
+        evidence_catalogue=build_evidence_catalogue([_catalogue_item(1), _catalogue_item(2)]),
     )
     request = _request()
     outcome = _LoopOutcome(
@@ -228,7 +236,7 @@ def _fixture(
 
 
 def test_catalogue_carries_the_ids_and_the_true_total() -> None:
-    catalogue = build_evidence_catalogue([_evidence(i) for i in range(1, 4)])
+    catalogue = build_evidence_catalogue([_catalogue_item(i) for i in range(1, 4)])
     assert catalogue["total"] == 3
     assert catalogue["truncated"] is False
     assert catalogue_ids(catalogue) == [
@@ -239,16 +247,29 @@ def test_catalogue_carries_the_ids_and_the_true_total() -> None:
 
 
 def test_catalogue_is_bounded_and_keeps_the_newest() -> None:
-    evidence = [_evidence(i) for i in range(1, MAX_CATALOGUE_EVIDENCE + 6)]
-    catalogue = build_evidence_catalogue(evidence)
-    assert catalogue["total"] == len(evidence)
+    items = [_catalogue_item(i) for i in range(1, MAX_CATALOGUE_EVIDENCE + 6)]
+    catalogue = build_evidence_catalogue(items)
+    assert catalogue["total"] == len(items)
     assert catalogue["shown"] == MAX_CATALOGUE_EVIDENCE
     assert catalogue["truncated"] is True
-    assert catalogue_ids(catalogue)[-1] == evidence[-1].id
+    assert catalogue_ids(catalogue)[-1] == items[-1].id
+
+
+def test_catalogue_accepts_event_ids_from_the_runs_pool() -> None:
+    """The catalogue is the run's event pool, so event ids are citable items."""
+    catalogue = build_evidence_catalogue(
+        [
+            EvidenceCatalogueItem(
+                id="evt_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                summary="telemetry.authentication.failed @ 2026-01-01T00:00:00Z",
+            )
+        ]
+    )
+    assert catalogue_ids(catalogue) == ["evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"]
 
 
 def test_catalogue_message_states_the_verbatim_rule_and_the_empty_out() -> None:
-    message = build_evidence_catalogue_message(build_evidence_catalogue([_evidence(1)]))
+    message = build_evidence_catalogue_message(build_evidence_catalogue([_catalogue_item(1)]))
     assert "VERBATIM" in message.content
     assert "empty evidenceCitations array" in message.content
     assert _VISIBLE in message.content
@@ -264,7 +285,10 @@ def test_correction_message_names_the_rejected_and_the_valid_ids() -> None:
     assert "rejectedEvidenceIds" in message.content
 
 
-def _catalogue_uow(evidence: list[EvidenceV1]) -> Any:
+def _catalogue_uow(
+    evidence: list[EvidenceV1],
+    events: list[Any] | None = None,
+) -> Any:
     """The slice of the unit of work ``_build_request`` reads."""
 
     class _Uow:
@@ -276,8 +300,12 @@ def _catalogue_uow(evidence: list[EvidenceV1]) -> Any:
         async def list_for_run(self, run_id: str) -> list[EvidenceV1]:
             return evidence
 
+    class _Events:
+        async def list_by_run(self, run_id: str, *, limit: int = 10_000) -> list[Any]:
+            return list(events or [])[:limit]
+
     class _Empty:
-        async def list_by_run(self, run_id: str) -> list[Any]:
+        async def list_by_run(self, run_id: str, *, limit: int = 10_000) -> list[Any]:
             return []
 
         async def list_for_session(self, session_id: str) -> list[Any]:
@@ -288,6 +316,7 @@ def _catalogue_uow(evidence: list[EvidenceV1]) -> Any:
             return None
 
     uow.evidence = _Evidence()
+    uow.events = _Events()
     uow.alerts = _Empty()
     uow.incidents = _Empty()
     uow.agent_tasks = _Empty()
@@ -358,6 +387,81 @@ async def test_the_request_shows_the_model_the_ids_it_will_be_validated_against(
     assert "AEGIS_EVIDENCE_CATALOGUE" in last
     for item in evidence:
         assert item.id in last
+
+
+@pytest.mark.asyncio
+async def test_the_request_carries_the_runs_event_ids_as_citable_evidence() -> None:
+    """The P1 regression: a run with events must never show an empty catalogue.
+
+    The QA playthroughs caught the copilot answering "the evidence catalogue
+    contains zero items" while the Evidence tab listed the run's events. The
+    catalogue is the run's event pool, so the request must carry the event ids
+    and the validator must accept them.
+    """
+    from aegis_contracts.events import ActorRef, ActorType, DomainEventEnvelopeV1
+    from aegis_contracts.versioning import DOMAIN_EVENT_SCHEMA_VERSION
+
+    event = DomainEventEnvelopeV1(
+        schema_version=DOMAIN_EVENT_SCHEMA_VERSION,
+        event_id="evt_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        run_id=_RUN_ID,
+        sequence=1,
+        type="telemetry.authentication.failed",
+        sim_time=_NOW,
+        recorded_at=_NOW,
+        actor=ActorRef(type=ActorType.SYSTEM, id="asset:detection-engine"),
+        subject=ActorRef(type=ActorType.ASSET, id="asset:svc-sso-broker"),
+        payload={"assetId": "asset:svc-sso-broker"},
+        trace_id=_TRACE_ID,
+    )
+    from aegis_agents.runtime.registry import build_definition
+    from aegis_contracts.entities import AgentRole, AgentSessionState, AgentSessionV1
+    from aegis_contracts.versioning import AGENT_SESSION_SCHEMA_VERSION
+
+    definition = build_definition(AgentRole.WATCHTOWER, provider_id="mock")
+    session = AgentSessionV1(
+        schema_version=AGENT_SESSION_SCHEMA_VERSION,
+        id="agent-session:ags_grounding",
+        run_id=_RUN_ID,
+        incident_id=None,
+        role=AgentRole.WATCHTOWER,
+        state=AgentSessionState.GATHERING,
+        trace_id=_TRACE_ID,
+        created_at=_NOW,
+        updated_at=_NOW,
+    )
+    task = AgentTaskV1(
+        schema_version=AGENT_TASK_SCHEMA_VERSION,
+        id="atk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        session_id=session.id,
+        run_id=_RUN_ID,
+        incident_id=None,
+        status=AgentTaskStatus.RUNNING,
+        idempotency_key="grounding-1",
+        trace_id=_TRACE_ID,
+        provider_id="mock",
+        created_at=_NOW,
+        updated_at=_NOW,
+    )
+    executor = TaskExecutor(generation=None)  # type: ignore[arg-type]
+    request, _, visible_ids, _, catalogue = await executor._build_request(
+        _catalogue_uow(evidence=[], events=[event]),
+        task=task,
+        session=session,
+        run_id=_RUN_ID,
+        incident_title=None,
+        definition=definition,
+        budget=definition.default_budget,
+    )
+
+    assert catalogue_ids(catalogue) == [event.event_id]
+    assert event.event_id in visible_ids
+    last = request.messages[-1].content
+    assert event.event_id in last
+    # An answer citing the run's event id is fully grounded — no repair needed.
+    assert invalid_citation_ids(
+        _answer(event.event_id), visible_evidence_ids=visible_ids
+    ) == []
 
 
 # --- detection: which ids are actually wrong ------------------------------------

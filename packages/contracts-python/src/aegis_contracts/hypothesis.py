@@ -11,7 +11,7 @@ from aegis_contracts.errors import ContractErrorCode, ContractValidationError
 from aegis_contracts.primitives import (
     AgentSessionId,
     AgentTaskId,
-    EvidenceId,
+    CitableEvidenceId,
     HypothesisId,
     IncidentId,
     RunId,
@@ -59,7 +59,7 @@ class HypothesisClaimV1(BaseModel):
     schema_version: int = Field(alias="schemaVersion", ge=1)
     kind: ClaimKindV1
     text: str = Field(min_length=1, max_length=2048)
-    evidence_ids: list[EvidenceId] = Field(alias="evidenceIds", default_factory=list)
+    evidence_ids: list[CitableEvidenceId] = Field(alias="evidenceIds", default_factory=list)
     attachment_ids: list[str] = Field(alias="attachmentIds", default_factory=list)
     is_assumption: bool = Field(alias="isAssumption", default=False)
 
@@ -124,11 +124,11 @@ class ContradictionLinkV1(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     schema_version: int = Field(alias="schemaVersion", ge=1)
-    supporting_evidence_ids: list[EvidenceId] = Field(
+    supporting_evidence_ids: list[CitableEvidenceId] = Field(
         alias="supportingEvidenceIds",
         default_factory=list,
     )
-    contradicting_evidence_ids: list[EvidenceId] = Field(
+    contradicting_evidence_ids: list[CitableEvidenceId] = Field(
         alias="contradictingEvidenceIds",
         default_factory=list,
     )
@@ -169,11 +169,11 @@ class HypothesisRevisionV1(BaseModel):
     confidence: ConfidenceAssessmentV1
     claims: list[HypothesisClaimV1] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
-    supporting_evidence_ids: list[EvidenceId] = Field(
+    supporting_evidence_ids: list[CitableEvidenceId] = Field(
         alias="supportingEvidenceIds",
         default_factory=list,
     )
-    contradicting_evidence_ids: list[EvidenceId] = Field(
+    contradicting_evidence_ids: list[CitableEvidenceId] = Field(
         alias="contradictingEvidenceIds",
         default_factory=list,
     )
@@ -204,15 +204,15 @@ class HypothesisComparisonEntryV1(BaseModel):
 
     hypothesis_id: HypothesisId = Field(alias="hypothesisId")
     revision_id: str = Field(alias="revisionId", min_length=1, max_length=64)
-    shared_evidence_ids: list[EvidenceId] = Field(
+    shared_evidence_ids: list[CitableEvidenceId] = Field(
         alias="sharedEvidenceIds",
         default_factory=list,
     )
-    unique_evidence_ids: list[EvidenceId] = Field(
+    unique_evidence_ids: list[CitableEvidenceId] = Field(
         alias="uniqueEvidenceIds",
         default_factory=list,
     )
-    contradicting_evidence_ids: list[EvidenceId] = Field(
+    contradicting_evidence_ids: list[CitableEvidenceId] = Field(
         alias="contradictingEvidenceIds",
         default_factory=list,
     )
@@ -254,7 +254,7 @@ class VerificationRequestV1(BaseModel):
     session_id: AgentSessionId = Field(alias="sessionId")
     task_id: AgentTaskId = Field(alias="taskId")
     purpose: str = Field(min_length=1, max_length=2048)
-    target_evidence_ids: list[EvidenceId] = Field(
+    target_evidence_ids: list[CitableEvidenceId] = Field(
         alias="targetEvidenceIds",
         default_factory=list,
     )

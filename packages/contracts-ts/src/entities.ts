@@ -8,6 +8,7 @@ import {
   approvalIdSchema,
   assetIdSchema,
   authoredIdSchema,
+  citableEvidenceIdSchema,
   eventIdSchema,
   evidenceIdSchema,
   hypothesisIdSchema,
@@ -262,7 +263,7 @@ export const hypothesisSchema = z
     status: z.string().max(32).default('active'),
     statement: z.string().min(1).nullable().optional(),
     confidence: z.number().min(0).max(1).nullable().optional(),
-    evidenceIds: z.array(evidenceIdSchema).default([]),
+    evidenceIds: z.array(citableEvidenceIdSchema).default([]),
     createdAt: utcTimestampSchema,
   })
   .strict()

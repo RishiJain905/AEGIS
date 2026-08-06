@@ -12,6 +12,11 @@ identifiers at all. Two things in this module answer that:
 * :func:`invalid_citation_ids` names exactly which ids a given answer got wrong,
   which is what the executor's bounded repair round-trip shows the model.
 
+The catalogue is the run's event pool — the same pool the operator's Evidence
+tab searches — plus any agent-created evidence records. The executor builds the
+items from the run's events (see :mod:`aegis_contracts.event_query`), so a cited
+``evt_...`` id is an id the operator can paste into Evidence and find.
+
 :func:`validate_citations` remains the strict gate on the audit path. Repair
 happens strictly before it; nothing here relaxes it.
 """
@@ -19,11 +24,11 @@ happens strictly before it; nothing here relaxes it.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any
 
 from aegis_agents.runtime.errors import AgentRuntimeError, AgentRuntimeErrorCode
 from aegis_contracts.agent_runtime import EvidenceCitationV1
-from aegis_contracts.entities import EvidenceV1
 
 #: Cardinality and per-string bounds for the injected catalogue. The catalogue is
 #: a *list of ids*, so it stays far cheaper than the run-state snapshot even at
@@ -31,22 +36,37 @@ from aegis_contracts.entities import EvidenceV1
 MAX_CATALOGUE_EVIDENCE = 60
 MAX_CATALOGUE_SUMMARY_CHARS = 140
 
+#: How many of the run's events the executor fetches to build the catalogue and
+#: the citable-id set. Runs are bounded by their scenario horizon (a few hundred
+#: events), so this is a safety cap, not a window the catalogue truncates to:
+#: the builder shows the newest ``MAX_CATALOGUE_EVIDENCE`` and every fetched id
+#: is a valid citation target, because the model can search the whole run.
+MAX_CATALOGUE_SOURCE_EVENTS = 5000
 
-def build_evidence_catalogue(evidence: Sequence[EvidenceV1]) -> dict[str, Any]:
+
+@dataclass(frozen=True)
+class EvidenceCatalogueItem:
+    """One citable entry: an event id or an evidence-record id, with a summary."""
+
+    id: str
+    summary: str
+
+
+def build_evidence_catalogue(items: Sequence[EvidenceCatalogueItem]) -> dict[str, Any]:
     """The authoritative set of evidence ids this task may cite.
 
-    Bounded to the most recent :data:`MAX_CATALOGUE_EVIDENCE` items (repository
-    listings are oldest-first, so the tail is the newest), and it reports the true
+    Bounded to the most recent :data:`MAX_CATALOGUE_EVIDENCE` items (the caller
+    lists oldest-first, so the tail is the newest), and it reports the true
     total so a model can tell "there is no evidence" from "I was shown a window
     onto more". Truncation is safe in the direction that matters: the validator
     accepts every visible id, so a shown id is always valid — the catalogue can
     only ever under-offer, never mislead.
     """
-    shown = list(evidence[-MAX_CATALOGUE_EVIDENCE:])
+    shown = list(items[-MAX_CATALOGUE_EVIDENCE:])
     return {
-        "total": len(evidence),
+        "total": len(items),
         "shown": len(shown),
-        "truncated": len(shown) < len(evidence),
+        "truncated": len(shown) < len(items),
         "items": [
             {
                 "evidenceId": item.id,

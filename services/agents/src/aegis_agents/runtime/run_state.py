@@ -17,7 +17,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from aegis_contracts.entities import AlertV1, EvidenceV1, IncidentV1
+from aegis_contracts.entities import AlertV1, IncidentV1
+from aegis_contracts.event_query import event_asset_id, event_evidence_summary
+from aegis_contracts.events import DomainEventEnvelopeV1
 
 MAX_RUN_STATE_ALERTS = 40
 MAX_RUN_STATE_INCIDENTS = 15
@@ -50,12 +52,18 @@ def _serialize_incident(incident: IncidentV1) -> dict[str, Any]:
     }
 
 
-def _serialize_evidence(evidence: EvidenceV1) -> dict[str, Any]:
+def _serialize_event(event: DomainEventEnvelopeV1) -> dict[str, Any]:
+    """An event as an evidence item — the same pool the Evidence tab searches.
+
+    The evidence section of the snapshot must agree with the injected evidence
+    catalogue, or the model would read "evidence: total 0" here while the
+    catalogue lists the run's events and report absence again.
+    """
     return {
-        "evidenceId": evidence.id,
-        "summary": _clip(evidence.summary),
-        "assetId": evidence.asset_id,
-        "createdAt": evidence.created_at.isoformat(),
+        "evidenceId": event.event_id,
+        "summary": _clip(event_evidence_summary(event)),
+        "assetId": event_asset_id(event),
+        "simTime": event.sim_time.isoformat(),
     }
 
 
@@ -79,13 +87,14 @@ def summarize_run_state(
     run_id: str,
     alerts: list[AlertV1],
     incidents: list[IncidentV1],
-    evidence: list[EvidenceV1],
+    events: list[DomainEventEnvelopeV1],
 ) -> dict[str, Any]:
     """Build the run-state snapshot injected into a run-scoped agent request.
 
     Everything here is already visible to the operator in the command centre —
     detection output and declared incidents, not attacker ground truth — so the
-    snapshot discloses nothing the human asking the question cannot see.
+    snapshot discloses nothing the human asking the question cannot see. The
+    evidence section is the run's event pool, matching the Evidence tab.
     """
     return {
         "runId": run_id,
@@ -93,5 +102,5 @@ def summarize_run_state(
         "incidents": _section(
             incidents, limit=MAX_RUN_STATE_INCIDENTS, serialize=_serialize_incident
         ),
-        "evidence": _section(evidence, limit=MAX_RUN_STATE_EVIDENCE, serialize=_serialize_evidence),
+        "evidence": _section(events, limit=MAX_RUN_STATE_EVIDENCE, serialize=_serialize_event),
     }

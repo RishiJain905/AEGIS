@@ -19,6 +19,7 @@ from aegis_contracts import (
     RunFeedEntryV1,
     RunFeedPageV1,
 )
+from aegis_contracts.event_query import event_asset_id, event_matches_filters
 from aegis_contracts.events import DomainEventEnvelopeV1
 from aegis_contracts.versioning import (
     CONSOLE_ASSET_DETAIL_SCHEMA_VERSION,
@@ -33,8 +34,6 @@ from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 # Recent-event window included in an asset deep-dive.
 _ASSET_RECENT_EVENTS = 25
-
-_ASSET_PAYLOAD_KEYS = ("assetId", "targetAssetId", "sourceAssetId")
 
 # Bounded window scanned per search/feed page before in-Python filtering; keeps a single
 # query cheap while cursor pagination walks the full stream across pages.
@@ -64,18 +63,6 @@ _FEED_CATEGORIES: tuple[tuple[str, str], ...] = (
 _FEED_TYPE_PREFIXES: tuple[str, ...] = tuple(prefix for prefix, _ in _FEED_CATEGORIES)
 
 
-def _event_asset_id(event: DomainEventEnvelopeV1) -> str | None:
-    for key in _ASSET_PAYLOAD_KEYS:
-        value = event.payload.get(key)
-        if isinstance(value, str) and value:
-            return value
-    if event.subject is not None and getattr(event.subject, "id", None):
-        subject_id = event.subject.id
-        if isinstance(subject_id, str) and subject_id.startswith("asset:"):
-            return subject_id
-    return None
-
-
 def _feed_category(event_type: str) -> str | None:
     for prefix, category in _FEED_CATEGORIES:
         if event_type.startswith(prefix):
@@ -96,12 +83,11 @@ class ConsoleService:
         events = await repo.list_by_run(
             run_id, from_sequence=from_sequence, limit=_SCAN_WINDOW
         )
-        text = request.text.lower() if request.text else None
         matched: list[ConsoleEventV1] = []
         last_sequence: int | None = None
         for event in events:
             last_sequence = event.sequence
-            if not self._matches(event, request, text):
+            if not self._matches(event, request):
                 continue
             matched.append(
                 ConsoleEventV1(
@@ -109,7 +95,7 @@ class ConsoleService:
                     sequence=event.sequence,
                     type=event.type,
                     sim_time=event.sim_time.isoformat(),
-                    asset_id=_event_asset_id(event),
+                    asset_id=event_asset_id(event),
                     payload=event.payload,
                 )
             )
@@ -193,21 +179,18 @@ class ConsoleService:
         self,
         event: DomainEventEnvelopeV1,
         request: ConsoleEventSearchRequestV1,
-        text: str | None,
     ) -> bool:
-        if request.event_type_prefix and not event.type.startswith(request.event_type_prefix):
-            return False
-        if request.asset_id and _event_asset_id(event) != request.asset_id:
-            return False
-        if request.from_sim_time and event.sim_time < request.from_sim_time:
-            return False
-        if request.to_sim_time and event.sim_time > request.to_sim_time:
-            return False
-        if text is not None:
-            haystack = f"{event.type} {event.payload}".lower()
-            if text not in haystack:
-                return False
-        return True
+        # One matcher for both surfaces: the agents' search_events tool runs the
+        # same filters, so a query the Evidence tab answers is a query the
+        # copilot can answer too — and a cited event id is searchable here.
+        return event_matches_filters(
+            event,
+            asset_id=request.asset_id,
+            event_type_prefix=request.event_type_prefix,
+            text=request.text,
+            from_sim_time=request.from_sim_time,
+            to_sim_time=request.to_sim_time,
+        )
 
     async def feed(
         self,
@@ -233,7 +216,7 @@ class ConsoleService:
                     category=category,
                     sim_time=event.sim_time.isoformat(),
                     initiator=_feed_initiator(event.payload),
-                    summary=_feed_summary(event.type, event.payload),
+                    summary=_feed_summary(event),
                     payload=event.payload,
                 )
             )
@@ -252,13 +235,8 @@ def _feed_initiator(payload: dict[str, Any]) -> str | None:
     return value if isinstance(value, str) else None
 
 
-def _feed_summary(event_type: str, payload: dict[str, Any]) -> str:
-    asset = None
-    for key in _ASSET_PAYLOAD_KEYS:
-        candidate = payload.get(key)
-        if isinstance(candidate, str) and candidate:
-            asset = candidate
-            break
+def _feed_summary(event: DomainEventEnvelopeV1) -> str:
+    asset = event_asset_id(event)
     if asset:
-        return f"{event_type} ({asset})"
-    return event_type
+        return f"{event.type} ({asset})"
+    return event.type
