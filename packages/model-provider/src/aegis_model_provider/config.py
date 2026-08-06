@@ -14,6 +14,16 @@ class ProviderKind(StrEnum):
     RECORDED = "recorded"
     OPENAI = "openai"
     OPENAI_COMPATIBLE = "openai-compatible"
+    OPENROUTER = "openrouter"
+    OLLAMA_CLOUD = "ollama-cloud"
+
+
+#: Kinds that reach a third-party endpoint with a per-user subscription key. They are
+#: selectable in the loadout dialog and require a stored credential; the local and
+#: fixture-serving kinds do not.
+CLOUD_PROVIDER_KINDS: frozenset[ProviderKind] = frozenset(
+    {ProviderKind.OPENAI, ProviderKind.OPENROUTER, ProviderKind.OLLAMA_CLOUD}
+)
 
 
 class ProviderSettings(BaseSettings):
@@ -63,9 +73,21 @@ class ProviderSettings(BaseSettings):
     # Must match the model id llama-server reports at /v1/models (its --alias or
     # the loaded GGUF basename). Requests may override this per model config.
     AEGIS_PROVIDER_LOCAL_MODEL: str = "local-model"
+    # OpenRouter and Ollama Cloud speak the same OpenAI chat-completions wire format.
+    # Their keys and models normally arrive per call, from the run owner's stored
+    # credential and the run's loadout; the env vars are the admin/debug fallback and
+    # stay unset (None) in a per-user deployment.
+    AEGIS_PROVIDER_OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    AEGIS_PROVIDER_OPENROUTER_API_KEY: str | None = None
+    AEGIS_PROVIDER_OPENROUTER_MODEL: str | None = None
+    AEGIS_PROVIDER_OLLAMA_CLOUD_BASE_URL: str = "https://ollama.com/v1"
+    AEGIS_PROVIDER_OLLAMA_CLOUD_API_KEY: str | None = None
+    AEGIS_PROVIDER_OLLAMA_CLOUD_MODEL: str | None = None
+
     AEGIS_PROVIDER_IN_MEMORY_ARTIFACTS: bool = False
     AEGIS_PROVIDER_EGRESS_ALLOWLIST: str = (
-        "https://api.openai.com/v1,http://localhost:8086/v1"
+        "https://api.openai.com/v1,http://localhost:8086/v1,"
+        "https://openrouter.ai/api/v1,https://ollama.com/v1"
     )
 
     @property

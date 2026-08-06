@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import pytest
 from aegis_contracts.generation import ProviderErrorCode
+from aegis_model_provider.adapters.ollama_cloud import OllamaCloudProvider
 from aegis_model_provider.adapters.openai_compatible import OpenAICompatibleProvider
 from aegis_model_provider.adapters.openai_hosted import OpenAIHostedProvider
+from aegis_model_provider.adapters.openrouter import OpenRouterProvider
 from aegis_model_provider.config import ProviderSettings
 from aegis_model_provider.errors import ProviderRuntimeError
 
@@ -73,6 +75,37 @@ def test_llama_server_local_endpoint_is_allowlisted() -> None:
     )
     provider = OpenAICompatibleProvider(settings)
     assert provider.provider_id == "openai-compatible"
+
+
+def test_openrouter_adapter_fails_closed_on_a_destination_outside_the_allowlist() -> None:
+    settings = ProviderSettings(
+        AEGIS_PROVIDER_OPENROUTER_BASE_URL="https://openrouter.ai.evil.example/api/v1",
+        AEGIS_PROVIDER_EGRESS_ALLOWLIST="https://openrouter.ai/api/v1",
+    )
+    with pytest.raises(ProviderRuntimeError) as exc:
+        OpenRouterProvider(settings)
+    assert exc.value.error.code == ProviderErrorCode.VALIDATION_FAILED
+
+
+def test_ollama_cloud_adapter_fails_closed_on_a_destination_outside_the_allowlist() -> None:
+    settings = ProviderSettings(
+        AEGIS_PROVIDER_OLLAMA_CLOUD_BASE_URL="https://ollama.com/v1",
+        AEGIS_PROVIDER_EGRESS_ALLOWLIST="https://api.openai.com/v1",
+    )
+    with pytest.raises(ProviderRuntimeError) as exc:
+        OllamaCloudProvider(settings)
+    assert exc.value.error.code == ProviderErrorCode.VALIDATION_FAILED
+
+
+def test_a_per_user_credential_cannot_redirect_a_cloud_adapter_off_the_allowlist() -> None:
+    # The credential seam supplies a key and a model id, never a destination:
+    # an override must not become a way to reach an unlisted host.
+    settings = ProviderSettings(
+        AEGIS_PROVIDER_OPENROUTER_BASE_URL="https://openrouter.ai/api/v1",
+        AEGIS_PROVIDER_EGRESS_ALLOWLIST="https://api.openai.com/v1",
+    )
+    with pytest.raises(ProviderRuntimeError):
+        OpenRouterProvider(settings, api_key_override="sk-or-user", model_id_override="a/b")
 
 
 def test_default_settings_target_llama_server_and_build_registry() -> None:

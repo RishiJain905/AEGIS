@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import re
 from datetime import UTC, datetime
@@ -130,8 +131,24 @@ def _is_model_loading(message: str, exc: Exception) -> bool:
 class OpenAIHostedProvider:
     provider_id = "openai"
 
-    def __init__(self, settings: ProviderSettings, *, base_url: str | None = None) -> None:
+    def __init__(
+        self,
+        settings: ProviderSettings,
+        *,
+        base_url: str | None = None,
+        api_key_override: str | None = None,
+        model_id_override: str | None = None,
+    ) -> None:
+        """``*_override`` carry per-call credentials — a run owner's stored API key and
+        the model their loadout pinned — which outrank the environment defaults.
+
+        Deliberately no destination override: the base URL comes from settings and is
+        still checked against the egress allowlist here, so supplying a credential can
+        never become a way to reach an unlisted host.
+        """
         self._settings = settings
+        self._api_key_override = api_key_override
+        self._model_id_override = model_id_override
         configured_base_url = (
             settings.AEGIS_PROVIDER_OPENAI_BASE_URL if base_url is None else base_url
         )
@@ -150,15 +167,24 @@ class OpenAIHostedProvider:
             ],
         )
 
-    def _client(self) -> Any:
-        if not self._settings.AEGIS_PROVIDER_OPENAI_API_KEY.strip():
+    def _configured_api_key(self) -> str | None:
+        """The environment's key for this adapter; subclasses point at their own var."""
+        return self._settings.AEGIS_PROVIDER_OPENAI_API_KEY
+
+    def _api_key(self) -> str:
+        api_key = (self._api_key_override or self._configured_api_key() or "").strip()
+        if not api_key:
             raise ProviderRuntimeError(
                 make_provider_error(
                     code=ProviderErrorCode.CREDENTIALS_MISSING,
-                    message="OpenAI provider credentials are not configured",
+                    message=f"No API key is configured for provider '{self.provider_id}'",
                     details={"providerId": self.provider_id},
                 )
             )
+        return api_key
+
+    def _client(self) -> Any:
+        api_key = self._api_key()
         try:
             from openai import AsyncOpenAI
         except ImportError as exc:
@@ -169,7 +195,7 @@ class OpenAIHostedProvider:
                 )
             ) from exc
         return AsyncOpenAI(
-            api_key=self._settings.AEGIS_PROVIDER_OPENAI_API_KEY,
+            api_key=api_key,
             base_url=self._base_url,
             **self._client_options(),
         )
@@ -188,8 +214,65 @@ class OpenAIHostedProvider:
             "max_retries": 0,
         }
 
+    def _default_model_id(self) -> str:
+        """The model to use when the request names no real one. Override beats env."""
+        return self._model_id_override or self._settings.AEGIS_PROVIDER_OPENAI_MODEL
+
     def _resolve_model_id(self, request: GenerationRequestV1) -> str:
-        return request.model_config_ref.model_id or self._settings.AEGIS_PROVIDER_OPENAI_MODEL
+        # Agent definitions carry synthetic ids like "openrouter-v1" (the runtime builds
+        # them from the provider id), which no real endpoint serves. Those defer to the
+        # pinned override or the env default; a request naming a real model still wins.
+        requested = request.model_config_ref.model_id
+        if requested and requested != f"{self.provider_id}-v1":
+            return requested
+        return self._default_model_id()
+
+    async def list_models(self) -> list[str]:
+        """The endpoint's catalogue, deduplicated and sorted.
+
+        The loadout dialog offers whatever the operator's own subscription serves, so
+        the list has to come from the provider rather than a hardcoded table. It goes
+        through the adapter (not ad-hoc HTTP) to keep the egress allowlist and the
+        credential seam on one path.
+        """
+        client = self._client()
+        try:
+            page = await client.models.list()
+        except Exception as exc:
+            message = str(exc)
+            if _is_auth_failure(message, exc):
+                raise ProviderRuntimeError(
+                    make_provider_error(
+                        code=ProviderErrorCode.CREDENTIALS_MISSING,
+                        message=f"Provider '{self.provider_id}' rejected the API key",
+                        details={"providerId": self.provider_id, "errorType": type(exc).__name__},
+                    )
+                ) from exc
+            raise ProviderRuntimeError(
+                make_provider_error(
+                    code=ProviderErrorCode.PROVIDER_UNAVAILABLE,
+                    message=f"Provider '{self.provider_id}' model listing failed",
+                    retryable=True,
+                    details={
+                        "providerId": self.provider_id,
+                        "errorType": type(exc).__name__,
+                        "providerMessage": _provider_message(message),
+                    },
+                )
+            ) from exc
+        finally:
+            await self._close_client(client)
+        return sorted({str(entry.id).strip() for entry in page.data if str(entry.id).strip()})
+
+    @staticmethod
+    async def _close_client(client: Any) -> None:
+        # A listing client is built for one call; without this its httpx pool leaks.
+        close = getattr(client, "close", None)
+        if close is None:
+            return
+        result = close()
+        if inspect.isawaitable(result):
+            await result
 
     #: Whether structured requests ride the server's ``response_format`` grammar.
     #: llama-server cannot combine a json_schema grammar with a reasoning model whose

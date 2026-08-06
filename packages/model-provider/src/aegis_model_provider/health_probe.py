@@ -31,7 +31,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 
-from aegis_model_provider.config import ProviderKind, ProviderSettings
+from aegis_model_provider.config import CLOUD_PROVIDER_KINDS, ProviderKind, ProviderSettings
 from aegis_model_provider.egress import assert_provider_destination_allowed
 from aegis_model_provider.redaction import redact_string
 
@@ -170,11 +170,24 @@ async def _list_models_via_sdk(
 
 def _endpoint_for(settings: ProviderSettings) -> tuple[str, str, str]:
     """(base_url, api_key, configured_model) for the configured provider kind."""
-    if settings.AEGIS_PROVIDER_DEFAULT is ProviderKind.OPENAI:
+    kind = settings.AEGIS_PROVIDER_DEFAULT
+    if kind is ProviderKind.OPENAI:
         return (
             settings.AEGIS_PROVIDER_OPENAI_BASE_URL,
             settings.AEGIS_PROVIDER_OPENAI_API_KEY,
             settings.AEGIS_PROVIDER_OPENAI_MODEL,
+        )
+    if kind is ProviderKind.OPENROUTER:
+        return (
+            settings.AEGIS_PROVIDER_OPENROUTER_BASE_URL,
+            settings.AEGIS_PROVIDER_OPENROUTER_API_KEY or "",
+            settings.AEGIS_PROVIDER_OPENROUTER_MODEL or "",
+        )
+    if kind is ProviderKind.OLLAMA_CLOUD:
+        return (
+            settings.AEGIS_PROVIDER_OLLAMA_CLOUD_BASE_URL,
+            settings.AEGIS_PROVIDER_OLLAMA_CLOUD_API_KEY or "",
+            settings.AEGIS_PROVIDER_OLLAMA_CLOUD_MODEL or "",
         )
     return (
         settings.AEGIS_PROVIDER_LOCAL_BASE_URL,
@@ -213,7 +226,7 @@ async def probe_model_provider(
             message="Provider base URL is not configured.",
         )
 
-    if kind is ProviderKind.OPENAI and not api_key.strip():
+    if kind in CLOUD_PROVIDER_KINDS and not api_key.strip():
         return _result(
             provider=provider,
             state=ProviderProbeState.SKIPPED,
