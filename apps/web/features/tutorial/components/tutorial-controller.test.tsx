@@ -103,12 +103,43 @@ const hoisted = vi.hoisted(() => ({
         },
       ],
     },
+    {
+      id: 'ch-three',
+      title: 'Three',
+      summary: 'Third',
+      section: 'cockpit',
+      beats: [
+        {
+          id: 'first-alert',
+          kind: 'do',
+          title: 'First alert',
+          body: [],
+          anchors: [],
+          pointerLabel: 'alerts',
+          objective: {
+            // Simulation-dependent: a finished run can never satisfy it, which is what
+            // raises the run-ended notice and the restart affordance.
+            evidence: 'alertRaised',
+            pending: 'Wait for the first alert',
+            done: 'Alert raised',
+            requirement: 'required',
+          },
+        },
+      ],
+    },
   ] satisfies TutorialChapter[],
 }));
 
 vi.mock('next/navigation', () => ({
   usePathname: () => hoisted.route.pathname,
   useRouter: () => ({ push: hoisted.route.push }),
+}));
+
+// The controller derives the training run's per-operator seed from the signed-in operator's
+// user id (see `tutorial-seed.ts`), so it needs the session even though the test tree has no
+// auth provider.
+vi.mock('@/features/auth', () => ({
+  useAuth: () => ({ actor: { userId: 'user:operator-alpha' } }),
 }));
 
 vi.mock('../tutorial-content', () => ({ TUTORIAL_CHAPTERS: hoisted.chapters }));
@@ -369,9 +400,11 @@ describe('TutorialController · evidence', () => {
   it('stands the polling down once the walkthrough is finished', () => {
     const { rerender } = renderController();
     act(() => {
-      latestProps()?.onJumpToChapter('ch-two');
+      latestProps()?.onJumpToChapter('ch-three');
     });
-    setEvidence({ assetSelected: true, reportReady: true });
+    // Jumping to the last chapter leaves every earlier objective outstanding, so all of
+    // them must be satisfied before the walkthrough counts as finished.
+    setEvidence({ assetSelected: true, reportReady: true, alertRaised: true });
     rerender();
 
     expect(hoisted.observationCalls.at(-1)?.enabled).toBe(false);
@@ -671,5 +704,28 @@ describe('TutorialController · holding the run clock', () => {
     expect(hoisted.observationCalls.some((call) => call.watchRunClock)).toBe(true);
     // The hold has been spent and no reached objective feeds off the simulation.
     expect(hoisted.observationCalls.at(-1)?.watchRunClock).toBe(false);
+  });
+
+  it('rebuilds the operator’s own training run when the walkthrough is stranded on an ended run', () => {
+    // Stranded on the simulation-dependent first-alert beat of a finished run: the overlay
+    // offers "Start training" and the rebuild uses the operator's derived seed, so the
+    // relaunch resolves to their own run id rather than another operator's.
+    seedProgress('run_a', { cursor: 3, reached: 3 });
+    hoisted.observation.runStatus = 'completed';
+    renderController();
+
+    expect(latestProps()?.onRestartTraining).toBeDefined();
+    act(() => {
+      latestProps()?.onRestartTraining?.();
+    });
+
+    expect(hoisted.createdRuns).toEqual([
+      {
+        scenarioPackagePath: 'scenarios/synthetic-training',
+        // FNV-1a of `user:operator-alpha` — the mocked signed-in operator's own seed.
+        seed: 1684221474,
+        restartExisting: true,
+      },
+    ]);
   });
 });

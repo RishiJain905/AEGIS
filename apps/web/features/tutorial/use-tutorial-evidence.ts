@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePathname } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery, type UseQueryOptions } from '@tanstack/react-query';
+import type { InvestigationDetailV1 } from '@aegis/contracts-ts';
 
 import { useRunAgentSessions } from '@/features/agent-chat/use-agent-chat';
 import { queryKeys } from '@/lib/api/query-keys';
@@ -210,12 +211,56 @@ export function useTutorialEvidence(
     incidents?.[0]?.id ??
     null;
 
-  const investigationQuery = useQuery({
-    queryKey: queryKeys.incidents.investigation(activeIncidentId ?? ''),
-    queryFn: ({ signal }) => client.getInvestigationDetail(activeIncidentId ?? '', signal),
-    enabled: needsInvestigation && Boolean(activeIncidentId),
-    refetchInterval: needsInvestigation ? POLL_INTERVAL_MS : false,
+  // Investigation details are read per incident, and the operator's direct actions anchor to
+  // the deterministic operator incident (`incident:inc_op_<runid>`) rather than whichever
+  // incident the operator happens to have open — so executed-action evidence must be read
+  // across every incident on the run, not just the "active" one. This is what the Observe
+  // beat was missing: the executed action lived on the operator incident while the evidence
+  // read the correlated incident's detail, so the objective could never advance. Proposals
+  // and approvals stay scoped to the active incident — they are facts about the case the
+  // operator is engaging, not about the run as a whole.
+  const incidentIds = useMemo(() => {
+    const ids = new Set(incidents?.map((incident) => incident.id) ?? []);
+    if (activeIncidentId) {
+      ids.add(activeIncidentId);
+    }
+    return [...ids];
+  }, [incidents, activeIncidentId]);
+
+  const investigationQueries = useQueries({
+    queries: incidentIds.map(
+      (incidentId): UseQueryOptions<InvestigationDetailV1> => ({
+        queryKey: queryKeys.incidents.investigation(incidentId),
+        queryFn: ({ signal }: { signal?: AbortSignal }) =>
+          client.getInvestigationDetail(incidentId, signal),
+        enabled: needsInvestigation,
+        refetchInterval: needsInvestigation ? POLL_INTERVAL_MS : false,
+      }),
+    ),
   });
+
+  const details = investigationQueries
+    .map((query) => query.data)
+    .filter((detail): detail is InvestigationDetailV1 => detail != null);
+  const activeDetail = details.find((detail) => detail.incidentId === activeIncidentId) ?? null;
+
+  const proposalRaised = (activeDetail?.proposals.length ?? 0) > 0;
+  const operatorActionExecuted = details.some((detail) => detail.executedActions.length > 0);
+  const containmentActionExecuted = details.some((detail) =>
+    detail.executedActions.some((action) => {
+      const proposal = detail.proposals.find((candidate) => candidate.id === action.proposalId);
+      if (!proposal) {
+        return false;
+      }
+      const command = proposal.scenarioCommand ?? proposal.command;
+      return !LOW_IMPACT_COMMANDS.has(command);
+    }),
+  );
+  const containmentResolved = activeDetail
+    ? activeDetail.approvals.length > 0 ||
+      activeDetail.executedActions.length > 0 ||
+      activeDetail.proposals.some((proposal) => TERMINAL_PROPOSAL_STATUSES.has(proposal.status))
+    : false;
 
   // The operator's own copilot threads. Tasks prove they asked; artifacts prove an agent
   // answered — two different beats, and on the local model minutes apart.
@@ -230,25 +275,6 @@ export function useTutorialEvidence(
     enabled: needsReport && reportEligible && Boolean(runId),
     refetchInterval: needsReport && reportEligible ? POLL_INTERVAL_MS : false,
   });
-
-  const detail = investigationQuery.data;
-  const proposalRaised = (detail?.proposals.length ?? 0) > 0;
-  const operatorActionExecuted = (detail?.executedActions.length ?? 0) > 0;
-  const containmentActionExecuted = detail
-    ? detail.executedActions.some((action) => {
-        const proposal = detail.proposals.find((candidate) => candidate.id === action.proposalId);
-        if (!proposal) {
-          return false;
-        }
-        const command = proposal.scenarioCommand ?? proposal.command;
-        return !LOW_IMPACT_COMMANDS.has(command);
-      })
-    : false;
-  const containmentResolved = detail
-    ? detail.approvals.length > 0 ||
-      detail.executedActions.length > 0 ||
-      detail.proposals.some((proposal) => TERMINAL_PROPOSAL_STATUSES.has(proposal.status))
-    : false;
 
   const sessions = agentSessionsQuery.data;
   const agentTaskCreated = sessions?.some((session) => session.tasks.length > 0) ?? false;

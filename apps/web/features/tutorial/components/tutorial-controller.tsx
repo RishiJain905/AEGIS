@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
+import { useAuth } from '@/features/auth';
 import { useCreateRun, useRunCommands } from '@/features/live-run/use-run-commands';
 
 import {
@@ -43,18 +44,18 @@ import {
   walkthroughNeedsLiveRun,
   withRunClockNotice,
 } from '../tutorial-run-clock';
+import { deriveTrainingSeed } from '../tutorial-seed';
 import { useTutorialEvidence } from '../use-tutorial-evidence';
 import { CoachMarkOverlay } from './coach-mark-overlay';
 
 /**
  * The training scenario's launch parameters, duplicated from the catalogue's
  * `SCENARIO_LAUNCH_CONFIG` on purpose: that table lives inside the scenarios route, and the
- * walkthrough must not import a page to start a run. The pinned seed is what makes every
- * training run tell the same story, so the two copies have to agree — see
- * `apps/web/src/app/(shell)/scenarios/page.tsx`.
+ * walkthrough must not import a page to start a run. The seed is derived per operator (see
+ * `tutorial-seed.ts`) so every training run tells the same story while each operator owns
+ * their own run — the two copies have to agree, so both derive from the same helper.
  */
 const TRAINING_PACKAGE_PATH = 'scenarios/synthetic-training';
-const TRAINING_SEED = 1000;
 
 // A run belongs to the guided tutorial when its scenario-version id carries this marker
 // (e.g. `scenario-version:1.0.0-synthetic-training`). Matching the marker rather than a
@@ -121,6 +122,7 @@ function extractRunId(pathname: string | null): string | null {
 export function TutorialController() {
   const pathname = usePathname();
   const router = useRouter();
+  const { actor } = useAuth();
 
   const beats = useMemo(() => flattenChapters(TUTORIAL_CHAPTERS), []);
 
@@ -356,9 +358,9 @@ export function TutorialController() {
     void createRun
       .mutateAsync({
         scenarioPackagePath: TRAINING_PACKAGE_PATH,
-        seed: TRAINING_SEED,
-        // The pinned seed derives one run id forever, so the finished run has to be torn
-        // down and rebuilt rather than resumed.
+        // The per-operator seed derives the operator's own run id forever, so the finished
+        // run has to be torn down and rebuilt rather than resumed.
+        seed: deriveTrainingSeed(actor?.userId ?? null),
         restartExisting: true,
       })
       .then((result) => {
@@ -366,11 +368,11 @@ export function TutorialController() {
         router.push(`/runs/${result.run.id}`);
       })
       .catch(() => {
-        // The launch surface owns the explanation (a pinned-seed run owned by another
-        // operator answers 409). Leave the walkthrough as it is and send them there.
+        // The launch surface owns the explanation (a refused launch answers 409 with
+        // RUN_OWNED_BY_ANOTHER_USER). Leave the walkthrough as it is and send them there.
         router.push('/scenarios');
       });
-  }, [createRun, router]);
+  }, [createRun, router, actor?.userId]);
 
   const onTutorialSurface = pathname ? TUTORIAL_SURFACE_PATTERN.test(pathname) : false;
 

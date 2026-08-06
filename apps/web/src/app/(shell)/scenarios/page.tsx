@@ -12,9 +12,11 @@ import { CommandCentreShell } from '@/features/shell/components/command-centre-s
 import { resumeRun, useCreateRun } from '@/features/live-run';
 import { ApiClientError } from '@/lib/api/types';
 import { useRuns, useScenarios } from '@/features/shell/hooks/use-shell-queries';
-// Import the pure storage helper directly (not the feature barrel) so the catalogue page
-// does not pull the overlay/evidence/api graph into its bundle.
+import { useAuth } from '@/features/auth';
+// Import the pure helpers directly (not the feature barrel) so the catalogue page does not
+// pull the overlay/evidence/api graph into its bundle.
 import { armTutorial } from '@/features/tutorial/tutorial-storage';
+import { deriveTrainingSeed } from '@/features/tutorial/tutorial-seed';
 
 // Demo/admin owner assigned to seeded/legacy runs by migration 014. Runs owned by this
 // identity are surfaced as demo/fixture data, not an ordinary result. See ADR 0034.
@@ -27,6 +29,12 @@ interface ScenarioLaunchConfig {
   // run — each run gets a different hidden root cause. Kept optional (not removed) so a
   // deterministic tutorial scenario can still pin a seed.
   seed?: number;
+  // The tutorial derives a stable per-operator seed from the signed-in operator's user id
+  // (see `deriveTrainingSeed`), so every operator owns their own training run instead of
+  // the whole database sharing one run id — the cross-operator ownership dead end QA found
+  // on 2026-08-06. The story is unaffected: the training scenario's attack branch is fixed,
+  // so any seed produces the same scheduled attack events.
+  perOperatorSeed?: boolean;
   // Scenario-version ids that belong to this scenario, used to match the caller's owned
   // runs (GET /runs is already owner-scoped server-side) to a "Resume latest run" action.
   versionIds: string[];
@@ -35,11 +43,12 @@ interface ScenarioLaunchConfig {
 const TRAINING_SCENARIO_ID = 'scenario:synthetic-training';
 
 const SCENARIO_LAUNCH_CONFIG: Record<string, ScenarioLaunchConfig> = {
-  // The guided tutorial pins seed 1000 so every training run tells the same story — the
-  // walkthrough milestones line up deterministically.
+  // The guided tutorial derives a per-operator seed so every training run tells the same
+  // story — the walkthrough milestones line up deterministically — while each operator's
+  // run stays their own.
   [TRAINING_SCENARIO_ID]: {
     packagePath: 'scenarios/synthetic-training',
-    seed: 1000,
+    perOperatorSeed: true,
     versionIds: ['scenario-version:1.0.0-synthetic-training'],
   },
   // The live operation launches seedless: the server draws a fresh random seed per run,
@@ -107,11 +116,27 @@ function scenarioSeed(scenarioId: string): number | undefined {
   return SCENARIO_LAUNCH_CONFIG[scenarioId]?.seed;
 }
 
+/**
+ * The seed a launch of `scenarioId` will actually use, for the signed-in operator.
+ *
+ * Per-operator scenarios (the tutorial) derive their seed from the operator's user id, so
+ * the catalogue can show the real number the run page will display. A null actor falls back
+ * to the legacy shared seed — unreachable inside the auth gate, but harmless to guard.
+ */
+function launchSeedFor(scenarioId: string, actorUserId: string | null): number | undefined {
+  const config = SCENARIO_LAUNCH_CONFIG[scenarioId];
+  if (config?.perOperatorSeed) {
+    return deriveTrainingSeed(actorUserId);
+  }
+  return config?.seed;
+}
+
 interface RunSummary {
   id: string;
   scenarioVersionId: string;
   status: string;
   startedAt: string;
+  createdAt?: string | null;
   ownerUserId?: string | null;
 }
 
@@ -127,9 +152,12 @@ function latestOwnedRun(
   if (!matching.length) {
     return undefined;
   }
-  // Most recent by start time. GET /runs only returns the caller's own runs (admins see
+  // Most recent by wall-clock creation. `startedAt` is the deterministic scenario epoch —
+  // identical for every run of the same scenario — so it cannot order runs; `createdAt`
+  // (null on legacy rows) can. GET /runs only returns the caller's own runs (admins see
   // all), so any match here is a run the current account may resume.
-  return [...matching].sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
+  const sorted = [...matching].sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''));
+  return sorted[sorted.length - 1];
 }
 
 // Quiet uppercase mono metadata chip — key/value pair, no chrome competing with the
@@ -150,11 +178,12 @@ function MetaChip({ label, value }: { label: string; value: string }) {
 /**
  * What to tell the operator when a launch is refused.
  *
- * A pinned-seed scenario — the tutorial, at seed 1000 — derives one run id for the whole
- * database, so whoever launches it first owns it. The server used to answer 200 with that
- * run and the operator landed in a workspace they had no permission to read; it now
- * refuses with `RUN_OWNED_BY_ANOTHER_USER`, and the refusal is only useful if we say what
- * it was.
+ * A pinned-seed scenario derives one run id for the whole database, so whoever launches it
+ * first owns it. The server used to answer 200 with that run and the operator landed in a
+ * workspace they had no permission to read; it now refuses with `RUN_OWNED_BY_ANOTHER_USER`,
+ * and the refusal is only useful if we say what it was. (The tutorial no longer hits this —
+ * it derives a per-operator seed — but the guard stays for any scenario that pins a shared
+ * seed.)
  */
 function launchErrorMessage(error: unknown): string {
   if (!(error instanceof ApiClientError)) {
@@ -171,6 +200,7 @@ function launchErrorMessage(error: unknown): string {
 
 export default function ScenariosPage() {
   const router = useRouter();
+  const { actor } = useAuth();
   const scenariosQuery = useScenarios();
   const runsQuery = useRuns();
   const createRun = useCreateRun();
@@ -182,14 +212,15 @@ export default function ScenariosPage() {
     void createRun
       .mutateAsync({
         scenarioPackagePath: scenarioPackagePath(scenarioId),
-        // undefined for seedless scenarios → server draws a random seed.
-        seed: scenarioSeed(scenarioId),
+        // undefined for seedless scenarios → server draws a random seed; the tutorial
+        // derives a stable per-operator seed so each operator owns their own run.
+        seed: launchSeedFor(scenarioId, actor?.userId ?? null),
         loadout,
         commanderIntent,
-        // The tutorial's pinned seed derives one run id for the lifetime of the database,
-        // so without this a relaunch resumes the first training run — long since finished,
-        // which drops the operator straight into the debrief. Ask the server to destroy and
-        // rebuild it instead. Silent Relay is seedless and never reaches that server path.
+        // The tutorial's per-operator seed derives one run id per operator, so without this
+        // a relaunch resumes the operator's own earlier training run — long since finished,
+        // which drops them straight into the debrief. Ask the server to destroy and rebuild
+        // it instead. Silent Relay is seedless and never reaches that server path.
         restartExisting: isTutorial,
       })
       .then((result) => {
@@ -382,7 +413,7 @@ export default function ScenariosPage() {
                           <MetaChip label="ID" value={scenarioId} />
                           <MetaChip
                             label="Seed"
-                            value={`${scenarioSeed(scenarioId)?.toString() ?? 'Server RNG'} · ${presentation.seedCaption}`}
+                            value={`${launchSeedFor(scenarioId, actor?.userId ?? null)?.toString() ?? 'Server RNG'} · ${presentation.seedCaption}`}
                           />
                           {latestRun ? (
                             <span className="inline-flex items-center gap-1.5 rounded-[var(--aegis-radius-sm)] border border-[color-mix(in_srgb,var(--aegis-accent-line)_45%,transparent)] bg-[var(--aegis-accent-soft)] px-2 py-1">

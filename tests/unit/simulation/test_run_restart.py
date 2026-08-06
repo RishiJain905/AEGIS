@@ -211,11 +211,14 @@ def test_launch_by_a_non_owner_is_refused_instead_of_handing_over_a_foreign_run(
 
 
 def test_operator_starting_the_tutorial_after_another_identity_owns_it_is_refused() -> None:
-    """BUG-001: the tutorial is pinned to seed 1000, so its run id is the same for everyone.
+    """BUG-001: a pinned-seed launch must never resolve to a run the caller cannot read.
 
     The reported failure was an operator whose "Start new run" resolved to a run owned by
     ``user:acct_…`` — a different identity — and answered 200 with ``replayed: true``. The
-    launch must fail loudly instead, whether or not ``restartExisting`` was asked for.
+    launch must fail loudly instead, whether or not ``restartExisting`` was asked for. The
+    live tutorial no longer reaches this path (the web client derives a per-operator seed, so
+    each operator's training run is their own), but the guard stays for any scenario that
+    pins a shared seed.
     """
     existing = _existing_run(owner_user_id="user:acct_9020b4189b4c9d8b620eb455")
     uow = _FakeUnitOfWork(runs=_FakeRunRepository(run=existing))

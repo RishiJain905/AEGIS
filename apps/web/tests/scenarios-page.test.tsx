@@ -28,6 +28,12 @@ vi.mock('@/features/shell/hooks/use-shell-queries', () => ({
   useRuns,
 }));
 
+// The tutorial derives a per-operator seed from the signed-in operator's user id, so the
+// catalogue needs the session to know which seed to show and launch with.
+vi.mock('@/features/auth', () => ({
+  useAuth: () => ({ actor: { userId: 'user:operator-alpha' } }),
+}));
+
 import ScenariosPage from '@/app/(shell)/scenarios/page';
 
 const SILENT_RELAY = {
@@ -165,9 +171,10 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
   });
 });
 
-// The tutorial pins seed 1000, so its run id is derived once and reused forever: relaunching
-// replaces the existing training run rather than adding one. The card has to say that, and
-// the request has to ask the server for it.
+// The tutorial derives a stable per-operator seed from the signed-in operator's user id, so
+// each operator owns their own training run: relaunching replaces that operator's run rather
+// than adding one, and no operator can ever trip the cross-operator ownership refusal. The
+// card has to say that, and the request has to ask the server for it.
 describe('ScenariosPage tutorial relaunch', () => {
   beforeEach(() => {
     push.mockReset();
@@ -219,7 +226,9 @@ describe('ScenariosPage tutorial relaunch', () => {
     await waitFor(() => {
       expect(mutateAsync).toHaveBeenCalledWith({
         scenarioPackagePath: 'scenarios/synthetic-training',
-        seed: 1000,
+        // FNV-1a of `user:operator-alpha` — the mocked signed-in operator's own seed, not
+        // the legacy shared 1000: every operator's tutorial run is theirs alone.
+        seed: 1684221474,
         loadout: undefined,
         commanderIntent: undefined,
         restartExisting: true,
@@ -228,5 +237,14 @@ describe('ScenariosPage tutorial relaunch', () => {
     await waitFor(() => {
       expect(push).toHaveBeenCalledWith('/runs/run_training_1');
     });
+  });
+
+  it('shows the operator’s own derived seed on the tutorial card', () => {
+    useRuns.mockReturnValue(runsResult([]));
+
+    render(<ScenariosPage />);
+
+    const chip = screen.getByText(/1684221474/);
+    expect(chip).toBeInTheDocument();
   });
 });

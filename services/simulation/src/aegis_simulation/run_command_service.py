@@ -208,8 +208,10 @@ def _require_run_access(
     ``UNAUTHORIZED`` is rendered by the runs router as HTTP 409 with the
     ``RUN_OWNED_BY_ANOTHER_USER`` code — a conflict rather than a forbidden, because the
     caller is allowed to create runs; what they cannot have is *this* run. Pinned-seed
-    scenarios (the guided tutorial launches at seed 1000) derive one run id per
-    (seed, scenario version) for everybody, so whoever launches one first owns it.
+    scenarios derive one run id per (seed, scenario version) for everybody, so whoever
+    launches one first owns it. (The guided tutorial no longer hits this: the web client
+    derives a stable per-operator seed, so each operator's training run is their own — but
+    the guard stays for any scenario that pins a shared seed.)
 
     The refused run's id is deliberately *not* in the error. It would be harmless as
     disclosure — the caller supplied the seed the id is derived from — but this is the
