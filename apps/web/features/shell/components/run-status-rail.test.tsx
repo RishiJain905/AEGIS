@@ -64,6 +64,24 @@ describe('describeSim', () => {
   it('says commands still execute while paused', () => {
     expect(describeSim('paused').detail).toMatch(/frozen timeline/i);
   });
+
+  it('explains the terminal reason from the resolved verdict', () => {
+    // P3 "Silent Relay horizon is opaque": the 00:06:15 boundary is the attacker's
+    // exfiltration, not a premature stop.
+    const reading = describeSim('stopped', {
+      outcome: 'loss_exfiltration',
+      reason: 'exfiltration_completed',
+      resolvedSimTime: '2026-01-01T00:06:15.000Z',
+    });
+    expect(reading.terminal).toBe(true);
+    expect(reading.detail).toMatch(/exfiltrated data at 00:06:15/i);
+    expect(reading.detail).toMatch(/read-only/i);
+  });
+
+  it('keeps the generic terminal copy when no verdict has landed', () => {
+    expect(describeSim('stopped', null).detail).toMatch(/was stopped/i);
+    expect(describeSim('completed', undefined).detail).toMatch(/ran to completion/i);
+  });
 });
 
 describe('describePosture', () => {

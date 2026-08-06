@@ -63,6 +63,26 @@ export const timelineEntrySchema = z
 
 export type TimelineEntryV1 = z.infer<typeof timelineEntrySchema>;
 
+/**
+ * The run's resolved win/lose verdict, projected from `sim.run.outcome_resolved`.
+ *
+ * The verdict is announced while the run is still `running` (the ticker STOPs right
+ * after), so the replicated state carries it separately from `runStatus` — the SIM
+ * instrument reads both to explain *why* a terminal run ended. Only the fields the
+ * cockpit narrates are projected; the full verdict (disruption cost, campaign ids)
+ * stays in the event payload and the after-action report.
+ */
+export const runOutcomeSchema = z
+  .object({
+    outcome: z.string().min(1),
+    reason: z.string().min(1),
+    resolvedSimTime: simTimestampSchema,
+    resolvedSequence: sequenceSchema,
+  })
+  .strict();
+
+export type RunOutcomeV1 = z.infer<typeof runOutcomeSchema>;
+
 export const runReplicatedStateSchema = z
   .object({
     schemaVersion: z.number().int().min(1),
@@ -76,6 +96,9 @@ export const runReplicatedStateSchema = z
     isStale: z.boolean(),
     locallyPaused: z.boolean(),
     seenEventIds: z.array(z.string().min(1)).default([]),
+    // The run's resolved verdict, once `sim.run.outcome_resolved` has been applied.
+    // Additive optional (schemaVersion stays 1): null until the verdict lands.
+    runOutcome: runOutcomeSchema.nullable().default(null),
   })
   .strict()
   .superRefine((value, ctx) => {
@@ -113,6 +136,13 @@ export const realtimeReducerActionSchema = z.discriminatedUnion('type', [
       type: z.literal('update_run_status'),
       runStatus: z.string().min(1),
       simTime: simTimestampSchema,
+      sequence: sequenceSchema,
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal('set_run_outcome'),
+      outcome: runOutcomeSchema,
       sequence: sequenceSchema,
     })
     .strict(),

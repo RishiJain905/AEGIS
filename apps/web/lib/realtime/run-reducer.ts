@@ -28,6 +28,7 @@ export function createInitialRunReplicatedState(
     isStale: false,
     locallyPaused: false,
     seenEventIds: [],
+    runOutcome: null,
   };
 }
 
@@ -78,6 +79,23 @@ export function runReplicatedReducer(
               : state.connectionHealth === ConnectionHealthState.SIMULATOR_PAUSED
                 ? ConnectionHealthState.CONNECTED
                 : state.connectionHealth,
+      };
+    case 'set_run_outcome':
+      // The verdict is fire-once and rides alongside the other actions for the same
+      // event, so it routinely arrives at a sequence already claimed by a sibling
+      // action — same strictly-older rule as `update_run_status`. It must also claim
+      // the sequence: the STOP that follows lands at the next sequence, and a cursor
+      // that never advanced past the verdict would read the STOP as a gap.
+      if (action.sequence < state.lastAppliedSequence) {
+        return state;
+      }
+      if (state.connectionHealth === ConnectionHealthState.GAP) {
+        return state;
+      }
+      return {
+        ...state,
+        runOutcome: action.outcome,
+        lastAppliedSequence: Math.max(state.lastAppliedSequence, action.sequence),
       };
     case 'append_timeline_entry': {
       if (action.entry.sequence <= state.lastAppliedSequence) {

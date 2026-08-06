@@ -7,7 +7,7 @@ import { ActionResultSlot, AssetCommandBar } from '@/features/operator-actions';
 import { RunTape } from '@/features/timeline';
 import { isCockpitShortcutKey } from '@/lib/cockpit-keys';
 import { isTypingTarget } from '@/lib/keyboard';
-import { isRunTerminal } from '@/lib/run-status';
+import { describeRunOutcome, isRunTerminal } from '@/lib/run-status';
 import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 
 import { CopilotChip } from './copilot-chip';
@@ -42,6 +42,11 @@ function TimelineSemanticsNotice() {
   }
 
   if (isRunTerminal(runStatus)) {
+    // Why the run ended, when the verdict has landed: Silent Relay runs end at 00:06:15
+    // because the attacker exfiltrated, and "the timeline is read-only" alone reads that
+    // fixed boundary as a premature stop. The verdict is announced before the STOP, so a
+    // terminal run with an outcome always has it by the time this ribbon renders.
+    const outcomeReading = describeRunOutcome(liveRun.state.runOutcome);
     return (
       <p
         role="status"
@@ -51,7 +56,8 @@ function TimelineSemanticsNotice() {
         <span className="font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-[var(--aegis-text-secondary)]">
           Run ended
         </span>
-        The timeline is read-only; commands can no longer execute.
+        {outcomeReading !== null ? `${outcomeReading.detail} ` : ''}The timeline is read-only;
+        commands can no longer execute.
       </p>
     );
   }

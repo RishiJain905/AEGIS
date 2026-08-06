@@ -161,6 +161,69 @@ describe('runReplicatedReducer', () => {
     expect(state.connectionHealth).toBe(ConnectionHealthState.CONNECTED);
   });
 
+  it('projects the resolved verdict and keeps the run status running until the STOP', () => {
+    // The ticker emits `sim.run.outcome_resolved` while the run is still `running` and
+    // STOPs right after; the SIM instrument reads both to explain why the run ended.
+    let state = createInitialRunReplicatedState(baseEvent.runId);
+    // The verdict lands at the run head (SEQ 283); advance the cursor there first so the
+    // projector sees a contiguous stream rather than a gap.
+    state = runReplicatedReducer(state, {
+      type: 'advance_sequence',
+      sequence: 282,
+      eventId: 'evt_prior',
+    });
+    const outcomeEvent: DomainEventEnvelopeV1 = {
+      ...baseEvent,
+      eventId: 'evt_outcome',
+      sequence: 283,
+      type: 'sim.run.outcome_resolved',
+      payload: {
+        schemaVersion: 1,
+        outcome: 'loss_exfiltration',
+        reason: 'exfiltration_completed',
+        resolvedSimTime: '2026-01-01T00:06:15.000Z',
+        resolvedSequence: 283,
+        disruptionCost: 0.0,
+        peakDisruptionCost: 0.0,
+        needlessCriticalOutages: [],
+        neutralizedCampaignIds: [],
+        succeededCampaignIds: ['campaign-credentials-relay'],
+      },
+    };
+    for (const action of projectDomainEventToActions(outcomeEvent, {
+      lastAppliedSequence: state.lastAppliedSequence,
+      seenEventIds: new Set(state.seenEventIds),
+      knownNodes: new Map(),
+    })) {
+      state = runReplicatedReducer(state, action);
+    }
+
+    expect(state.runOutcome).toEqual({
+      outcome: 'loss_exfiltration',
+      reason: 'exfiltration_completed',
+      resolvedSimTime: '2026-01-01T00:06:15.000Z',
+      resolvedSequence: 283,
+    });
+    // The verdict does not change the run status — the STOP event that follows does.
+    expect(state.runStatus).toBe('created');
+
+    const stopEvent: DomainEventEnvelopeV1 = {
+      ...baseEvent,
+      eventId: 'evt_stop',
+      sequence: 284,
+      type: 'sim.run.stopped',
+    };
+    for (const action of projectDomainEventToActions(stopEvent, {
+      lastAppliedSequence: state.lastAppliedSequence,
+      seenEventIds: new Set(state.seenEventIds),
+      knownNodes: new Map(),
+    })) {
+      state = runReplicatedReducer(state, action);
+    }
+    expect(state.runStatus).toBe('stopped');
+    expect(state.runOutcome?.outcome).toBe('loss_exfiltration');
+  });
+
   it('marks gap and stops applying until recovery', () => {
     let state = createInitialRunReplicatedState(baseEvent.runId);
     state = runReplicatedReducer(state, {

@@ -30,10 +30,10 @@ import { useCockpitUiStore } from '@/stores/cockpit-ui-store';
 
 const RUN_ID = 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV';
 
-function liveRunWithStatus(runStatus: string) {
+function liveRunWithStatus(runStatus: string, runOutcome: unknown = null) {
   return {
     isLiveMode: true,
-    state: { runStatus },
+    state: { runStatus, runOutcome },
   };
 }
 
@@ -159,5 +159,22 @@ describe('Console execution-semantics notice (BUG-012)', () => {
     useLiveRun.mockReturnValue(liveRunWithStatus('stopped'));
     render(<Console runId={RUN_ID} />);
     expect(screen.getByTestId('run-ended-notice')).toHaveTextContent(/read-only/i);
+  });
+
+  it('explains why the run ended when the verdict has landed', () => {
+    // P3 "Silent Relay horizon is opaque": a run that ends at 00:06:15 because the
+    // attacker exfiltrated must not read as a premature stop.
+    useLiveRun.mockReturnValue(
+      liveRunWithStatus('stopped', {
+        outcome: 'loss_exfiltration',
+        reason: 'exfiltration_completed',
+        resolvedSimTime: '2026-01-01T00:06:15.000Z',
+        resolvedSequence: 284,
+      }),
+    );
+    render(<Console runId={RUN_ID} />);
+    const notice = screen.getByTestId('run-ended-notice');
+    expect(notice).toHaveTextContent(/exfiltrated data at 00:06:15/i);
+    expect(notice).toHaveTextContent(/read-only/i);
   });
 });

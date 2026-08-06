@@ -3,6 +3,8 @@
 import { ConnectionHealthState } from '@aegis/contracts-ts';
 import { cn } from '@aegis/ui';
 
+import { describeRunOutcome } from '@/lib/run-status';
+
 /**
  * The mission rail — four instruments, four facts, one shared vocabulary.
  *
@@ -147,7 +149,15 @@ export interface SimReading {
 }
 
 /** Describe the simulation lifecycle — is simulated time moving, and can it still? */
-export function describeSim(runStatus: string | undefined): SimReading {
+export function describeSim(
+  runStatus: string | undefined,
+  outcome?: { outcome: string; reason: string; resolvedSimTime: string } | null,
+): SimReading {
+  // A terminal run's reason comes from its resolved verdict when there is one: Silent
+  // Relay runs end at 00:06:15 because the attacker exfiltrated, and "the scenario ran to
+  // completion" would read that fixed boundary as a premature stop. The verdict is
+  // announced before the STOP, so a terminal status with an outcome always has it.
+  const outcomeReading = describeRunOutcome(outcome);
   switch (runStatus) {
     case 'running':
       return {
@@ -171,7 +181,9 @@ export function describeSim(runStatus: string | undefined): SimReading {
         glyph: '■',
         tone: 'ended',
         terminal: true,
-        detail: 'The scenario ran to completion. The timeline is read-only.',
+        detail: outcomeReading
+          ? `${outcomeReading.detail} The timeline is read-only.`
+          : 'The scenario ran to completion. The timeline is read-only.',
       };
     case 'stopped':
       return {
@@ -179,7 +191,9 @@ export function describeSim(runStatus: string | undefined): SimReading {
         glyph: '■',
         tone: 'ended',
         terminal: true,
-        detail: 'The run was stopped. The timeline is read-only.',
+        detail: outcomeReading
+          ? `${outcomeReading.detail} The timeline is read-only.`
+          : 'The run was stopped. The timeline is read-only.',
       };
     case 'created':
       return {
@@ -302,6 +316,8 @@ export interface RunStatusRailProps {
   connectionHealth?: string;
   connectionStatus?: string;
   runStatus?: string;
+  /** The run's resolved verdict, when the live stream has projected it. */
+  runOutcome?: { outcome: string; reason: string; resolvedSimTime: string } | null;
   /** Disclosed graph nodes; posture derives from their worst status. */
   nodes?: readonly { status: string }[];
   reportAvailable?: boolean;
@@ -323,12 +339,13 @@ export function RunStatusRail({
   connectionHealth,
   connectionStatus,
   runStatus,
+  runOutcome,
   nodes,
   reportAvailable = false,
   hasRun = true,
 }: RunStatusRailProps) {
   const link = describeLink({ isLiveMode, health: connectionHealth, connectionStatus });
-  const sim = describeSim(runStatus);
+  const sim = describeSim(runStatus, runOutcome);
   const posture = describePosture(nodes);
   const report = describeReport({ runStatus, reportAvailable });
 

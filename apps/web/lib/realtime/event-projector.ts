@@ -284,6 +284,33 @@ export function projectDomainEventToActions(
     });
   }
 
+  // The win/lose verdict. Announced while the run is still `running` (the ticker STOPs
+  // right after), so it is projected into its own state slot rather than a status — the
+  // SIM instrument reads both to explain why a terminal run ended. The full verdict
+  // (disruption cost, campaign ids) stays in the payload for the after-action; the
+  // cockpit only narrates the outcome, reason, and resolution time.
+  if (event.type === 'sim.run.outcome_resolved') {
+    const payload = event.payload;
+    const outcome = typeof payload.outcome === 'string' ? payload.outcome : null;
+    const reason = typeof payload.reason === 'string' ? payload.reason : null;
+    const resolvedSimTime =
+      typeof payload.resolvedSimTime === 'string' ? payload.resolvedSimTime : null;
+    const resolvedSequence =
+      typeof payload.resolvedSequence === 'number' ? payload.resolvedSequence : null;
+    if (
+      outcome !== null &&
+      reason !== null &&
+      resolvedSimTime !== null &&
+      resolvedSequence !== null
+    ) {
+      actions.push({
+        type: 'set_run_outcome',
+        outcome: { outcome, reason, resolvedSimTime, resolvedSequence },
+        sequence: event.sequence,
+      });
+    }
+  }
+
   const nodeDelta = buildNodeDeltaFromStatusChange(event, options.knownNodes);
   if (nodeDelta !== null) {
     actions.push({ type: 'apply_graph_delta', delta: nodeDelta });

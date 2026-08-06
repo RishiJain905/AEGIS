@@ -99,6 +99,7 @@ export function StatusStrip({ runId }: StatusStripProps) {
         connectionHealth={isLiveMode ? liveRun.state.connectionHealth : undefined}
         connectionStatus={connectionStatus}
         runStatus={runStatus}
+        runOutcome={isLiveMode ? liveRun.state.runOutcome : undefined}
         nodes={postureNodes}
         reportAvailable={reportQuery.data !== undefined}
         hasRun={Boolean(runId)}
