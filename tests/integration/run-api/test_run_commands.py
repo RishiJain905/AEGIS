@@ -77,6 +77,10 @@ def test_create_run_persists_requested_loadout(api_client: TestClient) -> None:
         "biasGuard": False,
         "threatTempo": False,
         "roe": "forward_deployed",
+        # A loadout that names no model provider serializes both fields as null, which
+        # is what every run created before those fields existed also reads as.
+        "providerId": None,
+        "modelId": None,
     }
 
     run_id = create_response.json()["run"]["id"]

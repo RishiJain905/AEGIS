@@ -137,6 +137,11 @@ export const runLoadoutSchema = z
     biasGuard: z.boolean().default(true),
     threatTempo: z.boolean().default(true),
     roe: rulesOfEngagementSchema.default('investigate'),
+    // Which model drives every agent generation in this run. Both null means the
+    // deployment default, which is what every run launched before these fields existed
+    // carries — hence optional, and hence no schema version bump. Never a credential.
+    providerId: z.string().max(64).nullable().optional(),
+    modelId: z.string().max(256).nullable().optional(),
   })
   .strict();
 

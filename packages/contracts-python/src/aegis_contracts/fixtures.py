@@ -166,6 +166,10 @@ from aegis_contracts.proposals import (
     TriggerBastionRequestV1,
     TriggerWardenRequestV1,
 )
+from aegis_contracts.provider_credentials import (
+    ProviderCredentialStatusV1,
+    ProviderModelListV1,
+)
 from aegis_contracts.realtime import (
     BackfillRequestV1,
     BackfillResultV1,
@@ -423,6 +427,8 @@ FIXTURE_MODEL_MAP: dict[str, type[BaseModel]] = {
     "operator_hypothesis_request_v1": OperatorHypothesisRequestV1,
     "run_feed_entry_v1": RunFeedEntryV1,
     "run_feed_page_v1": RunFeedPageV1,
+    "provider_credential_status_v1": ProviderCredentialStatusV1,
+    "provider_model_list_v1": ProviderModelListV1,
     "ghost_decision_point_v1": GhostDecisionPointV1,
     "ghost_decision_points_v1": GhostDecisionPointsV1,
     "ghost_branch_request_v1": GhostBranchRequestV1,

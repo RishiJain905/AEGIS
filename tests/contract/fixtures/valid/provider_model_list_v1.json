@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "provider": "ollama-cloud",
+  "models": [
+    { "id": "gpt-oss:120b", "label": "gpt-oss:120b" },
+    { "id": "qwen3-coder:480b", "label": "qwen3-coder:480b" }
+  ]
+}

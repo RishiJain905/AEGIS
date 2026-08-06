@@ -222,6 +222,10 @@ OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION: Final[int] = 1
 RUN_FEED_ENTRY_SCHEMA_VERSION: Final[int] = 1
 RUN_FEED_PAGE_SCHEMA_VERSION: Final[int] = 1
 
+# Cloud model providers — per-user credential status and provider catalogues.
+PROVIDER_CREDENTIAL_STATUS_SCHEMA_VERSION: Final[int] = 1
+PROVIDER_MODEL_LIST_SCHEMA_VERSION: Final[int] = 1
+
 # Containment blast-radius preview (pre-approval decision support; deterministic graph traversal).
 BLAST_RADIUS_PREVIEW_SCHEMA_VERSION: Final[int] = 1
 
@@ -434,6 +438,8 @@ SUPPORTED_SCHEMA_VERSIONS: Final[dict[str, frozenset[int]]] = {
     "operator_hypothesis_request": frozenset({OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION}),
     "run_feed_entry": frozenset({RUN_FEED_ENTRY_SCHEMA_VERSION}),
     "run_feed_page": frozenset({RUN_FEED_PAGE_SCHEMA_VERSION}),
+    "provider_credential_status": frozenset({PROVIDER_CREDENTIAL_STATUS_SCHEMA_VERSION}),
+    "provider_model_list": frozenset({PROVIDER_MODEL_LIST_SCHEMA_VERSION}),
     "blast_radius_preview": frozenset({BLAST_RADIUS_PREVIEW_SCHEMA_VERSION}),
     "ghost_decision_point": frozenset({GHOST_DECISION_POINT_SCHEMA_VERSION}),
     "ghost_decision_points": frozenset({GHOST_DECISION_POINTS_SCHEMA_VERSION}),

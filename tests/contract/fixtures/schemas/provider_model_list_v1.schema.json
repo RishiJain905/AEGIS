@@ -1,0 +1,50 @@
+{
+  "$defs": {
+    "ProviderModelEntryV1": {
+      "additionalProperties": false,
+      "description": "One selectable model. ``label`` is what the picker shows; ``id`` is what is sent.",
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": ["id", "label"],
+      "title": "ProviderModelEntryV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A provider's live catalogue for the account that asked.",
+  "properties": {
+    "models": {
+      "items": {
+        "$ref": "#/$defs/ProviderModelEntryV1"
+      },
+      "title": "Models",
+      "type": "array"
+    },
+    "provider": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Provider",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "minimum": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": ["schemaVersion", "provider"],
+  "title": "ProviderModelListV1",
+  "type": "object"
+}

@@ -18,7 +18,9 @@ import { describe, expect, it } from 'vitest';
 import {
   evidenceSchema,
   graphNodeSchema,
+  providerCredentialStatusSchema,
   replayStateSchema,
+  runLoadoutSchema,
   safeParseContract,
 } from '../src/index';
 
@@ -57,5 +59,42 @@ describe('nullable parity with the Python contracts', () => {
       evidence.assetId = null;
     }
     expect(safeParseContract(replayStateSchema, state).success).toBe(true);
+  });
+
+  // A loadout can pin the run's model provider. Runs launched before those fields
+  // existed carry neither, so all three shapes — absent, null, populated — have to
+  // parse or the console drops every historical run's loadout.
+  it('accepts a loadout however it expresses "no pinned provider"', () => {
+    const stored = readFixture('run_loadout_v1');
+    expect(safeParseContract(runLoadoutSchema, stored).success).toBe(true);
+    expect(
+      safeParseContract(runLoadoutSchema, { ...stored, providerId: null, modelId: null }).success,
+    ).toBe(true);
+  });
+
+  it('accepts a loadout that pins a provider and model', () => {
+    const pinned = {
+      ...readFixture('run_loadout_v1'),
+      providerId: 'openrouter',
+      modelId: 'anthropic/claude-sonnet-4',
+    };
+    expect(safeParseContract(runLoadoutSchema, pinned).success).toBe(true);
+  });
+
+  it('rejects a loadout carrying anything key-shaped', () => {
+    const smuggled = { ...readFixture('run_loadout_v1'), apiKey: 'sk-or-secret' };
+    expect(safeParseContract(runLoadoutSchema, smuggled).success).toBe(false);
+  });
+
+  it('accepts an unconfigured credential status with no hint and no verification', () => {
+    // aegis_contracts.provider_credentials.ProviderCredentialStatusV1
+    const status = {
+      schemaVersion: 1,
+      provider: 'ollama-cloud',
+      configured: false,
+      keyHint: null,
+      verifiedAt: null,
+    };
+    expect(safeParseContract(providerCredentialStatusSchema, status).success).toBe(true);
   });
 });

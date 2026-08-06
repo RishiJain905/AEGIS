@@ -51,6 +51,32 @@
           "title": "Biasguard",
           "type": "boolean"
         },
+        "modelId": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelid"
+        },
+        "providerId": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Providerid"
+        },
         "roe": {
           "$ref": "#/$defs/RulesOfEngagementV1",
           "default": "investigate"

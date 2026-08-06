@@ -183,6 +183,7 @@ export * from './cinematic';
 export * from './scoring';
 export * from './operator-profile';
 export * from './ghost';
+export * from './provider-credentials';
 export * from './blast-radius';
 export * from './auth';
 export * from './observability';
@@ -280,6 +281,7 @@ import {
   ghostDecisionPointSchema,
   ghostDecisionPointsSchema,
 } from './ghost';
+import { providerCredentialStatusSchema, providerModelListSchema } from './provider-credentials';
 import { runLoadoutSchema } from './entities';
 
 export const FIXTURE_SCHEMA_MAP = {
@@ -455,6 +457,8 @@ export const FIXTURE_SCHEMA_MAP = {
   operator_hypothesis_request_v1: operatorHypothesisRequestSchema,
   run_feed_entry_v1: runFeedEntrySchema,
   run_feed_page_v1: runFeedPageSchema,
+  provider_credential_status_v1: providerCredentialStatusSchema,
+  provider_model_list_v1: providerModelListSchema,
   ghost_decision_point_v1: ghostDecisionPointSchema,
   ghost_decision_points_v1: ghostDecisionPointsSchema,
   ghost_branch_request_v1: ghostBranchRequestSchema,

@@ -442,6 +442,11 @@
       "sha256": "efe5a3a724062c65926d90549030a5a14b565cd6dfe720ab8025a33dfc1a913d"
     },
     {
+      "path": "tests/contract/fixtures/schemas/provider_credential_status_v1.schema.json",
+      "sha256": "4f90382ce49d4869871d26bd35001e7b35a73d953b37f37d9c570f7d878c5bd9",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/schemas/provider_error_v1.schema.json",
       "sha256": "aa73037606b9b75a549dac3e09213fc53bbfb3e65606e2683ef9d9479d74e406"
     },
@@ -452,6 +457,11 @@
     {
       "path": "tests/contract/fixtures/schemas/provider_generate_response_v1.schema.json",
       "sha256": "052a20f59422e5c11ca42b6b31455d6f7f53f4a928f8095901cd90f6c3a7c95c"
+    },
+    {
+      "path": "tests/contract/fixtures/schemas/provider_model_list_v1.schema.json",
+      "sha256": "95005289ea4aece002525271c462f6496d15fe2bc5f8c48181a9f09639cda9dd",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/schemas/provider_usage_v1.schema.json",
@@ -505,11 +515,11 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_snapshot_v1.schema.json",
-      "sha256": "f33572d1238b77d8ed72f38ad470f44f719fcedbe8b9347c09506ced995f8af2"
+      "sha256": "fcaa10680f6292ba0ff71a622c743d85efa525010ef70ed9988d0a46514e4fbc"
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_state_v1.schema.json",
-      "sha256": "ab0e6cd6bf4ae42dd01890b7f05b7ecf3445e47e48d7659c0022d80d108ffd1e"
+      "sha256": "7878744ff50a0cf56604687fbfc62846d82c5d5c49d0799fd3a2ddc8426b3515"
     },
     {
       "path": "tests/contract/fixtures/schemas/replay_view_state_v1.schema.json",
@@ -592,7 +602,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_command_response_v1.schema.json",
-      "sha256": "bedb77a6f4a7747ac2a0419a91ba504239ea37901b01d68f8f95fdf8d5bc5e4a"
+      "sha256": "3134e882c3852221f7ede3698b965def5de26b7b95e6f928849a05ab0dbabab3"
     },
     {
       "path": "tests/contract/fixtures/schemas/run_comparison_v1.schema.json",
@@ -605,7 +615,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_create_request_v1.schema.json",
-      "sha256": "a37fad3425ea10ac360b6d57071f04d611747ac1c6c27a956e436797fd01ccca"
+      "sha256": "18de8a0f42432c16ca8903ced5b9ee7e2c40bbd5e873e33afaa9d23892e42d2e"
     },
     {
       "path": "tests/contract/fixtures/schemas/run_feed_entry_v1.schema.json",
@@ -619,7 +629,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_loadout_v1.schema.json",
-      "sha256": "448b94a59c48759094523e5327a56fdb106659538909e9d67d0b976088207803",
+      "sha256": "7d61af13c38be6953caf616428620205b1c595d828142329790050954fee5258",
       "schemaVersion": 1
     },
     {
@@ -629,7 +639,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/run_v1.schema.json",
-      "sha256": "3a0d511ec1a72665d350ddf1364d3e3d5dd09c08576527d396149fb3a1582784"
+      "sha256": "a6a278e1fcbd1ed63192e93170d933655913be65628e37e07bbcd96cbae7b0a3"
     },
     {
       "path": "tests/contract/fixtures/schemas/scenario_v1.schema.json",
@@ -688,7 +698,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/snapshot_bootstrap_v1.schema.json",
-      "sha256": "76fdd837de3e72933fa114227c44f7847804a74799c7cd6af4104ea26aded789"
+      "sha256": "4b54798f7dff7336498c1a6584b1245cf59bc1c57a07f85257f174d09164835b"
     },
     {
       "path": "tests/contract/fixtures/schemas/snapshot_manifest_v1.schema.json",
@@ -1228,6 +1238,11 @@
       "sha256": "8864c71630465eb58d07b2f49febbfae7ce9e67ea39b0f786f06fdee17e30e3a"
     },
     {
+      "path": "tests/contract/fixtures/valid/provider_credential_status_v1.json",
+      "sha256": "f35cf9c9d817425b22a4f42450c4a4863e00a0fe090d76aa2515439267aefa7f",
+      "schemaVersion": 1
+    },
+    {
       "path": "tests/contract/fixtures/valid/provider_error_v1.json",
       "sha256": "a90b83fc5c55c2dc5f6f03e001bd8957fc5bda9448678727f473c79e9b10e4c1"
     },
@@ -1238,6 +1253,11 @@
     {
       "path": "tests/contract/fixtures/valid/provider_generate_response_v1.json",
       "sha256": "b9673ba3838f61d1e459d2efff67c0038c33e8a92713aa5c0f93277c1c797222"
+    },
+    {
+      "path": "tests/contract/fixtures/valid/provider_model_list_v1.json",
+      "sha256": "0693c406f75e02b421cea0d6532d7849585c3e1d77db6318da3a85c8b5adbe0e",
+      "schemaVersion": 1
     },
     {
       "path": "tests/contract/fixtures/valid/provider_usage_v1.json",

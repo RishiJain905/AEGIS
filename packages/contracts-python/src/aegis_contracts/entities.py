@@ -116,6 +116,12 @@ class RunLoadoutV1(BaseModel):
     bias_guard: bool = Field(default=True, alias="biasGuard")
     threat_tempo: bool = Field(default=True, alias="threatTempo")
     roe: RulesOfEngagementV1 = Field(default=RulesOfEngagementV1.INVESTIGATE)
+    # Which model drives every agent generation in this run. Both null means the
+    # deployment default (AEGIS_PROVIDER_DEFAULT + its configured model), which is what
+    # every run launched before these fields existed carries — hence optional, and hence
+    # no schema version bump. Never a credential: the key lives encrypted per user.
+    provider_id: str | None = Field(default=None, alias="providerId", max_length=64)
+    model_id: str | None = Field(default=None, alias="modelId", max_length=256)
 
     @model_validator(mode="after")
     def validate_schema_version(self) -> RunLoadoutV1:

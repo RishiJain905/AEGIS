@@ -280,6 +280,12 @@ from aegis_contracts.operator_profile import (
 )
 from aegis_contracts.parsing import parse_contract
 from aegis_contracts.persistence import IdempotencyRecordV1, ObjectMetadataReferenceV1
+from aegis_contracts.provider_credentials import (
+    LoadoutProviderOptionV1,
+    ProviderCredentialStatusV1,
+    ProviderModelEntryV1,
+    ProviderModelListV1,
+)
 from aegis_contracts.realtime import (
     BackfillRequestV1,
     BackfillResultV1,
@@ -620,13 +626,17 @@ __all__ = [
     "GenerationResponseV1",
     "ModelConfigV1",
     "OnlineFeatureUpdateV1",
+    "LoadoutProviderOptionV1",
     "ProviderCapabilitiesV1",
     "ProviderCapability",
+    "ProviderCredentialStatusV1",
     "ProviderErrorCode",
     "ProviderErrorV1",
     "ProviderFinishReason",
     "ProviderGenerateRequestV1",
     "ProviderGenerateResponseV1",
+    "ProviderModelEntryV1",
+    "ProviderModelListV1",
     "ProviderUsageV1",
     "RecordedResponseKeyV1",
     "StructuredOutputSpecV1",

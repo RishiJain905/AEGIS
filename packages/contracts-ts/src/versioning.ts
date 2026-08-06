@@ -213,6 +213,9 @@ export const CONSOLE_ASSET_DETAIL_SCHEMA_VERSION = 1;
 export const OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION = 1;
 export const RUN_FEED_ENTRY_SCHEMA_VERSION = 1;
 export const RUN_FEED_PAGE_SCHEMA_VERSION = 1;
+// Cloud model providers — per-user credential status and provider catalogues.
+export const PROVIDER_CREDENTIAL_STATUS_SCHEMA_VERSION = 1;
+export const PROVIDER_MODEL_LIST_SCHEMA_VERSION = 1;
 // Containment blast-radius preview (pre-approval decision support; deterministic).
 export const BLAST_RADIUS_PREVIEW_SCHEMA_VERSION = 1;
 
@@ -426,6 +429,8 @@ export const SUPPORTED_SCHEMA_VERSIONS: Readonly<Record<string, readonly number[
   operator_hypothesis_request: [OPERATOR_HYPOTHESIS_REQUEST_SCHEMA_VERSION],
   run_feed_entry: [RUN_FEED_ENTRY_SCHEMA_VERSION],
   run_feed_page: [RUN_FEED_PAGE_SCHEMA_VERSION],
+  provider_credential_status: [PROVIDER_CREDENTIAL_STATUS_SCHEMA_VERSION],
+  provider_model_list: [PROVIDER_MODEL_LIST_SCHEMA_VERSION],
   blast_radius_preview: [BLAST_RADIUS_PREVIEW_SCHEMA_VERSION],
   ghost_decision_point: [GHOST_DECISION_POINT_SCHEMA_VERSION],
   ghost_decision_points: [GHOST_DECISION_POINTS_SCHEMA_VERSION],
