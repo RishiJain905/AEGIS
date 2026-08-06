@@ -55,6 +55,11 @@ class ProposalFact:
     target_asset_ids: tuple[str, ...] = ()
     created_sequence: int | None = None
     policy_decision: str | None = None
+    #: The session that authored the proposal. Operator direct actions anchor to the
+    #: deterministic operator-console session; agent proposals carry their agent session.
+    #: Lets the decision review tell an operator's own justification apart from an agent
+    #: recommendation instead of rendering the operator's words as "vs agent".
+    agent_session_id: str | None = None
 
 
 @dataclass(frozen=True)

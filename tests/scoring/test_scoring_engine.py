@@ -207,3 +207,74 @@ def test_correct_rejection_earns_restraint_credit() -> None:
     score = compute_run_score(facts)
     assert any(r.outcome.value == "restraint_credited" for r in score.decision_reviews)
     assert all(r.used_future_knowledge is False for r in score.decision_reviews)
+
+
+def test_operator_directed_approval_is_not_rendered_as_agent_recommendation() -> None:
+    """An operator's own justification must not read as 'vs agent' in the debrief.
+
+    Operator direct actions anchor to the operator-console session; their proposal
+    summary is the operator's typed justification, so the decision review folds it
+    into the available-info summary instead of the agent-recommendation slot.
+    """
+    facts = _base_facts(
+        approvals=[
+            ApprovalFact(
+                "apr_01ARZ3NDEKTSV4RRFFQ69G5FB2",
+                "prp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                "approved",
+                50,
+            )
+        ],
+        proposals=[
+            ProposalFact(
+                "prp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                "contain",
+                "executed",
+                "Confirmed compromise on Identity Broker; isolate now.",
+                ("asset:svc-identity-broker",),
+                None,
+                "require_approval",
+                "agent-session:operator-console",
+            )
+        ],
+        executed_actions=[],
+    )
+    score = compute_run_score(facts)
+    review = next(
+        r for r in score.decision_reviews if r.decision_id == "apr_01ARZ3NDEKTSV4RRFFQ69G5FB2"
+    )
+    assert review.agent_recommendation is None
+    assert "Confirmed compromise on Identity Broker; isolate now." in review.available_info_summary
+    assert review.operator_action == "approved"
+
+
+def test_agent_proposal_keeps_agent_recommendation() -> None:
+    """An agent-authored proposal still surfaces as the agent's recommendation."""
+    facts = _base_facts(
+        approvals=[
+            ApprovalFact(
+                "apr_01ARZ3NDEKTSV4RRFFQ69G5FB3",
+                "prp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                "approved",
+                50,
+            )
+        ],
+        proposals=[
+            ProposalFact(
+                "prp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                "contain",
+                "executed",
+                "BASTION recommends containing the logistics API.",
+                ("asset:svc-logistics-api",),
+                None,
+                "require_approval",
+                "agent-session:ags_bastion_001",
+            )
+        ],
+        executed_actions=[],
+    )
+    score = compute_run_score(facts)
+    review = next(
+        r for r in score.decision_reviews if r.decision_id == "apr_01ARZ3NDEKTSV4RRFFQ69G5FB3"
+    )
+    assert review.agent_recommendation == "BASTION recommends containing the logistics API."

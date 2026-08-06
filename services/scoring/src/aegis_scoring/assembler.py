@@ -6,10 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from aegis_contracts.scoring import ScoreErrorCode
-from aegis_persistence.mappers import incident_to_domain
-from aegis_persistence.orm.tables import IncidentRow
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
-from sqlalchemy import select
 
 from aegis_scoring.errors import ScoringError
 from aegis_scoring.facts import (
@@ -39,6 +36,46 @@ def _event_asset_id(payload: dict[str, Any], subject_id: str | None = None) -> s
     if subject_id and subject_id.startswith("asset:"):
         return subject_id
     return None
+
+
+def _approval_sequence(event_facts: list[EventFact], approval: Any) -> int:
+    """The event sequence at which an approval was decided, or 0 when none matches.
+
+    Approver-authorized proposals emit ``action.proposal.approved`` (etc.). Operator
+    direct actions (the console's Class 0-3 commands) skip that event — the operator is
+    the incident commander approving their own call — and only emit ``action.executed``,
+    which still carries the ``approvalId``. Without the fallback, every operator decision
+    would land at sequence 0 and the debrief timeline would misplace it.
+    """
+    for event in event_facts:
+        if event.event_type in {
+            "action.proposal.approved",
+            "action.proposal.rejected",
+            "action.proposal.modified",
+            "action.proposal.cancelled",
+        } and (
+            event.payload.get("proposalId") == approval.proposal_id
+            or event.payload.get("approvalId") == approval.id
+        ):
+            return event.sequence
+    for event in event_facts:
+        if event.event_type == "action.executed" and (
+            event.payload.get("proposalId") == approval.proposal_id
+            or event.payload.get("approvalId") == approval.id
+        ):
+            return event.sequence
+    return 0
+
+
+def _executed_sequence(event_facts: list[EventFact], action: Any) -> int:
+    for event in event_facts:
+        if event.event_type == "action.executed" and (
+            event.payload.get("proposalId") == action.proposal_id
+            or event.payload.get("executedActionId") == action.id
+            or event.payload.get("actionId") == action.id
+        ):
+            return event.sequence
+    return 0
 
 
 async def assemble_scoring_facts(
@@ -114,18 +151,13 @@ async def assemble_scoring_facts(
             if condition_id.startswith("hidden-cause"):
                 true_cause_id = condition_id
 
-    # Resolve incident
+    # Resolve the primary incident (oldest-first, matching the SCRIBE coordinator's
+    # resolution) — the anchor the score's incidentId points at. The artifact
+    # aggregation below deliberately reads EVERY incident, not just this one.
+    incidents = await uow.incidents.list_by_run(run_id)
     resolved_incident_id = incident_id
     if resolved_incident_id is None:
-        assert uow._session is not None  # noqa: SLF001
-        result = await uow._session.execute(  # noqa: SLF001
-            select(IncidentRow)
-            .where(IncidentRow.run_id == run_id)
-            .order_by(IncidentRow.created_at.asc())
-        )
-        row = result.scalars().first()
-        if row is not None:
-            resolved_incident_id = incident_to_domain(row).id
+        resolved_incident_id = incidents[0].id if incidents else None
 
     evidence_rows = await uow.evidence.list_for_run(run_id)
     evidence_facts = [
@@ -145,9 +177,25 @@ async def assemble_scoring_facts(
     executed_facts: list[ExecutedActionFact] = []
     affected: set[str] = {ev.asset_id for ev in evidence_facts if ev.asset_id}
 
-    if resolved_incident_id is not None:
-        detail = await uow.investigation.get_detail(resolved_incident_id, run_id)
+    # Aggregate investigation artifacts across EVERY incident in the run, deduped by
+    # id. Operator direct actions anchor to the deterministic operator incident
+    # (``incident:inc_op_<run>``, created lazily on the first action), which is usually
+    # NOT the oldest incident — the alert-opened case is. Reading only the oldest
+    # incident silently dropped every executed operator decision from the debrief
+    # (QA P1: "Timeline & decisions" showed 0 / "No recorded decisions."). The
+    # operator-profile assembler already aggregates this way; the scoring facts must
+    # match so the score and the debrief see the same decisions.
+    seen_hypotheses: set[str] = set()
+    seen_proposals: set[str] = set()
+    seen_approvals: set[str] = set()
+    seen_executed: set[str] = set()
+
+    for incident in incidents:
+        detail = await uow.investigation.get_detail(incident.id, run_id)
         for hyp in detail.hypotheses:
+            if hyp.id in seen_hypotheses:
+                continue
+            seen_hypotheses.add(hyp.id)
             hypothesis_facts.append(
                 HypothesisFact(
                     hypothesis_id=hyp.id,
@@ -164,6 +212,9 @@ async def assemble_scoring_facts(
             if getattr(d, "proposal_id", None)
         }
         for prop in detail.proposals:
+            if prop.id in seen_proposals:
+                continue
+            seen_proposals.add(prop.id)
             action_class = (
                 prop.action_class.value
                 if hasattr(prop.action_class, "value")
@@ -179,54 +230,40 @@ async def assemble_scoring_facts(
                     target_asset_ids=(prop.target_asset_id,),
                     created_sequence=None,
                     policy_decision=policy_by_proposal.get(prop.id),
+                    agent_session_id=getattr(prop, "agent_session_id", None),
                 )
             )
             affected.add(prop.target_asset_id)
 
         for approval in detail.approvals:
+            if approval.id in seen_approvals:
+                continue
+            seen_approvals.add(approval.id)
             decision = (
                 approval.decision.value
                 if hasattr(approval.decision, "value")
                 else str(approval.decision)
             )
-            seq = 0
-            for event in event_facts:
-                if event.event_type in {
-                    "action.proposal.approved",
-                    "action.proposal.rejected",
-                    "action.proposal.modified",
-                    "action.proposal.cancelled",
-                } and (
-                    event.payload.get("proposalId") == approval.proposal_id
-                    or event.payload.get("approvalId") == approval.id
-                ):
-                    seq = event.sequence
-                    break
             approval_facts.append(
                 ApprovalFact(
                     approval_id=approval.id,
                     proposal_id=approval.proposal_id,
                     decision=decision,
-                    sequence=seq,
+                    sequence=_approval_sequence(event_facts, approval),
                     decided_at=str(approval.decided_at) if approval.decided_at else None,
                 )
             )
 
         for action in detail.executed_actions:
+            if action.id in seen_executed:
+                continue
+            seen_executed.add(action.id)
             impact = 0.5
             summary = str(getattr(action, "result_summary", "") or "").lower()
             if "high" in summary or "disrupt" in summary:
                 impact = 0.85
             elif "low" in summary or "minimal" in summary:
                 impact = 0.25
-            seq = 0
-            for event in event_facts:
-                if event.event_type == "action.executed" and (
-                    event.payload.get("proposalId") == action.proposal_id
-                    or event.payload.get("actionId") == action.id
-                ):
-                    seq = event.sequence
-                    break
             target_ids: tuple[str, ...] = ()
             matching_prop = next(
                 (p for p in proposal_facts if p.proposal_id == action.proposal_id), None
@@ -237,7 +274,7 @@ async def assemble_scoring_facts(
                 ExecutedActionFact(
                     action_id=action.id,
                     proposal_id=action.proposal_id,
-                    sequence=seq,
+                    sequence=_executed_sequence(event_facts, action),
                     outcome=str(getattr(action, "result_summary", "") or "executed"),
                     impact_score=impact,
                     target_asset_ids=target_ids,

@@ -66,7 +66,7 @@ class ReportService:
                 trace_id=trace_id,
             )
 
-        source, _events = await assemble_report_source(
+        source, _events, agent_tasks = await assemble_report_source(
             uow,
             run_id=run_id,
             incident_id=incident_id,
@@ -109,6 +109,7 @@ class ReportService:
             grounding_fallback=grounding_fallback,
             generation_mode=generation_mode,
             narrative_claims=grounded_claims,
+            agent_tasks=agent_tasks,
         )
 
         status = (

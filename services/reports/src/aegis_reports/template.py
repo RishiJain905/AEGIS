@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from aegis_contracts.investigation import InvestigationDetailV1
@@ -22,6 +23,25 @@ from aegis_contracts.versioning import (
     REPORT_CITATION_SCHEMA_VERSION,
     REPORT_CLAIM_SCHEMA_VERSION,
 )
+
+#: Terminal statuses whose task is a real AI-teammate interaction worth recording.
+_TERMINAL_TASK_STATUSES = frozenset({"completed", "failed", "cancelled"})
+
+
+@dataclass(frozen=True)
+class AgentTaskFact:
+    """A terminal run-scoped agent task, distilled for the deterministic template.
+
+    Run-scoped (copilot/lane) tasks leave no incident-keyed artifacts, so the report
+    records the interaction itself: which role, what outcome, and the failure reason
+    when there was one. Pure data — the assembler builds these from persisted rows.
+    """
+
+    task_id: str
+    session_id: str
+    role: str | None
+    status: str
+    error_message: str | None = None
 
 
 def _checksum(payload: dict[str, object]) -> str:
@@ -58,6 +78,7 @@ def build_template_report(
     grounding_fallback: bool = False,
     generation_mode: ReportGenerationModeV1 = ReportGenerationModeV1.DETERMINISTIC,
     narrative_claims: Sequence[ReportClaimV1] | None = None,
+    agent_tasks: Sequence[AgentTaskFact] | None = None,
 ) -> AfterActionReportV1:
     claims: list[ReportClaimV1] = []
     claim_index = 0
@@ -193,6 +214,47 @@ def build_template_report(
             )
         )
 
+    # Run-scoped (copilot/lane) tasks leave no incident-keyed artifacts, so their
+    # terminal outcomes are recorded as claims here — the report must not read as if
+    # the AI teammate never ran when it demonstrably did.
+    for task in agent_tasks or []:
+        if task.status not in _TERMINAL_TASK_STATUSES:
+            continue
+        claim_index += 1
+        role = task.role or "agent"
+        if task.status == "completed":
+            text = f"{role} completed task {task.task_id} in session {task.session_id}."
+        elif task.status == "cancelled":
+            text = (
+                f"{role} task {task.task_id} was cancelled: "
+                f"{task.error_message or 'the run ended before it finished'}."
+            )
+        else:
+            text = (
+                f"{role} task {task.task_id} failed: "
+                f"{task.error_message or 'no failure reason was recorded'}."
+            )
+        claims.append(
+            ReportClaimV1(
+                schema_version=REPORT_CLAIM_SCHEMA_VERSION,
+                claim_id=f"claim_{claim_index:03d}",
+                category=ReportClaimCategoryV1.AGENT_INFERENCE,
+                text=text,
+                citations=[
+                    _citation(
+                        kind=ReportCitationKindV1.AGENT_TASK,
+                        reference_id=task.task_id,
+                        label=task.task_id,
+                    ),
+                    _citation(
+                        kind=ReportCitationKindV1.AGENT_SESSION,
+                        reference_id=task.session_id,
+                        label=task.session_id,
+                    ),
+                ],
+            )
+        )
+
     # Grounded model claims are appended here rather than merged by the caller so the
     # checksum below covers the full claim set actually persisted.
     if narrative_claims:
@@ -205,11 +267,13 @@ def build_template_report(
         for item in revision.unknowns
     ][:8]
 
+    terminal_tasks = [task for task in agent_tasks or [] if task.status in _TERMINAL_TASK_STATUSES]
     has_agent_artifacts = bool(
         investigation.triage_results
         or investigation.hypotheses
         or investigation.proposals
         or investigation.policy_decisions
+        or terminal_tasks
     )
     summary_parts = [
         f"Deterministic after-action report for incident '{title}'.",
@@ -218,6 +282,12 @@ def build_template_report(
         f"Proposals: {len(investigation.proposals)}.",
         f"Policy decisions: {len(investigation.policy_decisions)}.",
     ]
+    if terminal_tasks:
+        completed = sum(1 for task in terminal_tasks if task.status == "completed")
+        failed = sum(1 for task in terminal_tasks if task.status == "failed")
+        summary_parts.append(
+            f"Agent tasks: {len(terminal_tasks)} ({completed} completed, {failed} failed)."
+        )
     if generation_mode is ReportGenerationModeV1.DETERMINISTIC and not has_agent_artifacts:
         # The degraded case the operator most needs flagged: the run stopped without any
         # agent investigation, so everything below is reconstructed from persisted run

@@ -133,6 +133,22 @@ class _FakeRuns:
         return SimpleNamespace(id=RUN_ID, sim_time=RUN_SIM_TIME) if run_id == RUN_ID else None
 
 
+class _FakeAgentSessions:
+    def __init__(self, sessions: list[Any]) -> None:
+        self._sessions = sessions
+
+    async def list_for_run(self, run_id: str) -> list[Any]:
+        return [item for item in self._sessions if item.run_id == run_id]
+
+
+class _FakeAgentTasks:
+    def __init__(self, tasks: list[Any]) -> None:
+        self._tasks = tasks
+
+    async def list_for_session(self, session_id: str) -> list[Any]:
+        return [item for item in self._tasks if item.session_id == session_id]
+
+
 class _FakeUow:
     def __init__(
         self,
@@ -140,6 +156,8 @@ class _FakeUow:
         incidents: list[IncidentV1],
         detail: InvestigationDetailV1,
         reports: _FakeReports,
+        sessions: list[Any] | None = None,
+        tasks: list[Any] | None = None,
     ) -> None:
         self.incidents = _FakeIncidents(incidents)
         self.investigation = _FakeInvestigation(detail)
@@ -148,6 +166,8 @@ class _FakeUow:
         self.objects = _FakeObjects()
         self.reports = reports
         self.runs = _FakeRuns()
+        self.agent_sessions = _FakeAgentSessions(sessions or [])
+        self.agent_tasks = _FakeAgentTasks(tasks or [])
         self.appended_events: list[Any] = []
 
     async def append_event(self, event: Any) -> Any:
@@ -194,11 +214,15 @@ def _uow(
     incidents: list[IncidentV1] | None = None,
     detail: InvestigationDetailV1 | None = None,
     reports: _FakeReports | None = None,
+    sessions: list[Any] | None = None,
+    tasks: list[Any] | None = None,
 ) -> _FakeUow:
     return _FakeUow(
         incidents=[_incident()] if incidents is None else incidents,
         detail=detail or _empty_detail(),
         reports=reports or _FakeReports(),
+        sessions=sessions,
+        tasks=tasks,
     )
 
 
@@ -322,3 +346,117 @@ async def test_deterministic_safety_net_covers_a_failed_agent_task() -> None:
 def test_triage_result_contract_is_importable() -> None:
     # Guards the model_copy stubs above from drifting into a contract that no longer exists.
     assert WatchtowerTriageResultV1 is not None
+
+
+def _run_scoped_session(session_id: str, role: str) -> Any:
+    return SimpleNamespace(
+        id=session_id,
+        run_id=RUN_ID,
+        incident_id=None,
+        role=SimpleNamespace(value=role),
+    )
+
+
+def _terminal_task(task_id: str, session_id: str, status: str) -> Any:
+    return SimpleNamespace(
+        id=task_id,
+        session_id=session_id,
+        run_id=RUN_ID,
+        status=status,
+        error_message="provider timeout" if status == "failed" else None,
+    )
+
+
+@pytest.mark.asyncio
+async def test_run_scoped_copilot_tasks_are_recorded_in_the_report() -> None:
+    """A completed copilot task must not read as 'no agent investigation artifacts'.
+
+    Copilot chat sessions are run-scoped (incident_id None) and leave no incident-keyed
+    artifacts, so the deterministic report records the terminal task itself as a claim
+    and counts it in the executive summary (QA P2: Reports v1 said all zeros despite a
+    completed WATCHTOWER task).
+    """
+    session_id = "agent-session:ags_chat_001"
+    task_id = "atk_01ARZ3NDEKTSV4RRFFQ69G5FBD"
+    reports = _FakeReports()
+    uow = _uow(
+        reports=reports,
+        sessions=[_run_scoped_session(session_id, "WATCHTOWER")],
+        tasks=[_terminal_task(task_id, session_id, "completed")],
+    )
+
+    result = await ScribeCoordinator().ensure_report_for_run(uow, _request())  # type: ignore[arg-type]
+
+    assert result.outcome is ScribeReportOutcome.DETERMINISTIC
+    report = reports.reports[0]
+    # The task is recorded as a claim with task/session citations.
+    task_claims = [
+        claim
+        for claim in report.claims
+        if any(citation.kind.value == "agent_task" for citation in claim.citations)
+    ]
+    assert len(task_claims) == 1
+    assert "WATCHTOWER completed task" in task_claims[0].text
+    assert task_claims[0].citations[0].reference_id == task_id
+    # The summary counts the interaction and no longer claims the agents never ran.
+    assert "Agent tasks: 1 (1 completed, 0 failed)." in report.executive_summary
+    assert "No agent investigation artifacts were recorded" not in report.executive_summary
+    # The source records the run-scoped session and task ids for auditability.
+    assert session_id in report.source.agent_session_ids
+    assert task_id in report.source.agent_task_ids
+
+
+@pytest.mark.asyncio
+async def test_failed_run_scoped_task_is_recorded_with_its_reason() -> None:
+    session_id = "agent-session:ags_chat_002"
+    task_id = "atk_01ARZ3NDEKTSV4RRFFQ69G5FBE"
+    reports = _FakeReports()
+    uow = _uow(
+        reports=reports,
+        sessions=[_run_scoped_session(session_id, "TRACE")],
+        tasks=[_terminal_task(task_id, session_id, "failed")],
+    )
+
+    await ScribeCoordinator().ensure_report_for_run(uow, _request())  # type: ignore[arg-type]
+
+    report = reports.reports[0]
+    task_claims = [
+        claim
+        for claim in report.claims
+        if any(citation.kind.value == "agent_task" for citation in claim.citations)
+    ]
+    assert len(task_claims) == 1
+    assert "TRACE task" in task_claims[0].text
+    assert "provider timeout" in task_claims[0].text
+    assert "Agent tasks: 1 (0 completed, 1 failed)." in report.executive_summary
+
+
+@pytest.mark.asyncio
+async def test_incident_scoped_sessions_do_not_duplicate_task_claims() -> None:
+    """Only run-scoped sessions feed task claims; incident-scoped artifacts already do."""
+    session_id = "agent-session:ags_incident_001"
+    task_id = "atk_01ARZ3NDEKTSV4RRFFQ69G5FBF"
+    reports = _FakeReports()
+    uow = _uow(
+        reports=reports,
+        sessions=[
+            SimpleNamespace(
+                id=session_id,
+                run_id=RUN_ID,
+                incident_id=INCIDENT_ID,
+                role=SimpleNamespace(value="WATCHTOWER"),
+            )
+        ],
+        tasks=[_terminal_task(task_id, session_id, "completed")],
+    )
+
+    await ScribeCoordinator().ensure_report_for_run(uow, _request())  # type: ignore[arg-type]
+
+    report = reports.reports[0]
+    task_claims = [
+        claim
+        for claim in report.claims
+        if any(citation.kind.value == "agent_task" for citation in claim.citations)
+    ]
+    assert task_claims == []
+    assert "No agent investigation artifacts were recorded" in report.executive_summary

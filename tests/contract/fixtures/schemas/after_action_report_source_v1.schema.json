@@ -75,6 +75,13 @@
       "title": "Agentsessionids",
       "type": "array"
     },
+    "agentTaskIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Agenttaskids",
+      "type": "array"
+    },
     "alertIds": {
       "items": {
         "type": "string"

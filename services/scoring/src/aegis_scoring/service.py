@@ -126,10 +126,12 @@ class ScoringService:
         run_id: str,
         scenarios_root: Path | None = None,
     ) -> AfterActionViewModelV1:
-        try:
-            score = await self.get_score(uow, run_id=run_id)
-        except ScoringError:
-            score = await self.score_run(uow, run_id=run_id, scenarios_root=scenarios_root)
+        # ``score_run`` dedups on the provenance fingerprint: a stored score whose facts
+        # still match is returned unchanged, and a stale one — computed before a scoring
+        # fix landed, so its decision reviews are missing — is recomputed and stored.
+        # Without this, a run scored under the old facts would keep serving the empty
+        # debrief forever.
+        score = await self.score_run(uow, run_id=run_id, scenarios_root=scenarios_root)
         facts = await assemble_scoring_facts(uow, run_id=run_id, scenarios_root=scenarios_root)
         return build_after_action_view_model(facts, score)
 

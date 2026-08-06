@@ -127,6 +127,7 @@ export const afterActionReportSourceSchema = z
     affectedAssetIds: z.array(assetIdSchema).default([]),
     alertIds: z.array(z.string()).default([]),
     agentSessionIds: z.array(agentSessionIdSchema).default([]),
+    agentTaskIds: z.array(agentTaskIdSchema).default([]),
     timeline: z.array(reportTimelineEntrySchema).default([]),
     investigationSummary: z.record(z.unknown()).default({}),
   })

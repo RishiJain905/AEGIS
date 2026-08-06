@@ -8,11 +8,11 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/after_action_report_source_v1.schema.json",
-      "sha256": "616f5cb57ec8db049439bb114ccd899b40315c50babc2541dc396cdec19e184c"
+      "sha256": "98f37a8645b74ddfdf64c7a312bb5f1d3f6f88b323b4e528a97104432587e6e8"
     },
     {
       "path": "tests/contract/fixtures/schemas/after_action_report_v1.schema.json",
-      "sha256": "90595d523d4751aea066934d21bef828da8fbbb39a05492f6b5fe02f385e37a3"
+      "sha256": "1692c028e0ad2789def72b5738bd75eee5885ce4f03cdf4ba2d0f2412a699331"
     },
     {
       "path": "tests/contract/fixtures/schemas/after_action_view_model_v1.schema.json",
@@ -790,11 +790,11 @@
     },
     {
       "path": "tests/contract/fixtures/valid/after_action_report_source_v1.json",
-      "sha256": "5058dbd8ebd032cf54ad60bf7fd4a9477198d6425ae6e4e9d3a6a410ebebd429"
+      "sha256": "152ecd5777fa0766c725d86238a0ca600ea76320d1fb4cdba77cc0536038f328"
     },
     {
       "path": "tests/contract/fixtures/valid/after_action_report_v1.json",
-      "sha256": "359574f953a51a9355194c8b360b23c7fc410a590548e5761db08f16c4e5005d"
+      "sha256": "6652652969e1fc6fc8ab3cf3b98cedb2fff6755507639c9fe68d032d8ffc5698"
     },
     {
       "path": "tests/contract/fixtures/valid/after_action_view_model_v1.json",

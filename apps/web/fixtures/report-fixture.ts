@@ -172,6 +172,7 @@ export const syntheticAfterActionReport: AfterActionReportV1 = parseContract(
       affectedAssetIds: ['asset:device-workstation-01'],
       alertIds: ['alert:alt_synthetic_001'],
       agentSessionIds: ['agent-session:ags_scribe_001'],
+      agentTaskIds: ['atk_01ARZ3NDEKTSV4RRFFQ69G5FBB'],
       timeline: [],
       investigationSummary: {
         incidentTitle: 'Operation Silent Relay — After-action report',

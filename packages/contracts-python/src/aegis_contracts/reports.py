@@ -187,6 +187,13 @@ class AfterActionReportSourceV1(BaseModel):
         alias="agentSessionIds",
         default_factory=list,
     )
+    #: Terminal tasks of run-scoped (copilot/lane) sessions — the AI-teammate
+    #: interaction that leaves no incident-keyed artifacts, so the report must
+    #: record it explicitly or it reads as if the agents never ran.
+    agent_task_ids: list[AgentTaskId] = Field(
+        alias="agentTaskIds",
+        default_factory=list,
+    )
     timeline: list[ReportTimelineEntryV1] = Field(default_factory=list)
     investigation_summary: dict[str, Any] = Field(
         alias="investigationSummary",

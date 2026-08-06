@@ -12,6 +12,12 @@ from aegis_contracts.versioning import (
 
 from aegis_scoring.facts import ScoringFacts
 
+#: The deterministic session id operator direct actions anchor to (mirrors
+#: ``_OPERATOR_SESSION_ID`` in the operator-actions service; the scoring service must
+#: not import from apps). Proposals authored by this session carry the operator's own
+#: justification, never an agent recommendation.
+_OPERATOR_SESSION_ID = "agent-session:operator-console"
+
 
 def build_decision_reviews(facts: ScoringFacts) -> list[DecisionReviewV1]:
     reviews: list[DecisionReviewV1] = []
@@ -23,7 +29,14 @@ def build_decision_reviews(facts: ScoringFacts) -> list[DecisionReviewV1]:
             if ev.created_sequence is None or ev.created_sequence <= approval.sequence
         ]
         proposal = next((p for p in facts.proposals if p.proposal_id == approval.proposal_id), None)
-        agent_rec = proposal.summary if proposal else None
+        operator_directed = (
+            proposal is not None and proposal.agent_session_id == _OPERATOR_SESSION_ID
+        )
+        # An operator-directed action's proposal summary is the operator's own
+        # justification, not an agent recommendation — rendering it as "vs agent"
+        # would misattribute the operator's words. It is folded into the available-info
+        # summary instead, which the debrief shows as the decision's context.
+        agent_rec = None if operator_directed else (proposal.summary if proposal else None)
         policy = proposal.policy_decision if proposal else None
 
         outcome = "neutral"
@@ -61,6 +74,15 @@ def build_decision_reviews(facts: ScoringFacts) -> list[DecisionReviewV1]:
             rule_id = "rule-decision-modification"
             reason = "Operator modified a proposal before execution."
 
+        info_summary = (
+            f"{len(available_events)} events and {len(available_evidence)} evidence "
+            f"items were available at sequence {approval.sequence}."
+        )
+        if operator_directed and proposal is not None and proposal.summary:
+            info_summary = (
+                f"Operator-directed action. Justification: {proposal.summary}. {info_summary}"
+            )
+
         reviews.append(
             DecisionReviewV1.model_validate(
                 {
@@ -76,10 +98,7 @@ def build_decision_reviews(facts: ScoringFacts) -> list[DecisionReviewV1]:
                     "proposalId": approval.proposal_id,
                     "operatorAction": approval.decision,
                     "agentRecommendation": agent_rec,
-                    "availableInfoSummary": (
-                        f"{len(available_events)} events and {len(available_evidence)} evidence "
-                        f"items were available at sequence {approval.sequence}."
-                    ),
+                    "availableInfoSummary": info_summary,
                     "availableEventIds": [e.event_id for e in available_events[-8:]],
                     "availableEvidenceIds": [e.evidence_id for e in available_evidence[-8:]],
                     "outcome": outcome,
