@@ -13,19 +13,9 @@ class OpenAICompatibleProvider(OpenAIHostedProvider):
     # <think> opener (see OpenAIHostedProvider._use_server_response_format).
     _use_server_response_format = False
 
-    def __init__(
-        self,
-        settings: ProviderSettings,
-        *,
-        api_key_override: str | None = None,
-        model_id_override: str | None = None,
-    ) -> None:
-        super().__init__(
-            settings,
-            base_url=settings.AEGIS_PROVIDER_LOCAL_BASE_URL,
-            api_key_override=api_key_override,
-            model_id_override=model_id_override,
-        )
+    @classmethod
+    def configured_base_url(cls, settings: ProviderSettings) -> str:
+        return settings.AEGIS_PROVIDER_LOCAL_BASE_URL
 
     def _configured_api_key(self) -> str | None:
         return self._settings.AEGIS_PROVIDER_LOCAL_API_KEY

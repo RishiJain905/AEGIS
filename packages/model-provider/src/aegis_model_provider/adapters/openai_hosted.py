@@ -131,11 +131,20 @@ def _is_model_loading(message: str, exc: Exception) -> bool:
 class OpenAIHostedProvider:
     provider_id = "openai"
 
+    @classmethod
+    def configured_base_url(cls, settings: ProviderSettings) -> str:
+        """Where this adapter reads its destination from; subclasses point elsewhere.
+
+        On the class so a caller can ask where an adapter *would* connect without
+        constructing one — ``build_provider_registry`` does, to tell a deliberately
+        de-allowlisted provider from a broken configuration.
+        """
+        return settings.AEGIS_PROVIDER_OPENAI_BASE_URL
+
     def __init__(
         self,
         settings: ProviderSettings,
         *,
-        base_url: str | None = None,
         api_key_override: str | None = None,
         model_id_override: str | None = None,
     ) -> None:
@@ -149,11 +158,8 @@ class OpenAIHostedProvider:
         self._settings = settings
         self._api_key_override = api_key_override
         self._model_id_override = model_id_override
-        configured_base_url = (
-            settings.AEGIS_PROVIDER_OPENAI_BASE_URL if base_url is None else base_url
-        )
         self._base_url = assert_provider_destination_allowed(
-            base_url=configured_base_url,
+            base_url=self.configured_base_url(settings),
             allowed_base_urls=settings.provider_egress_allowlist,
             provider_id=self.provider_id,
         )

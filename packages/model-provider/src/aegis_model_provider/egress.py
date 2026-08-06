@@ -32,6 +32,24 @@ def _normalized_base_url(value: str) -> str:
     return urlunsplit(SplitResult(parsed.scheme.lower(), netloc, path, "", ""))
 
 
+def provider_destination_excluded(*, base_url: str, allowed_base_urls: list[str]) -> bool:
+    """Whether a well-formed destination is simply absent from the allowlist.
+
+    This exists to tell a *deliberate exclusion* — an operator who removed a vendor
+    endpoint from ``AEGIS_PROVIDER_EGRESS_ALLOWLIST`` — apart from a *broken*
+    configuration, which raises the same VALIDATION_FAILED from the assert below. A
+    malformed URL is not an exclusion, so it answers False and leaves the loud failure
+    where it belongs. Callers must still go through ``assert_provider_destination_allowed``
+    for the actual gate; this only decides whether attempting the destination is worth it.
+    """
+    try:
+        destination = _normalized_base_url(base_url)
+        allowed = {_normalized_base_url(item) for item in allowed_base_urls if item.strip()}
+    except (ValueError, UnicodeError):
+        return False
+    return destination not in allowed
+
+
 def assert_provider_destination_allowed(
     *,
     base_url: str,

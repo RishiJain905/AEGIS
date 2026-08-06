@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from aegis_contracts.generation import (
     GenerationRequestV1,
     ProviderCapabilitiesV1,
@@ -16,8 +18,11 @@ from aegis_model_provider.adapters.openai_hosted import OpenAIHostedProvider
 from aegis_model_provider.adapters.openrouter import OpenRouterProvider
 from aegis_model_provider.adapters.recorded import RecordedResponseProvider
 from aegis_model_provider.config import ProviderKind, ProviderSettings
+from aegis_model_provider.egress import provider_destination_excluded
 from aegis_model_provider.errors import ProviderRuntimeError, make_provider_error
 from aegis_model_provider.protocol import ModelProvider
+
+logger = logging.getLogger(__name__)
 
 #: Adapters that accept per-call credentials. Mock and recorded serve fixtures and have
 #: nothing to override, so ``resolve_with_credentials`` hands back their shared instance.
@@ -146,16 +151,26 @@ def build_provider_registry(settings: ProviderSettings) -> ProviderRegistry:
         ProviderKind.OPENAI_COMPATIBLE.value: OpenAICompatibleProvider(settings),
     }
     for kind in (ProviderKind.OPENROUTER, ProviderKind.OLLAMA_CLOUD):
-        try:
-            providers[kind.value] = CREDENTIAL_AWARE_ADAPTERS[kind.value](settings)
-        except ProviderRuntimeError:
-            # These two point at fixed vendor endpoints, so a deployment that leaves
-            # theirs out of AEGIS_PROVIDER_EGRESS_ALLOWLIST is declaring the provider
-            # off-limits. That has to make the provider unavailable — resolving it says
-            # "Unknown provider" — not stop the API from booting. The local and OpenAI
-            # adapters stay strict above: their base URLs are deployment-specific, so a
-            # rejected one is a misconfiguration worth failing loudly on.
+        adapter = CREDENTIAL_AWARE_ADAPTERS[kind.value]
+        # These two point at fixed vendor endpoints, so a deployment that leaves one out
+        # of AEGIS_PROVIDER_EGRESS_ALLOWLIST is declaring that provider off-limits. That
+        # should make the provider unavailable, not stop the API from booting — but only
+        # when the deployment is not *running on* it, and only when the destination is
+        # genuinely absent rather than malformed. Both of those still construct, and
+        # construction raises loudly. The local and OpenAI adapters skip this check
+        # entirely: their base URLs are deployment-specific, so a rejected one is always
+        # a misconfiguration.
+        if kind is not settings.AEGIS_PROVIDER_DEFAULT and provider_destination_excluded(
+            base_url=adapter.configured_base_url(settings),
+            allowed_base_urls=settings.provider_egress_allowlist,
+        ):
+            logger.warning(
+                "Provider %r is not registered: its endpoint is absent from "
+                "AEGIS_PROVIDER_EGRESS_ALLOWLIST. Add it there to offer this provider.",
+                kind.value,
+            )
             continue
+        providers[kind.value] = adapter(settings)
     return ProviderRegistry(
         providers,
         default_provider_id=settings.AEGIS_PROVIDER_DEFAULT.value,

@@ -18,19 +18,9 @@ from aegis_model_provider.errors import ProviderRuntimeError, make_provider_erro
 class OllamaCloudProvider(OpenAIHostedProvider):
     provider_id = "ollama-cloud"
 
-    def __init__(
-        self,
-        settings: ProviderSettings,
-        *,
-        api_key_override: str | None = None,
-        model_id_override: str | None = None,
-    ) -> None:
-        super().__init__(
-            settings,
-            base_url=settings.AEGIS_PROVIDER_OLLAMA_CLOUD_BASE_URL,
-            api_key_override=api_key_override,
-            model_id_override=model_id_override,
-        )
+    @classmethod
+    def configured_base_url(cls, settings: ProviderSettings) -> str:
+        return settings.AEGIS_PROVIDER_OLLAMA_CLOUD_BASE_URL
 
     def _configured_api_key(self) -> str | None:
         return self._settings.AEGIS_PROVIDER_OLLAMA_CLOUD_API_KEY

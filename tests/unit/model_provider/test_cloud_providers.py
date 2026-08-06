@@ -16,6 +16,7 @@ is captured.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import pytest
@@ -296,22 +297,61 @@ def test_build_provider_registry_registers_both_cloud_providers() -> None:
     assert {"openrouter", "ollama-cloud"} <= registered
 
 
-def test_a_narrowed_allowlist_removes_the_cloud_providers_without_breaking_boot() -> None:
+def test_a_narrowed_allowlist_removes_the_cloud_providers_without_breaking_boot(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     # An operator who allowlists only the local endpoint has declared the cloud
     # providers off-limits; the registry must still build, and asking for one must be
-    # an honest "unknown provider" rather than a dead API.
+    # an honest "unknown provider" rather than a dead API. Silence would be wrong
+    # though — the drop has to say which provider and why.
     settings = ProviderSettings(
         _env_file=None,
         AEGIS_PROVIDER_EGRESS_ALLOWLIST="https://api.openai.com/v1,http://localhost:8086/v1",
     )
 
-    registry = build_provider_registry(settings)
+    with caplog.at_level(logging.WARNING, logger="aegis_model_provider.registry"):
+        registry = build_provider_registry(settings)
 
     registered = {entry["providerId"] for entry in registry.list_providers()}
     assert "openai-compatible" in registered
     assert not ({"openrouter", "ollama-cloud"} & registered)
+    warnings = "\n".join(record.getMessage() for record in caplog.records)
+    assert "openrouter" in warnings
+    assert "ollama-cloud" in warnings
+    assert "AEGIS_PROVIDER_EGRESS_ALLOWLIST" in warnings
     with pytest.raises(ProviderRuntimeError) as exc:
         registry.resolve_with_credentials("openrouter", api_key="k")
+    assert exc.value.error.code == ProviderErrorCode.VALIDATION_FAILED
+
+
+def test_de_allowlisting_the_default_provider_fails_the_build_instead_of_the_run() -> None:
+    # Dropping the provider the whole deployment runs on would boot a clean API whose
+    # every generation then dies with "Unknown provider" and no hint at the allowlist.
+    # That misconfiguration belongs at startup.
+    settings = ProviderSettings(
+        _env_file=None,
+        AEGIS_PROVIDER_DEFAULT=ProviderKind.OPENROUTER,
+        AEGIS_PROVIDER_EGRESS_ALLOWLIST="http://localhost:8086/v1",
+    )
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        build_provider_registry(settings)
+
+    assert exc.value.error.code == ProviderErrorCode.VALIDATION_FAILED
+
+
+def test_a_malformed_cloud_base_url_is_not_mistaken_for_a_deliberate_exclusion() -> None:
+    # A typo in AEGIS_PROVIDER_OLLAMA_CLOUD_BASE_URL raises the same VALIDATION_FAILED
+    # as an off-allowlist destination, but it is a broken config, not a policy choice.
+    settings = ProviderSettings(
+        _env_file=None,
+        AEGIS_PROVIDER_OLLAMA_CLOUD_BASE_URL="ollama.com/v1",
+        AEGIS_PROVIDER_EGRESS_ALLOWLIST=ALL_BASE_URLS,
+    )
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        build_provider_registry(settings)
+
     assert exc.value.error.code == ProviderErrorCode.VALIDATION_FAILED
 
 
