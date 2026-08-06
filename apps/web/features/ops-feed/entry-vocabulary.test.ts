@@ -74,6 +74,38 @@ describe('describeEntry', () => {
     ).toBe('BASTION could not finish its task — no incident open on this run');
   });
 
+  it('reads the attributable error fields the backend now emits', () => {
+    expect(
+      describeEntry(
+        entry({
+          type: 'agent.task.failed',
+          payload: {
+            role: 'TRACE',
+            errorCode: 'PROVIDER_FAILURE',
+            errorMessage: 'Provider request timed out',
+          },
+        }),
+      ),
+    ).toBe('TRACE could not finish its task — Provider request timed out (PROVIDER_FAILURE)');
+  });
+
+  it('names the role on a run-stop cancellation', () => {
+    expect(
+      describeEntry(
+        entry({
+          type: 'agent.task.failed',
+          payload: {
+            role: 'BASTION',
+            errorCode: 'TASK_CANCELLED',
+            errorMessage: 'Run stopped while the task was in flight',
+          },
+        }),
+      ),
+    ).toBe(
+      'BASTION could not finish its task — Run stopped while the task was in flight (TASK_CANCELLED)',
+    );
+  });
+
   it('reads a status change as a sentence about the asset', () => {
     expect(
       describeEntry(

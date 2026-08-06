@@ -283,10 +283,18 @@ class _FakeRepo:
         return 1
 
 
+class _FakeSessionLike:
+    """The slice of a SQLAlchemy session the persist phase touches."""
+
+    def expire_all(self) -> None:
+        return None
+
+
 class _FakeUow:
     """The slice of the unit of work the loop touches, with commit accounting."""
 
     def __init__(self) -> None:
+        self.session = _FakeSessionLike()
         self.alerts = _FakeRepo()
         self.incidents = _FakeRepo()
         self.evidence = _FakeRepo()
@@ -705,14 +713,14 @@ async def test_persisted_invocations_carry_the_round_that_asked_for_them() -> No
 class _PersistUow(_FakeUow):
     """Adds the write surface the persist phase needs on top of the loop's."""
 
-    def __init__(self) -> None:
+    def __init__(self, task: Any = None) -> None:
         super().__init__()
         self.agent_sessions = _WritableRepo()
         self.agent_transitions = _WritableRepo()
         self.artifacts_added: list[Any] = []
         self.tasks_updated: list[Any] = []
         self.agent_artifacts = _CollectingRepo(self.artifacts_added)
-        self.agent_tasks = _CollectingRepo(self.tasks_updated)
+        self.agent_tasks = _CollectingRepo(self.tasks_updated, task=task)
 
 
 class _WritableRepo(_FakeRepo):
@@ -724,9 +732,15 @@ class _WritableRepo(_FakeRepo):
 
 
 class _CollectingRepo(_FakeRepo):
-    def __init__(self, sink: list[Any]) -> None:
+    def __init__(self, sink: list[Any], task: Any = None) -> None:
         super().__init__()
         self._sink = sink
+        #: The task row the persist phase re-reads to detect an external
+        #: cancellation; None means "no row" for the other repos.
+        self._task = task
+
+    async def get_by_id(self, _id: str) -> Any:
+        return self._task
 
     async def add(self, item: Any) -> Any:
         self._sink.append(item)
@@ -735,6 +749,12 @@ class _CollectingRepo(_FakeRepo):
     async def update(self, item: Any) -> Any:
         self._sink.append(item)
         return item
+
+    async def claim_transition(
+        self, task: Any, *, from_statuses: tuple[str, ...]
+    ) -> bool:
+        self._sink.append(task)
+        return True
 
 
 @pytest.mark.asyncio
@@ -755,8 +775,8 @@ async def test_the_persist_phase_runs_exactly_the_requests_the_loop_refused() ->
     executor = TaskExecutor(generation=generation)  # type: ignore[arg-type]
     tools = _RecordingToolExecutor()
     executor._tool_executor = tools  # type: ignore[assignment]
-    uow = _PersistUow()
     task = _task()
+    uow = _PersistUow(task=task)
     session = AgentSessionV1(
         schema_version=AGENT_SESSION_SCHEMA_VERSION,
         id=_FakeSession.id,

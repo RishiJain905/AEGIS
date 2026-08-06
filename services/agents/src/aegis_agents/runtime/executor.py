@@ -256,6 +256,17 @@ def _invalid_model_output(
     )
 
 
+class _TaskExternallyTerminated(Exception):
+    """The task's terminal state was written by someone else while we were mid-flight.
+
+    Raised by the persist phase when the authoritative row is no longer RUNNING —
+    the run-stop finalizer cancelled the task while the model was thinking. The
+    canceller owns the terminal state and already emitted its event, so the
+    executor must discard this turn's partial writes and stop, never clobbering
+    the cancellation with a late COMPLETED/FAILED write.
+    """
+
+
 @dataclass
 class _LoopOutcome:
     """What the multi-turn tool loop produced for the persist phase.
@@ -473,6 +484,12 @@ class TaskExecutor:
         try:
             await self._persist_result(uow, prepared, outcome)
             await uow.commit()
+        except _TaskExternallyTerminated:
+            # The run-stop finalizer cancelled the task while the model was
+            # thinking. Its terminal state and event are already committed; this
+            # transaction's partial writes (tool calls, artifacts, events) are
+            # moot, so discard them and stop without clobbering the cancellation.
+            await uow.rollback()
         except AgentRuntimeError as exc:
             await self._fail_and_commit(uow, prepared, code=exc.code, message=exc.message)
             raise
@@ -1013,6 +1030,7 @@ class TaskExecutor:
                     session_id=session.id,
                     task_id=task.id,
                     trace_id=task.trace_id,
+                    role=session.role.value,
                     sim_time=await _run_sim_time(uow, run_id),
                 )
             )
@@ -1339,6 +1357,23 @@ class TaskExecutor:
         definition = prepared.definition
         request = outcome.request
 
+        # The task may have been cancelled externally (the run stopped) while the
+        # model was thinking. Re-read the authoritative row before writing
+        # anything: if it is no longer RUNNING, the canceller owns the terminal
+        # state, and this turn's work — including the state-changing tools below —
+        # must not run or be persisted. The terminal CAS at the end of this phase
+        # is the second half of the guard, for a cancellation that lands between
+        # this read and the final write.
+        #
+        # The claim's bulk UPDATE does not refresh the session's identity map, so
+        # the row must be expired first — otherwise ``get_by_id`` returns the
+        # stale pre-claim object (still QUEUED) and every task would look
+        # externally terminated.
+        uow.session.expire_all()
+        current = await uow.agent_tasks.get_by_id(task.id)
+        if current is None or current.status != AgentTaskStatus.RUNNING:
+            raise _TaskExternallyTerminated()
+
         if response.error is not None:
             raise _provider_failure(response.error, trace_id=task.trace_id)
         assert response.response is not None
@@ -1640,7 +1675,15 @@ class TaskExecutor:
                 "completed_at": datetime.now(UTC),
             }
         )
-        await uow.agent_tasks.update(completed)
+        # Status-guarded CAS, not a blind update: a run-stop cancellation that
+        # landed between the early re-read above and this write must win. When it
+        # does, the canceller's terminal state and event stand and this turn's
+        # partial writes are rolled back by the caller.
+        claimed = await uow.agent_tasks.claim_transition(
+            completed, from_statuses=(AgentTaskStatus.RUNNING.value,)
+        )
+        if not claimed:
+            raise _TaskExternallyTerminated()
         next_sequence = await uow.events.next_sequence(run_id)
         await uow.append_event(
             build_task_completed_event(
@@ -1651,6 +1694,7 @@ class TaskExecutor:
                 task_id=task.id,
                 trace_id=task.trace_id,
                 status="completed",
+                role=session.role.value,
                 sim_time=await _run_sim_time(uow, run_id),
             )
         )
@@ -1751,7 +1795,16 @@ class TaskExecutor:
                 "error_message": message,
             }
         )
-        await uow.agent_tasks.update(failed)
+        # Status-guarded CAS, not a blind update: the run-stop finalizer may have
+        # cancelled this task while the executor was mid-flight, and its terminal
+        # state must never be clobbered by a late failure write. When the CAS
+        # loses, the canceller already emitted the terminal event, so there is
+        # nothing left to record here.
+        claimed = await uow.agent_tasks.claim_transition(
+            failed, from_statuses=(AgentTaskStatus.RUNNING.value,)
+        )
+        if not claimed:
+            return
         # Session handling on failure:
         # - Run-scoped lane/chat sessions (incident_id is None: autonomy lanes and
         #   operator copilot chats) host many turns and MUST survive a failed turn
@@ -1792,6 +1845,9 @@ class TaskExecutor:
                 task_id=task.id,
                 trace_id=task.trace_id,
                 status=failed.status.value,
+                role=session.role.value,
+                error_code=code.value,
+                error_message=message,
                 sim_time=await _run_sim_time(uow, run_id),
             )
         )

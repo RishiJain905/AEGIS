@@ -79,8 +79,13 @@ def _runtime_id(prefix: str, index: int = 1) -> str:
 
 
 class _FakeRepo:
+    def __init__(self, task: AgentTaskV1 | None = None) -> None:
+        #: The task row the persist phase re-reads to detect an external
+        #: cancellation; None means "no row" for the other repos.
+        self.task = task
+
     async def get_by_id(self, _id: str) -> Any:
-        return None
+        return self.task
 
     async def next_sequence(self, _run_id: str) -> int:
         return 1
@@ -91,12 +96,25 @@ class _FakeRepo:
     async def add(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
+    async def claim_transition(
+        self, _task: Any, *, from_statuses: tuple[str, ...]
+    ) -> bool:
+        return True
+
+
+class _FakeSessionLike:
+    """The slice of a SQLAlchemy session the persist phase touches."""
+
+    def expire_all(self) -> None:
+        return None
+
 
 class _FakeUow:
-    def __init__(self) -> None:
+    def __init__(self, task: AgentTaskV1 | None = None) -> None:
+        self.session = _FakeSessionLike()
         self.agent_sessions = _FakeRepo()
         self.agent_artifacts = _FakeRepo()
-        self.agent_tasks = _FakeRepo()
+        self.agent_tasks = _FakeRepo(task)
         self.events = _FakeRepo()
         self.runs = _FakeRepo()
         self.appended_events: list[Any] = []
@@ -247,9 +265,10 @@ async def _persist(
 ) -> _FakeUow:
     executor = TaskExecutor(generation=None)  # type: ignore[arg-type]
     executor._sessions = _PassThroughSessions()  # type: ignore[assignment]
-    uow = _FakeUow()
+    task = _task(incident_id=None if run_scoped else _INCIDENT_ID)
+    uow = _FakeUow(task=task)
     prepared = _PreparedTask(
-        task=_task(incident_id=None if run_scoped else _INCIDENT_ID),
+        task=task,
         session=_FakeSession(),
         run_id=_RUN_ID,
         agent_name="WATCHTOWER",

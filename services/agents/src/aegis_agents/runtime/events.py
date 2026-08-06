@@ -94,7 +94,15 @@ def build_task_started_event(
     task_id: str,
     trace_id: str,
     sim_time: datetime,
+    role: str | None = None,
 ) -> DomainEventEnvelopeV1:
+    payload: dict[str, Any] = {
+        "schemaVersion": 1,
+        "sessionId": session_id,
+        "taskId": task_id,
+    }
+    if role is not None:
+        payload["role"] = role
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
@@ -105,7 +113,7 @@ def build_task_started_event(
         recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
-        payload={"schemaVersion": 1, "sessionId": session_id, "taskId": task_id},
+        payload=payload,
         trace_id=trace_id,
     )
 
@@ -120,8 +128,30 @@ def build_task_completed_event(
     trace_id: str,
     status: str,
     sim_time: datetime,
+    role: str | None = None,
+    error_code: str | None = None,
+    error_message: str | None = None,
 ) -> DomainEventEnvelopeV1:
+    """The terminal event for a task: ``agent.task.completed`` or ``agent.task.failed``.
+
+    ``role`` and the error fields are additive — the event tape reads them to say
+    *which* agent failed and *why* instead of the generic "an agent could not
+    finish its task". ``error_code``/``error_message`` are only meaningful on a
+    failure, but the builder accepts them for any status and the caller decides.
+    """
     event_type = "agent.task.completed" if status == "completed" else "agent.task.failed"
+    payload: dict[str, Any] = {
+        "schemaVersion": 1,
+        "sessionId": session_id,
+        "taskId": task_id,
+        "status": status,
+    }
+    if role is not None:
+        payload["role"] = role
+    if error_code is not None:
+        payload["errorCode"] = error_code
+    if error_message is not None:
+        payload["errorMessage"] = error_message
     return DomainEventEnvelopeV1(
         event_id=event_id,
         run_id=run_id,
@@ -132,7 +162,7 @@ def build_task_completed_event(
         recorded_at=datetime.now(UTC),
         actor=_agent_actor(session_id),
         subject=_agent_actor(session_id),
-        payload={"schemaVersion": 1, "sessionId": session_id, "taskId": task_id, "status": status},
+        payload=payload,
         trace_id=trace_id,
     )
 

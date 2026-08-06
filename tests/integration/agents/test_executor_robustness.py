@@ -15,9 +15,12 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from aegis_agents.providers.generation import AgentGenerationFacade
-from aegis_agents.runtime.errors import AgentRuntimeError
+from aegis_agents.runtime.errors import AgentRuntimeError, AgentRuntimeErrorCode
 from aegis_agents.runtime.executor import TaskExecutor
-from aegis_agents.runtime.recovery import recover_orphaned_tasks
+from aegis_agents.runtime.recovery import (
+    finalize_tasks_for_stopped_run,
+    recover_orphaned_tasks,
+)
 from aegis_agents.runtime.session_service import AgentSessionService
 from aegis_agents.runtime.task_service import AgentTaskService
 from aegis_contracts.agent_runtime import (
@@ -214,9 +217,17 @@ async def _make_running_task(
     task = await AgentTaskService().create_task(
         uow, session=session, request=_task_req(f"orphan-{attempt}-{started_ago_seconds}")
     )
-    started = datetime.now(UTC) - timedelta(seconds=started_ago_seconds)
+    # The sweep's staleness anchor is ``updated_at`` (the heartbeat's liveness
+    # signal), not ``started_at`` — an abandoned task is one whose heartbeat
+    # stopped, so both timestamps must be old for the task to read as orphaned.
+    abandoned = datetime.now(UTC) - timedelta(seconds=started_ago_seconds)
     running = task.model_copy(
-        update={"status": AgentTaskStatus.RUNNING, "attempt": attempt, "started_at": started}
+        update={
+            "status": AgentTaskStatus.RUNNING,
+            "attempt": attempt,
+            "started_at": abandoned,
+            "updated_at": abandoned,
+        }
     )
     await uow.agent_tasks.update(running)
     return task.id
@@ -287,9 +298,16 @@ async def _orphan_run_scoped_task(
             uow, run_id=run_id, request=_session_req()
         )
         task = await AgentTaskService().create_task(uow, session=session, request=_task_req(key))
-        started = datetime.now(UTC) - timedelta(seconds=started_ago_seconds)
+        # Same anchor as _make_running_task: the sweep reads ``updated_at``, so an
+        # abandoned task must carry an old heartbeat timestamp, not just an old claim.
+        abandoned = datetime.now(UTC) - timedelta(seconds=started_ago_seconds)
         orphaned = task.model_copy(
-            update={"status": AgentTaskStatus.RUNNING, "attempt": 1, "started_at": started}
+            update={
+                "status": AgentTaskStatus.RUNNING,
+                "attempt": 1,
+                "started_at": abandoned,
+                "updated_at": abandoned,
+            }
         )
         await uow.agent_tasks.update(orphaned)
     return task.id
@@ -328,3 +346,141 @@ async def test_worker_poll_reclaims_orphan_and_reruns_to_completion(
     assert untouched is not None
     assert untouched.status == AgentTaskStatus.RUNNING
     assert untouched.attempt == 1
+
+
+async def _make_in_flight_task(
+    uow: PostgresUnitOfWork,
+    *,
+    run_id: str,
+    status: AgentTaskStatus,
+    key: str,
+) -> str:
+    """Create a run-scoped task under ``run_id`` and leave it queued or running."""
+    session = await AgentSessionService().create_run_session(
+        uow, run_id=run_id, request=_session_req()
+    )
+    task = await AgentTaskService().create_task(uow, session=session, request=_task_req(key))
+    if status == AgentTaskStatus.RUNNING:
+        running = task.model_copy(
+            update={"status": AgentTaskStatus.RUNNING, "started_at": datetime.now(UTC)}
+        )
+        await uow.agent_tasks.update(running)
+    return task.id
+
+
+@pytest.mark.asyncio
+async def test_run_stop_finalization_cancels_in_flight_tasks_with_events(
+    session_maker: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+) -> None:
+    """A stopped run's queued and running tasks reach CANCELLED with an
+    attributable reason, and each cancellation lands in the run's event stream —
+    the copilot cards resolve instead of spinning, and the record shows why."""
+    _ = db_session
+    async with PostgresUnitOfWork(session_maker) as uow:
+        run_id, _evidence = await seed_run_with_evidence(uow)
+        queued_id = await _make_in_flight_task(
+            uow, run_id=run_id, status=AgentTaskStatus.QUEUED, key="stop-queued"
+        )
+        running_id = await _make_in_flight_task(
+            uow, run_id=run_id, status=AgentTaskStatus.RUNNING, key="stop-running"
+        )
+
+    async with PostgresUnitOfWork(session_maker) as uow:
+        cancelled = await finalize_tasks_for_stopped_run(uow, run_id=run_id)
+        assert cancelled == 2
+
+    async with PostgresUnitOfWork(session_maker) as uow:
+        queued = await uow.agent_tasks.get_by_id(queued_id)
+        running = await uow.agent_tasks.get_by_id(running_id)
+        events = await uow.events.list_by_run(run_id)
+    assert queued is not None
+    assert queued.status == AgentTaskStatus.CANCELLED
+    assert queued.error_code == AgentRuntimeErrorCode.TASK_CANCELLED.value
+    assert queued.error_message == "Run stopped before the task started"
+    assert queued.completed_at is not None
+    assert running is not None
+    assert running.status == AgentTaskStatus.CANCELLED
+    assert running.error_message == "Run stopped while the task was in flight"
+    failed_events = [e for e in events if e.type == "agent.task.failed"]
+    assert len(failed_events) == 2
+    for event in failed_events:
+        assert event.payload["status"] == "cancelled"
+        assert event.payload["errorCode"] == AgentRuntimeErrorCode.TASK_CANCELLED.value
+        assert event.payload["errorMessage"] in {
+            "Run stopped before the task started",
+            "Run stopped while the task was in flight",
+        }
+
+
+@pytest.mark.asyncio
+async def test_executor_does_not_resurrect_a_cancelled_task(
+    session_maker: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+) -> None:
+    """The executor must never clobber a run-stop cancellation: a task cancelled
+    while the worker was mid-flight stays CANCELLED even when the executor runs
+    against it afterwards (its claim phase finds no QUEUED row and no-ops)."""
+    _ = db_session
+    async with PostgresUnitOfWork(session_maker) as uow:
+        run_id, _evidence = await seed_run_with_evidence(uow)
+        task_id = await _make_in_flight_task(
+            uow, run_id=run_id, status=AgentTaskStatus.RUNNING, key="stop-resurrect"
+        )
+    async with PostgresUnitOfWork(session_maker) as uow:
+        await finalize_tasks_for_stopped_run(uow, run_id=run_id)
+
+    executor = TaskExecutor(generation=AgentGenerationFacade(_service()))
+    async with PostgresUnitOfWork(session_maker) as uow:
+        await executor.execute(uow, task_id)
+    async with PostgresUnitOfWork(session_maker) as uow:
+        final = await uow.agent_tasks.get_by_id(task_id)
+    assert final is not None
+    assert final.status == AgentTaskStatus.CANCELLED
+
+
+@pytest.mark.asyncio
+async def test_late_executor_failure_does_not_clobber_a_cancelled_task(
+    session_maker: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+) -> None:
+    """The failure path is CAS-guarded too: a task the run-stop finalizer
+    cancelled while the executor was mid-flight keeps its CANCELLED state and the
+    canceller's event — a late FAILED write and its event are both skipped."""
+    _ = db_session
+    async with PostgresUnitOfWork(session_maker) as uow:
+        run_id, _evidence = await seed_run_with_evidence(uow)
+        task_id = await _make_in_flight_task(
+            uow, run_id=run_id, status=AgentTaskStatus.RUNNING, key="stop-late-fail"
+        )
+        task = await uow.agent_tasks.get_by_id(task_id)
+        assert task is not None
+        session = await uow.agent_sessions.get_by_id(task.session_id)
+        assert session is not None
+        running_snapshot = task
+    async with PostgresUnitOfWork(session_maker) as uow:
+        await finalize_tasks_for_stopped_run(uow, run_id=run_id)
+
+    executor = TaskExecutor(generation=AgentGenerationFacade(_service()))
+    async with PostgresUnitOfWork(session_maker) as uow:
+        # The executor's own failure path, racing the cancellation: the CAS out of
+        # 'running' loses, so nothing is written and no event is appended.
+        await executor._fail_task(  # type: ignore[attr-defined]
+            uow,
+            task=running_snapshot,
+            session=session,
+            run_id=run_id,
+            code=AgentRuntimeErrorCode.PROVIDER_FAILURE,
+            message="Provider request timed out",
+        )
+        await uow.commit()
+    async with PostgresUnitOfWork(session_maker) as uow:
+        final = await uow.agent_tasks.get_by_id(task_id)
+        events = await uow.events.list_by_run(run_id)
+    assert final is not None
+    assert final.status == AgentTaskStatus.CANCELLED
+    assert final.error_code == AgentRuntimeErrorCode.TASK_CANCELLED.value
+    # Only the canceller's event exists — the late failure added nothing.
+    failed_events = [e for e in events if e.type == "agent.task.failed"]
+    assert len(failed_events) == 1
+    assert failed_events[0].payload["status"] == "cancelled"

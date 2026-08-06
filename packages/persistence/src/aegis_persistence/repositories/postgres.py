@@ -887,6 +887,23 @@ class PostgresAgentTaskRepository:
         )
         return [agent_task_to_domain(row) for row in result.scalars().all()]
 
+    async def list_for_run(
+        self,
+        run_id: str,
+        *,
+        statuses: tuple[str, ...] | None = None,
+    ) -> list[AgentTaskV1]:
+        """Every task anchored to ``run_id``, optionally narrowed to ``statuses``.
+
+        The run-stop finalizer reads this to find the tasks a stopped run still
+        owns; the status filter keeps that read to the rows that can still move.
+        """
+        query = select(AgentTaskRow).where(AgentTaskRow.run_id == run_id)
+        if statuses is not None:
+            query = query.where(AgentTaskRow.status.in_(statuses))
+        result = await self._session.execute(query.order_by(AgentTaskRow.created_at.asc()))
+        return [agent_task_to_domain(row) for row in result.scalars().all()]
+
     async def add(self, task: AgentTaskV1) -> AgentTaskV1:
         payload = domain_to_payload(task)
         row = AgentTaskRow(

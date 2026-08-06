@@ -197,3 +197,90 @@ async def recover_running_tasks(uow: PostgresUnitOfWork) -> int:
     retried rather than silently failed.
     """
     return await recover_orphaned_tasks(uow, older_than_seconds=0.0)
+
+
+async def finalize_tasks_for_stopped_run(
+    uow: PostgresUnitOfWork,
+    *,
+    run_id: str,
+    sessions: AgentSessionService | None = None,
+) -> int:
+    """Cancel every in-flight agent task on a run that has just stopped.
+
+    A run that ends with tasks still queued or running leaves the copilot cards
+    spinning with no honest terminal state — the operator cannot tell whether to
+    wait, and the run is over, so no queued task will ever be useful and no
+    running task's answer can change anything. Both are cancelled terminally with
+    an attributable reason, and each cancellation is recorded in the run's event
+    stream like any other task outcome (so the replay and the after-action see
+    it). Returns how many tasks were cancelled.
+
+    Every transition is the same status-guarded CAS the executor uses, so a task
+    the worker is concurrently completing is never clobbered (the CAS finds no
+    row and the cancellation is skipped) — and, symmetrically, the executor's own
+    terminal writes are CAS-guarded, so a cancelled task is never resurrected by
+    a late completion. Incident-scoped sessions go terminal (CANCELLED, mirroring
+    ``TaskExecutor._fail_task``); run-scoped lane/chat sessions survive, because
+    they host many turns and the operator still reads their history.
+    """
+    sessions = sessions or AgentSessionService()
+    now = datetime.now(UTC)
+    in_flight = await uow.agent_tasks.list_for_run(
+        run_id,
+        statuses=(AgentTaskStatus.QUEUED.value, AgentTaskStatus.RUNNING.value),
+    )
+    cancelled = 0
+    for task in in_flight:
+        message = (
+            "Run stopped before the task started"
+            if task.status == AgentTaskStatus.QUEUED
+            else "Run stopped while the task was in flight"
+        )
+        terminal = task.model_copy(
+            update={
+                "status": AgentTaskStatus.CANCELLED,
+                "updated_at": now,
+                "completed_at": now,
+                "error_code": AgentRuntimeErrorCode.TASK_CANCELLED.value,
+                "error_message": message,
+            }
+        )
+        claimed = await uow.agent_tasks.claim_transition(
+            terminal, from_statuses=(task.status.value,)
+        )
+        if not claimed:
+            # The executor got there first (or another finalizer did); its
+            # terminal state stands and this cancellation is a no-op.
+            continue
+        cancelled += 1
+        session = await uow.agent_sessions.get_by_id(task.session_id)
+        if (
+            session is not None
+            and task.incident_id is not None
+            and can_transition(session.state, AgentSessionState.CANCELLED)
+        ):
+            await sessions.transition(
+                uow,
+                session=session,
+                to_state=AgentSessionState.CANCELLED,
+                reason="run_stopped",
+                task_id=task.id,
+                run_id=run_id,
+            )
+        next_sequence = await uow.events.next_sequence(run_id)
+        await uow.append_event(
+            build_task_completed_event(
+                event_id=new_runtime_id("evt"),
+                run_id=run_id,
+                sequence=next_sequence,
+                session_id=task.session_id,
+                task_id=task.id,
+                trace_id=task.trace_id,
+                status=AgentTaskStatus.CANCELLED.value,
+                role=session.role.value if session is not None else None,
+                error_code=AgentRuntimeErrorCode.TASK_CANCELLED.value,
+                error_message=message,
+                sim_time=await _run_sim_time(uow, run_id),
+            )
+        )
+    return cancelled

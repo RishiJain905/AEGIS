@@ -16,6 +16,11 @@ class _FakeAgentTasks:
     async def get_by_id(self, task_id: str) -> object:
         return SimpleNamespace(id=task_id, status=SimpleNamespace(value="queued"))
 
+    async def list_for_run(
+        self, run_id: str, *, statuses: tuple[str, ...] | None = None
+    ) -> list[object]:
+        return []
+
 
 class _FakeUow:
     def __init__(self) -> None:

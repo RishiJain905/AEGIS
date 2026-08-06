@@ -16,6 +16,7 @@ from pathlib import Path
 
 from aegis_agents.runtime.factory import create_task_executor
 from aegis_agents.runtime.ids import new_runtime_id
+from aegis_agents.runtime.recovery import finalize_tasks_for_stopped_run
 from aegis_contracts import AegisSettings
 from aegis_contracts.reports import TriggerScribeRequestV1
 from aegis_contracts.versioning import TRIGGER_SCRIBE_REQUEST_SCHEMA_VERSION
@@ -44,6 +45,21 @@ async def finalize_stopped_run(
     so a second call (e.g. manual stop after the ticker already finalized) is harmless.
     """
     root = scenarios_root or (WORKSPACE_ROOT / "scenarios")
+
+    # Cancel any agent tasks still in flight on the stopped run FIRST, before the
+    # SCRIBE after-action task is created below: a run that ends with tasks queued or
+    # running leaves the copilot cards spinning with no honest terminal state, and the
+    # operator cannot tell whether to wait. The cancellations land in the run's event
+    # stream like any other task outcome, so the replay and the after-action see them.
+    # Best-effort like everything else here — a failed sweep leaves the existing
+    # backstops (client deadline, stale-task sweep) to resolve the cards.
+    try:
+        async with PostgresUnitOfWork(session_maker, settings=settings) as uow:
+            await finalize_tasks_for_stopped_run(uow, run_id=run_id)
+    except Exception:  # noqa: BLE001 — finalization must never fail the stop path
+        logger.warning(
+            "Agent task finalization failed for stopped run %s", run_id, exc_info=True
+        )
 
     # Score is the primary deliverable: it tolerates a run with zero incidents (the facts
     # assembler resolves incident_id=None gracefully), so it is produced for every stop.

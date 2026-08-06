@@ -111,10 +111,13 @@ function phraseFor(entry: RunFeedEntry): string | null {
     case 'agent.task.completed':
       return `${role ?? 'An agent'} finished its task${on}`;
     case 'agent.task.failed': {
-      const reason = payloadText(payload, 'error', 'message');
+      // The backend's terminal event carries the attributable cause
+      // (errorMessage/errorCode); older events only had free-form error/message.
+      const reason = payloadText(payload, 'errorMessage', 'error', 'message');
+      const code = payloadText(payload, 'errorCode');
       return `${role ?? 'An agent'} could not finish its task${on}${
         reason === null ? '' : ` — ${reason}`
-      }`;
+      }${code === null ? '' : ` (${code})`}`;
     }
     case 'agent.artifact.created':
       return `${role ?? 'An agent'} recorded a finding${on}`;
