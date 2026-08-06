@@ -31,6 +31,24 @@ class SubscriptionState:
     channel: str
     last_applied_sequence: int
     paused: bool = False
+    # When the overflow path parked this subscription. The gateway sweeps paused
+    # subscriptions on every heartbeat and needs to know how long each has been waiting:
+    # a queue that drains is resumed, one that never drains has its connection closed.
+    # `None` whenever `paused` is False — the two are set and cleared together.
+    paused_at: datetime | None = None
+
+    def pause(self, now: datetime) -> None:
+        self.paused = True
+        self.paused_at = now
+
+    def resume(self) -> None:
+        self.paused = False
+        self.paused_at = None
+
+    def paused_seconds(self, now: datetime) -> float:
+        if self.paused_at is None:
+            return 0.0
+        return (now - self.paused_at).total_seconds()
 
 
 @dataclass

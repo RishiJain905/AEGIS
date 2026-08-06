@@ -30,6 +30,7 @@ class WebSocketMessageType(StrEnum):
     SNAPSHOT_REQUIRED = "snapshot_required"
     PING = "ping"
     RESYNC_COMPLETE = "resync_complete"
+    RUN_TERMINATED = "run_terminated"
 
 
 class WebSocketErrorCode(StrEnum):
@@ -141,6 +142,15 @@ class WebSocketResyncCompletePayloadV1(BaseModel):
     events_delivered: int = Field(alias="eventsDelivered", ge=0)
 
 
+class WebSocketRunTerminatedPayloadV1(BaseModel):
+    """Server → client: the subscribed run has ended; no further events will be delivered."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    run_id: RunId = Field(alias="runId")
+    status: str = Field(min_length=1, max_length=64)
+
+
 _PAYLOAD_MODEL_BY_TYPE: dict[WebSocketMessageType, type[BaseModel]] = {
     WebSocketMessageType.HELLO: WebSocketHelloPayloadV1,
     WebSocketMessageType.HELLO_ACK: WebSocketHelloAckPayloadV1,
@@ -154,6 +164,7 @@ _PAYLOAD_MODEL_BY_TYPE: dict[WebSocketMessageType, type[BaseModel]] = {
     WebSocketMessageType.SNAPSHOT_REQUIRED: WebSocketSnapshotRequiredPayloadV1,
     WebSocketMessageType.PING: WebSocketPingPayloadV1,
     WebSocketMessageType.RESYNC_COMPLETE: WebSocketResyncCompletePayloadV1,
+    WebSocketMessageType.RUN_TERMINATED: WebSocketRunTerminatedPayloadV1,
 }
 
 

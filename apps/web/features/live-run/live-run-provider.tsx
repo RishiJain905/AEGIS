@@ -35,6 +35,7 @@ import {
   saveStoredCursor,
 } from '@/lib/realtime/cursor-storage';
 import { projectDomainEventToActions } from '@/lib/realtime/event-projector';
+import { planGapRecovery } from '@/lib/realtime/gap-recovery';
 import { createInitialRunReplicatedState, runReplicatedReducer } from '@/lib/realtime/run-reducer';
 import { buildBootstrapFromEndpoints } from '@/lib/realtime/snapshot-resync';
 
@@ -447,11 +448,28 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
    */
   const catchUpFromSnapshot = useCallback(
     async (bootstrap: SnapshotBootstrapPayloadV1) => {
-      const fromSequence = graphSequenceFloor(bootstrap) + 1;
-      if (fromSequence > bootstrap.lastAppliedSequence) {
+      const plan = planGapRecovery({
+        fromSequence: graphSequenceFloor(bootstrap) + 1,
+        toSequence: bootstrap.lastAppliedSequence,
+      });
+      if (plan.strategy === 'none') {
         return;
       }
-      const events = await fetchMissingEvents(runId, fromSequence, bootstrap.lastAppliedSequence);
+      if (plan.strategy === 'snapshot') {
+        // Too far behind to replay. The snapshot just loaded already *is* the authoritative
+        // world state, and the run record carries the status and clock — what the skipped
+        // events would add is historical narration the timeline fetches on demand. Walking
+        // them instead means dozens of sequential paged reads that still finish short of the
+        // head, leaving the cursor behind it so the next live event reads as another gap:
+        // the loop this cap exists to break. Take the head and resume contiguously.
+        lastAppliedSequenceRef.current = Math.max(
+          lastAppliedSequenceRef.current,
+          bootstrap.lastAppliedSequence,
+        );
+        saveStoredCursor(runId, bootstrap.lastAppliedSequence);
+        return;
+      }
+      const events = await fetchMissingEvents(runId, plan.fromSequence, plan.toSequence);
       for (const event of events) {
         applyEventToGraph(event, true);
         saveStoredCursor(runId, event.sequence);
@@ -756,6 +774,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
     let offSnapshotRequired = () => {};
     let offError = () => {};
     let offResyncComplete = () => {};
+    let offRunTerminated = () => {};
 
     void (async () => {
       let ticket: string;
@@ -844,6 +863,14 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         });
       });
 
+      offRunTerminated = transport.on('run_terminated', () => {
+        // The gateway has unregistered the subscription; nothing further will arrive on it.
+        // One authoritative refetch settles the facts the cockpit was waiting on an event to
+        // deliver — terminal status, resolved verdict, report availability — instead of
+        // leaving the board narrating a run that has already finished.
+        requestResync();
+      });
+
       await transport.connect();
       transport.subscribe({
         runId,
@@ -859,6 +886,7 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
       offSnapshotRequired();
       offError();
       offResyncComplete();
+      offRunTerminated();
       transportRef.current?.disconnect();
       transportRef.current = null;
     };

@@ -82,6 +82,14 @@ function bootstrapPayload(lastAppliedSequence: number, runId: string = RUN_ID) {
   };
 }
 
+/** A snapshot that lags the run head — the shape every catch-up has to close. */
+function laggedBootstrap(snapshotSequence: number, head: number) {
+  const payload = bootstrapPayload(head);
+  payload.graphSnapshot.sequence = snapshotSequence;
+  payload.graphSnapshot.revision = snapshotSequence;
+  return payload;
+}
+
 function envelope(sequence: number, type = 'telemetry.api.request'): RealtimeMessageEnvelopeV1 {
   const suffix = String(sequence).padStart(26, '0');
   return {
@@ -369,5 +377,37 @@ describe('LiveRunProvider request budget', () => {
     });
 
     expect(screen.getByTestId('snapshot-run')).toHaveTextContent(OTHER_RUN_ID);
+  });
+});
+
+describe('LiveRunProvider catch-up distance cap', () => {
+  it('still replays a catch-up that fits inside the cap', async () => {
+    buildBootstrapFromEndpoints.mockResolvedValue(laggedBootstrap(10, 30));
+
+    await mountAndSettle();
+
+    expect(fetchMissingEvents).toHaveBeenCalledWith(RUN_ID, 11, 30);
+  });
+
+  it('skips the replay when the snapshot is further behind the head than the cap', async () => {
+    // A run left unattended. Walking that range is dozens of sequential paged reads that
+    // still finish short of the head, leaving the cursor behind it — so the next live event
+    // reads as a gap, which asks for another snapshot, which replays another dozens of
+    // pages. The snapshot already carries authoritative world state; take it and the head.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    buildBootstrapFromEndpoints.mockResolvedValue(laggedBootstrap(10, 50_000));
+
+    await mountAndSettle();
+
+    expect(fetchMissingEvents).not.toHaveBeenCalled();
+
+    // The cursor took the head, so live delivery resumes contiguously rather than looping.
+    act(() => {
+      emit(50_001);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+    expect(buildBootstrapFromEndpoints).toHaveBeenCalledTimes(1);
   });
 });

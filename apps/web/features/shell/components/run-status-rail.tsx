@@ -3,6 +3,7 @@
 import { ConnectionHealthState } from '@aegis/contracts-ts';
 import { cn } from '@aegis/ui';
 
+import { resolveConnectionState, type ConnectionStateInput } from '@/lib/realtime/connection-state';
 import { describeRunOutcome } from '@/lib/run-status';
 
 /**
@@ -44,99 +45,83 @@ export interface LinkReading {
   detail: string;
 }
 
-/**
- * Describe realtime delivery — and only delivery. A paused simulator is a healthy link
- * (`simulator_paused` maps to Connected); the pause itself is the SIM instrument's fact.
- */
-export function describeLink(input: {
-  isLiveMode: boolean;
-  health?: string;
-  connectionStatus?: string;
-}): LinkReading {
-  if (input.isLiveMode) {
-    switch (input.health) {
-      case ConnectionHealthState.CONNECTED:
-      case ConnectionHealthState.SIMULATOR_PAUSED:
-        return {
-          label: 'Connected',
-          tone: 'ok',
-          pulse: false,
-          detail: 'Live events are reaching this screen.',
-        };
-      case ConnectionHealthState.LOCALLY_PAUSED:
-        return {
-          label: 'Held',
-          tone: 'held',
-          pulse: false,
-          detail: 'You are holding live updates. Resume from the Link controls to apply them.',
-        };
-      case ConnectionHealthState.RECONNECTING:
-        return {
-          label: 'Reconnecting',
-          tone: 'warn',
-          pulse: true,
-          detail: 'Restoring the realtime connection.',
-        };
-      case ConnectionHealthState.CATCHING_UP:
-      case ConnectionHealthState.SNAPSHOT_RESYNC:
-        return {
-          label: 'Syncing',
-          tone: 'info',
-          pulse: true,
-          detail: 'Applying missed events before resuming live delivery.',
-        };
-      case ConnectionHealthState.GAP:
-        return {
-          label: 'Recovering',
-          tone: 'warn',
-          pulse: true,
-          detail: 'A sequence gap is being repaired from an authoritative snapshot.',
-        };
-      case ConnectionHealthState.DISCONNECTED:
-        return {
-          label: 'Offline',
-          tone: 'down',
-          pulse: false,
-          detail: 'No realtime connection. The board may lag the simulation.',
-        };
-      case ConnectionHealthState.STALE:
-        return {
-          label: 'Stale',
-          tone: 'warn',
-          pulse: false,
-          detail: 'Event delivery is interrupted. Recover before trusting the live view.',
-        };
-      default:
-        return {
-          label: input.health ?? 'Unknown',
-          tone: 'warn',
-          pulse: false,
-          detail: 'Link health is unrecognized.',
-        };
-    }
-  }
-  if (input.connectionStatus === 'offline') {
-    return {
-      label: 'Offline',
-      tone: 'down',
-      pulse: false,
-      detail: 'Realtime updates are unavailable.',
-    };
-  }
-  if (input.connectionStatus === 'reconnecting') {
-    return {
-      label: 'Reconnecting',
-      tone: 'warn',
-      pulse: true,
-      detail: 'Attempting to restore the realtime connection.',
-    };
-  }
-  return {
+/** One instrument reading per connection condition — the chip's half of the vocabulary. */
+const LINK_READINGS: Record<string, LinkReading> = {
+  [ConnectionHealthState.CONNECTED]: {
     label: 'Connected',
     tone: 'ok',
     pulse: false,
-    detail: 'Data delivery is healthy.',
-  };
+    detail: 'Live events are reaching this screen.',
+  },
+  // A paused simulator is a healthy link; the pause itself is the SIM instrument's fact.
+  [ConnectionHealthState.SIMULATOR_PAUSED]: {
+    label: 'Connected',
+    tone: 'ok',
+    pulse: false,
+    detail: 'Live events are reaching this screen.',
+  },
+  [ConnectionHealthState.LOCALLY_PAUSED]: {
+    label: 'Held',
+    tone: 'held',
+    pulse: false,
+    detail: 'You are holding live updates. Resume from the Link controls to apply them.',
+  },
+  [ConnectionHealthState.RECONNECTING]: {
+    label: 'Reconnecting',
+    tone: 'warn',
+    pulse: true,
+    detail: 'Restoring the realtime connection.',
+  },
+  [ConnectionHealthState.CATCHING_UP]: {
+    label: 'Syncing',
+    tone: 'info',
+    pulse: true,
+    detail: 'Applying missed events before resuming live delivery.',
+  },
+  [ConnectionHealthState.SNAPSHOT_RESYNC]: {
+    label: 'Syncing',
+    tone: 'info',
+    pulse: true,
+    detail: 'Applying missed events before resuming live delivery.',
+  },
+  [ConnectionHealthState.GAP]: {
+    label: 'Recovering',
+    tone: 'warn',
+    pulse: true,
+    detail: 'A sequence gap is being repaired from an authoritative snapshot.',
+  },
+  [ConnectionHealthState.DISCONNECTED]: {
+    label: 'Offline',
+    tone: 'down',
+    pulse: false,
+    detail: 'No realtime connection. The board may lag the simulation.',
+  },
+  [ConnectionHealthState.STALE]: {
+    label: 'Stale',
+    tone: 'warn',
+    pulse: false,
+    detail: 'Event delivery is interrupted. Recover before trusting the live view.',
+  },
+};
+
+/**
+ * Describe realtime delivery — and only delivery.
+ *
+ * The condition comes from `resolveConnectionState`, the same call the connection banner
+ * makes. That shared source is what stopped this chip reading "Connected" while the banner
+ * beneath it warned the projection was stale: `isStale` is now folded into the condition
+ * both surfaces render, so a stale projection reads Stale in both places or in neither.
+ */
+export function describeLink(input: ConnectionStateInput): LinkReading {
+  const reading = resolveConnectionState(input);
+  return (
+    LINK_READINGS[reading.condition] ?? {
+      label: 'Unknown',
+      tone: 'warn',
+      pulse: false,
+      detail: 'Link health is unrecognized.',
+    }
+  );
 }
 
 export interface SimReading {
@@ -315,6 +300,11 @@ export interface RunStatusRailProps {
   isLiveMode: boolean;
   connectionHealth?: string;
   connectionStatus?: string;
+  /**
+   * The reducer's staleness flag. Part of the LINK reading, not a separate instrument: a
+   * projection known to be behind is not a connected link, whatever the socket reports.
+   */
+  isStale?: boolean;
   runStatus?: string;
   /** The run's resolved verdict, when the live stream has projected it. */
   runOutcome?: { outcome: string; reason: string; resolvedSimTime: string } | null;
@@ -338,13 +328,20 @@ export function RunStatusRail({
   isLiveMode,
   connectionHealth,
   connectionStatus,
+  isStale,
   runStatus,
   runOutcome,
   nodes,
   reportAvailable = false,
   hasRun = true,
 }: RunStatusRailProps) {
-  const link = describeLink({ isLiveMode, health: connectionHealth, connectionStatus });
+  const link = describeLink({
+    isLiveMode,
+    health: connectionHealth,
+    connectionStatus,
+    isStale,
+    runStatus,
+  });
   const sim = describeSim(runStatus, runOutcome);
   const posture = describePosture(nodes);
   const report = describeReport({ runStatus, reportAvailable });

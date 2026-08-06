@@ -6,10 +6,12 @@ import {
   websocketFrameSchema,
   websocketPingPayloadSchema,
   websocketResyncCompletePayloadSchema,
+  websocketRunTerminatedPayloadSchema,
   websocketSnapshotRequiredPayloadSchema,
   websocketWarningPayloadSchema,
   type RealtimeMessageEnvelopeV1,
   type WebSocketFrameV1,
+  type WebSocketRunTerminatedPayloadV1,
   type WebSocketSnapshotRequiredPayloadV1,
 } from '@aegis/contracts-ts';
 
@@ -50,6 +52,12 @@ export type RealtimeTransportEventMap = {
     eventsDelivered: number;
   };
   warning: { code: string; message: string };
+  /**
+   * The subscribed run has ended. The gateway has already unregistered the subscription, so
+   * nothing further will arrive on it — a consumer that keeps waiting for live events here
+   * waits forever.
+   */
+  run_terminated: WebSocketRunTerminatedPayloadV1;
 };
 
 type EventKey = keyof RealtimeTransportEventMap;
@@ -92,6 +100,7 @@ export class RealtimeTransport {
     snapshot_required: new Set(),
     resync_complete: new Set(),
     warning: new Set(),
+    run_terminated: new Set(),
   };
 
   private socket: WebSocket | null = null;
@@ -313,6 +322,15 @@ export class RealtimeTransport {
           code: warningPayload.code,
           message: warningPayload.message,
         });
+        return;
+      }
+      case 'run_terminated': {
+        const terminatedPayload = parseContract(websocketRunTerminatedPayloadSchema, frame.payload);
+        // The cursor is deliberately kept. The gateway serves a terminal run's backfill in
+        // full before saying this, so a reconnect replays anything this client missed and
+        // ends on another `run_terminated` — deterministic either way. Dropping the cursor
+        // instead would make a reconnect re-read the whole run from sequence 0.
+        this.emit('run_terminated', terminatedPayload);
         return;
       }
       default:

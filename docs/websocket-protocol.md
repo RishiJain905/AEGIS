@@ -69,6 +69,7 @@ All frames use `WebSocketFrameV1`:
 | `snapshot_required` | Client must resync (gap, queue overflow) |
 | `ping` | Heartbeat |
 | `resync_complete` | Backfill delivery finished |
+| `run_terminated` | `{ runId, status }` — the run has ended; the subscription is closed server-side |
 
 ## Subscription lifecycle
 
@@ -102,6 +103,31 @@ All frames use `WebSocketFrameV1`:
 - Per-connection outbound queue bound: `AEGIS_WS_MAX_QUEUE_DEPTH` (default 256).
 - On overflow: subscription paused, `snapshot_required` with `WS_QUEUE_OVERFLOW`, live fan-out stopped for that subscription.
 - Prevents unbounded memory growth under slow consumers.
+
+### Pause is never a resting state
+
+A paused subscription is resolved server-side on every heartbeat sweep — recovery does not
+depend on the client noticing `snapshot_required`:
+
+- Queue drained back to `paused_resume_queue_ratio` × `max_queue_depth` → the subscription
+  **resumes**, and the client receives a `warning` with code `WS_SUBSCRIPTION_RESUMED`. Its
+  cursor is behind the run head; the next live event's PostgreSQL gap fill closes that.
+- Still full after `paused_subscription_grace_seconds` → the connection is **closed** with
+  `WS_QUEUE_OVERFLOW` so the client reconnects and re-subscribes from a servable cursor.
+
+## Terminated runs
+
+A terminal run publishes no further events, so no subscription may outlive one:
+
+- `sim.run.stopped` reaching fan-out → every subscription on that run (all channels) receives
+  `run_terminated` after the lifecycle event itself, and is then unregistered.
+- Subscribing to an already-terminal run still receives its full backfill and
+  `resync_complete` — replaying a finished run is a debrief, not an error — followed by
+  `run_terminated`, after which the subscription is unregistered.
+
+Either way the client ends up with a deterministic terminal frame and the gateway holds no
+fan-out entry that nothing can ever match. `@aegis/realtime-client` surfaces this as its
+`run_terminated` transport event.
 
 ## Error codes
 

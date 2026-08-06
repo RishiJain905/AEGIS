@@ -18,6 +18,7 @@ export const websocketMessageTypeSchema = z.enum([
   'snapshot_required',
   'ping',
   'resync_complete',
+  'run_terminated',
 ]);
 
 export const websocketErrorCodeSchema = z.enum([
@@ -125,6 +126,13 @@ export const websocketResyncCompletePayloadSchema = z
   })
   .strict();
 
+export const websocketRunTerminatedPayloadSchema = z
+  .object({
+    runId: runIdSchema,
+    status: z.string().min(1).max(64),
+  })
+  .strict();
+
 const payloadSchemaByType = {
   hello: websocketHelloPayloadSchema,
   hello_ack: websocketHelloAckPayloadSchema,
@@ -138,6 +146,7 @@ const payloadSchemaByType = {
   snapshot_required: websocketSnapshotRequiredPayloadSchema,
   ping: websocketPingPayloadSchema,
   resync_complete: websocketResyncCompletePayloadSchema,
+  run_terminated: websocketRunTerminatedPayloadSchema,
 } as const;
 
 export const websocketFrameSchema = z
@@ -185,6 +194,7 @@ export type WebSocketSnapshotRequiredPayloadV1 = z.infer<
   typeof websocketSnapshotRequiredPayloadSchema
 >;
 export type WebSocketResyncCompletePayloadV1 = z.infer<typeof websocketResyncCompletePayloadSchema>;
+export type WebSocketRunTerminatedPayloadV1 = z.infer<typeof websocketRunTerminatedPayloadSchema>;
 
 export function parseWebSocketFrame(value: unknown): WebSocketFrameV1 {
   return websocketFrameSchema.parse(value);

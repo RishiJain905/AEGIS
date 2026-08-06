@@ -10,7 +10,11 @@ import { Alert, Badge, Button, cn, getMotionTransition, useReducedMotion } from 
 import { useLiveRun } from '@/features/live-run/live-run-provider';
 import type { ConnectionStatus } from '@/lib/api';
 import { useConnectionStatus } from '@/features/shell/hooks/use-shell-queries';
-import { isRunTerminal } from '@/lib/run-status';
+import {
+  resolveConnectionState,
+  shouldNotify,
+  type ConnectionStateInput,
+} from '@/lib/realtime/connection-state';
 
 /**
  * How long a degraded connection must persist before the operator is told about it. The
@@ -31,107 +35,79 @@ export interface ConnectionNotice {
   detail: string;
 }
 
-/** Also the fallback for any health value this presentation layer does not know yet. */
-const STALE_NOTICE: ConnectionNotice = {
-  key: 'stale',
-  variant: 'warning',
-  title: 'Stale state',
-  detail: 'Event delivery is interrupted. Recover before trusting the live view.',
-};
-
-const LIVE_NOTICES: Record<string, ConnectionNotice> = {
-  [ConnectionHealthState.STALE]: STALE_NOTICE,
+/** Live-mode copy, keyed by the resolved condition. */
+const LIVE_COPY: Record<string, { title: string; detail: string }> = {
+  [ConnectionHealthState.STALE]: {
+    title: 'Stale state',
+    detail: 'Event delivery is interrupted. Recover before trusting the live view.',
+  },
   [ConnectionHealthState.DISCONNECTED]: {
-    key: 'disconnected',
-    variant: 'warning',
     title: 'Disconnected',
     detail: 'Displayed state may not reflect the latest simulation progress.',
   },
   [ConnectionHealthState.RECONNECTING]: {
-    key: 'reconnecting',
-    variant: 'warning',
     title: 'Reconnecting',
     detail: 'Restoring the realtime connection from the last processed cursor.',
   },
   [ConnectionHealthState.CATCHING_UP]: {
-    key: 'catching_up',
-    variant: 'default',
     title: 'Catching up',
     detail: 'Applying historical events before resuming live delivery.',
   },
   [ConnectionHealthState.SNAPSHOT_RESYNC]: {
-    key: 'snapshot_resync',
-    variant: 'warning',
     title: 'Resynchronizing',
     detail: 'Loading an authoritative snapshot and replaying missed events.',
   },
   [ConnectionHealthState.GAP]: {
-    key: 'gap',
-    variant: 'warning',
     title: 'Sequence gap',
     detail: 'Event application is paused until missing sequences are recovered.',
   },
   [ConnectionHealthState.SIMULATOR_PAUSED]: {
-    key: 'simulator_paused',
-    variant: 'default',
     title: 'Simulation paused',
     detail: 'The board resumes updating when the simulator does.',
   },
   [ConnectionHealthState.LOCALLY_PAUSED]: {
-    key: 'locally_paused',
-    variant: 'default',
     title: 'Updates paused',
     detail: 'Live updates are held locally. Resume to apply queued events.',
   },
 };
 
-const FIXTURE_NOTICES: Partial<Record<ConnectionStatus, ConnectionNotice>> = {
-  offline: {
-    key: 'fixture_offline',
-    variant: 'warning',
+/**
+ * Fixture-mode copy for the same conditions. A fixture-backed view has no cursor and no
+ * event stream, so "from the last processed cursor" would be a lie there.
+ */
+const FIXTURE_COPY: Record<string, { title: string; detail: string }> = {
+  [ConnectionHealthState.DISCONNECTED]: {
     title: 'Connection offline',
     detail: 'Realtime updates are unavailable. Showing last known fixture data.',
   },
-  reconnecting: {
-    key: 'fixture_reconnecting',
-    variant: 'default',
+  [ConnectionHealthState.RECONNECTING]: {
     title: 'Reconnecting',
     detail: 'Attempting to restore the realtime connection…',
   },
 };
 
 /**
- * The single mapping from connection state to operator-facing copy. Live runs are described
- * by the transport's own health; fixture-backed views fall back to the polled connection
- * status. Returns `null` when there is nothing worth interrupting the operator about.
+ * Operator-facing copy for the resolved connection condition — the banner's half of the
+ * vocabulary. The condition itself comes from `resolveConnectionState`, the same call the
+ * status strip's LINK chip makes, which is what stops the two surfaces contradicting each
+ * other. Returns `null` when there is nothing worth interrupting the operator about.
  */
-export function describeConnectionNotice(input: {
-  isLiveMode: boolean;
-  health?: string;
-  isStale?: boolean;
-  connectionStatus: ConnectionStatus;
-  /** The run's lifecycle status, when known — terminal runs mute delivery narration. */
-  runStatus?: string;
-}): ConnectionNotice | null {
-  if (input.isLiveMode) {
-    let notice: ConnectionNotice | null = null;
-    if (input.health !== undefined && input.health !== ConnectionHealthState.CONNECTED) {
-      notice = LIVE_NOTICES[input.health] ?? STALE_NOTICE;
-    } else if (input.isStale === true) {
-      // Connected but the reducer still flags the projection as stale — worth saying so.
-      notice = STALE_NOTICE;
-    }
-    // A finished run has nothing left to deliver: the informational delivery states
-    // (catching up, resynchronizing, simulator paused) describe a pipeline that no
-    // longer exists, and with no future event to clear them they would sit on screen
-    // forever. Genuine faults keep their warning banner even on an ended run.
-    const terminal = isRunTerminal(input.runStatus);
-    if (terminal && notice !== null && notice.variant === 'default') {
-      return null;
-    }
-    return notice;
+export function describeConnectionNotice(
+  input: ConnectionStateInput & { connectionStatus?: ConnectionStatus },
+): ConnectionNotice | null {
+  const reading = resolveConnectionState(input);
+  if (!shouldNotify(reading)) {
+    return null;
   }
-  return FIXTURE_NOTICES[input.connectionStatus] ?? null;
+  const copy = (reading.isLiveMode ? LIVE_COPY : FIXTURE_COPY)[reading.condition];
+  if (copy === undefined) {
+    return null;
+  }
+  return {
+    key: reading.condition,
+    variant: reading.severity === 'fault' ? 'warning' : 'default',
+    ...copy,
+  };
 }
 
 /**

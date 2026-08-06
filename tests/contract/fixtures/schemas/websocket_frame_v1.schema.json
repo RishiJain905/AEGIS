@@ -13,7 +13,8 @@
         "error",
         "snapshot_required",
         "ping",
-        "resync_complete"
+        "resync_complete",
+        "run_terminated"
       ],
       "title": "WebSocketMessageType",
       "type": "string"

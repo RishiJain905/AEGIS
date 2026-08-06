@@ -25,6 +25,7 @@ from aegis_contracts.websocket import (
     WebSocketMessageType,
     WebSocketPingPayloadV1,
     WebSocketResyncCompletePayloadV1,
+    WebSocketRunTerminatedPayloadV1,
     WebSocketSnapshotRequiredPayloadV1,
     WebSocketSubscribedPayloadV1,
     WebSocketSubscribePayloadV1,
@@ -57,6 +58,20 @@ from aegis_api.websocket.metrics import GLOBAL_GATEWAY_METRICS, GatewayMetrics
 from aegis_api.websocket.recovery import SubscriptionRecoveryService, envelope_from_domain_event
 
 logger = logging.getLogger(__name__)
+
+# The lifecycle event that ends a run. Both a manual STOP and the ticker reaching the
+# scenario horizon emit it, as does a quarantined run taken down through the real lifecycle
+# path — so this is the one signal that means "no further event will ever be published for
+# this run". Statuses written straight onto the run row without a lifecycle command emit
+# nothing, which is why subscribe-time also checks the persisted status.
+_RUN_TERMINAL_EVENT = "sim.run.stopped"
+
+
+def _is_run_active(status: str) -> bool:
+    """Whether a run can still produce events. Imported lazily, as the fog seeding is."""
+    from aegis_simulation.disclosure_resolver import ACTIVE_RUN_STATUSES
+
+    return status in ACTIVE_RUN_STATUSES
 
 
 class WebSocketGatewayManager:
@@ -196,6 +211,13 @@ class WebSocketGatewayManager:
                 continue
             await self._deliver_live_event(connection, subscription, envelope)
 
+        # The run just ended. Every subscription on it is now a subscription to a stream that
+        # will never produce another event, and leaving them registered is how a client ends
+        # up holding an open, silent socket waiting on a finished run. Announce the ending
+        # after the lifecycle event itself has been delivered, then unregister.
+        if envelope.event.type == _RUN_TERMINAL_EVENT:
+            await self._terminate_run_subscriptions(envelope.event.run_id, status="stopped")
+
     async def _handshake(self, connection: ConnectionState) -> None:
         raw = await asyncio.wait_for(
             connection.websocket.receive_text(),
@@ -277,7 +299,7 @@ class WebSocketGatewayManager:
             )
             # Seed/refresh fog-of-war disclosure from persisted truth before any backfill so
             # the resync path redacts by current disclosure and converges after reveals.
-            await self._seed_run_tracker(session, payload.run_id)
+            run_status = await self._seed_run_tracker(session, payload.run_id)
             plan = await self._recovery.plan_recovery(
                 session,
                 run_id=payload.run_id,
@@ -346,43 +368,103 @@ class WebSocketGatewayManager:
                 ),
             )
 
-    async def _seed_run_tracker(self, session: AsyncSession, run_id: str) -> None:
+        # Subscribing to a run that has already ended is legitimate — a debrief replays the
+        # whole stream from cursor 0 — so the backfill above still runs. What must not happen
+        # is the subscription outliving it: no live event will ever arrive for a terminal run,
+        # so the client would wait on a silent socket and the gateway would hold an entry in
+        # the fan-out index nothing can ever match. Say the run has ended, then unregister.
+        if run_status is not None and not _is_run_active(run_status):
+            await self._announce_run_terminated(
+                connection,
+                run_id=payload.run_id,
+                status=run_status,
+                trace_id=frame.trace_id,
+            )
+            await self._drop_subscription(connection, key)
+
+    async def _seed_run_tracker(self, session: AsyncSession, run_id: str) -> str | None:
         """Build/refresh the run's disclosure tracker from persisted truth.
 
         Overwriting with the authoritative current state on each subscribe is safe: it is a
         superset of the incremental fan-out updates, so live redaction stays correct and a
         post-reveal resync converges. Failures degrade to no redaction rather than dropping
         the subscription — fog is best-effort transport hygiene, never a hard dependency.
+
+        Returns the run's persisted lifecycle status, which the caller needs anyway to decide
+        whether the subscription has a future; `None` when it could not be read, in which case
+        the subscription is treated as live (fail-soft, same as the fog seeding itself).
         """
         from aegis_persistence.repositories.postgres import PostgresRunRepository
-        from aegis_simulation.disclosure_resolver import ACTIVE_RUN_STATUSES
 
         from aegis_api.runs.service import get_run_command_service
 
         try:
             run = await PostgresRunRepository(session).get_by_id(run_id)
             if run is None:
-                return
+                return None
             disclosure = await get_run_command_service().resolve_disclosure(session, run)
             if not disclosure.has_hidden_state:
                 self._run_trackers.pop(run_id, None)
-                return
+                return run.status
             self._run_trackers[run_id] = RunDisclosureTracker(
                 governing_map=dict(disclosure.governing_map),
                 revealed_condition_ids=set(disclosure.inputs.revealed_condition_ids),
                 alerted_asset_ids=set(disclosure.inputs.alerted_asset_ids),
-                active=run.status in ACTIVE_RUN_STATUSES,
+                active=_is_run_active(run.status),
             )
+            return run.status
         except Exception:  # noqa: BLE001 — never fail a subscription over fog seeding
             logger.warning("Fog-of-war tracker seed failed for run %s", run_id, exc_info=True)
+            return None
 
-    async def _handle_unsubscribe(
+    async def _announce_run_terminated(
         self,
         connection: ConnectionState,
-        frame: WebSocketFrameV1,
+        *,
+        run_id: str,
+        status: str,
+        trace_id: str | None = None,
     ) -> None:
-        payload = parse_contract(WebSocketUnsubscribePayloadV1, frame.payload)
-        key = connection.subscription_key(payload.run_id, payload.channel)
+        """Tell one client its run has ended. Queued, so it lands after the run's own events."""
+        await self._send_frame(
+            connection,
+            build_websocket_frame(
+                message_type=WebSocketMessageType.RUN_TERMINATED,
+                trace_id=trace_id or new_trace_id(),
+                sent_at=datetime.now(UTC),
+                payload=WebSocketRunTerminatedPayloadV1(run_id=run_id, status=status),
+            ),
+        )
+        self._metrics.record_subscription_terminated()
+
+    async def _terminate_run_subscriptions(self, run_id: str, *, status: str) -> None:
+        """Close out every subscription on a run that has just ended.
+
+        Covers every channel, not just the one the terminal event arrived on: the run is over
+        for all of them. The run's disclosure tracker goes too — with no subscriber left there
+        is nothing to redact, and holding it would leak one tracker per run for the lifetime
+        of the gateway process.
+        """
+        async with self._lock:
+            keys = [key for key in self._subscription_index if key[0] == run_id]
+            targets = [(key, list(self._subscription_index.get(key, set()))) for key in keys]
+
+        for key, connection_ids in targets:
+            for connection_id in connection_ids:
+                connection = self._connections.get(connection_id)
+                if connection is None or connection.get_subscription(*key) is None:
+                    continue
+                await self._announce_run_terminated(connection, run_id=run_id, status=status)
+                await self._drop_subscription(connection, key)
+
+        self._run_trackers.pop(run_id, None)
+
+    async def _drop_subscription(
+        self,
+        connection: ConnectionState,
+        key: tuple[str, str],
+    ) -> None:
+        """Unregister one subscription from both the connection and the fan-out index."""
         connection.subscriptions.pop(key, None)
         async with self._lock:
             subscribers = self._subscription_index.get(key)
@@ -390,6 +472,17 @@ class WebSocketGatewayManager:
                 subscribers.discard(connection.connection_id)
                 if not subscribers:
                     self._subscription_index.pop(key, None)
+
+    async def _handle_unsubscribe(
+        self,
+        connection: ConnectionState,
+        frame: WebSocketFrameV1,
+    ) -> None:
+        payload = parse_contract(WebSocketUnsubscribePayloadV1, frame.payload)
+        await self._drop_subscription(
+            connection,
+            connection.subscription_key(payload.run_id, payload.channel),
+        )
 
     async def _deliver_live_event(
         self,
@@ -489,7 +582,7 @@ class WebSocketGatewayManager:
         subscription: SubscriptionState,
         from_sequence: int,
     ) -> None:
-        subscription.paused = True
+        subscription.pause(datetime.now(UTC))
         self._metrics.record_slow_client()
         await self._send_frame_direct(
             connection,
@@ -533,6 +626,10 @@ class WebSocketGatewayManager:
                         message="Connection idle timeout exceeded",
                     )
                     continue
+                if await self._sweep_paused_subscriptions(connection, now):
+                    # The sweep closed the connection; a ping onto a closed socket would
+                    # only raise out of the heartbeat loop.
+                    continue
                 await self._send_frame(
                     connection,
                     build_websocket_frame(
@@ -542,6 +639,67 @@ class WebSocketGatewayManager:
                         payload=WebSocketPingPayloadV1(server_time=now),
                     ),
                 )
+
+    async def _sweep_paused_subscriptions(
+        self,
+        connection: ConnectionState,
+        now: datetime,
+    ) -> bool:
+        """Resolve every parked subscription on one connection. Returns True if it closed it.
+
+        Pausing bounds the gateway's memory; it is not a resting state. A subscription that
+        stays paused delivers nothing for the rest of the connection's life, and the only
+        thing that used to lift it was the client re-subscribing after noticing
+        `snapshot_required` — which a client that had stopped reading is, by construction,
+        least likely to do.
+
+        Two outcomes, no third: the queue has drained back under the resume watermark and the
+        subscription resumes (its cursor is behind, and the next live event's gap fill repairs
+        that from PostgreSQL), or it has not drained inside the grace window and the
+        connection is closed so the client reconnects onto a subscription that can be served.
+        """
+        paused = [
+            subscription
+            for subscription in connection.subscriptions.values()
+            if subscription.paused
+        ]
+        if not paused:
+            return False
+
+        if connection.outbound_queue.qsize() > self._config.paused_resume_queue_depth:
+            stalled = max(subscription.paused_seconds(now) for subscription in paused)
+            if stalled <= self._config.paused_subscription_grace_seconds:
+                return False
+            logger.info(
+                "Closing connection %s: subscription paused for %.0fs without draining",
+                connection.connection_id,
+                stalled,
+            )
+            await self._send_error_and_close(
+                connection,
+                code=WebSocketErrorCode.WS_QUEUE_OVERFLOW,
+                message="Subscription paused too long without draining",
+            )
+            return True
+
+        for subscription in paused:
+            subscription.resume()
+            self._metrics.record_subscription_resumed()
+            await self._send_frame(
+                connection,
+                build_websocket_frame(
+                    message_type=WebSocketMessageType.WARNING,
+                    trace_id=new_trace_id(),
+                    sent_at=now,
+                    payload=WebSocketWarningPayloadV1(
+                        code="WS_SUBSCRIPTION_RESUMED",
+                        message="Live delivery resumed after backpressure",
+                        run_id=subscription.run_id,
+                        details={"fromSequence": subscription.last_applied_sequence + 1},
+                    ),
+                ),
+            )
+        return False
 
     async def _send_error_and_close(
         self,

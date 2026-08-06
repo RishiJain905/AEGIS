@@ -98,6 +98,7 @@ export function StatusStrip({ runId }: StatusStripProps) {
         isLiveMode={isLiveMode}
         connectionHealth={isLiveMode ? liveRun.state.connectionHealth : undefined}
         connectionStatus={connectionStatus}
+        isStale={isLiveMode ? liveRun.state.isStale : undefined}
         runStatus={runStatus}
         runOutcome={isLiveMode ? liveRun.state.runOutcome : undefined}
         nodes={postureNodes}

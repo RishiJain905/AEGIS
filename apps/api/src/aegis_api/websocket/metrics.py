@@ -18,6 +18,8 @@ class GatewayMetrics:
     resyncs_total: int = 0
     duplicates_suppressed: int = 0
     slow_clients: int = 0
+    subscriptions_resumed: int = 0
+    subscriptions_terminated: int = 0
     close_reasons: dict[str, int] = field(default_factory=dict)
     _lock: Lock = field(default_factory=Lock, repr=False)
 
@@ -34,6 +36,8 @@ class GatewayMetrics:
                 "resyncsTotal": self.resyncs_total,
                 "duplicatesSuppressed": self.duplicates_suppressed,
                 "slowClients": self.slow_clients,
+                "subscriptionsResumed": self.subscriptions_resumed,
+                "subscriptionsTerminated": self.subscriptions_terminated,
                 "closeReasons": dict(self.close_reasons),
             }
 
@@ -134,6 +138,14 @@ class GatewayMetrics:
     def record_slow_client(self) -> None:
         with self._lock:
             self.slow_clients += 1
+
+    def record_subscription_resumed(self) -> None:
+        with self._lock:
+            self.subscriptions_resumed += 1
+
+    def record_subscription_terminated(self) -> None:
+        with self._lock:
+            self.subscriptions_terminated += 1
 
     def update_queue_depth(self, depth: int) -> None:
         with self._lock:

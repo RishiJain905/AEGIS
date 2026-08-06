@@ -18,6 +18,9 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ refetchQueries }),
 }));
 
+import { describeLink } from '@/features/shell/components/run-status-rail';
+import { resolveConnectionState } from '@/lib/realtime/connection-state';
+
 import { ConnectionHealthBanner, describeConnectionNotice } from './connection-health-banner';
 
 function mockLive(health: string, isStale = false) {
@@ -232,7 +235,10 @@ describe('ConnectionHealthBanner hysteresis', () => {
     render(<ConnectionHealthBanner />);
     advance(700);
     const banner = screen.getByTestId('connection-banner');
-    expect(banner).toHaveAttribute('data-connection-notice', 'fixture_offline');
+    // The condition is the shared one — a fixture view that is offline and a live run that
+    // is disconnected are the same connection state — while the copy stays mode-specific,
+    // since a fixture view has no cursor to describe.
+    expect(banner).toHaveAttribute('data-connection-notice', 'disconnected');
     expect(banner).toHaveTextContent('Showing last known fixture data.');
   });
 });
@@ -296,5 +302,64 @@ describe('ConnectionHealthBanner layout neutrality', () => {
     // The overlay itself must not swallow clicks aimed at the controls underneath it.
     expect(layer?.className).toContain('pointer-events-none');
     expect(screen.getByTestId('connection-banner').className).toContain('pointer-events-auto');
+  });
+});
+
+describe('the chip and the banner cannot disagree', () => {
+  // Both surfaces used to derive connection state independently, from different inputs: the
+  // chip saw `connectionHealth` and the polled status, the banner saw those plus `isStale`
+  // and the run's lifecycle status. A live run whose transport reported `connected` while
+  // the reducer still flagged the projection as stale showed a green "Connected" chip
+  // directly above a warning banner saying the view could not be trusted. Both now read
+  // `resolveConnectionState`, so the condition they narrate is the same one by construction.
+  const HEALTHS = Object.values(ConnectionHealthState);
+  const STALE_FLAGS = [false, true];
+  const RUN_STATUSES = [undefined, 'running', 'paused', 'stopped', 'completed'];
+
+  it('renders the same underlying condition on both surfaces, across the state space', () => {
+    for (const health of HEALTHS) {
+      for (const isStale of STALE_FLAGS) {
+        for (const runStatus of RUN_STATUSES) {
+          const input = { isLiveMode: true, health, isStale, runStatus } as const;
+          const reading = resolveConnectionState(input);
+          const notice = describeConnectionNotice({ ...input, connectionStatus: 'connected' });
+
+          // The chip is a pure function of the resolved condition — feeding it the condition
+          // directly produces the identical reading, so nothing else can steer it.
+          expect(describeLink(input)).toEqual(
+            describeLink({ isLiveMode: true, health: reading.condition }),
+          );
+          // The banner may stay quiet. When it does speak, it must be about the very
+          // condition the chip is displaying.
+          if (notice !== null) {
+            expect(notice.key).toBe(reading.condition);
+          }
+        }
+      }
+    }
+  });
+
+  it('never shows a healthy chip above a warning banner', () => {
+    for (const health of HEALTHS) {
+      for (const isStale of STALE_FLAGS) {
+        const input = { isLiveMode: true, health, isStale } as const;
+        const notice = describeConnectionNotice({ ...input, connectionStatus: 'connected' });
+        if (notice?.variant === 'warning') {
+          expect(describeLink(input).tone).not.toBe('ok');
+        }
+      }
+    }
+  });
+
+  it('agrees about a connected transport with a stale projection', () => {
+    const input = {
+      isLiveMode: true,
+      health: ConnectionHealthState.CONNECTED,
+      isStale: true,
+    } as const;
+    expect(describeLink(input).label).toBe('Stale');
+    expect(describeConnectionNotice({ ...input, connectionStatus: 'connected' })).toMatchObject({
+      key: 'stale',
+    });
   });
 });

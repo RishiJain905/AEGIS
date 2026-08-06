@@ -778,7 +778,7 @@
     },
     {
       "path": "tests/contract/fixtures/schemas/websocket_frame_v1.schema.json",
-      "sha256": "2a88a39aa13e31dc29134ba8b6f681d99e4df0c535e092b78ccc45a073473048"
+      "sha256": "b7616f3ad77b275f589a23b708762fdd7b24b87011f3a945e05265698ad6a7a1"
     },
     {
       "path": "tests/contract/fixtures/schemas/world_state_snapshot_v1.schema.json",
