@@ -16,7 +16,7 @@ export interface SelectedAsset {
 
 /**
  * Resolve the currently-selected graph asset from whichever projection is authoritative:
- * the live-run bootstrap snapshot in live mode, else the fetched run-graph snapshot. Returns
+ * the live-run graph store in live mode, else the fetched run-graph snapshot. Returns
  * null when nothing (or a non-asset entity) is selected. Used to anchor operator direct
  * actions and the deep-dive drawer to a concrete asset without a dedicated backend lookup —
  * it degrades to graph-store data until the console asset-detail endpoint lands.
@@ -26,10 +26,23 @@ export function useSelectedAsset(runId: string): SelectedAsset | null {
   const liveRun = useLiveRun();
   const graphQuery = useRunGraph(runId, { enabled: liveRun?.isLiveMode !== true });
 
-  const snapshot = liveRun?.isLiveMode ? liveRun.bootstrapSnapshot : graphQuery.data?.snapshot;
+  // Live runs read the mutable graph store, fixture views the REST snapshot — an executed
+  // control has to reach the command bar either way. The bootstrap snapshot is a
+  // point-in-time seed, not a live projection: reading it here is how the bar kept
+  // narrating `normal` for an asset the inspector had already shown `contained`.
+  const graphStore =
+    liveRun !== null && liveRun.isLiveMode && liveRun.bootstrapSnapshot !== null
+      ? liveRun.graphStore
+      : null;
+  const graphRevision = liveRun === null ? 0 : liveRun.graphRevision;
 
   return useMemo(() => {
-    if (!selectedEntityId || !snapshot) {
+    if (!selectedEntityId) {
+      return null;
+    }
+    const snapshot =
+      graphStore === null ? (graphQuery.data?.snapshot ?? null) : graphStore.exportSnapshot();
+    if (!snapshot) {
       return null;
     }
     const node = snapshot.nodes.find((candidate) => candidate.id === selectedEntityId);
@@ -37,5 +50,5 @@ export function useSelectedAsset(runId: string): SelectedAsset | null {
       return null;
     }
     return { node, disclosed: node.disclosed !== false };
-  }, [selectedEntityId, snapshot]);
+  }, [graphQuery.data, graphRevision, graphStore, selectedEntityId]);
 }

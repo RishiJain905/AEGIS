@@ -12,9 +12,11 @@
 import type { ReactNode } from 'react';
 
 import type { DomainEventEnvelopeV1, RealtimeMessageEnvelopeV1 } from '@aegis/contracts-ts';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { queryKeys } from '@/lib/api/query-keys';
 
 const buildBootstrapFromEndpoints = vi.fn();
 vi.mock('@/lib/realtime/snapshot-resync', () => ({
@@ -80,7 +82,7 @@ function bootstrapPayload(lastAppliedSequence: number, runId: string = RUN_ID) {
   };
 }
 
-function envelope(sequence: number): RealtimeMessageEnvelopeV1 {
+function envelope(sequence: number, type = 'telemetry.api.request'): RealtimeMessageEnvelopeV1 {
   const suffix = String(sequence).padStart(26, '0');
   return {
     schemaVersion: 1,
@@ -90,7 +92,7 @@ function envelope(sequence: number): RealtimeMessageEnvelopeV1 {
       eventId: `evt_${suffix}`,
       runId: RUN_ID,
       sequence,
-      type: 'telemetry.api.request',
+      type,
       simTime: '2026-01-01T00:01:00.000Z',
       recordedAt: '2026-06-30T02:00:01.102Z',
       actor: { type: 'asset', id: 'asset:device-workstation-01' },
@@ -265,6 +267,50 @@ describe('LiveRunProvider request budget', () => {
 
     // The held event applied contiguously on top of the resync, so nothing asked for a third.
     expect(buildBootstrapFromEndpoints).toHaveBeenCalledTimes(2);
+  });
+
+  it('refetches the after-action report query when report generation completes', async () => {
+    // The header's REPORT chip and the inspector's SCRIBE panel gate their report queries
+    // on the run being terminal, and a terminal run's first fetch routinely answers 404 —
+    // the report is generated asynchronously after the run stops. The tape announcing
+    // `report.generation.completed` must invalidate that query, or the chip stays on
+    // "Debrief pending" until a page navigation remounts it.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const reportQueryFn = vi.fn(() => ({ versionNumber: 1 }));
+
+    function ReportProbe() {
+      const query = useQuery({
+        queryKey: queryKeys.runs.afterActionReport(RUN_ID),
+        queryFn: reportQueryFn,
+      });
+      return <span data-testid="report-version">{query.data?.versionNumber ?? 'none'}</span>;
+    }
+
+    render(<ReportProbe />, { wrapper });
+    await waitFor(() => {
+      expect(listeners.has('event')).toBe(true);
+    });
+    await waitFor(() => {
+      expect(buildBootstrapFromEndpoints).toHaveBeenCalled();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('report-version')).toHaveTextContent('1');
+    });
+    expect(reportQueryFn).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      listeners.get('event')?.(envelope(11, 'report.generation.completed'));
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    await waitFor(() => {
+      expect(reportQueryFn).toHaveBeenCalledTimes(2);
+    });
   });
 
   it('discards a resync that lands after the operator moved to another run', async () => {

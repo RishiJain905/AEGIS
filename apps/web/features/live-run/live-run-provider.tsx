@@ -386,6 +386,19 @@ export function LiveRunProvider({ runId, children }: LiveRunProviderProps) {
         scheduleInvalidate(queryKeys.runs.graph(runId));
       }
       if (
+        envelope.event.type === 'report.generation.completed' ||
+        envelope.event.type === 'report.version.created'
+      ) {
+        // The header's REPORT instrument and the inspector's SCRIBE panel gate their
+        // report queries on the run being terminal, and a terminal run's first fetch
+        // routinely answers 404 — the report is generated asynchronously after the run
+        // stops. Without this the "Debrief pending" chip stayed up until a page
+        // navigation remounted the query, even though the tape already showed generation
+        // completed.
+        scheduleInvalidate(queryKeys.runs.afterActionReport(runId));
+        scheduleInvalidate(queryKeys.runs.reportVersions(runId));
+      }
+      if (
         envelope.event.type.startsWith('action.proposal.') ||
         envelope.event.type === 'action.executed'
       ) {
