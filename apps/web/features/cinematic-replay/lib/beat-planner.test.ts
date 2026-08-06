@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { getReplayStateFixture } from '@/fixtures/replay-fixture';
 import { planCinematicBeats } from '@/features/cinematic-replay/lib/beat-planner';
 import { filterSafePresentationHints } from '@/features/cinematic-replay/lib/hint-gating';
-import { SILENT_RELAY_PRESENTATION_HINTS } from '@/features/cinematic-replay/lib/silent-relay-hints';
+import {
+  presentationHintsForRun,
+  SILENT_RELAY_PRESENTATION_HINTS,
+} from '@/features/cinematic-replay/lib/silent-relay-hints';
 import type { PresentationHintV1 } from '@aegis/contracts-ts';
 
 describe('cinematic beat planner', () => {
@@ -75,6 +78,44 @@ describe('cinematic beat planner', () => {
     expect(plan.warnings.some((w) => w.includes('asset:does-not-exist'))).toBe(true);
     const incidentBeat = plan.beats.find((b) => b.id === 'beat_incident_origin_001');
     expect(incidentBeat?.entityIds.includes('asset:does-not-exist')).toBe(false);
+  });
+});
+
+describe('scenario-scoped presentation hints', () => {
+  it('offers the Silent Relay hints only to a Silent Relay run', () => {
+    expect(presentationHintsForRun('scenario-version:1.0.0-silent-relay')).toEqual(
+      SILENT_RELAY_PRESENTATION_HINTS,
+    );
+    // The hints name Silent Relay's own assets, so no other scenario may borrow them.
+    expect(presentationHintsForRun('scenario-version:1.0.0-synthetic-training')).toEqual([]);
+    expect(presentationHintsForRun('scenario-version:unknown')).toEqual([]);
+    expect(presentationHintsForRun(null)).toEqual([]);
+    expect(presentationHintsForRun(undefined)).toEqual([]);
+  });
+
+  it('narrates an unhinted run from its own state, naming no scenario and no foreign asset', () => {
+    const state = getReplayStateFixture('run_01ARZ3NDEKTSV4RRFFQ69G5FAV', { sequence: 500 });
+    const plan = planCinematicBeats({ state });
+
+    const establishing = plan.beats.find((beat) => beat.kind === 'establishing');
+    expect(establishing?.caption).not.toMatch(/Silent Relay/i);
+
+    // Focus used to fall back to Silent Relay's `asset:svc-api-gateway` whenever no hint
+    // named an entity; with no hints there is nothing truthful to point the camera at.
+    const incidentBeat = plan.beats.find((beat) => beat.id === 'beat_incident_origin_001');
+    expect(incidentBeat?.entityIds).toEqual([]);
+    const incidentDirective = plan.cameraDirectives.find(
+      (directive) => directive.id === incidentBeat?.cameraDirectiveId,
+    );
+    expect(incidentDirective?.kind).toBe('overview');
+
+    // The evidence path traced from that same hardcoded gateway to the run's evidence
+    // asset; it may now only contain entities the run itself supplied.
+    const evidenceBeat = plan.beats.find((beat) => beat.id === 'beat_evidence_focus_001');
+    const evidenceAssetId = state.evidence[0]?.assetId ?? null;
+    for (const entityId of evidenceBeat?.pathEntityIds ?? []) {
+      expect(entityId).toBe(evidenceAssetId);
+    }
   });
 });
 

@@ -21,12 +21,19 @@ export interface ChapterTemplate {
   order: number;
 }
 
-/** Silent Relay chapter scaffolding — labels over sequences, not a second timeline. */
+/**
+ * Default chapter scaffolding — labels over sequences, not a second timeline.
+ *
+ * Applied to every run the planner sees, so the titles and summaries describe the arc of a
+ * defensive engagement in general and never assert a fact about one scenario's estate. The
+ * baseline summary used to count "eight organizational zones", which is Silent Relay's
+ * topology stated over whichever run was actually being replayed.
+ */
 export const SILENT_RELAY_CHAPTER_TEMPLATES: readonly ChapterTemplate[] = [
   {
     id: 'chapter-baseline',
     title: 'Baseline operations',
-    summary: 'Normal telemetry across eight organizational zones.',
+    summary: 'Normal telemetry across the organizational zones.',
     fromSequence: 0,
     toSequence: 39,
     order: 0,
@@ -267,7 +274,9 @@ export function planCinematicBeats(options: PlanCinematicBeatsOptions): Cinemati
         chapterId: chapter.id,
         kind: 'establishing',
         sequence: 0,
-        caption: 'Operation Silent Relay begins under normal baseline conditions.',
+        // Every run opens on this beat, so the caption cannot name a scenario — it read
+        // "Operation Silent Relay begins…" over a training run's own graph.
+        caption: 'The operation begins under normal baseline conditions.',
         entityIds: [],
         cameraDirectiveId: camId,
         runId: state.runId,
@@ -323,8 +332,12 @@ export function planCinematicBeats(options: PlanCinematicBeatsOptions): Cinemati
       const focusFromHints = safeHints
         .filter((h) => h.sequence === sequence || h.chapterId === chapter.id)
         .flatMap((h) => h.entityIds);
+      // Focus only where a hint actually points. The fallback here was a literal
+      // `asset:svc-api-gateway` — Silent Relay's gateway, framed as the origin of whatever
+      // incident this run opened, on any scenario and regardless of the real origin. With
+      // no hint there is nothing truthful to focus on, so the camera pulls back instead.
       const entityIds = resolveExistingEntities(
-        focusFromHints.length > 0 ? focusFromHints : ['asset:svc-api-gateway'],
+        focusFromHints,
         known,
         warnings,
         'beat_incident_origin_001',
@@ -348,7 +361,7 @@ export function planCinematicBeats(options: PlanCinematicBeatsOptions): Cinemati
           priority: 10,
           tieBreaker: tie++,
         }),
-        makeDirective(camId, 'entity_focus', entityIds),
+        makeDirective(camId, entityIds.length > 0 ? 'entity_focus' : 'overview', entityIds),
       );
     }
   }
@@ -366,10 +379,12 @@ export function planCinematicBeats(options: PlanCinematicBeatsOptions): Cinemati
         warnings,
         'beat_evidence_focus_001',
       );
-      const pathCandidates = ['asset:svc-api-gateway'];
-      if (evidence.assetId) {
-        pathCandidates.push(evidence.assetId);
-      }
+      // The path traced here has to be one the run actually contains. Seeding it with
+      // `asset:svc-api-gateway` drew a line from Silent Relay's gateway to this run's
+      // evidence asset, asserting a relationship nothing in the replay state supports.
+      // One endpoint is not a path, and `makeDirective` below already falls back to
+      // `entity_focus` when fewer than two resolve.
+      const pathCandidates = evidence.assetId ? [evidence.assetId] : [];
       const pathEntityIds = resolveExistingEntities(
         pathCandidates,
         known,

@@ -261,6 +261,18 @@ def build_template_report(
         claims.extend(narrative_claims)
 
     contradictions = [item.summary for item in investigation.hypothesis_comparisons if item.summary]
+    # Lessons are the operator's takeaways from *this* run, so each one is only true if the
+    # run actually did the thing it talks about. Both used to be emitted unconditionally,
+    # which put "preserve contradictory evidence" on a report with no contradictions and
+    # "policy-gated proposals require approval" on a run that never raised a proposal —
+    # generic doctrine printed under a heading that claims to be about the operator's own
+    # engagement. An empty list is honest; the UI's `StringList` and the Markdown export
+    # both drop the section when there is nothing to say.
+    lessons: list[str] = []
+    if contradictions:
+        lessons.append("Preserve contradictory evidence in downstream review.")
+    if investigation.policy_decisions:
+        lessons.append("Policy-gated proposals require human approval before execution.")
     uncertainties = [
         item
         for revision in investigation.hypothesis_revisions
@@ -329,10 +341,7 @@ def build_template_report(
         chronology_summary=chronology_summary,
         claims=claims,
         timeline=source.timeline,
-        lessons=[
-            "Preserve contradictory evidence in downstream review.",
-            "Policy-gated proposals require human approval before execution.",
-        ],
+        lessons=lessons,
         contradictions=contradictions,
         uncertainties=uncertainties,
         source=source,

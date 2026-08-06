@@ -8,7 +8,7 @@ import { GraphViewMode } from '@/features/cinematic-graph/contracts';
 import { useCinematicGraphStore } from '@/features/cinematic-graph/stores/cinematic-graph-store';
 import { planCinematicBeats } from '@/features/cinematic-replay/lib/beat-planner';
 import { speedToBeatIntervalMs } from '@/features/cinematic-replay/lib/camera-director';
-import { SILENT_RELAY_PRESENTATION_HINTS } from '@/features/cinematic-replay/lib/silent-relay-hints';
+import { presentationHintsForRun } from '@/features/cinematic-replay/lib/silent-relay-hints';
 import { useCinematicReplayStore } from '@/features/cinematic-replay/stores/cinematic-replay-store';
 import { useReplayStore } from '@/stores/replay-store';
 import { useWorkspaceUiStore } from '@/stores/workspace-ui-store';
@@ -86,7 +86,7 @@ export function useCinematicDirectorController(runId: string): void {
     const sequence = reconstructedState.cursor.sequence;
     const readyEnough = sequence >= Math.min(maxSequence, 120) || maxSequence < 120;
     if (!readyEnough && plannedForRef.current === null) {
-      // Seek once to max so the plan can include full Silent Relay chapters
+      // Seek once to max so the plan can include the run's full set of chapters
       if (cursor && cursor.sequence !== maxSequence) {
         setCursorSequence(maxSequence);
       }
@@ -96,7 +96,9 @@ export function useCinematicDirectorController(runId: string): void {
     try {
       const planned = planCinematicBeats({
         state: reconstructedState,
-        hints: SILENT_RELAY_PRESENTATION_HINTS,
+        // Only the hints authored for this run's own scenario; every other run plans
+        // from its replay state alone.
+        hints: presentationHintsForRun(reconstructedState.run?.scenarioVersionId),
       });
       setPlan(planned);
       setError(null);

@@ -78,6 +78,32 @@ def _executed_sequence(event_facts: list[EventFact], action: Any) -> int:
     return 0
 
 
+#: Impact assumed for an executed action whose result summary says nothing either way.
+_DEFAULT_ACTION_IMPACT = 0.5
+
+
+def _estimate_action_impact(result_summary: Any) -> float:
+    """Estimate how disruptive an executed action was, from its result summary.
+
+    An estimate, not a measurement: nothing in the platform instruments the real service
+    impact of an action, so this reads the freeform summary the executor wrote and looks
+    for words that signal magnitude. An action whose summary says neither gets
+    ``_DEFAULT_ACTION_IMPACT``, i.e. the midpoint, because "unknown" has to score as
+    something and scoring it as harmless would reward actions nobody characterised.
+
+    This figure moves the operator's grade through ``score_false_positive_cost`` and
+    ``score_service_impact``, so its explanation says "estimated" — replacing the keyword
+    heuristic with a real impact signal (action class is the obvious candidate) is a
+    scoring-rubric decision, not a rewording, and would shift every run's score.
+    """
+    summary = str(result_summary or "").lower()
+    if "high" in summary or "disrupt" in summary:
+        return 0.85
+    if "low" in summary or "minimal" in summary:
+        return 0.25
+    return _DEFAULT_ACTION_IMPACT
+
+
 async def assemble_scoring_facts(
     uow: PostgresUnitOfWork,
     *,
@@ -258,12 +284,7 @@ async def assemble_scoring_facts(
             if action.id in seen_executed:
                 continue
             seen_executed.add(action.id)
-            impact = 0.5
-            summary = str(getattr(action, "result_summary", "") or "").lower()
-            if "high" in summary or "disrupt" in summary:
-                impact = 0.85
-            elif "low" in summary or "minimal" in summary:
-                impact = 0.25
+            impact = _estimate_action_impact(getattr(action, "result_summary", ""))
             target_ids: tuple[str, ...] = ()
             matching_prop = next(
                 (p for p in proposal_facts if p.proposal_id == action.proposal_id), None

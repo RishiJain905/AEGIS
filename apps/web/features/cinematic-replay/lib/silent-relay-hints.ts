@@ -71,3 +71,29 @@ export const SILENT_RELAY_PRESENTATION_HINTS: PresentationHintV1[] = [
     hiddenCauseId: null,
   },
 ];
+
+// A run belongs to Silent Relay when its scenario-version id carries this marker (e.g.
+// `scenario-version:1.0.0-silent-relay`). Matching the marker rather than a literal id
+// keeps the match stable across scenario version bumps — the same convention the tutorial
+// controller uses to recognise its own runs.
+const SILENT_RELAY_SCENARIO_MARKER = 'silent-relay';
+
+/**
+ * The presentation hints that legitimately describe `scenarioVersionId`'s run.
+ *
+ * The hints above name Silent Relay's estate outright — its API gateway, its workstation —
+ * and carry `scenarioId: 'scenario:operation-silent-relay'` to say so. Nothing checked that
+ * field: the director handed this array to the planner for every run, so a training run
+ * scrubbed in cinematic mode was captioned "Early risk drift appears around the API
+ * gateway" over a graph that has no such asset. A hint set only applies to the scenario it
+ * was authored for; any other run plans from its own replay state, which is what the
+ * planner does when it is given no hints at all.
+ */
+export function presentationHintsForRun(
+  scenarioVersionId: string | null | undefined,
+): PresentationHintV1[] {
+  if (scenarioVersionId?.includes(SILENT_RELAY_SCENARIO_MARKER) !== true) {
+    return [];
+  }
+  return SILENT_RELAY_PRESENTATION_HINTS;
+}

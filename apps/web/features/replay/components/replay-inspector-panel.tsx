@@ -43,6 +43,12 @@ export function ReplayInspectorPanel() {
   }
 
   const snapshot = state?.graph ?? null;
+  // The replay projection reconstructs one risk total per asset and nothing about how it
+  // was reached — `ReplayRiskScoreV1` is `{ assetId, score, revision }`. The inspector
+  // below therefore gets the total alone (`riskTotal`) rather than a padded-out
+  // `AssetRiskScoreV1`: the padded shape rendered "Direct <score> / Propagated 0.00" in
+  // the same metric grid the live inspector uses for a genuine breakdown, so an asset
+  // whose risk propagated in from a compromised neighbour read as entirely its own.
   const selectedRisk =
     state?.riskScores.find(
       (score: NonNullable<typeof state>['riskScores'][number]) =>
@@ -105,22 +111,7 @@ export function ReplayInspectorPanel() {
               <GraphEntityInspector
                 snapshot={snapshot}
                 selectedEntityId={selectedEntityId}
-                riskScore={
-                  selectedRisk
-                    ? {
-                        schemaVersion: 1,
-                        runId: state.runId,
-                        assetId: selectedRisk.assetId,
-                        total: selectedRisk.score,
-                        direct: selectedRisk.score,
-                        propagated: 0,
-                        algorithmVersion: 'replay-projection-v1',
-                        computedAtSequence: state.cursor.sequence,
-                        simTime: state.cursor.simTime ?? state.provenance.reconstructedAt,
-                        topContributions: [],
-                      }
-                    : null
-                }
+                riskTotal={selectedRisk?.score ?? null}
               />
             ) : (
               <EmptyState

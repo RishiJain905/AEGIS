@@ -7,7 +7,7 @@ export {
   directiveToCameraBookmark,
   speedToBeatIntervalMs,
 } from './lib/camera-director';
-export { SILENT_RELAY_PRESENTATION_HINTS } from './lib/silent-relay-hints';
+export { presentationHintsForRun, SILENT_RELAY_PRESENTATION_HINTS } from './lib/silent-relay-hints';
 export { useCinematicReplayStore } from './stores/cinematic-replay-store';
 export { useCinematicDirectorController } from './hooks/use-cinematic-director-controller';
 export { CinematicModeToggle } from './components/cinematic-mode-toggle';

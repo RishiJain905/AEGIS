@@ -48,12 +48,21 @@ export interface GraphEntityInspectorProps {
   snapshot: GraphSnapshotV1;
   selectedEntityId: string | null;
   riskScore?: AssetRiskScoreV1 | null;
+  /**
+   * A risk total from a source that carries no direct/propagated split — the replay
+   * projection, which reconstructs one score per asset and nothing about how it was
+   * reached. Supplying it shows the total and omits the breakdown; the alternative is
+   * to synthesize `direct = total, propagated = 0`, which reads as a real decomposition
+   * and is wrong for every asset whose risk actually arrived from a neighbour.
+   */
+  riskTotal?: number | null;
 }
 
 export function GraphEntityInspector({
   snapshot,
   selectedEntityId,
   riskScore,
+  riskTotal,
 }: GraphEntityInspectorProps) {
   const visualState = useGraphVisualStore((s) => s.visualState);
   const pendingControls = usePendingControlStore((s) => s.pending);
@@ -119,7 +128,7 @@ export function GraphEntityInspector({
         <InspectorMetricGrid>
           <InspectorMetric
             label="Risk score"
-            value={(riskScore?.total ?? node.riskScore).toFixed(2)}
+            value={(riskScore?.total ?? riskTotal ?? node.riskScore).toFixed(2)}
           />
           <InspectorMetric label="Criticality" value={node.criticality.toFixed(2)} />
           {riskScore ? (

@@ -489,7 +489,11 @@ def score_service_impact(
     # Contain branch naturally higher impact — slight floor if proportionate
     if facts.selected_response_branch == "branch-response-contain":
         raw = max(raw, 0.35)
-    reason = f"Average measured action impact score was {avg_impact:.2f} (lower is better)."
+    # "Estimated", not "measured": nothing instruments the real service impact of an
+    # action. The assembler infers this figure from each action's result summary (see
+    # `_estimate_action_impact`), so the explanation must not tell the operator their
+    # grade rests on a measurement the platform never took.
+    reason = f"Average estimated action impact score was {avg_impact:.2f} (lower is better)."
     return _component(
         "criterion-service-impact",
         label,

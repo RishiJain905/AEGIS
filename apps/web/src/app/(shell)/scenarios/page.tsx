@@ -18,10 +18,6 @@ import { useAuth } from '@/features/auth';
 import { armTutorial } from '@/features/tutorial/tutorial-storage';
 import { deriveTrainingSeed } from '@/features/tutorial/tutorial-seed';
 
-// Demo/admin owner assigned to seeded/legacy runs by migration 014. Runs owned by this
-// identity are surfaced as demo/fixture data, not an ordinary result. See ADR 0034.
-const DEMO_OWNER_USER_ID = 'user:admin-alpha';
-
 interface ScenarioLaunchConfig {
   packagePath: string;
   // A pinned seed makes the scenario deterministic on launch. Omit it (as Operation
@@ -364,7 +360,6 @@ export default function ScenariosPage() {
                 const presentation = presentationFor(scenarioId);
                 const isTutorial = presentation.kind === 'tutorial';
                 const latestRun = latestOwnedRun(scenarioId, runsQuery.data as RunSummary[]);
-                const isDemoRun = latestRun?.ownerUserId === DEMO_OWNER_USER_ID;
                 // The tutorial's run id is pinned by its seed, so launching it again does
                 // not add a run — it replaces the one that exists. Say so on the button
                 // rather than promising a "new run" that overwrites the operator's last one.
@@ -427,7 +422,7 @@ export default function ScenariosPage() {
                                   'uppercase text-[var(--aegis-accent-strong)]',
                                 )}
                               >
-                                {isDemoRun ? 'Demo run' : 'Run available'}
+                                Run available
                               </span>
                             </span>
                           ) : null}
@@ -452,8 +447,7 @@ export default function ScenariosPage() {
                                 openLatestRun(latestRun);
                               }}
                             >
-                              {isDemoRun ? 'Open demo run' : 'Resume latest run'} (
-                              {latestRun.status})
+                              Resume latest run ({latestRun.status})
                             </Button>
                           ) : null}
                         </div>
