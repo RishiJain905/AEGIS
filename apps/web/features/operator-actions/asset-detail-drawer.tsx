@@ -11,6 +11,9 @@ import {
 } from '@aegis/ui';
 import type { GraphNodeV1 } from '@aegis/contracts-ts';
 
+import { useLiveRun } from '@/features/live-run';
+import { isRunTerminal } from '@/lib/run-status';
+
 import { AssetActionMenu } from './asset-action-menu';
 
 function StatBar({ label, value }: { label: string; value: number }) {
@@ -51,6 +54,10 @@ export function AssetDetailDrawer({
   open,
   onOpenChange,
 }: AssetDetailDrawerProps) {
+  // Same gating as the command bar: on an ended run the drawer's action menu must not
+  // offer commands the server will refuse (P1, owner-reported 2026-08-07 — the deep dive
+  // read as buggy because its actions were the only dead ones left reachable).
+  const runEnded = isRunTerminal(useLiveRun()?.state.runStatus);
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent data-testid="asset-detail-drawer">
@@ -92,11 +99,21 @@ export function AssetDetailDrawer({
               assetId={node.id}
               assetLabel={node.label}
               assetType={node.assetType}
+              disabled={runEnded}
             />
-            <p className="text-[10px] leading-4 text-[var(--aegis-text-muted)]">
-              Routed through the same policy pipeline as agent proposals. Class 2/3 actions ask you
-              to confirm the consequences.
-            </p>
+            {runEnded ? (
+              <p
+                data-testid="drawer-run-ended-hint"
+                className="text-[10px] leading-4 text-[var(--aegis-text-muted)]"
+              >
+                The run has ended — commands can no longer execute. The record stays readable.
+              </p>
+            ) : (
+              <p className="text-[10px] leading-4 text-[var(--aegis-text-muted)]">
+                Routed through the same policy pipeline as agent proposals. Class 2/3 actions ask
+                you to confirm the consequences.
+              </p>
+            )}
           </div>
         </div>
       </DrawerContent>

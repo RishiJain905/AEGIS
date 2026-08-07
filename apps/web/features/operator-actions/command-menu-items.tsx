@@ -20,10 +20,15 @@ const TIERS: readonly { classes: readonly ActionClass[]; label: string }[] = [
 export interface CommandMenuItemsProps {
   commands: readonly CommandMeta[];
   onSelect: (command: CommandMeta) => void;
+  /**
+   * True on a terminal run: every item renders disabled so a surface that cannot show a
+   * hint (the graph context menu) still never offers a command the server will refuse.
+   */
+  disabled?: boolean;
 }
 
 /** The grouped command list shared by the inspector dropdown and the graph context menu. */
-export function CommandMenuItems({ commands, onSelect }: CommandMenuItemsProps) {
+export function CommandMenuItems({ commands, onSelect, disabled = false }: CommandMenuItemsProps) {
   const tiers = TIERS.map((tier) => ({
     label: tier.label,
     commands: commands.filter((command) => tier.classes.includes(command.actionClass)),
@@ -38,6 +43,7 @@ export function CommandMenuItems({ commands, onSelect }: CommandMenuItemsProps) 
           {tier.commands.map((command) => (
             <DropdownMenuItem
               key={command.command}
+              disabled={disabled}
               onSelect={() => {
                 onSelect(command);
               }}

@@ -10,6 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@aegis/ui';
 
+import { useLiveRun } from '@/features/live-run';
+import { isRunTerminal } from '@/lib/run-status';
+
 import { CommandMenuItems } from './command-menu-items';
 import { useAssetActionRunner } from './use-asset-action-runner';
 import { useAssetCommands } from './use-asset-commands';
@@ -80,6 +83,10 @@ function AssetContextMenuBody({
     assetId: anchor.nodeId,
     assetLabel: anchor.label,
   });
+  // Same gating as the command bar: on an ended run the menu must not offer commands the
+  // server will refuse. The menu has no room for a hint, so the items themselves go
+  // disabled — a dead item reads as a dead item, not as a broken click.
+  const runEnded = isRunTerminal(useLiveRun()?.state.runStatus);
 
   return (
     <>
@@ -108,7 +115,7 @@ function AssetContextMenuBody({
             {anchor.label}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <CommandMenuItems commands={commands} onSelect={runner.select} />
+          <CommandMenuItems commands={commands} onSelect={runner.select} disabled={runEnded} />
         </DropdownMenuContent>
       </DropdownMenu>
 

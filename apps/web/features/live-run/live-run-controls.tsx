@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { Button } from '@aegis/ui';
 
 import { useLiveRun } from '@/features/live-run/live-run-provider';
+import { RestartRunControl } from '@/features/live-run/restart-run-control';
 import { useRunCommands } from '@/features/live-run/use-run-commands';
 import { isRunTerminal } from '@/lib/run-status';
 
@@ -97,6 +98,10 @@ export function LiveRunControls() {
         >
           Stop
         </Button>
+        {/* The one SIM control that means something once the run is over: the way back
+            from the read-only dead end (P1, owner-reported 2026-08-07). Rendered only on
+            a terminal run — mid-run it would be a way to destroy a live engagement. */}
+        {isTerminal ? <RestartRunControl runId={liveRun.runId} /> : null}
       </ControlGroup>
 
       <ControlGroup label="Link">

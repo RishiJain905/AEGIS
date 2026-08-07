@@ -7,7 +7,14 @@ import { useState } from 'react';
 import { Button, EmptyState, ErrorState, LoadingState, cn, typographyTokens } from '@aegis/ui';
 
 import type { RunLoadout } from '@/features/command-surface';
-import { LoadoutLaunchDialog } from '@/features/loadout';
+import {
+  LoadoutLaunchDialog,
+  SCENARIO_LAUNCH_CONFIG,
+  TRAINING_SCENARIO_ID,
+  launchSeedFor,
+  scenarioPackagePathFor,
+  scenarioSeedFor,
+} from '@/features/loadout';
 import { CommandCentreShell } from '@/features/shell/components/command-centre-shell';
 import { resumeRun, useCreateRun } from '@/features/live-run';
 import { ApiClientError } from '@/lib/api/types';
@@ -16,44 +23,6 @@ import { useAuth } from '@/features/auth';
 // Import the pure helpers directly (not the feature barrel) so the catalogue page does not
 // pull the overlay/evidence/api graph into its bundle.
 import { armTutorial } from '@/features/tutorial/tutorial-storage';
-import { deriveTrainingSeed } from '@/features/tutorial/tutorial-seed';
-
-interface ScenarioLaunchConfig {
-  packagePath: string;
-  // A pinned seed makes the scenario deterministic on launch. Omit it (as Operation
-  // Silent Relay does) to launch seedless, so the server draws a fresh random seed per
-  // run — each run gets a different hidden root cause. Kept optional (not removed) so a
-  // deterministic tutorial scenario can still pin a seed.
-  seed?: number;
-  // The tutorial derives a stable per-operator seed from the signed-in operator's user id
-  // (see `deriveTrainingSeed`), so every operator owns their own training run instead of
-  // the whole database sharing one run id — the cross-operator ownership dead end QA found
-  // on 2026-08-06. The story is unaffected: the training scenario's attack branch is fixed,
-  // so any seed produces the same scheduled attack events.
-  perOperatorSeed?: boolean;
-  // Scenario-version ids that belong to this scenario, used to match the caller's owned
-  // runs (GET /runs is already owner-scoped server-side) to a "Resume latest run" action.
-  versionIds: string[];
-}
-
-const TRAINING_SCENARIO_ID = 'scenario:synthetic-training';
-
-const SCENARIO_LAUNCH_CONFIG: Record<string, ScenarioLaunchConfig> = {
-  // The guided tutorial derives a per-operator seed so every training run tells the same
-  // story — the walkthrough milestones line up deterministically — while each operator's
-  // run stays their own.
-  [TRAINING_SCENARIO_ID]: {
-    packagePath: 'scenarios/synthetic-training',
-    perOperatorSeed: true,
-    versionIds: ['scenario-version:1.0.0-synthetic-training'],
-  },
-  // The live operation launches seedless: the server draws a fresh random seed per run,
-  // so the hidden root cause differs every time.
-  'scenario:operation-silent-relay': {
-    packagePath: 'scenarios/operation-silent-relay',
-    versionIds: ['scenario-version:1.0.0-silent-relay'],
-  },
-};
 
 type ScenarioKind = 'tutorial' | 'live';
 
@@ -93,38 +62,10 @@ function presentationFor(scenarioId: string): ScenarioPresentation {
       kind: 'live',
       badge: 'Operation',
       tagline: 'A defensive scenario streaming synthetic telemetry into the command surface.',
-      seedCaption: scenarioSeed(scenarioId) !== undefined ? 'Pinned seed' : 'Server RNG',
+      seedCaption: scenarioSeedFor(scenarioId) !== undefined ? 'Pinned seed' : 'Server RNG',
       order: 99,
     }
   );
-}
-
-function scenarioPackagePath(scenarioId: string): string {
-  const configured = SCENARIO_LAUNCH_CONFIG[scenarioId];
-  if (configured) {
-    return configured.packagePath;
-  }
-  // Fallback for scenarios without explicit config: derive from the id slug.
-  return `scenarios/${scenarioId.split(':')[1] ?? ''}`;
-}
-
-function scenarioSeed(scenarioId: string): number | undefined {
-  return SCENARIO_LAUNCH_CONFIG[scenarioId]?.seed;
-}
-
-/**
- * The seed a launch of `scenarioId` will actually use, for the signed-in operator.
- *
- * Per-operator scenarios (the tutorial) derive their seed from the operator's user id, so
- * the catalogue can show the real number the run page will display. A null actor falls back
- * to the legacy shared seed — unreachable inside the auth gate, but harmless to guard.
- */
-function launchSeedFor(scenarioId: string, actorUserId: string | null): number | undefined {
-  const config = SCENARIO_LAUNCH_CONFIG[scenarioId];
-  if (config?.perOperatorSeed) {
-    return deriveTrainingSeed(actorUserId);
-  }
-  return config?.seed;
 }
 
 interface RunSummary {
@@ -207,7 +148,7 @@ export default function ScenariosPage() {
     const isTutorial = presentationFor(scenarioId).kind === 'tutorial';
     void createRun
       .mutateAsync({
-        scenarioPackagePath: scenarioPackagePath(scenarioId),
+        scenarioPackagePath: scenarioPackagePathFor(scenarioId),
         // undefined for seedless scenarios → server draws a random seed; the tutorial
         // derives a stable per-operator seed so each operator owns their own run.
         seed: launchSeedFor(scenarioId, actor?.userId ?? null),

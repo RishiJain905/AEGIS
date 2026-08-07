@@ -133,7 +133,8 @@ function SelectedAssetCommandBar({
   // operator learns the sentence is decoration. Read-only affordances (Deep dive) stay live:
   // examining an asset after the fact is most of what an ended run is for.
   const liveRun = useLiveRun();
-  const commandsDisabled = runner.isPending || isRunTerminal(liveRun?.state.runStatus);
+  const runEnded = isRunTerminal(liveRun?.state.runStatus);
+  const commandsDisabled = runner.isPending || runEnded;
 
   return (
     <div
@@ -165,6 +166,18 @@ function SelectedAssetCommandBar({
         ) : (
           <Badge variant="outline">undisclosed</Badge>
         )}
+        {/* The gating has to be visible, not just hoverable: on an ended run the command
+            buttons are dead by design, and a row of enabled-looking buttons with only a
+            tooltip to explain them reads as broken (P1, owner-reported 2026-08-07). Say
+            it in the bar itself, in the same vocabulary as the SIM instrument. */}
+        {runEnded ? (
+          <span
+            data-testid="command-bar-run-ended"
+            className="rounded-full border border-[var(--aegis-border-strong)] bg-[var(--aegis-surface-raised)] px-2 py-0.5 font-[family-name:var(--aegis-font-display)] text-[0.625rem] font-semibold uppercase tracking-[0.13em] text-[var(--aegis-text-primary)]"
+          >
+            Run ended · read-only
+          </span>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center gap-2 md:ml-auto">
