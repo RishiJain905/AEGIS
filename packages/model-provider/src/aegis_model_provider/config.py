@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -53,7 +54,22 @@ class ProviderSettings(BaseSettings):
     AEGIS_PROVIDER_CIRCUIT_BREAKER_THRESHOLD: int = Field(default=5, ge=1, le=100)
     AEGIS_PROVIDER_CIRCUIT_BREAKER_RESET_SECONDS: int = Field(default=60, ge=1, le=3600)
     AEGIS_PROVIDER_MAX_CONCURRENT_REQUESTS: int = Field(default=10, ge=1, le=256)
+    # The largest *answer* budget a caller may ask for (validated in GenerationService).
     AEGIS_PROVIDER_MAX_OUTPUT_TOKENS: int = Field(default=4096, ge=1, le=65536)
+    # The completion pool hosted reasoning routes get on the wire. A reasoning model
+    # bills its scratchpad out of the SAME pool as the answer, so `max_tokens` is not
+    # an answer budget at all: on OpenRouter the whole 4096 went into thinking and the
+    # turn came back with empty content ("Provider spent its entire output budget on
+    # reasoning"). Only the cloud adapters use this — the local llama-server path keeps
+    # the ceiling above, since it is the slow path the timeout chain is tuned around.
+    AEGIS_PROVIDER_CLOUD_MAX_OUTPUT_TOKENS: int = Field(default=8192, ge=1, le=65536)
+    # How much of that pool the model may spend thinking, sent as the OpenAI-compatible
+    # `reasoning_effort` (OpenRouter maps it to `reasoning.effort`; Ollama Cloud to its
+    # think levels; both ignore it for models with no scratchpad). This is the half of
+    # the fix that keeps a bigger pool from becoming a longer wall clock — tokens are
+    # seconds, and one attempt still has to finish inside
+    # AEGIS_PROVIDER_TIMEOUT_SECONDS. Empty disables the field entirely.
+    AEGIS_PROVIDER_REASONING_EFFORT: Literal["", "minimal", "low", "medium", "high"] = "low"
     AEGIS_PROVIDER_MAX_COST_USD: float | None = Field(default=None, ge=0.0)
     AEGIS_PROVIDER_RECORDED_FIXTURES_DIR: str = "fixtures/model-responses"
 

@@ -18,6 +18,12 @@ from aegis_model_provider.errors import ProviderRuntimeError, make_provider_erro
 class OpenRouterProvider(OpenAIHostedProvider):
     provider_id = "openrouter"
 
+    # The operator picks the model, and the catalogue is mostly reasoning models — QA
+    # ran deepseek-v4-flash, which spent every one of its 4096 output tokens thinking
+    # and returned no content at all. So this route gets the cloud completion pool and
+    # a cap on the scratchpad rather than the local path's tuned-for-llama-server one.
+    _hosted_reasoning_route = True
+
     @classmethod
     def configured_base_url(cls, settings: ProviderSettings) -> str:
         return settings.AEGIS_PROVIDER_OPENROUTER_BASE_URL

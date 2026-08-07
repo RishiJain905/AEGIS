@@ -54,6 +54,25 @@ def _reasoning_content(message: Any) -> str:
     return value if isinstance(value, str) else ""
 
 
+#: The contract's own ceiling on ``maxOutputTokens`` (GenerationRequestV1). Nothing the
+#: adapter grants a reasoning scratchpad may exceed what the contract can describe.
+_WIRE_MAX_OUTPUT_TOKENS = 65536
+
+
+def _rejects_reasoning_effort(message: str, exc: Exception) -> bool:
+    """Whether the endpoint refused the *request* specifically over ``reasoning_effort``.
+
+    Read narrowly, both ways: only a 400/422 (the endpoint judged the body, so retrying
+    a different body is meaningful — a 500 or a timeout judged nothing), and only when
+    the complaint names the parameter. A 400 about context length or a malformed schema
+    must surface as itself rather than be silently retried into the same failure.
+    """
+    if getattr(exc, "status_code", None) not in {400, 422}:
+        return False
+    lowered = message.lower()
+    return "reasoning_effort" in lowered or "reasoning effort" in lowered
+
+
 _THINK_BLOCK = re.compile(r"<think>(.*?)</think>", re.DOTALL)
 
 
@@ -328,6 +347,17 @@ class OpenAIHostedProvider:
         if inspect.isawaitable(result):
             await result
 
+    #: Whether this adapter fronts a hosted service whose models bill their reasoning
+    #: scratchpad out of the same completion pool as the answer, with no per-model way
+    #: to know in advance. Those routes get the larger cloud pool and a cap on how long
+    #: the model may think (see :meth:`_wire_max_tokens` and :meth:`_reasoning_effort`).
+    #:
+    #: Off by default, which covers the two adapters that must not change: the local
+    #: llama-server path (the slow path the timeout chain is tuned around) and OpenAI
+    #: itself, whose default model is not a reasoning model and answers 400 to
+    #: ``reasoning_effort``.
+    _hosted_reasoning_route = False
+
     #: Whether structured requests ride the server's ``response_format`` grammar.
     #: llama-server cannot combine a json_schema grammar with a reasoning model whose
     #: chat template opens with ``<think>`` — the grammar constrains output from the
@@ -394,6 +424,48 @@ class OpenAIHostedProvider:
             )
         return None
 
+    def _wire_max_tokens(self, request: GenerationRequestV1) -> int:
+        """The completion pool this request gets on the wire.
+
+        ``max_tokens`` bounds reasoning *and* answer together, so on a hosted reasoning
+        route the caller's number — which means "how long an answer" — is not a budget
+        the model can actually respect. Those routes get the configured cloud pool as a
+        floor instead. A caller that explicitly asked for more still wins: this only
+        ever raises the pool, never lowers one somebody chose.
+        """
+        budget = min(request.max_output_tokens, self._settings.AEGIS_PROVIDER_MAX_OUTPUT_TOKENS)
+        if not self._hosted_reasoning_route:
+            return budget
+        return min(
+            max(budget, self._settings.AEGIS_PROVIDER_CLOUD_MAX_OUTPUT_TOKENS),
+            _WIRE_MAX_OUTPUT_TOKENS,
+        )
+
+    def _reasoning_effort(self) -> str | None:
+        """How hard the model may think, or ``None`` to leave the wire untouched."""
+        if not self._hosted_reasoning_route:
+            return None
+        return self._settings.AEGIS_PROVIDER_REASONING_EFFORT or None
+
+    @staticmethod
+    async def _create_completion(client: Any, kwargs: dict[str, Any]) -> Any:
+        """One chat completion, retried once without ``reasoning_effort`` if refused.
+
+        OpenRouter and Ollama Cloud each front hundreds of models and normally ignore
+        the parameter for one that has no scratchpad — but "normally" is not a
+        guarantee we can make on the operator's behalf, and a 400 here would take a
+        working model offline entirely. The fallback is deliberately narrow: only a
+        rejected *request* that names the parameter, and only once.
+        """
+        try:
+            return await client.chat.completions.create(**kwargs)
+        except Exception as exc:
+            if "reasoning_effort" not in kwargs or not _rejects_reasoning_effort(str(exc), exc):
+                raise
+        return await client.chat.completions.create(
+            **{key: value for key, value in kwargs.items() if key != "reasoning_effort"}
+        )
+
     async def generate(self, request: GenerationRequestV1) -> GenerationResponseV1:
         client = self._client()
         model_id = self._resolve_model_id(request)
@@ -414,10 +486,11 @@ class OpenAIHostedProvider:
         kwargs: dict[str, Any] = {
             "model": model_id,
             "messages": messages,
-            "max_tokens": min(
-                request.max_output_tokens, self._settings.AEGIS_PROVIDER_MAX_OUTPUT_TOKENS
-            ),
+            "max_tokens": self._wire_max_tokens(request),
         }
+        reasoning_effort = self._reasoning_effort()
+        if reasoning_effort is not None:
+            kwargs["reasoning_effort"] = reasoning_effort
         if request.model_config_ref.temperature is not None:
             kwargs["temperature"] = request.model_config_ref.temperature
         if request.structured_output is not None and self._use_server_response_format:
@@ -431,7 +504,7 @@ class OpenAIHostedProvider:
             }
         started = datetime.now(UTC)
         try:
-            completion = await client.chat.completions.create(**kwargs)
+            completion = await self._create_completion(client, kwargs)
         except Exception as exc:
             error_type = type(exc).__name__
             message = str(exc)
@@ -513,6 +586,9 @@ class OpenAIHostedProvider:
                         "finishReason": "length",
                         "maxOutputTokens": kwargs["max_tokens"],
                         "reasoningTokens": bool(reasoning),
+                        # Both levers, so the operator can see which one is already in
+                        # play: enlarge the pool, or shorten the thinking that ate it.
+                        "reasoningEffort": kwargs.get("reasoning_effort"),
                     },
                     trace_id=request.trace_id,
                 )

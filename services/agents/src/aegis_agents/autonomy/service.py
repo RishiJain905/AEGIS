@@ -39,6 +39,7 @@ from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from aegis_agents.autonomy.events import build_autonomy_task_enqueued_event
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_agents.runtime.session_service import AgentSessionService
+from aegis_agents.runtime.state_machine import is_terminal
 from aegis_agents.runtime.task_service import AgentTaskService
 
 _ACTIVE_STATUSES = {AgentTaskStatus.QUEUED, AgentTaskStatus.RUNNING}
@@ -298,8 +299,15 @@ class AutonomyTriageService:
     ) -> str:
         key = (run_id, role.value)
         cached = self._session_ids.get(key)
-        if cached is not None and await uow.agent_sessions.get_by_id(cached) is not None:
-            return cached
+        if cached is not None:
+            session = await uow.agent_sessions.get_by_id(cached)
+            # A terminal lane is as useless as a missing one, and worse to reuse: no
+            # state leaves COMPLETED or CANCELLED, so every task enqueued onto it dies
+            # at the starting transition ("completed -> gathering") instead of running.
+            # Open a fresh lane rather than filling a dead one — the alternative is a
+            # run whose autonomy is silently over.
+            if session is not None and not is_terminal(session.state):
+                return cached
         session = await self.sessions.create_run_session(
             uow,
             run_id=run_id,

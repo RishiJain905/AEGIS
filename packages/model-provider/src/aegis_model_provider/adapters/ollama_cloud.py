@@ -49,6 +49,11 @@ def _is_unknown_model(message: str, exc: Exception) -> bool:
 class OllamaCloudProvider(OpenAIHostedProvider):
     provider_id = "ollama-cloud"
 
+    # Same reasoning as OpenRouter: the operator picks the model from a catalogue that
+    # is largely thinking models, and they bill the scratchpad out of the completion
+    # pool, so this route gets the cloud pool plus a cap on how long it may think.
+    _hosted_reasoning_route = True
+
     @classmethod
     def configured_base_url(cls, settings: ProviderSettings) -> str:
         return settings.AEGIS_PROVIDER_OLLAMA_CLOUD_BASE_URL

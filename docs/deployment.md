@@ -157,6 +157,8 @@ dropped when a provider-specific manifest is generated.
 | `AEGIS_PROVIDER_CIRCUIT_BREAKER_RESET_SECONDS` | API/agents | no                         | `60`                               | no     | Phase 18      |
 | `AEGIS_PROVIDER_MAX_CONCURRENT_REQUESTS`       | API/agents | no                         | `10`                               | no     | Phase 18      |
 | `AEGIS_PROVIDER_MAX_OUTPUT_TOKENS`             | API/agents | no                         | `4096`                             | no     | Phase 18      |
+| `AEGIS_PROVIDER_CLOUD_MAX_OUTPUT_TOKENS`       | API/agents | no                         | `8192`                             | no     | Phase 32      |
+| `AEGIS_PROVIDER_REASONING_EFFORT`              | API/agents | no                         | `low`                              | no     | Phase 32      |
 | `AEGIS_PROVIDER_RECORDED_FIXTURES_DIR`         | API/agents | no                         | `fixtures/model-responses`         | no     | Phase 18      |
 | `AEGIS_PROVIDER_OPENAI_API_KEY`                | API/agents | no for mock                | empty                              | yes    | Phase 18 / 32 |
 | `AEGIS_PROVIDER_OPENAI_BASE_URL`               | API/agents | no                         | `https://api.openai.com/v1`        | no     | Phase 18      |

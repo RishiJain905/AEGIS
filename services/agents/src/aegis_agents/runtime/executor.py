@@ -1863,7 +1863,14 @@ class TaskExecutor:
         # machine). This keeps the whole chat as one session (matching the prior-turn
         # digest) without weakening the terminal guarantees the state machine gives
         # incident-scoped sessions.
-        if not run_scoped:
+        #
+        # Keyed on the SESSION, not the task — the same asymmetry ``_fail_task``
+        # already avoids. An autonomy lane session is run-scoped and shared by every
+        # triage turn in the run, while each turn carries the incident id of the case
+        # it enriches (ADR 0037). Reading the task's scope here completed the shared
+        # lane on its first successful turn, and COMPLETED has no outgoing
+        # transitions: every later triage died with "completed -> gathering".
+        if session.incident_id is not None:
             session = await self._sessions.transition(
                 uow,
                 session=session,
