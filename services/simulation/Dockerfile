@@ -8,10 +8,12 @@ COPY packages/contracts-python/pyproject.toml packages/contracts-python/
 COPY packages/persistence/pyproject.toml packages/persistence/
 COPY packages/scenario-sdk/pyproject.toml packages/scenario-sdk/
 COPY packages/simulation-domain/pyproject.toml packages/simulation-domain/
+COPY packages/model-provider/pyproject.toml packages/model-provider/
 COPY packages/contracts-python/src packages/contracts-python/src
 COPY packages/persistence/src packages/persistence/src
 COPY packages/scenario-sdk/src packages/scenario-sdk/src
 COPY packages/simulation-domain/src packages/simulation-domain/src
+COPY packages/model-provider/src packages/model-provider/src
 COPY services/simulation/src services/simulation/src
 RUN uv sync --frozen --no-dev --package aegis-simulation
 
@@ -27,6 +29,7 @@ COPY --chown=aegis:aegis packages/contracts-python/src packages/contracts-python
 COPY --chown=aegis:aegis packages/persistence/src packages/persistence/src
 COPY --chown=aegis:aegis packages/scenario-sdk/src packages/scenario-sdk/src
 COPY --chown=aegis:aegis packages/simulation-domain/src packages/simulation-domain/src
+COPY --chown=aegis:aegis packages/model-provider/src packages/model-provider/src
 ENV PATH="/app/.venv/bin:$PATH" \
     HOME=/tmp \
     TMPDIR=/tmp \
