@@ -8,6 +8,8 @@ from aegis_contracts.versioning import HEALTH_RESPONSE_SCHEMA_VERSION
 from aegis_observability.middleware import create_observability_middleware
 from aegis_observability.setup import init_observability, shutdown_observability
 from fastapi import Depends, FastAPI
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -39,6 +41,7 @@ from aegis_api.observability import protected_router as ops_protected_router
 from aegis_api.observability import public_router as ops_public_router
 from aegis_api.operator_actions.router import router as operator_router
 from aegis_api.profile.router import router as profile_router
+from aegis_api.provider_credentials.router import router as provider_credentials_router
 from aegis_api.providers.observability import router as providers_observability_router
 from aegis_api.providers.router import router as providers_router
 from aegis_api.realtime.backfill import router as backfill_router
@@ -189,6 +192,24 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     ) -> JSONResponse:
         return auth_error_response(exc)
 
+    @app.exception_handler(RequestValidationError)
+    async def handle_request_validation_error(
+        _request: object,
+        exc: RequestValidationError,
+    ) -> JSONResponse:
+        """A 422 that does not read the request body back to the caller.
+
+        FastAPI's default includes the offending value in the response, so a malformed
+        login or a mistyped provider API key comes straight back out — and into
+        anything that records response bodies. Where the error is and what is wrong
+        with it is enough to fix a request; the value itself is the caller's already.
+        """
+        errors = [
+            {key: value for key, value in error.items() if key not in {"input", "ctx"}}
+            for error in exc.errors()
+        ]
+        return JSONResponse(status_code=422, content=jsonable_encoder({"detail": errors}))
+
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         # Liveness: process is alive. Does not check dependencies.
@@ -249,6 +270,11 @@ def create_app(settings: AegisSettings | None = None) -> FastAPI:
     app.include_router(risk_observability_router, dependencies=admin_manage)
     app.include_router(providers_router, dependencies=admin_manage)
     app.include_router(providers_observability_router, dependencies=admin_manage)
+    # Provider credentials belong to the operator launching runs, not to an admin: the
+    # picker in the launch dialog has to be readable by anyone who can start a run.
+    # Connecting and disconnecting a key additionally demands runs:write, declared on
+    # those routes, so a read-only viewer can see the picker but not spend anything.
+    app.include_router(provider_credentials_router, dependencies=read_runs)
     app.include_router(agents_router, dependencies=read_investigation)
     app.include_router(investigation_router, dependencies=read_investigation)
     app.include_router(approvals_router, dependencies=decide_approvals)

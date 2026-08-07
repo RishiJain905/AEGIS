@@ -38,6 +38,9 @@ from aegis_persistence.repositories.postgres import (
     create_outbox_row,
 )
 from aegis_persistence.repositories.proposals import PostgresProposalRepository
+from aegis_persistence.repositories.provider_credentials import (
+    PostgresProviderCredentialRepository,
+)
 from aegis_persistence.repositories.replay import PostgresReplaySnapshotRepository
 from aegis_persistence.repositories.reports import PostgresReportRepository
 from aegis_persistence.repositories.scoring import PostgresRunScoreRepository
@@ -86,6 +89,7 @@ class PostgresUnitOfWork:
         self._run_scores = PostgresRunScoreRepository(self._session)
         self._replay_snapshots = PostgresReplaySnapshotRepository(self._session)
         self._auth = PostgresAuthRepository(self._session)
+        self._provider_credentials = PostgresProviderCredentialRepository(self._session)
         self._directives = PostgresDirectiveRepository(self._session)
         self._investigation = PostgresInvestigationRepository(
             self._session,
@@ -217,6 +221,10 @@ class PostgresUnitOfWork:
     @property
     def auth(self) -> PostgresAuthRepository:
         return self._auth
+
+    @property
+    def provider_credentials(self) -> PostgresProviderCredentialRepository:
+        return self._provider_credentials
 
     @property
     def investigation(self) -> PostgresInvestigationRepository:

@@ -28,6 +28,36 @@ pnpm install --frozen-lockfile
 echo "==> Installing Python dependencies (frozen lockfile)"
 uv sync --frozen --all-packages
 
+echo "==> Ensuring a provider-credential encryption key exists"
+# Cloud model providers store the operator's API key encrypted, which needs a Fernet
+# key. Generating it here means a fresh clone can connect a provider without anyone
+# reading the docs; it is written once and never regenerated, because rotating it
+# strands every key already stored.
+uv run python - <<'PY'
+from pathlib import Path
+
+from cryptography.fernet import Fernet
+
+NAME = "AEGIS_CREDENTIAL_ENCRYPTION_KEY"
+env_path = Path(".env")
+lines = env_path.read_text(encoding="utf-8").splitlines()
+
+for index, line in enumerate(lines):
+    if not line.startswith(f"{NAME}="):
+        continue
+    if line[len(NAME) + 1 :].strip():
+        print(f"{NAME} is already set; leaving it alone")
+        break
+    lines[index] = f"{NAME}={Fernet.generate_key().decode()}"
+    env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"Generated {NAME} in .env")
+    break
+else:
+    lines.append(f"{NAME}={Fernet.generate_key().decode()}")
+    env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"Appended {NAME} to .env")
+PY
+
 echo "==> Validating environment configuration"
 pnpm validate-env
 uv run python scripts/validate_env.py

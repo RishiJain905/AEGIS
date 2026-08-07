@@ -67,6 +67,11 @@ _EXPECTED_ROUTE_PERMISSIONS: dict[tuple[str, str], PermissionV1] = {
     ("POST", "/api/v1/agent-sessions/{session_id}/cancel"): PermissionV1.INVESTIGATION_TRIGGER,
     ("POST", "/api/v1/agent-tasks/{task_id}/retry"): PermissionV1.INVESTIGATION_TRIGGER,
     ("POST", "/api/v1/realtime/backfill"): PermissionV1.ADMIN_MANAGE,
+    # Connecting a provider key spends the operator's own subscription on runs, so it
+    # rides runs:write rather than admin:manage — the picker has to work for whoever
+    # launches runs, but a read-only viewer must not be able to store or drop a key.
+    ("PUT", "/api/v1/provider-credentials/{provider}"): PermissionV1.RUNS_WRITE,
+    ("DELETE", "/api/v1/provider-credentials/{provider}"): PermissionV1.RUNS_WRITE,
 }
 
 

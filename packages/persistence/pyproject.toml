@@ -11,6 +11,8 @@ dependencies = [
     "alembic>=1.15",
     "greenlet>=3.1",
     "boto3>=1.35",
+    # Fernet, for the provider API keys this layer stores on an operator's behalf.
+    "cryptography>=44.0",
 ]
 
 [tool.uv.sources]

@@ -69,6 +69,14 @@ class AegisSettings(BaseSettings):
     AEGIS_OIDC_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/callback"
     AEGIS_OIDC_SCOPES: str = "openid profile email"
     AEGIS_WEB_BASE_URL: str = "http://localhost:3000"
+    # Fernet key encrypting the model-provider API keys operators lend the platform.
+    # Optional: a deployment that never offers cloud providers needs none, and while it
+    # is unset the credential endpoints report a configuration error rather than
+    # storing anything. Generate one with:
+    #   uv run python -c \
+    #     "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    # Rotating it strands every stored key — operators reconnect their providers.
+    AEGIS_CREDENTIAL_ENCRYPTION_KEY: str | None = None
 
     # Phase 31 observability
     OTEL_SERVICE_NAME: str = "aegis-api"

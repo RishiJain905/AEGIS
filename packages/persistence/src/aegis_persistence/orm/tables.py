@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -1048,6 +1049,35 @@ class AuthUserCredentialRow(Base):
     )
     password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
     algorithm: Mapped[str] = mapped_column(String(32), nullable=False, default="argon2id")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class AuthUserProviderCredentialRow(Base):
+    """One operator's encrypted API key for one cloud model provider.
+
+    Separate from ``auth_user_credentials`` because this is not a login secret: it is a
+    third-party key the operator lends the platform so their runs bill their own
+    subscription. Keyed by ``(user_id, provider)`` so reconnecting replaces rather than
+    accumulates, and so no query can return a key without naming whose it is.
+
+    ``ciphertext`` is Fernet output (see ``aegis_persistence.credentials``); ``key_hint``
+    is the only plaintext fragment kept, four characters so the console can say which
+    key is connected. ``algorithm`` records the scheme each row was written under.
+    """
+
+    __tablename__ = "auth_user_provider_credentials"
+
+    user_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("auth_users.user_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    provider: Mapped[str] = mapped_column(String(64), primary_key=True)
+    ciphertext: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    key_hint: Mapped[str] = mapped_column(String(8), nullable=False)
+    algorithm: Mapped[str] = mapped_column(String(32), nullable=False, default="fernet")
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

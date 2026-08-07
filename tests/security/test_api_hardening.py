@@ -206,3 +206,20 @@ def test_rate_limiter_bounds_bucket_memory_with_deterministic_lru_eviction() -> 
     limiter._consume("ip:three")
 
     assert list(limiter._buckets) == ["ip:two", "ip:three"]
+
+
+def test_validation_errors_do_not_read_the_request_body_back_to_the_caller() -> None:
+    # FastAPI's default 422 embeds the offending value. On a login body that is the
+    # password; on a provider-credential body it is the operator's API key. Neither may
+    # come back out, so the handler strips the echoed input from every entry.
+    secret = "p" * 300
+    response = _client(_settings()).post(
+        "/api/v1/auth/login",
+        json={"schemaVersion": 1, "username": "operator", "password": secret},
+    )
+
+    assert response.status_code == 422
+    assert secret not in response.text
+    assert all("input" not in error for error in response.json()["detail"])
+    # It still says what was wrong and where.
+    assert response.json()["detail"][0]["loc"] == ["body", "password"]
