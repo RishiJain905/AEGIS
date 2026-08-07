@@ -8,7 +8,9 @@ existing hosted adapter and are pinned here:
   and the run's loadout), not from the environment, so the constructor takes
   overrides that outrank the env settings;
 * the loadout dialog needs the provider's live catalogue, so the adapters can
-  list models.
+  list models;
+* proving a key is a *different* request from listing the catalogue, because
+  both vendors serve their catalogue to anybody who asks.
 
 Nothing here touches the network — the SDK client is faked or its constructor
 is captured.
@@ -31,12 +33,16 @@ from aegis_contracts.versioning import (
     GENERATION_REQUEST_SCHEMA_VERSION,
     MODEL_CONFIG_SCHEMA_VERSION,
 )
-from aegis_model_provider.adapters.ollama_cloud import OllamaCloudProvider
+from aegis_model_provider.adapters.ollama_cloud import (
+    CREDENTIAL_PROBE_MODEL_ID,
+    OllamaCloudProvider,
+)
 from aegis_model_provider.adapters.openai_compatible import OpenAICompatibleProvider
+from aegis_model_provider.adapters.openai_hosted import OpenAIHostedProvider
 from aegis_model_provider.adapters.openrouter import OpenRouterProvider
 from aegis_model_provider.config import ProviderKind, ProviderSettings
 from aegis_model_provider.errors import ProviderRuntimeError
-from aegis_model_provider.protocol import ModelListingProvider
+from aegis_model_provider.protocol import CredentialVerifyingProvider, ModelListingProvider
 from aegis_model_provider.registry import ProviderRegistry, build_provider_registry
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
@@ -120,6 +126,105 @@ class _FakeModelListingClient:
 
     async def close(self) -> None:
         self.closed = True
+
+
+def _result_or_raise(result: Any) -> Any:
+    if isinstance(result, Exception):
+        raise result
+    return result
+
+
+class _FakeClientModels:
+    def __init__(self, client: _FakeCloudClient) -> None:
+        self._client = client
+
+    async def list(self) -> Any:
+        self._client.model_list_calls += 1
+        return _result_or_raise(self._client.transport.models_result)
+
+
+class _FakeChatCompletions:
+    def __init__(self, client: _FakeCloudClient) -> None:
+        self._client = client
+
+    async def create(self, **kwargs: Any) -> Any:
+        self._client.completion_calls.append(kwargs)
+        return _result_or_raise(self._client.transport.completion_result)
+
+
+class _FakeChat:
+    def __init__(self, client: _FakeCloudClient) -> None:
+        self.completions = _FakeChatCompletions(client)
+
+
+class _FakeCloudClient:
+    """``AsyncOpenAI``'s surface, minus the network.
+
+    Records *which* request an adapter made and how the client was built, because
+    verification is only correct if it reaches an endpoint that authenticates —
+    an assertion about the returned value could not tell the two apart.
+    """
+
+    def __init__(self, transport: _CloudTransport, **kwargs: Any) -> None:
+        self.transport = transport
+        self.kwargs = kwargs
+        self.get_calls: list[str] = []
+        self.completion_calls: list[dict[str, Any]] = []
+        self.model_list_calls = 0
+        self.closed = False
+        self.chat = _FakeChat(self)
+        self.models = _FakeClientModels(self)
+
+    async def get(self, path: str, *, cast_to: Any = None, **_: Any) -> Any:
+        self.get_calls.append(path)
+        return _result_or_raise(self.transport.key_result)
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class _CloudTransport:
+    """The programmable outcome every faked client answers with."""
+
+    def __init__(self) -> None:
+        self.key_result: Any = {"data": {"label": "probe"}}
+        self.completion_result: Any = None
+        self.models_result: Any = _FakeModelsPage([])
+        self.clients: list[_FakeCloudClient] = []
+
+    @property
+    def client(self) -> _FakeCloudClient:
+        assert len(self.clients) == 1, f"expected one client, {len(self.clients)} were built"
+        return self.clients[0]
+
+
+@pytest.fixture()
+def cloud_transport(monkeypatch: pytest.MonkeyPatch) -> _CloudTransport:
+    transport = _CloudTransport()
+
+    def _build(**kwargs: Any) -> _FakeCloudClient:
+        client = _FakeCloudClient(transport, **kwargs)
+        transport.clients.append(client)
+        return client
+
+    monkeypatch.setattr("openai.AsyncOpenAI", _build)
+    return transport
+
+
+class _Unauthorized(Exception):
+    status_code = 401
+
+
+class _NotFound(Exception):
+    status_code = 404
+
+
+class _BadRequest(Exception):
+    status_code = 400
+
+
+class _ServerError(Exception):
+    status_code = 500
 
 
 # --- identity -------------------------------------------------------------
@@ -243,9 +348,6 @@ async def test_list_models_normalizes_the_sdk_response() -> None:
 
 @pytest.mark.asyncio
 async def test_list_models_classifies_a_rejected_key_as_credentials_missing() -> None:
-    class _Unauthorized(Exception):
-        status_code = 401
-
     provider = OllamaCloudProvider(cloud_settings(AEGIS_PROVIDER_OLLAMA_CLOUD_API_KEY="bad"))
     provider._client = lambda: _FakeModelListingClient(_Unauthorized("no"))  # type: ignore[method-assign]
 
@@ -305,6 +407,183 @@ async def test_the_local_adapter_inherits_model_listing() -> None:
     provider._client = lambda: _FakeModelListingClient(_FakeModelsPage(["local-model"]))  # type: ignore[method-assign]
 
     assert await provider.list_models() == ["local-model"]
+
+
+# --- credential verification ----------------------------------------------
+#
+# Chrome QA stored `sk-test-not-a-real-key-0000` against OpenRouter and Ollama
+# Cloud and got a CONNECTED badge from both. Verification was "fetch the
+# catalogue on the operator's key" — and both vendors serve `/models` to
+# unauthenticated callers, so the call could not fail on a bad key. These tests
+# pin the endpoint each adapter proves a key against, because the *result* of a
+# verification says nothing about whether it verified anything.
+
+
+def test_every_credential_backed_adapter_can_prove_a_key() -> None:
+    registry = build_provider_registry(cloud_settings())
+
+    for provider_id in ("openai", "openai-compatible", "openrouter", "ollama-cloud"):
+        adapter = registry.resolve_with_credentials(provider_id)
+        assert isinstance(adapter, CredentialVerifyingProvider), provider_id
+    # Fixture-serving providers take no key, so the router can tell before asking.
+    assert not isinstance(registry.resolve_with_credentials("mock"), CredentialVerifyingProvider)
+
+
+@pytest.mark.asyncio
+async def test_openai_verification_falls_back_to_the_catalogue_that_does_authenticate(
+    cloud_transport: _CloudTransport,
+) -> None:
+    # OpenAI's `/models` refuses an unknown key, so listing it *is* a key check and
+    # the base adapter keeps that as its default.
+    transport = cloud_transport
+    transport.models_result = _FakeModelsPage(["gpt-4o-mini"])
+    provider = OpenAIHostedProvider(cloud_settings(), api_key_override="sk-operator-openai")
+
+    await provider.verify_credentials()
+
+    assert transport.client.model_list_calls == 1
+    assert transport.client.kwargs["api_key"] == "sk-operator-openai"
+    assert transport.client.closed is True
+
+
+@pytest.mark.asyncio
+async def test_openai_verification_reports_a_refused_key_as_credentials_missing(
+    cloud_transport: _CloudTransport,
+) -> None:
+    cloud_transport.models_result = _Unauthorized("invalid api key")
+    provider = OpenAIHostedProvider(cloud_settings(), api_key_override="sk-not-a-real-key-0000")
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        await provider.verify_credentials()
+
+    assert exc.value.error.code == ProviderErrorCode.CREDENTIALS_MISSING
+
+
+@pytest.mark.asyncio
+async def test_openrouter_verification_asks_the_key_endpoint_not_the_public_catalogue(
+    cloud_transport: _CloudTransport,
+) -> None:
+    provider = OpenRouterProvider(cloud_settings(), api_key_override="sk-or-operator-key")
+
+    await provider.verify_credentials()
+
+    client = cloud_transport.client
+    assert client.get_calls == ["/key"]
+    assert client.model_list_calls == 0
+    assert client.kwargs["api_key"] == "sk-or-operator-key"
+    # The probe must stay under the allowlisted destination, not reach a new host.
+    assert client.kwargs["base_url"] == OPENROUTER_BASE_URL
+    assert client.closed is True
+
+
+@pytest.mark.asyncio
+async def test_openrouter_verification_rejects_a_key_the_endpoint_refuses(
+    cloud_transport: _CloudTransport,
+) -> None:
+    cloud_transport.key_result = _Unauthorized("No auth credentials found")
+    provider = OpenRouterProvider(cloud_settings(), api_key_override="sk-test-not-a-real-key-0000")
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        await provider.verify_credentials()
+
+    assert exc.value.error.code == ProviderErrorCode.CREDENTIALS_MISSING
+    assert cloud_transport.client.closed is True
+
+
+@pytest.mark.asyncio
+async def test_openrouter_verification_reports_an_unreachable_endpoint_as_unavailable(
+    cloud_transport: _CloudTransport,
+) -> None:
+    cloud_transport.key_result = _ServerError("bad gateway")
+    provider = OpenRouterProvider(cloud_settings(), api_key_override="sk-or-operator-key")
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        await provider.verify_credentials()
+
+    assert exc.value.error.code == ProviderErrorCode.PROVIDER_UNAVAILABLE
+    assert exc.value.error.retryable is True
+
+
+@pytest.mark.asyncio
+async def test_ollama_cloud_verification_probes_with_a_model_that_cannot_exist(
+    cloud_transport: _CloudTransport,
+) -> None:
+    # Ollama Cloud has no key-introspection endpoint, so the probe is a chat request
+    # for a model nobody serves: a 404 means the request got past authentication,
+    # which is the whole question. It cannot spend tokens — there is no model to run.
+    cloud_transport.completion_result = _NotFound("model not found")
+    provider = OllamaCloudProvider(cloud_settings(), api_key_override="ok-operator-key")
+
+    await provider.verify_credentials()
+
+    client = cloud_transport.client
+    assert len(client.completion_calls) == 1
+    probe = client.completion_calls[0]
+    assert probe["model"] == CREDENTIAL_PROBE_MODEL_ID
+    assert probe["max_tokens"] == 1
+    assert client.model_list_calls == 0
+    assert client.kwargs["api_key"] == "ok-operator-key"
+    assert client.kwargs["base_url"] == OLLAMA_CLOUD_BASE_URL
+    assert client.closed is True
+
+
+@pytest.mark.asyncio
+async def test_ollama_cloud_verification_accepts_a_model_not_found_reported_as_a_bad_request(
+    cloud_transport: _CloudTransport,
+) -> None:
+    # Same signal, different status: the endpoint authenticated the caller and then
+    # complained about the model. That is a working key.
+    cloud_transport.completion_result = _BadRequest(
+        f"model '{CREDENTIAL_PROBE_MODEL_ID}' not found, try pulling it first"
+    )
+    provider = OllamaCloudProvider(cloud_settings(), api_key_override="ok-operator-key")
+
+    await provider.verify_credentials()
+
+    assert cloud_transport.client.closed is True
+
+
+@pytest.mark.asyncio
+async def test_ollama_cloud_verification_rejects_a_key_the_endpoint_refuses(
+    cloud_transport: _CloudTransport,
+) -> None:
+    cloud_transport.completion_result = _Unauthorized("unauthorized")
+    provider = OllamaCloudProvider(cloud_settings(), api_key_override="sk-test-not-a-real-key-0000")
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        await provider.verify_credentials()
+
+    assert exc.value.error.code == ProviderErrorCode.CREDENTIALS_MISSING
+    assert cloud_transport.client.closed is True
+
+
+@pytest.mark.asyncio
+async def test_ollama_cloud_verification_reports_a_timeout_as_unavailable(
+    cloud_transport: _CloudTransport,
+) -> None:
+    # An operator whose key never got an answer has nothing to fix; that is a 502
+    # upstream, not a 400 against their key.
+    cloud_transport.completion_result = TimeoutError("request timed out")
+    provider = OllamaCloudProvider(cloud_settings(), api_key_override="ok-operator-key")
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        await provider.verify_credentials()
+
+    assert exc.value.error.code == ProviderErrorCode.PROVIDER_UNAVAILABLE
+    assert exc.value.error.retryable is True
+
+
+@pytest.mark.asyncio
+async def test_verification_without_a_key_never_reaches_the_network(
+    cloud_transport: _CloudTransport,
+) -> None:
+    provider = OpenRouterProvider(cloud_settings())
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        await provider.verify_credentials()
+
+    assert exc.value.error.code == ProviderErrorCode.CREDENTIALS_MISSING
+    assert cloud_transport.clients == []
 
 
 # --- registry -------------------------------------------------------------

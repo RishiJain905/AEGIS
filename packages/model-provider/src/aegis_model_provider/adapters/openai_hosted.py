@@ -233,13 +233,58 @@ class OpenAIHostedProvider:
             return requested
         return self._default_model_id()
 
+    async def verify_credentials(self) -> None:
+        """Prove the configured key is one this provider accepts, or raise.
+
+        Separate from :meth:`list_models` because for two of the four adapters they are
+        not the same question: OpenRouter and Ollama Cloud serve their catalogue to
+        anybody who asks, so a listing that succeeded said nothing about the key and
+        every non-empty string was being stored as "verified". Those two override this.
+
+        The default is the catalogue call, which is right wherever ``/models`` itself
+        authenticates — OpenAI's does, and refuses an unknown key with a 401.
+        """
+        await self.list_models()
+
+    def _verification_error(self, exc: Exception) -> ProviderRuntimeError:
+        """One classified failure for every override of :meth:`verify_credentials`.
+
+        A refused key is the operator's to fix and must never be retried against the
+        provider; anything else is the endpoint being unreachable, which is.
+        """
+        message = str(exc)
+        if _is_auth_failure(message, exc):
+            return ProviderRuntimeError(
+                make_provider_error(
+                    code=ProviderErrorCode.CREDENTIALS_MISSING,
+                    message=f"Provider '{self.provider_id}' rejected the API key",
+                    details={"providerId": self.provider_id, "errorType": type(exc).__name__},
+                )
+            )
+        return ProviderRuntimeError(
+            make_provider_error(
+                code=ProviderErrorCode.PROVIDER_UNAVAILABLE,
+                message=f"Provider '{self.provider_id}' could not verify the API key",
+                retryable=True,
+                details={
+                    "providerId": self.provider_id,
+                    "errorType": type(exc).__name__,
+                    "providerMessage": _provider_message(message),
+                },
+            )
+        )
+
     async def list_models(self) -> list[str]:
         """The endpoint's catalogue, deduplicated and sorted.
 
-        The loadout dialog offers whatever the operator's own subscription serves, so
-        the list has to come from the provider rather than a hardcoded table. It goes
-        through the adapter (not ad-hoc HTTP) to keep the egress allowlist and the
-        credential seam on one path.
+        The loadout dialog offers what the endpoint serves, so the list has to come
+        from the provider rather than a hardcoded table. It goes through the adapter
+        (not ad-hoc HTTP) to keep the egress allowlist and the credential seam on one
+        path.
+
+        Not an entitlement check, and not a key check: OpenRouter's and Ollama Cloud's
+        catalogues are public global lists, so this can offer a model the operator's
+        own subscription does not reach.
         """
         client = self._client()
         try:

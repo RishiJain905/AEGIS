@@ -24,10 +24,19 @@ const LABEL_CLASS = 'font-mono text-[10px] uppercase tracking-wide text-[var(--a
 /** Above this many models the list stops being scannable and earns a filter field. */
 const MODEL_FILTER_THRESHOLD = 8;
 
-function ErrorLine({ id, children }: { id?: string; children: React.ReactNode }) {
+function ErrorLine({
+  id,
+  ref,
+  children,
+}: {
+  id?: string;
+  ref?: React.Ref<HTMLParagraphElement>;
+  children: React.ReactNode;
+}) {
   return (
     <p
       id={id}
+      ref={ref}
       role="alert"
       data-testid="provider-error"
       className="flex flex-wrap items-center gap-2 text-[11px] leading-4 text-[var(--aegis-risk-critical)]"
@@ -182,6 +191,8 @@ export function ProviderLoadoutSection({
   const [replacing, setReplacing] = useState(false);
   const [filter, setFilter] = useState('');
   const keyFieldRef = useRef<HTMLInputElement | null>(null);
+  const keyFormRef = useRef<HTMLFormElement | null>(null);
+  const actionErrorRef = useRef<HTMLParagraphElement | null>(null);
   // Replacing and disconnecting both destroy the button that was focused. Set this and the
   // field they open takes the focus, instead of dropping the operator onto <body>.
   const claimKeyFieldFocus = useRef(false);
@@ -189,6 +200,9 @@ export function ProviderLoadoutSection({
   const options = optionsQuery.data ?? [];
   const selectedOption = options.find((option) => option.id === selection.providerId);
   const providerLabel = selectedOption?.label ?? providerDoctrine(selection.providerId).label;
+  // Both halves travel together: the copy is written in the label, and the server's own
+  // complaints are written in the id, so a failure needs the pair to be said in one voice.
+  const provider = { id: selection.providerId, label: providerLabel };
 
   const credential = credentialsQuery.data?.find(
     (status) => status.provider === selection.providerId,
@@ -269,7 +283,9 @@ export function ProviderLoadoutSection({
   // as one error line, always adjacent to the control that produced it.
   const actionError =
     error === null ? null : (
-      <ErrorLine id={keyErrorId}>{describeProviderError(error, providerLabel)}</ErrorLine>
+      <ErrorLine id={keyErrorId} ref={actionErrorRef}>
+        {describeProviderError(error, provider)}
+      </ErrorLine>
     );
 
   useEffect(() => {
@@ -278,6 +294,27 @@ export function ProviderLoadoutSection({
       keyFieldRef.current?.focus();
     }
   }, [showKeyForm]);
+
+  // This section is the last thing in a dialog body that scrolls, so both the key form
+  // and the complaint about it render at the fold. A sighted operator on a short
+  // viewport could press Connect, watch nothing move, and never learn the key was
+  // refused. `nearest` scrolls only when the element is genuinely out of sight, and the
+  // jump is instant — an animation here is motion nobody asked for, so this holds under
+  // reduced motion without needing to ask what the preference is.
+  useEffect(() => {
+    if (error !== null) {
+      actionErrorRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+    }
+  }, [error]);
+
+  // Choosing a cloud card reveals the key form somewhere below; take the operator to the
+  // thing their click just asked for. Keyed on the provider too, so moving between two
+  // unconnected cloud providers — where `showKeyForm` never flips — still lands there.
+  useEffect(() => {
+    if (showKeyForm) {
+      keyFormRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+    }
+  }, [showKeyForm, selection.providerId]);
 
   return (
     <fieldset className="flex flex-col gap-2" data-testid="loadout-provider-section">
@@ -420,6 +457,7 @@ export function ProviderLoadoutSection({
 
           {showKeyForm ? (
             <form
+              ref={keyFormRef}
               className="flex flex-col gap-1.5"
               onSubmit={(event) => {
                 event.preventDefault();
@@ -491,7 +529,7 @@ export function ProviderLoadoutSection({
               ) : null}
               {modelsQuery.isError ? (
                 <ErrorLine>
-                  {describeProviderError(modelsQuery.error, providerLabel)}
+                  {describeProviderError(modelsQuery.error, provider)}
                   <Button
                     variant="ghost"
                     size="sm"

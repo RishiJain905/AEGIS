@@ -40,7 +40,7 @@ from aegis_contracts.versioning import (
 from aegis_model_provider import load_provider_settings
 from aegis_model_provider.config import CLOUD_PROVIDER_KINDS, ProviderKind, ProviderSettings
 from aegis_model_provider.errors import ProviderRuntimeError
-from aegis_model_provider.protocol import ModelListingProvider
+from aegis_model_provider.protocol import CredentialVerifyingProvider, ModelListingProvider
 from aegis_model_provider.registry import ProviderRegistry, build_provider_registry
 from aegis_persistence.credentials import (
     CredentialCryptoError,
@@ -180,6 +180,32 @@ def _provider_http_error(exc: ProviderRuntimeError) -> HTTPException:
     return HTTPException(status_code=502, detail=exc.error.message)
 
 
+async def _verify_api_key(registry: ProviderRegistry, provider: str, *, api_key: str) -> None:
+    """Prove the key against the provider, or raise the failure the operator must fix.
+
+    Deliberately *not* "fetch the catalogue and see whether it worked". OpenRouter and
+    Ollama Cloud serve their model lists to unauthenticated callers, so that check
+    passed for any non-empty string and stored it as verified — the defect Chrome QA
+    found on 2026-08-06. Each adapter now names the endpoint that actually
+    authenticates it; listing stays the model picker's errand alone.
+    """
+    try:
+        adapter = registry.resolve_with_credentials(provider, api_key=api_key)
+    except ProviderRuntimeError as exc:
+        raise _provider_http_error(exc) from exc
+    if not isinstance(adapter, CredentialVerifyingProvider):
+        # Fixture-serving adapters have no endpoint to ask. Nothing routed here should
+        # be one, so refuse the key rather than store one nothing ever checked.
+        raise HTTPException(
+            status_code=502,
+            detail=f"Provider '{provider}' cannot verify an API key",
+        )
+    try:
+        await adapter.verify_credentials()
+    except ProviderRuntimeError as exc:
+        raise _provider_http_error(exc) from exc
+
+
 async def _fetch_model_ids(registry: ProviderRegistry, provider: str, *, api_key: str) -> list[str]:
     """The provider's live catalogue, fetched on this caller's key."""
     try:
@@ -266,9 +292,9 @@ async def connect_provider_credential(
     """Verify an API key against its provider, then store it encrypted for this account.
 
     Verification comes first and the key is stored only if it worked, so a connected
-    provider means a key that answered — not one that will fail at launch. The
-    encryption key is resolved before the provider is contacted: a deployment that
-    cannot store the result should never have been sent the key at all.
+    provider means a key the provider itself accepted — not one that will fail at
+    launch. The encryption key is resolved before the provider is contacted: a
+    deployment that cannot store the result should never have been sent the key at all.
     """
     _require_cloud_provider(provider, registry)
     encryption_key = _encryption_key(request)
@@ -276,7 +302,7 @@ async def connect_provider_credential(
     if not api_key:
         raise HTTPException(status_code=400, detail="API key must not be blank")
 
-    await _fetch_model_ids(registry, provider, api_key=api_key)
+    await _verify_api_key(registry, provider, api_key=api_key)
 
     now = datetime.now(UTC)
     # The key was proven usable before verification, so this cannot fail on key material.

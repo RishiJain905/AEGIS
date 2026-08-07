@@ -262,24 +262,33 @@ export function useProviderCredentialActions(): ProviderCredentialActions {
  * One failure, said in a way the operator can act on. The status is what separates "your key
  * is wrong" from "the provider is down" from "this deployment cannot store keys at all" —
  * three failures with three different fixes, and only one of them the operator's.
+ *
+ * Takes the provider's id as well as its label because the server writes its complaints
+ * against the wire id, and the operator has only ever seen the label.
  */
-export function describeProviderError(error: unknown, providerLabel: string): string {
+export function describeProviderError(
+  error: unknown,
+  provider: { id: string; label: string },
+): string {
+  const { id, label } = provider;
   if (!(error instanceof ApiClientError)) {
-    return `${providerLabel} could not be reached from this console. Check your connection and try again.`;
+    return `${label} could not be reached from this console. Check your connection and try again.`;
   }
   switch (error.status) {
     case 400:
-      // The provider's own classification, already redacted server-side.
-      return error.message;
+      // The provider's own classification, already redacted server-side — but phrased
+      // as `Provider 'ollama-cloud' rejected the API key`. The operator picked a card
+      // labelled "Ollama Cloud"; say it back to them in the words they chose.
+      return error.message.replaceAll(`'${id}'`, label);
     case 401:
     case 403:
       return 'Your account is not allowed to connect model-provider keys. Ask an administrator for run-launch permission.';
     case 404:
-      return `This deployment does not offer ${providerLabel}.`;
+      return `This deployment does not offer ${label}.`;
     case 503:
       return 'This deployment is not configured for cloud model providers. An administrator has to set a credential encryption key before any key can be stored.';
     default:
-      return `${providerLabel} could not be reached (${String(error.status)}). Try again in a moment.`;
+      return `${label} could not be reached (${String(error.status)}). Try again in a moment.`;
   }
 }
 

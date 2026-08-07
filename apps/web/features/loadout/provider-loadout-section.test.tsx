@@ -178,12 +178,16 @@ async function expectNoAxeViolations(container: HTMLElement) {
   expect(results.violations).toHaveLength(0);
 }
 
+/** jsdom implements no layout, so the real one does not exist to call. */
+const scrollIntoView = vi.fn();
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
 beforeEach(() => {
+  Element.prototype.scrollIntoView = scrollIntoView;
   installApi();
 });
 
@@ -523,6 +527,59 @@ describe('ProviderLoadoutSection — a connected provider', () => {
     await screen.findByTestId('provider-api-key');
     expect(screen.getByTestId('provider-api-key')).not.toHaveFocus();
     expect(openrouter).toHaveFocus();
+  });
+});
+
+describe('ProviderLoadoutSection — keeping the next step on screen', () => {
+  // The dialog body scrolls and this section is its last child, so both the key form
+  // and the rejection render at the fold. Chrome QA watched a connect fail with the
+  // error clipped to a red sliver: the operator presses Connect, nothing appears to
+  // change, and they never learn the key was refused.
+  it('brings the key form into view when a cloud provider is chosen', async () => {
+    const user = userEvent.setup();
+    renderSection();
+
+    await user.click(await screen.findByTestId('provider-option-openrouter'));
+    const field = await screen.findByTestId('provider-api-key');
+
+    await waitFor(() => {
+      expect(scrollIntoView.mock.contexts).toContain(field.closest('form'));
+    });
+    // Instant, never smooth: a scroll animation is motion the operator did not ask for.
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', behavior: 'auto' });
+  });
+
+  it('brings a rejected key into view instead of leaving it below the fold', async () => {
+    const user = userEvent.setup();
+    installApi({
+      connectFailure: { status: 400, detail: "Provider 'openrouter' rejected the API key" },
+    });
+    renderSection();
+
+    await user.click(await screen.findByTestId('provider-option-openrouter'));
+    await user.type(await screen.findByTestId('provider-api-key'), 'sk-wrong');
+    await user.click(screen.getByTestId('provider-connect'));
+
+    const error = await screen.findByTestId('provider-error');
+    await waitFor(() => {
+      expect(scrollIntoView.mock.contexts).toContain(error);
+    });
+  });
+
+  it('names the provider the way the card does, not by its wire id', async () => {
+    const user = userEvent.setup();
+    installApi({
+      connectFailure: { status: 400, detail: "Provider 'ollama-cloud' rejected the API key" },
+    });
+    renderSection();
+
+    await user.click(await screen.findByTestId('provider-option-ollama-cloud'));
+    await user.type(await screen.findByTestId('provider-api-key'), 'sk-wrong');
+    await user.click(screen.getByTestId('provider-connect'));
+
+    const error = await screen.findByTestId('provider-error');
+    expect(error).toHaveTextContent('Ollama Cloud rejected the API key');
+    expect(error.textContent).not.toContain("'ollama-cloud'");
   });
 });
 

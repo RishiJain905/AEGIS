@@ -21,6 +21,20 @@ class ModelProvider(Protocol):
 
 
 @runtime_checkable
+class CredentialVerifyingProvider(ModelProvider, Protocol):
+    """A provider that can prove an API key is one it accepts.
+
+    Its own capability, separate from :class:`ModelListingProvider`, because for two
+    of the cloud adapters listing and verifying are not the same request: OpenRouter
+    and Ollama Cloud serve their catalogues unauthenticated, so a successful listing
+    is no evidence at all about the key. A caller storing a credential narrows on
+    this; a caller filling a model picker narrows on the other.
+    """
+
+    async def verify_credentials(self) -> None: ...
+
+
+@runtime_checkable
 class ModelListingProvider(ModelProvider, Protocol):
     """A provider that can enumerate the models its endpoint serves.
 

@@ -148,7 +148,12 @@ class _FakeUnitOfWork:
 
 
 class _FakeListingProvider:
-    """An endpoint-backed adapter: it can enumerate models, and it may refuse."""
+    """An endpoint-backed adapter: it can prove a key, enumerate models, and refuse either.
+
+    The two are separately programmable on purpose. Verification used to *be* the
+    catalogue call, which is exactly the defect these tests now guard: a provider whose
+    catalogue answers anybody must still be able to refuse a key.
+    """
 
     def __init__(
         self,
@@ -156,11 +161,14 @@ class _FakeListingProvider:
         *,
         models: list[str] | None = None,
         error: ProviderRuntimeError | None = None,
+        verify_error: ProviderRuntimeError | None = None,
     ) -> None:
         self._provider_id = provider_id
         self._models = models or []
         self._error = error
+        self._verify_error = verify_error
         self.list_models_calls = 0
+        self.verify_credentials_calls = 0
 
     @property
     def provider_id(self) -> str:
@@ -176,6 +184,11 @@ class _FakeListingProvider:
     async def generate(self, request: Any) -> Any:  # pragma: no cover - never called here
         raise NotImplementedError
 
+    async def verify_credentials(self) -> None:
+        self.verify_credentials_calls += 1
+        if self._verify_error is not None:
+            raise self._verify_error
+
     async def list_models(self) -> list[str]:
         self.list_models_calls += 1
         if self._error is not None:
@@ -183,12 +196,33 @@ class _FakeListingProvider:
         return self._models
 
 
+class _FakeFixtureProvider:
+    """An adapter with no endpoint behind it, so it can neither prove a key nor list."""
+
+    def __init__(self, provider_id: str) -> None:
+        self._provider_id = provider_id
+
+    @property
+    def provider_id(self) -> str:
+        return self._provider_id
+
+    def capabilities(self) -> ProviderCapabilitiesV1:
+        return ProviderCapabilitiesV1(
+            schema_version=PROVIDER_CAPABILITIES_SCHEMA_VERSION,
+            provider_id=self._provider_id,
+            capabilities=[ProviderCapability.CHAT],
+        )
+
+    async def generate(self, request: Any) -> Any:  # pragma: no cover - never called here
+        raise NotImplementedError
+
+
 class _FakeRegistry:
     def __init__(
         self,
         *,
         provider_ids: tuple[str, ...] = _ALL_PROVIDERS,
-        provider: _FakeListingProvider | None = None,
+        provider: _FakeListingProvider | _FakeFixtureProvider | None = None,
     ) -> None:
         self._provider_ids = provider_ids
         self._provider = provider
@@ -206,7 +240,7 @@ class _FakeRegistry:
         *,
         api_key: str | None = None,
         model_id: str | None = None,
-    ) -> _FakeListingProvider:
+    ) -> _FakeListingProvider | _FakeFixtureProvider:
         if provider_id not in self._provider_ids:
             raise ProviderRuntimeError(
                 make_provider_error(
@@ -300,7 +334,8 @@ def test_connecting_verifies_the_key_then_stores_it_encrypted(
     repository: _FakeCredentialRepository,
     encryption_key: str,
 ) -> None:
-    registry = _FakeRegistry(provider=_FakeListingProvider("openai", models=["gpt-4o-mini"]))
+    provider = _FakeListingProvider("openai", models=["gpt-4o-mini"])
+    registry = _FakeRegistry(provider=provider)
     client = _client(repository=repository, registry=registry, encryption_key=encryption_key)
 
     response = client.put("/api/v1/provider-credentials/openai", json={"apiKey": _API_KEY})
@@ -312,6 +347,11 @@ def test_connecting_verifies_the_key_then_stores_it_encrypted(
     assert body["keyHint"] == "wxyz"
     assert body["verifiedAt"] is not None
     _assert_no_key_material(response.text)
+
+    # Connecting proves the key and nothing else: the catalogue is the model picker's
+    # errand, and asking for it here is what let a public listing stand in for a check.
+    assert provider.verify_credentials_calls == 1
+    assert provider.list_models_calls == 0
 
     # Verification used the real key, and the stored ciphertext decrypts back to it.
     assert registry.api_keys_seen == [_API_KEY]
@@ -326,7 +366,7 @@ def test_a_rejected_key_is_reported_as_a_bad_request_and_never_stored(
 ) -> None:
     provider = _FakeListingProvider(
         "openrouter",
-        error=ProviderRuntimeError(
+        verify_error=ProviderRuntimeError(
             make_provider_error(
                 code=ProviderErrorCode.CREDENTIALS_MISSING,
                 message="Provider 'openrouter' rejected the API key",
@@ -346,16 +386,54 @@ def test_a_rejected_key_is_reported_as_a_bad_request_and_never_stored(
     assert repository.rows == {}
 
 
+def test_a_key_a_public_catalogue_cannot_vouch_for_is_still_rejected(
+    repository: _FakeCredentialRepository,
+    encryption_key: str,
+) -> None:
+    """The regression Chrome QA found on 2026-08-06.
+
+    OpenRouter and Ollama Cloud serve ``/models`` to unauthenticated callers, so the
+    old "fetch the catalogue to verify" path returned 200 for the fake key
+    ``sk-test-not-a-real-key-0000`` and stored it as CONNECTED. A provider whose
+    listing succeeds while its key check refuses must fail the connect and store
+    nothing — the listing must not be able to vouch for the key at all.
+    """
+    provider = _FakeListingProvider(
+        "openrouter",
+        models=["anthropic/claude-sonnet-4", "openai/gpt-4o"],
+        verify_error=ProviderRuntimeError(
+            make_provider_error(
+                code=ProviderErrorCode.CREDENTIALS_MISSING,
+                message="Provider 'openrouter' rejected the API key",
+            )
+        ),
+    )
+    client = _client(
+        repository=repository,
+        registry=_FakeRegistry(provider=provider),
+        encryption_key=encryption_key,
+    )
+
+    response = client.put(
+        "/api/v1/provider-credentials/openrouter",
+        json={"apiKey": "sk-test-not-a-real-key-0000"},
+    )
+
+    assert response.status_code == 400
+    assert repository.rows == {}
+    assert provider.verify_credentials_calls == 1
+
+
 def test_an_unreachable_provider_is_a_bad_gateway_and_never_stored(
     repository: _FakeCredentialRepository,
     encryption_key: str,
 ) -> None:
     provider = _FakeListingProvider(
         "ollama-cloud",
-        error=ProviderRuntimeError(
+        verify_error=ProviderRuntimeError(
             make_provider_error(
                 code=ProviderErrorCode.PROVIDER_UNAVAILABLE,
-                message="Provider 'ollama-cloud' model listing failed",
+                message="Provider 'ollama-cloud' could not verify the API key",
                 retryable=True,
             )
         ),
@@ -371,6 +449,25 @@ def test_an_unreachable_provider_is_a_bad_gateway_and_never_stored(
     assert response.status_code == 502
     _assert_no_key_material(response.text)
     assert repository.rows == {}
+
+
+def test_an_adapter_that_cannot_prove_a_key_never_has_one_stored_against_it(
+    repository: _FakeCredentialRepository,
+    encryption_key: str,
+) -> None:
+    # Nothing routed here should be a fixture-serving adapter. If one ever is, say the
+    # provider cannot answer rather than storing a key nobody checked.
+    client = _client(
+        repository=repository,
+        registry=_FakeRegistry(provider=_FakeFixtureProvider("openrouter")),
+        encryption_key=encryption_key,
+    )
+
+    response = client.put("/api/v1/provider-credentials/openrouter", json={"apiKey": _API_KEY})
+
+    assert response.status_code == 502
+    assert repository.rows == {}
+    _assert_no_key_material(response.text)
 
 
 def test_without_an_encryption_key_the_server_refuses_to_take_the_key(
