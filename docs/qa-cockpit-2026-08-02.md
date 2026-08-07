@@ -665,3 +665,37 @@ the gated isolate action and after-action report worked, and normal runs reached
 terminal boundary. Release confidence is blocked by the missing provider/model audit chip, the
 cloud TRACE task that can block terminalization and remain Working after stop, and cloud
 WATCHTOWER latency that is still tens of seconds rather than seconds.
+
+## Fix-wave verification — 2026-08-07 (Chrome QA on the rebuilt stack)
+
+Fixes verified working in the live app: provider/model chip on cockpit/after-action/replay
+headers (d57d4c5); live command bar enabled + dispatching (97c2e34 diagnosis confirmed);
+stuck-TRACE lifecycle (4c0dce4 — attributed terminal failure, clean horizon terminalization at
+25:00, terminal after stop, retry on dead run cancelled server-side with no provider call).
+Full report: .superpowers/sdd/qa-fix-wave-2026-08-07/final-qa-report.md
+
+### Still open / new from this pass
+
+- **P1 — Restart control absent from the built UI.** RestartRunControl (97c2e34) renders nowhere:
+  three ended runs checked (own stopped, own natural-horizon, pre-existing), cockpit +
+  after-action, post-reload. Its 14 unit tests pass — the gap is between the component and the
+  live mount: suspected `scenarioIdForRunVersion(run.scenarioVersionId)` returning null because
+  scenario-launch-config's static versionIds don't match real runs' scenarioVersionId strings
+  (test doubles used configured ids). Sub-checks (confirm dialog, cancel, same-seed remount)
+  remain unverified.
+- **P2 — Ended-run context menu still renders enabled-looking dead items.** Items are
+  functionally disabled (no dispatch, aria-disabled present) but carry full live styling and no
+  "run ended" note — the exact invisible-gating failure mode, fixed on the command bar and
+  drawer but not the menu.
+- **P2 — Autonomous WATCHTOWER never fired on a Forward-deployed OpenRouter run.**
+  run_HAQWCJAZ9P7CVFZVKMNEH9WXQ5, seed 860588544: "No WATCHTOWER activity yet" for the entire
+  25-minute run despite alerts. Either autonomy dispatch is not firing under this ROE/provider
+  combination or it is gated on something this run never hit.
+- **P2 — Cloud reasoning models exhaust the output-token budget on reasoning.** Every TRACE turn
+  on deepseek/deepseek-v4-flash-0731 failed with "Provider spent its entire output budget on
+  reasoning and returned no content; raise the output token budget" (PROVIDER_FAILURE). The
+  lifecycle fix surfaces it honestly, but the budget (AEGIS_PROVIDER_MAX_OUTPUT_TOKENS-derived)
+  makes reasoning models effectively unusable for agent turns; needs a raised/provider-aware
+  output budget.
+- P3 cosmetic: provider chip renders borderless next to outlined pills; local-model runs show no
+  chip (correct per spec, noted for the record).
