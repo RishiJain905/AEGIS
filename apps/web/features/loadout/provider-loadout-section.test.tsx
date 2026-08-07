@@ -32,6 +32,7 @@ interface FakeApi {
   connected: Record<string, string>;
   models: Record<string, { id: string; label: string }[]>;
   connectFailure?: HttpFailure;
+  disconnectFailure?: HttpFailure;
   modelsFailure?: HttpFailure;
   optionsFailure?: HttpFailure;
   calls: { path: string; method: string; body?: string }[];
@@ -117,6 +118,11 @@ function installApi(overrides: Partial<FakeApi> = {}): FakeApi {
         return Promise.resolve(jsonResponse(200, credentialStatus(provider, 'p99z')));
       }
       if (method === 'DELETE') {
+        if (api.disconnectFailure) {
+          return Promise.resolve(
+            jsonResponse(api.disconnectFailure.status, { detail: api.disconnectFailure.detail }),
+          );
+        }
         Reflect.deleteProperty(api.connected, provider);
         return Promise.resolve(jsonResponse(204, null));
       }
@@ -438,6 +444,28 @@ describe('ProviderLoadoutSection — a connected provider', () => {
       modelId: null,
       requiresCredential: true,
     });
+  });
+
+  it('leaves no focus claim behind when the disconnect fails', async () => {
+    const user = userEvent.setup();
+    installApi({
+      connected: { openai: 'ab12' },
+      disconnectFailure: { status: 403, detail: 'Forbidden' },
+    });
+    renderSection();
+
+    await user.click(await screen.findByTestId('provider-option-openai'));
+    await user.click(await screen.findByTestId('provider-disconnect'));
+    expect(await screen.findByTestId('provider-error')).toBeInTheDocument();
+
+    // The provider is still connected, so no key field opened and nothing took focus.
+    // Moving to a provider that *does* need one must not inherit the abandoned claim:
+    // stealing focus out of the radiogroup would break arrow-key navigation between cards.
+    const openrouter = screen.getByTestId('provider-option-openrouter');
+    await user.click(openrouter);
+    await screen.findByTestId('provider-api-key');
+    expect(screen.getByTestId('provider-api-key')).not.toHaveFocus();
+    expect(openrouter).toHaveFocus();
   });
 });
 

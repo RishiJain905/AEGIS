@@ -199,11 +199,13 @@ export function ProviderLoadoutSection({
     active,
   );
 
-  // Nothing typed for one provider should survive a move to another.
+  // Nothing about one provider survives a move to another — a pending focus claim least of
+  // all, since selecting a card must leave focus on the card the operator is arrowing through.
   useEffect(() => {
     setApiKey('');
     setReplacing(false);
     setFilter('');
+    claimKeyFieldFocus.current = false;
     clearError();
   }, [selection.providerId, clearError]);
 
@@ -239,16 +241,32 @@ export function ProviderLoadoutSection({
   };
 
   const handleDisconnect = async () => {
+    // Claimed before the await, not after: disconnecting refetches the credential list, and
+    // the render that flips `showKeyForm` — the one the focus effect watches — can commit
+    // before this continuation resumes. A claim staked afterwards would arrive too late and
+    // never fire again, since a ref cannot re-trigger the effect.
+    claimKeyFieldFocus.current = true;
     const forgotten = await disconnect(selection.providerId);
     if (forgotten) {
       setApiKey('');
       setReplacing(false);
-      claimKeyFieldFocus.current = true;
       onSelectionChange({ ...selection, modelId: null });
+      return;
     }
+    // The key is still stored, so no field opened and nothing lost focus. Drop the claim:
+    // left standing it would fire on the next unrelated open — moving to another provider
+    // would yank focus out of the radiogroup mid arrow-key navigation.
+    claimKeyFieldFocus.current = false;
   };
 
   const showKeyForm = credentialsQuery.isSuccess && (!connected || replacing);
+
+  // Connecting and disconnecting fail through the same state, so the complaint renders
+  // beside whichever of the two is on screen. The branches are mutually exclusive — a
+  // connected provider that is not being replaced never shows the key form — so this reads
+  // as one error line, always adjacent to the control that produced it.
+  const actionError =
+    error === null ? null : <ErrorLine>{describeProviderError(error, providerLabel)}</ErrorLine>;
 
   useEffect(() => {
     if (showKeyForm && claimKeyFieldFocus.current) {
@@ -350,42 +368,45 @@ export function ProviderLoadoutSection({
           ) : null}
 
           {connected && !replacing ? (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p
-                data-testid="provider-connected"
-                className="font-mono text-[11px] text-[var(--aegis-text-secondary)]"
-              >
-                <span
-                  aria-hidden="true"
-                  className="mr-1.5 inline-block size-1.5 rounded-full bg-[var(--aegis-accent-cyan)] align-middle"
-                />
-                {credential.keyHint ? `Connected (…${credential.keyHint})` : 'Connected'}
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  data-testid="provider-replace-key"
-                  disabled={disabled || pending}
-                  onClick={() => {
-                    clearError();
-                    claimKeyFieldFocus.current = true;
-                    setReplacing(true);
-                  }}
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p
+                  data-testid="provider-connected"
+                  className="font-mono text-[11px] text-[var(--aegis-text-secondary)]"
                 >
-                  Replace key
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  data-testid="provider-disconnect"
-                  disabled={disabled || pending}
-                  onClick={() => void handleDisconnect()}
-                >
-                  Disconnect
-                </Button>
+                  <span
+                    aria-hidden="true"
+                    className="mr-1.5 inline-block size-1.5 rounded-full bg-[var(--aegis-accent-cyan)] align-middle"
+                  />
+                  {credential.keyHint ? `Connected (…${credential.keyHint})` : 'Connected'}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    data-testid="provider-replace-key"
+                    disabled={disabled || pending}
+                    onClick={() => {
+                      clearError();
+                      claimKeyFieldFocus.current = true;
+                      setReplacing(true);
+                    }}
+                  >
+                    Replace key
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    data-testid="provider-disconnect"
+                    disabled={disabled || pending}
+                    onClick={() => void handleDisconnect()}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
               </div>
-            </div>
+              {actionError}
+            </>
           ) : null}
 
           {showKeyForm ? (
@@ -445,9 +466,7 @@ export function ProviderLoadoutSection({
                 Verified against {providerLabel} now, then stored encrypted against your account.
                 The console never shows it again.
               </p>
-              {error !== null ? (
-                <ErrorLine>{describeProviderError(error, providerLabel)}</ErrorLine>
-              ) : null}
+              {actionError}
             </form>
           ) : null}
 
