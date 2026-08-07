@@ -7,6 +7,7 @@ from typing import Any
 
 from aegis_contracts import GraphSnapshotV1
 from aegis_contracts.versioning import GRAPH_SNAPSHOT_SCHEMA_VERSION
+from aegis_graph_risk.posture import posture_risk
 from aegis_scenario_sdk.contracts.manifest import ScenarioManifestV1
 from aegis_simulation_domain.disclosure import redact_graph_snapshot
 from aegis_simulation_domain.runtime import SimulationRuntime
@@ -44,7 +45,21 @@ def build_graph_snapshot_from_runtime(
             "assetType": asset.asset_type,
             "label": _asset_label(manifest, asset.id),
             "clusterId": asset.zone_id,
-            "riskScore": asset.risk_score,
+            # Risk is *derived here*, every tick, from the asset's live posture — not read
+            # off world state. ``AssetState.risk_score`` is the manifest's authored
+            # ``initial_risk_score`` and nothing in the codebase ever writes to it again,
+            # so publishing it directly is what made the inspector's RISK SCORE inert: an
+            # asset held one value for a whole run and a compromised database ranked below
+            # an untouched laptop. Deriving keeps the authored value as a floor (a vendor
+            # laptop stays exposed at rest) while letting compromise and containment move
+            # the number. Derivation rather than mutation is deliberate: no world state
+            # changes, so checkpoints, the normalized event hash, and cold rebuilds are
+            # untouched, and replay reproduces the same risk from the same events.
+            "riskScore": posture_risk(
+                asset.effective_status,
+                asset.criticality,
+                authored_floor=asset.risk_score,
+            ),
             "criticality": asset.criticality,
             # World state holds posture and applied controls separately; the graph
             # contract exposes one composed status plus the controls beside it, so the

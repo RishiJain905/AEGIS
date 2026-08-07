@@ -28,6 +28,7 @@ from aegis_contracts.versioning import (
 
 from aegis_graph_risk.errors import GraphRiskError, GraphRiskErrorCode
 from aegis_graph_risk.graph_index import GraphIndex, build_graph_index, validate_snapshot_entities
+from aegis_graph_risk.posture import posture_risk
 from aegis_graph_risk.version import GRAPH_RISK_ALGORITHM_VERSION
 
 
@@ -297,7 +298,18 @@ def compute_risk_scores(
     for node in sorted(snapshot.nodes, key=lambda item: item.id):
         if allowed_nodes is not None and node.id not in allowed_nodes:
             continue
-        direct = direct_by_node.get(node.id, 0.0)
+        # An asset's own posture is direct risk: the attacker owns this host whether or not
+        # a detector happened to fire on it. Folding the posture floor into ``direct``
+        # (rather than bolting a third component onto the score) keeps the inspector's
+        # Direct/Propagated breakdown honest — direct is "risk originating here", and being
+        # compromised originates here — and it means the engine can never report an asset
+        # as safer than the graph already shows it to be.
+        posture_floor = posture_risk(
+            node.status.value,
+            node.criticality,
+            authored_floor=node.risk_score,
+        )
+        direct = max(direct_by_node.get(node.id, 0.0), posture_floor)
         node_contribs = propagated_contributions.get(node.id, [])
         propagated = 0.0
         if node_contribs:
