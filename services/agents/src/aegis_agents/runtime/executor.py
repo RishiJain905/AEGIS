@@ -74,7 +74,6 @@ from aegis_contracts.agent_runtime import (
     ToolInvocationStatus,
 )
 from aegis_contracts.entities import AgentRole, AutonomyInitiatorV1
-from aegis_contracts.simulation import SimulationRunStatus
 from aegis_contracts.errors import ContractValidationError
 from aegis_contracts.event_query import event_evidence_summary
 from aegis_contracts.generation import (
@@ -85,6 +84,7 @@ from aegis_contracts.generation import (
     ProviderCapability,
     StructuredOutputSpecV1,
 )
+from aegis_contracts.simulation import SimulationRunStatus
 from aegis_contracts.versioning import (
     AGENT_ARTIFACT_SCHEMA_VERSION,
     EVIDENCE_CITATION_SCHEMA_VERSION,
