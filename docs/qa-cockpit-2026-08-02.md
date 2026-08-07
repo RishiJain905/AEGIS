@@ -67,6 +67,27 @@ Realtime follow-ups: server-side paused-subscription self-heal, terminated-run s
 health-chip vs banner sync, plan_recovery distance cap. Snapshot-worker per-run exception
 isolation. `aegis_replay` mypy gate. Unclustered-node layout constraint one-liner.
 
+## Owner-reported defects — 2026-08-07
+
+Reported directly by the owner from live play (screenshots on file), logged verbatim for the
+next fix wave. Not yet independently reproduced.
+
+- **P1 — No way to restart after Stop.** After pressing Stop, the run enters
+  `STOPPED` / `RUN ENDED — the timeline is read-only; commands can no longer execute`, and the
+  cockpit offers no restart control at all. Observed on `run_N9YES8EF6XG8SANKEANCT0DSE7`, seed
+  `1620701892`, stopped at SEQ 17. The owner wants a restart button/option (relaunch same
+  scenario+seed, or a clear path back to a fresh launch) instead of a dead end.
+- **P1 — Node command bar buttons unclickable except Deep dive.** After clicking a node (2D or
+  3D alike), the inspector command bar's `Observe` / `Increase telemetry` / `Isolate service` /
+  `All actions` buttons do not respond to clicks; only `Deep dive` responds — and the owner
+  flags Deep dive's behaviour as buggy too. Owner screenshot shows the bar on Kubernetes
+  Control Plane (`normal` posture). **Repro note for the fix agent:** the accompanying
+  screenshot's run is in the ended state, where command gating is designed to disable
+  state-changing actions — first verify whether the dead buttons reproduce on a *live* run
+  (defect in command dispatch) or only on ended runs (defect is the gating being invisible:
+  buttons render enabled-looking and give no feedback about why clicks are ignored). Either
+  way the current behaviour reads as broken to the operator and needs fixing.
+
 ## Luna partial playthrough — 2026-08-05 (Playwright-driven, ended early by owner)
 
 ### Scope and interim verdict
@@ -523,3 +544,124 @@ known P1s.
    remove visible state races.
 6. Label the Silent Relay horizon/outcome and tighten the below-1280 layout after the blocking
    correctness fixes.
+
+## Luna OpenRouter provider playthrough — 2026-08-07
+
+### Driver
+
+- Native visible computer use through `@oai/sky` drove Chrome at `http://localhost:3000` for
+  all four runs. The native driver was available; no Playwright fallback was used.
+- The existing OpenRouter connection was selected without opening any key-entry form or
+  changing, revealing, replacing, or disconnecting credentials.
+
+### Runs
+
+- `run_BEPFH1WBC7K3GDBBYMF3WXBQP3`, seed `2125640506`: OpenRouter / model
+  `deepseek/deepseek-v4-flash-0731`; ROE `Investigate`; Bias guard `ON`; Threat tempo `ON`;
+  commander's intent present: `Protect student records; preserve evidence; isolate only
+  confirmed compromise.` WATCHTOWER triage completed before terminal; run ended at sim
+  `00:06:15Z` / SEQ `296`, report ready, score `47.7/100` (`F`).
+- `run_662SCNNJ2CJDGGJJHFCKNXGD73`, seed `842859928`: OpenRouter / model
+  `deepseek/deepseek-v4-flash-0731`; ROE `Observe`; Bias guard `OFF`; Threat tempo `OFF`;
+  commander's intent absent. Followed the SSO Broker alert and executed Observe at about sim
+  `00:02:55Z` / SEQ `128`; the asset was durably under observation by sim `00:03:18Z` / SEQ
+  `150`. Run ended at sim `00:06:15Z` / SEQ `298`, report ready.
+- `run_0N4ESYQAKZ1E99BRR7BXDVB2P4`, seed `1352770460`: OpenRouter / model
+  `deepseek/deepseek-v4-flash-0731`; ROE `Forward-deployed`; Bias guard `ON`; Threat tempo
+  `ON`; commander's intent absent. WATCHTOWER was sent at sim `00:02:08Z` / SEQ `88` and
+  completed around sim `00:04:40Z` / SEQ `197` with alert IDs. TRACE was sent at sim
+  `00:05:30Z` / SEQ `240` and remained Working; BASTION was not reachable because the UI
+  required an open incident. I stopped the run at sim `00:08:12Z` / SEQ `361` after report
+  generation was ready; the copilot still displayed TRACE as Working.
+- `run_H2BZ50K14MGBQY921ZKXKC8WB0`, seed `1528588529`: OpenRouter / model
+  `deepseek/deepseek-v4-flash-0731`; ROE `Investigate`; Bias guard `OFF`; Threat tempo `OFF`;
+  commander's intent present: `Protect student records; isolate confirmed compromise; preserve
+  evidence.` Opened the SSO Broker alert case and executed the gated Class 2 Isolate service
+  action at sim `00:05:15Z` / SEQ `238` with an audited justification. Run ended normally at
+  sim `00:06:15Z` / SEQ `291`, report ready; after-action score `46.9/100` (`F`).
+
+### Provider integration verification
+
+- The OpenRouter card showed Connected on every loadout, and the type-to-filter picker exposed
+  and accepted the exact model ID `deepseek/deepseek-v4-flash-0731` on every run.
+- Cloud-model agent execution worked for WATCHTOWER on runs 1 and 3. Run 3's WATCHTOWER
+  answer cited three exact-looking alert IDs and prioritized the newest SSO Broker alert; run 1's
+  Evidence search independently showed matching run-scoped authentication/alert records. No
+  provider error was observed.
+- TRACE did not complete on run 3: it stayed Working rather than surfacing an attributed
+  provider/task failure. BASTION was explicitly unavailable on runs 3 and 4 with the message
+  that an open incident was required; no proposal was produced.
+- The live header and after-action/report header showed the loadout chips (ROE, toggles, and
+  intent) but did not show an OpenRouter/provider chip or the pinned model string. This is
+  recorded as a new defect below.
+- The Class 2 gate displayed consequences and blast radius, accepted the real justification,
+  executed isolation, and showed `contained` / `Isolated` in Inspector and Chronicle. The
+  after-action Timeline & decisions retained the approval and justification at SEQ `238`.
+
+### Known-defect recheck (deltas only)
+
+- **P1 evidence-catalogue contradiction: better in these cloud runs.** WATCHTOWER did not
+  claim a zero-item catalogue; run 3 returned exact alert IDs, and run 1's Evidence surface
+  independently showed matching run records. This is a playthrough delta, not a global closure
+  claim.
+- **P1 after-action Timeline & decisions omission: better/fixed on run 4.** The executed
+  isolate appears as `Operator approved` at SEQ `238` with its justification; the prior omission
+  was not reproduced.
+- **P2 Inspector/command-bar posture race: better/no repro after run 4 isolate.** Both surfaces
+  showed the target contained/Isolated after the toast.
+- **P2 report/debrief readiness lag: better/no repro.** Runs 1, 2, and 4 showed report ready at
+  terminal; run 3 became report ready after the explicit stop.
+- **P2 first-attempt copilot failure: better for WATCHTOWER, worse for cloud TRACE.** WATCHTOWER
+  completed without the prior visible first-attempt failure; TRACE exhibited the new persistent
+  Working/terminalization failure below.
+- **P2 orphaned Working tasks: worse/changed shape under OpenRouter.** The earlier baseline
+  defect is directly implicated by run 3's TRACE task blocking the normal horizon and remaining
+  Working after stop; see the new P1 below.
+- **P2 separate Reports AI-artifact omission: partial improvement only.** Run 4 Reports showed
+  grounded claims and agent-task cancellation metadata, but this pass did not establish complete
+  persistence of a successful cloud TRACE/BASTION interaction.
+- **P3 Silent Relay horizon: same at `00:06:15Z` for normal runs.** Runs 1, 2, and 4 ended at
+  that boundary; run 3 exceeded it only because TRACE was still Working.
+
+### New defects
+
+- **P1 — OpenRouter TRACE can remain Working past the horizon and block terminalization.** Repro:
+  `run_id=run_0N4ESYQAKZ1E99BRR7BXDVB2P4`, `seed=1352770460`; send TRACE at sim `00:05:30Z` /
+  `SEQ=240`; at sim `00:07:55Z` / `SEQ=341` the header still showed `SIM RUNNING` and
+  `REPORT UNDERWAY`, while BASTION said `Still working elsewhere: TRACE`; after stopping at
+  sim `00:08:12Z` / `SEQ=361`, report became ready but TRACE still displayed Working. This is
+  the cloud-provider shape of the earlier P2 orphaned-Working-task defect recorded above.
+- **P2 — Run header/debrief omit the pinned OpenRouter provider and model.** Repro:
+  `run_id=run_H2BZ50K14MGBQY921ZKXKC8WB0`, `seed=1528588529`; select OpenRouter and
+  `deepseek/deepseek-v4-flash-0731`, then inspect sim `00:06:15Z` / `SEQ=291` and the
+  after-action page. The header renders Bias guard, Threat tempo, intent, and ROE chips but no
+  `OpenRouter` or `deepseek/deepseek-v4-flash-0731` chip, so the provider pin is not operator-
+  auditable after launch.
+- **P2 — OpenRouter WATCHTOWER completion is slower than the cloud-flow expectation.** Repro:
+  `run_id=run_0N4ESYQAKZ1E99BRR7BXDVB2P4`, `seed=1352770460`; send the exact-ID triage prompt
+  at sim `00:02:08Z` / `SEQ=88`; the answer renders around sim `00:04:40Z` / `SEQ=197`, after
+  tens of wall-clock seconds rather than a seconds-scale response. It completes and is
+  attributable to the selected cloud run, but the faster-cadence expectation is not met.
+
+### UX observations
+
+- The provider card and exact model filter are understandable, but the loadout modal requires
+  scrolling between ROE/capabilities and provider/model, making full-loadout verification easy
+  to lose.
+- The cloud WATCHTOWER answer was materially more useful than the earlier zero-catalogue answer:
+  it named the newest alert, included exact alert IDs, and stated triage checks. The UI still
+  needs a bounded task deadline and honest terminal state for TRACE.
+- The BASTION tab explains why it cannot act (`needs an open incident`), but opening an alert case
+  did not make a proposal reachable during these runs; the distinction between an alert case and
+  an open incident is not obvious.
+- The isolate consequence modal is a strong operator pattern. The entered justification was
+  visible in Chronicle and the debrief, and the run remained read-only after termination.
+
+### Verdict
+
+**NOT READY for the cloud-model-provider flow.** Four OpenRouter runs launched successfully with
+the exact requested model, live cloud WATCHTOWER execution and evidence-grounded output worked,
+the gated isolate action and after-action report worked, and normal runs reached the 00:06:15
+terminal boundary. Release confidence is blocked by the missing provider/model audit chip, the
+cloud TRACE task that can block terminalization and remain Working after stop, and cloud
+WATCHTOWER latency that is still tens of seconds rather than seconds.
