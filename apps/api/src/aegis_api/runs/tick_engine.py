@@ -34,6 +34,7 @@ import secrets
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 
+from aegis_agents.runtime.recovery import finalize_tasks_for_stopped_run
 from aegis_contracts import AegisSettings, SimulationCommandType
 from aegis_contracts.detection import StatisticalBaselineV1
 from aegis_contracts.entities import RunV1
@@ -231,6 +232,21 @@ class SimulationTicker:
                 self._command_service.evict(run_id)
                 async with self._uow_factory() as uow:
                     await self._force_stopped_status(uow, run_id)
+        # A run forced to a terminal status must not leave its agent tasks spinning:
+        # cancel every in-flight task with an attributable reason, exactly as the
+        # normal stop paths do (the ticker horizon and the manual stop route both
+        # finalize through lifecycle.finalize_stopped_run; this path bypasses it).
+        # Best-effort like everything else here — a failed sweep leaves the
+        # stale-task sweep to resolve the cards.
+        try:
+            async with self._uow_factory() as uow:
+                await finalize_tasks_for_stopped_run(uow, run_id=run_id)
+        except Exception:  # noqa: BLE001 — quarantine must never kill the tick loop
+            logger.warning(
+                "Agent task finalization failed for quarantined run %s",
+                run_id,
+                exc_info=True,
+            )
         self._reset_tempo_state(run_id)
         self._detection_cursors.pop(run_id, None)
 

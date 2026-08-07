@@ -240,6 +240,32 @@ async def test_per_run_failure_isolated_and_evicts() -> None:
     assert all(rid != "run:bad" for rid, _ in svc.step_calls)
 
 
+@pytest.mark.asyncio
+async def test_quarantined_run_finalizes_its_agent_tasks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A run the engine cannot advance is forced terminal AND its in-flight agent
+    tasks are cancelled — the quarantine path must not leave copilot cards spinning
+    on a dead run (the one stop path that bypasses lifecycle.finalize_stopped_run)."""
+    svc = _FakeCommandService(step_delta_seconds=1, fail_runs={"run:bad"})
+    svc.register("run:bad")
+    ticker = _ticker(svc, _settings(AEGIS_SIM_TICK_FAILURE_THRESHOLD=1))
+    finalized: list[str] = []
+
+    async def _spy_finalize(uow: object, *, run_id: str) -> int:
+        finalized.append(run_id)
+        return 0
+
+    monkeypatch.setattr(
+        "aegis_api.runs.tick_engine.finalize_tasks_for_stopped_run", _spy_finalize
+    )
+
+    await ticker._tick_once()
+
+    assert svc.statuses["run:bad"] == "stopped"
+    assert finalized == ["run:bad"]
+
+
 def test_reached_horizon_boundary() -> None:
     svc = _FakeCommandService(step_delta_seconds=0)
     ticker = _ticker(svc, _settings(AEGIS_SIM_MAX_SIM_SECONDS=25))

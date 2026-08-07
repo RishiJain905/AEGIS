@@ -73,7 +73,8 @@ from aegis_contracts.agent_runtime import (
     EvidenceCitationV1,
     ToolInvocationStatus,
 )
-from aegis_contracts.entities import AutonomyInitiatorV1
+from aegis_contracts.entities import AgentRole, AutonomyInitiatorV1
+from aegis_contracts.simulation import SimulationRunStatus
 from aegis_contracts.errors import ContractValidationError
 from aegis_contracts.event_query import event_evidence_summary
 from aegis_contracts.generation import (
@@ -1125,6 +1126,51 @@ class TaskExecutor:
         loadout = getattr(run, "loadout", None) if run is not None else None
         loadout_pinned = loadout is not None and loadout.provider_id == task.provider_id
         model_id = loadout.model_id if loadout is not None and loadout_pinned else None
+        # A task on a run that is already over must not execute: the operator's card
+        # would spin "Working" on a dead run, and no answer it produced could change
+        # anything. The run-stop finalizer cancels in-flight tasks on every stop path;
+        # this is the backstop for a task that reaches the executor after the run ended
+        # anyway (a task enqueued in the stop race, a run forced terminal by the tick
+        # engine's quarantine). SCRIBE after-action tasks are the one legitimate
+        # exception — report generation runs on the stopped run by design.
+        if (
+            run is not None
+            and run.status == SimulationRunStatus.STOPPED.value
+            and session.role != AgentRole.SCRIBE
+        ):
+            cancelled = task.model_copy(
+                update={
+                    "status": AgentTaskStatus.CANCELLED,
+                    "updated_at": datetime.now(UTC),
+                    "completed_at": datetime.now(UTC),
+                    "error_code": AgentRuntimeErrorCode.TASK_CANCELLED.value,
+                    "error_message": "Run is no longer running; task cancelled",
+                }
+            )
+            # Status-guarded CAS, not a blind update: the run-stop finalizer may have
+            # cancelled this task first, and its terminal state must never be clobbered.
+            claimed = await uow.agent_tasks.claim_transition(
+                cancelled, from_statuses=(AgentTaskStatus.QUEUED.value,)
+            )
+            if claimed:
+                next_sequence = await uow.events.next_sequence(run_id)
+                await uow.append_event(
+                    build_task_completed_event(
+                        event_id=new_runtime_id("evt"),
+                        run_id=run_id,
+                        sequence=next_sequence,
+                        session_id=session.id,
+                        task_id=task.id,
+                        trace_id=task.trace_id,
+                        status=AgentTaskStatus.CANCELLED.value,
+                        role=session.role.value,
+                        error_code=AgentRuntimeErrorCode.TASK_CANCELLED.value,
+                        error_message="Run is no longer running; task cancelled",
+                        sim_time=await _run_sim_time(uow, run_id),
+                    )
+                )
+                await uow.commit()
+            return None
         definition = build_definition(
             session.role, provider_id=task.provider_id, model_id=model_id
         )

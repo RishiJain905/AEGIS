@@ -80,6 +80,7 @@ def _run(
     provider_id: str | None = None,
     model_id: str | None = None,
     owner_user_id: str | None = _OWNER,
+    status: str = "running",
 ) -> RunV1:
     loadout = (
         RunLoadoutV1(provider_id=provider_id, model_id=model_id)
@@ -91,7 +92,7 @@ def _run(
         id=_RUN_ID,
         scenario_version_id="scenario-version:test-v1",
         seed=42,
-        status="running",
+        status=status,
         started_at=_NOW,
         sim_time=_NOW,
         revision=1,
@@ -692,6 +693,41 @@ async def test_a_credential_is_still_demanded_when_the_run_did_pin_the_provider(
     assert credentials.decrypt_calls == [(_OWNER, "openai")]
     assert generation.bindings == [("openai", _SECRET_KEY, "gpt-4o")]
     assert prepared.provider is not None
+
+
+@pytest.mark.asyncio
+async def test_a_task_on_a_stopped_run_is_cancelled_not_executed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A task that reaches the executor after its run ended must not execute.
+
+    The run-stop finalizer cancels in-flight tasks on every stop path; this is the
+    backstop for a task that slips past it (enqueued in the stop race, or a run
+    forced terminal by the tick engine's quarantine). The task reaches a terminal
+    CANCELLED state with an attributable reason and a terminal event, and the
+    executor never calls the model.
+    """
+    monkeypatch.setattr(
+        "aegis_agents.runtime.executor._deployment_encryption_key", lambda: None
+    )
+    generation = _RecordingGeneration()
+    executor = TaskExecutor(generation=generation)  # type: ignore[arg-type]
+    task = _queued_task("mock")
+    run = _run(status="stopped")
+    uow = _ExecutorUow(task, run, _FakeCredentialRepo())
+    generation.uow = uow
+
+    prepared = await executor._claim_and_prepare(uow, task.id)  # type: ignore[arg-type]
+
+    assert prepared is None
+    assert generation.calls == []
+    assert uow.agent_tasks.task.status == AgentTaskStatus.CANCELLED
+    assert uow.agent_tasks.task.error_code == AgentRuntimeErrorCode.TASK_CANCELLED.value
+    assert uow.agent_tasks.task.error_message == "Run is no longer running; task cancelled"
+    assert uow.agent_tasks.task.completed_at is not None
+    # The cancellation landed in the run's event stream like any other task outcome.
+    assert uow.open_writes == 0  # committed
+    assert uow.commits == 1
 
 
 @pytest.mark.asyncio
