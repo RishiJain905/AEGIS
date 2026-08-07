@@ -125,8 +125,10 @@ export function useChangeRoe(runId: string) {
 }
 
 /**
- * Read the run's persisted loadout (bias guard, threat tempo, RoE) off the run detail.
- * Optional/absent on legacy runs → callers treat a missing value as the default loadout.
+ * Read the run's persisted loadout (bias guard, threat tempo, RoE, pinned provider/model)
+ * off the run detail. Optional/absent on legacy runs → callers treat a missing value as the
+ * default loadout. The provider pin is carried through so the header can name the model the
+ * run actually generates on; both null means the deployment default.
  */
 export function readRunLoadout(run: unknown): RunLoadout | null {
   if (typeof run !== 'object' || run === null) {
@@ -145,5 +147,7 @@ export function readRunLoadout(run: unknown): RunLoadout | null {
     biasGuard: value.biasGuard !== false,
     threatTempo: value.threatTempo !== false,
     roe: value.roe,
+    providerId: typeof value.providerId === 'string' ? value.providerId : null,
+    modelId: typeof value.modelId === 'string' ? value.modelId : null,
   };
 }

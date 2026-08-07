@@ -92,4 +92,27 @@ describe('useSubmitOperatorAction', () => {
       }),
     ).toMatchObject({ biasGuard: false, threatTempo: true, roe: 'observe' });
   });
+
+  it('carries the pinned provider and model through so the header can name them', () => {
+    expect(
+      readRunLoadout({
+        loadout: {
+          schemaVersion: 1,
+          biasGuard: true,
+          threatTempo: true,
+          roe: 'investigate',
+          providerId: 'openrouter',
+          modelId: 'deepseek/deepseek-v4-flash-0731',
+        },
+      }),
+    ).toMatchObject({ providerId: 'openrouter', modelId: 'deepseek/deepseek-v4-flash-0731' });
+  });
+
+  it('normalizes an absent provider pin to null (deployment default)', () => {
+    expect(
+      readRunLoadout({
+        loadout: { schemaVersion: 1, biasGuard: true, threatTempo: true, roe: 'observe' },
+      }),
+    ).toMatchObject({ providerId: null, modelId: null });
+  });
 });
