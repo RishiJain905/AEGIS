@@ -277,9 +277,11 @@ export function describeProviderError(
   switch (error.status) {
     case 400:
       // The provider's own classification, already redacted server-side — but phrased
-      // as `Provider 'ollama-cloud' rejected the API key`. The operator picked a card
-      // labelled "Ollama Cloud"; say it back to them in the words they chose.
-      return error.message.replaceAll(`'${id}'`, label);
+      // against the wire id: `Provider 'ollama-cloud' rejected the API key`. The
+      // operator picked a card labelled "Ollama Cloud"; say it back to them in the
+      // words they chose. The two-step swap drops the redundant "Provider" where the
+      // message leads with it, and still names the label anywhere else it appears.
+      return error.message.replaceAll(`Provider '${id}'`, label).replaceAll(`'${id}'`, label);
     case 401:
     case 403:
       return 'Your account is not allowed to connect model-provider keys. Ask an administrator for run-launch permission.';

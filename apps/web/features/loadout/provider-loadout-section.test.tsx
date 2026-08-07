@@ -578,8 +578,8 @@ describe('ProviderLoadoutSection — keeping the next step on screen', () => {
     await user.click(screen.getByTestId('provider-connect'));
 
     const error = await screen.findByTestId('provider-error');
-    expect(error).toHaveTextContent('Ollama Cloud rejected the API key');
-    expect(error.textContent).not.toContain("'ollama-cloud'");
+    // The wire id is gone, and so is the "Provider" the id needed to read as a noun.
+    expect(error.textContent).toBe('Ollama Cloud rejected the API key');
   });
 });
 
