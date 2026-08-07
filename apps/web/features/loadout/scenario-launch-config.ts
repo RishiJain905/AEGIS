@@ -27,6 +27,18 @@ export interface ScenarioLaunchConfig {
   // Scenario-version ids that belong to this scenario, used to match the caller's owned
   // runs (GET /runs is already owner-scoped server-side) to a "Resume latest run" action,
   // and by the cockpit's restart control to resolve a run back to its launchable scenario.
+  //
+  // These cannot be derived from the id: the server mints
+  // `scenario-version:{metadata.version}` straight from the scenario package's
+  // `manifest.yaml`, and Silent Relay's version is the bare semver `1.0.0`, which carries
+  // no scenario identity at all. So the ids are listed, and the rule that keeps the list
+  // correct is: **one entry per package, spelled `scenario-version:` + that package's
+  // `metadata.version`**, plus any legacy id older runs still carry. The server keeps the
+  // same table (`SCENARIO_PACKAGE_BY_VERSION` in the simulation service) — if it gains an
+  // entry, so does this one. `scenario-launch-config.test.ts` reads the real manifests off
+  // disk and fails when a version bump lands here unmirrored, because a silent miss here
+  // does not error: it unmounts the restart control and drops the catalogue's resume
+  // action (the P1 of 2026-08-07).
   versionIds: string[];
   // The guided walkthrough scenario. Restarting it re-arms the tutorial overlay; live
   // operations have no overlay to re-arm.
@@ -49,7 +61,11 @@ export const SCENARIO_LAUNCH_CONFIG: Record<string, ScenarioLaunchConfig> = {
   // so the hidden root cause differs every time.
   'scenario:operation-silent-relay': {
     packagePath: 'scenarios/operation-silent-relay',
-    versionIds: ['scenario-version:1.0.0-silent-relay'],
+    // `scenario-version:1.0.0` is what every real Silent Relay run carries — the package
+    // manifest's version is the bare `1.0.0`, unqualified by the scenario. The suffixed
+    // id below never reached a live run here but stays listed because the server still
+    // maps it, so a run restored from an older deployment keeps its relaunch path.
+    versionIds: ['scenario-version:1.0.0', 'scenario-version:1.0.0-silent-relay'],
   },
 };
 

@@ -155,7 +155,10 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
       runsResult([
         {
           id: 'run_owned_1',
-          scenarioVersionId: 'scenario-version:1.0.0-silent-relay',
+          // The id real Silent Relay runs carry (GET /api/v1/runs, 2026-08-07). The
+          // suffixed id this fixture used to name never reached a run, so the resume
+          // action was matching against a string the catalogue would never see.
+          scenarioVersionId: 'scenario-version:1.0.0',
           status: 'running',
           startedAt: '2026-06-30T02:00:00.000Z',
           ownerUserId: 'user:operator-alpha',
@@ -178,7 +181,10 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
       runsResult([
         {
           id: 'run_paused_1',
-          scenarioVersionId: 'scenario-version:1.0.0-silent-relay',
+          // The id real Silent Relay runs carry (GET /api/v1/runs, 2026-08-07). The
+          // suffixed id this fixture used to name never reached a run, so the resume
+          // action was matching against a string the catalogue would never see.
+          scenarioVersionId: 'scenario-version:1.0.0',
           status: 'paused',
           startedAt: '2026-06-30T02:00:00.000Z',
           ownerUserId: 'user:operator-alpha',

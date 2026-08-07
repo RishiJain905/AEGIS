@@ -53,7 +53,9 @@ describe('RestartRunControl accessibility', () => {
   it('renders the terminal-cockpit control without axe violations', async () => {
     runData = {
       id: 'run_x',
-      scenarioVersionId: 'scenario-version:1.0.0-silent-relay',
+      // The id a real Silent Relay run carries (observed on GET /api/v1/runs, 2026-08-07);
+      // anything else and the control renders nothing and axe passes on an empty tree.
+      scenarioVersionId: 'scenario-version:1.0.0',
       seed: 424242,
       status: 'stopped',
     };
@@ -72,7 +74,9 @@ describe('RestartRunControl accessibility', () => {
     const user = userEvent.setup();
     runData = {
       id: 'run_x',
-      scenarioVersionId: 'scenario-version:1.0.0-silent-relay',
+      // The id a real Silent Relay run carries (observed on GET /api/v1/runs, 2026-08-07);
+      // anything else and the control renders nothing and axe passes on an empty tree.
+      scenarioVersionId: 'scenario-version:1.0.0',
       seed: 424242,
       status: 'stopped',
     };

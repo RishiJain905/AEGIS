@@ -50,7 +50,11 @@ interface RunFixture {
 
 const SILENT_RELAY_RUN: RunFixture = {
   id: 'run_01ARZ3NDEKTSV4RRFFQ69G5FAV',
-  scenarioVersionId: 'scenario-version:1.0.0-silent-relay',
+  // The id a real Silent Relay run carries — see LIVE_API_RUN below for the provenance.
+  // This fixture previously said `scenario-version:1.0.0-silent-relay`, an id no run has
+  // ever had, which is how a suite of passing tests sat on top of a control that rendered
+  // nowhere in the running app.
+  scenarioVersionId: 'scenario-version:1.0.0',
   seed: 424242,
   status: 'stopped',
   loadout: {
@@ -62,6 +66,37 @@ const SILENT_RELAY_RUN: RunFixture = {
     modelId: 'gpt-4o',
   },
   commanderIntent: 'Contain the exfil before it spreads.',
+};
+
+/**
+ * A real run, copied verbatim from `GET /api/v1/runs/run_HAQWCJAZ9P7CVFZVKMNEH9WXQ5`
+ * against the running API on 2026-08-07 (the natural-horizon OpenRouter run Chrome QA
+ * reported the missing control on) — real id strings, real field casing, every field the
+ * endpoint returns, nothing trimmed to what the component happens to read. The tailored
+ * fixtures above test the payload mapping; this one exists to prove the control survives
+ * contact with the actual response, since the defect it is pinned against was a fixture
+ * that disagreed with reality about one string.
+ */
+const LIVE_API_RUN = {
+  schemaVersion: 1,
+  id: 'run_HAQWCJAZ9P7CVFZVKMNEH9WXQ5',
+  scenarioVersionId: 'scenario-version:1.0.0',
+  seed: 860588544,
+  status: 'stopped',
+  startedAt: '2026-01-01T00:00:00Z',
+  simTime: '2026-01-01T00:25:00Z',
+  revision: 975,
+  createdAt: '2026-08-07T06:26:02.352234Z',
+  ownerUserId: 'user:acct_a22e5e0a52761703732f72d8',
+  loadout: {
+    schemaVersion: 1,
+    biasGuard: true,
+    threatTempo: true,
+    roe: 'forward_deployed',
+    providerId: 'openrouter',
+    modelId: 'deepseek/deepseek-v4-flash-0731',
+  },
+  commanderIntent: null,
 };
 
 const TUTORIAL_RUN: RunFixture = {
@@ -129,6 +164,20 @@ describe('RestartRunControl gating', () => {
       expect(screen.getByTestId('live-restart')).toBeInTheDocument();
     },
   );
+
+  it('renders on a run object taken verbatim from the live API', () => {
+    runData = LIVE_API_RUN;
+    liveRunStatus = 'stopped';
+    renderControl(LIVE_API_RUN.id);
+    expect(screen.getByTestId('live-restart')).toBeInTheDocument();
+  });
+
+  it('still renders for a run restored with the legacy suffixed version id', () => {
+    runData = { ...SILENT_RELAY_RUN, scenarioVersionId: 'scenario-version:1.0.0-silent-relay' };
+    liveRunStatus = 'stopped';
+    renderControl();
+    expect(screen.getByTestId('live-restart')).toBeInTheDocument();
+  });
 });
 
 describe('RestartRunControl confirm flow', () => {
@@ -185,6 +234,35 @@ describe('RestartRunControl confirm flow', () => {
         modelId: 'gpt-4o',
       },
       commanderIntent: 'Contain the exfil before it spreads.',
+      restartExisting: true,
+    });
+  });
+
+  it('relaunches a verbatim live-API run with the values that response carried', async () => {
+    const user = userEvent.setup();
+    mutateAsync.mockResolvedValue({ run: { id: LIVE_API_RUN.id } });
+    runData = LIVE_API_RUN;
+    renderControl(LIVE_API_RUN.id);
+
+    await user.click(screen.getByTestId('live-restart'));
+    expect(await screen.findByTestId('restart-run-dialog')).toHaveTextContent('Seed 860588544');
+    await user.click(screen.getByTestId('restart-run-confirm'));
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledTimes(1);
+    });
+    expect(mutateAsync.mock.calls[0]?.[0]).toEqual({
+      scenarioPackagePath: 'scenarios/operation-silent-relay',
+      seed: 860588544,
+      loadout: {
+        schemaVersion: 1,
+        biasGuard: true,
+        threatTempo: true,
+        roe: 'forward_deployed',
+        providerId: 'openrouter',
+        modelId: 'deepseek/deepseek-v4-flash-0731',
+      },
+      // The run carried a null intent; the relaunch omits the field rather than sending null.
       restartExisting: true,
     });
   });
