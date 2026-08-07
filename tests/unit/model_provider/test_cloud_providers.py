@@ -37,7 +37,7 @@ from aegis_model_provider.adapters.openrouter import OpenRouterProvider
 from aegis_model_provider.config import ProviderKind, ProviderSettings
 from aegis_model_provider.errors import ProviderRuntimeError
 from aegis_model_provider.protocol import ModelListingProvider
-from aegis_model_provider.registry import build_provider_registry
+from aegis_model_provider.registry import ProviderRegistry, build_provider_registry
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 OLLAMA_CLOUD_BASE_URL = "https://ollama.com/v1"
@@ -267,6 +267,27 @@ async def test_list_models_reports_an_unreachable_endpoint_as_unavailable() -> N
     assert exc.value.error.retryable is True
 
 
+@pytest.mark.asyncio
+async def test_list_models_treats_an_entry_without_an_id_as_a_provider_failure() -> None:
+    # A page whose entries do not carry `.id` is a provider/SDK shape change, not a bug in
+    # the caller — it has to arrive as a ProviderRuntimeError the router can classify,
+    # never as an AttributeError escaping into a 500.
+    class _Shapeless:
+        pass
+
+    page = _FakeModelsPage([])
+    page.data = [_Shapeless()]  # type: ignore[list-item]
+    provider = OpenRouterProvider(cloud_settings(AEGIS_PROVIDER_OPENROUTER_API_KEY="k"))
+    client = _FakeModelListingClient(page)
+    provider._client = lambda: client  # type: ignore[method-assign]
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        await provider.list_models()
+
+    assert exc.value.error.code == ProviderErrorCode.PROVIDER_UNAVAILABLE
+    assert client.closed is True
+
+
 def test_only_endpoint_backed_adapters_claim_to_list_models() -> None:
     registry = build_provider_registry(cloud_settings())
 
@@ -380,6 +401,26 @@ def test_resolve_with_credentials_rejects_an_unknown_provider() -> None:
         registry.resolve_with_credentials("not-a-provider", api_key="k")
 
     assert exc.value.error.code == ProviderErrorCode.VALIDATION_FAILED
+
+
+def test_a_settings_less_registry_refuses_to_swallow_a_callers_key() -> None:
+    # Binding a key needs the settings the fresh adapter is built from. Without them the
+    # only thing the registry could hand back is the shared env-configured adapter — which
+    # would run the caller's request on the deployment's own credential and say nothing.
+    # A registry built without settings is a test/harness construction, so this is latent;
+    # it stays latent by failing loudly the moment a real caller reaches it.
+    registry = ProviderRegistry(
+        {"openrouter": OpenRouterProvider(cloud_settings(AEGIS_PROVIDER_OPENROUTER_API_KEY="env"))},
+        default_provider_id="openrouter",
+    )
+
+    with pytest.raises(ProviderRuntimeError) as exc:
+        registry.resolve_with_credentials("openrouter", api_key="per-user-key")
+
+    assert exc.value.error.code == ProviderErrorCode.VALIDATION_FAILED
+
+    # Asking without a key is still the shared instance: nothing to bind, nothing to hide.
+    assert registry.resolve_with_credentials("openrouter").provider_id == "openrouter"
 
 
 def test_resolve_with_credentials_accepts_no_key_for_the_local_provider(

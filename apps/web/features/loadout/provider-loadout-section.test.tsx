@@ -286,6 +286,24 @@ describe('ProviderLoadoutSection — connecting a key', () => {
     expect(screen.queryByTestId('provider-connected')).toBeNull();
   });
 
+  it('marks the key field invalid and points it at the rejection', async () => {
+    const user = userEvent.setup();
+    installApi({ connectFailure: { status: 400, detail: 'OpenAI rejected the API key' } });
+    renderSection();
+
+    await user.click(await screen.findByTestId('provider-option-openai'));
+    const field = await screen.findByTestId('provider-api-key');
+    expect(field).toHaveAttribute('aria-invalid', 'false');
+
+    await user.type(field, 'sk-wrong');
+    await user.click(screen.getByTestId('provider-connect'));
+
+    const error = await screen.findByTestId('provider-error');
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    // A screen reader reaching the field must hear the rejection, not only the help text.
+    expect(field.getAttribute('aria-describedby')?.split(' ')).toContain(error.id);
+  });
+
   it('distinguishes an unreachable provider from a rejected key', async () => {
     const user = userEvent.setup();
     installApi({ connectFailure: { status: 502, detail: 'provider timed out' } });
@@ -443,6 +461,45 @@ describe('ProviderLoadoutSection — a connected provider', () => {
       providerId: 'openai',
       modelId: null,
       requiresCredential: true,
+    });
+  });
+
+  it('freezes the provider cards while a credential call is in flight', async () => {
+    const user = userEvent.setup();
+    let releaseDisconnect = () => {};
+    const pendingDisconnect = new Promise<void>((resolve) => {
+      releaseDisconnect = resolve;
+    });
+    installApi({ connected: { openai: 'ab12' } });
+    const inner = apiFetch.getMockImplementation() as (
+      path: string,
+      init?: RequestInit,
+    ) => Promise<Response>;
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if ((init?.method ?? 'GET').toUpperCase() === 'DELETE') {
+        await pendingDisconnect;
+      }
+      return inner(path, init);
+    });
+    const { onSelectionChange } = renderSection();
+
+    await user.click(await screen.findByTestId('provider-option-openai'));
+    await user.click(await screen.findByTestId('provider-model-option-gpt-4o'));
+    await user.click(screen.getByTestId('provider-disconnect'));
+
+    // Switching providers mid-disconnect would let the continuation below write the
+    // disconnected provider back over the operator's newer choice.
+    await waitFor(() => {
+      expect(screen.getByTestId('provider-option-openrouter')).toBeDisabled();
+    });
+    await user.click(screen.getByTestId('provider-option-openrouter'));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ providerId: 'openai' }),
+    );
+
+    releaseDisconnect();
+    await waitFor(() => {
+      expect(screen.getByTestId('provider-option-openrouter')).toBeEnabled();
     });
   });
 

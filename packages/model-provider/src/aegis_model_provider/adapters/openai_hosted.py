@@ -244,6 +244,10 @@ class OpenAIHostedProvider:
         client = self._client()
         try:
             page = await client.models.list()
+            # Read the page inside the try as well: an entry that does not carry `.id` is
+            # the provider changing shape under us, which belongs in the same classified
+            # error as a refused call rather than escaping as an AttributeError.
+            return sorted({str(entry.id).strip() for entry in page.data if str(entry.id).strip()})
         except Exception as exc:
             message = str(exc)
             if _is_auth_failure(message, exc):
@@ -268,7 +272,6 @@ class OpenAIHostedProvider:
             ) from exc
         finally:
             await self._close_client(client)
-        return sorted({str(entry.id).strip() for entry in page.data if str(entry.id).strip()})
 
     @staticmethod
     async def _close_client(client: Any) -> None:

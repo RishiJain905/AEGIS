@@ -24,9 +24,10 @@ const LABEL_CLASS = 'font-mono text-[10px] uppercase tracking-wide text-[var(--a
 /** Above this many models the list stops being scannable and earns a filter field. */
 const MODEL_FILTER_THRESHOLD = 8;
 
-function ErrorLine({ children }: { children: React.ReactNode }) {
+function ErrorLine({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
     <p
+      id={id}
       role="alert"
       data-testid="provider-error"
       className="flex flex-wrap items-center gap-2 text-[11px] leading-4 text-[var(--aegis-risk-critical)]"
@@ -170,6 +171,7 @@ export function ProviderLoadoutSection({
 }: ProviderLoadoutSectionProps) {
   const keyFieldId = useId();
   const keyHelpId = useId();
+  const keyErrorId = useId();
   const listboxId = useId();
 
   const optionsQuery = useLoadoutProviderOptions(active);
@@ -266,7 +268,9 @@ export function ProviderLoadoutSection({
   // connected provider that is not being replaced never shows the key form — so this reads
   // as one error line, always adjacent to the control that produced it.
   const actionError =
-    error === null ? null : <ErrorLine>{describeProviderError(error, providerLabel)}</ErrorLine>;
+    error === null ? null : (
+      <ErrorLine id={keyErrorId}>{describeProviderError(error, providerLabel)}</ErrorLine>
+    );
 
   useEffect(() => {
     if (showKeyForm && claimKeyFieldFocus.current) {
@@ -310,7 +314,12 @@ export function ProviderLoadoutSection({
               type="button"
               role="radio"
               aria-checked={selected}
-              disabled={disabled}
+              // Frozen while a connect/disconnect is in flight, exactly like every other
+              // control in this section. Moving provider mid-call leaves the continuation
+              // holding the provider it started on: a completed disconnect would write
+              // that stale id back over the operator's newer choice, and a completed
+              // connect would store the key against a provider no longer on screen.
+              disabled={disabled || pending}
               onClick={() => {
                 selectProvider(option.id, option.requiresCredential);
               }}
@@ -430,7 +439,11 @@ export function ProviderLoadoutSection({
                   spellCheck={false}
                   value={apiKey}
                   disabled={disabled || pending}
-                  aria-describedby={keyHelpId}
+                  // The rejection renders as its own alert; the field has to claim it too,
+                  // or a screen reader hears the complaint and then reads a field that
+                  // sounds perfectly fine.
+                  aria-invalid={error !== null}
+                  aria-describedby={error === null ? keyHelpId : `${keyHelpId} ${keyErrorId}`}
                   placeholder="Paste your key"
                   onChange={(event) => {
                     setApiKey(event.target.value);

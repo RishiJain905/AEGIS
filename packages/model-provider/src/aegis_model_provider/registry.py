@@ -95,6 +95,23 @@ class ProviderRegistry:
                     details={"providerId": provider_id},
                 )
             )
+        if api_key is not None and self._settings is None:
+            # A fresh adapter is built *from* the settings, so without them the only thing
+            # to hand back is the shared env-configured instance — which would run this
+            # caller's request on the deployment's own credential and say nothing.
+            # Registries built without settings are test/harness constructions; every
+            # production one comes from build_provider_registry. Fail loudly so a future
+            # refactor that reaches here is a crash, not a silently wrong credential.
+            raise ProviderRuntimeError(
+                make_provider_error(
+                    code=ProviderErrorCode.VALIDATION_FAILED,
+                    message=(
+                        f"Provider '{provider_id}' cannot be bound to a caller's key: this "
+                        "registry was built without provider settings."
+                    ),
+                    details={"providerId": provider_id},
+                )
+            )
         adapter = CREDENTIAL_AWARE_ADAPTERS.get(provider_id)
         if adapter is None or self._settings is None:
             # Fixture-serving providers, and registries built without settings (tests,
