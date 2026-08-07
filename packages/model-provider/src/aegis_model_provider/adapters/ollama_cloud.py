@@ -33,12 +33,14 @@ def _is_unknown_model(message: str, exc: Exception) -> bool:
     That answer is the probe's success signal, so read it narrowly. A 404 counts on its
     own — the request reached the chat endpoint and was told the model is absent. A 400
     counts only when it says so in words, because 400 is also how this endpoint
-    complains about a malformed request, which proves nothing either way.
+    complains about a malformed request, which proves nothing either way. No HTTP
+    status at all (connection/timeout/DNS failure) never counts — the endpoint
+    rendered no verdict, so the key stays unproven no matter how the message reads.
     """
     status = getattr(exc, "status_code", None)
     if status == 404:
         return True
-    if status == 400 or status is None:
+    if status == 400:
         lowered = message.lower()
         return any(phrase in lowered for phrase in _UNKNOWN_MODEL_PHRASES)
     return False
