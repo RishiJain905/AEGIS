@@ -727,3 +727,36 @@ Full report: .superpowers/sdd/qa-fix-wave-2026-08-07/final-qa-report.md
   nothing. Needs a look at the graph-risk scoring pipeline (inputs, normalization, event
   sensitivity) and a decision on what the score is FOR (triage ordering? gating? display only?)
   — right now it has no use case and reads as noise.
+
+## Closing QA — 2026-08-07 (post-fix-wave, one Forward-deployed OpenRouter run)
+
+Verified in live play (run_KE7EDTJNXCC5AVQQ53TW5MBSA1, seed 1964378572): incidents populate
+(state leaves OPEN, triage evidence attaches), TRACE completes real work within the new
+reasoning budget (7 evidence items, 4 tool calls; no output-budget failures anywhere),
+risk scores move with posture, agent-task claims render as prose with no raw ids in sentence
+text, ended-run context menu visibly dead, console clean. Autonomy fired with a real
+evidence-cited, intent-referencing triage. Full report:
+.superpowers/sdd/qa-fix-wave-2026-08-07/closing-qa-report.md
+
+### New defects from this pass
+
+- **P1 — A restarted run is agent-dead.** After confirming Restart (same run id rebuilt),
+  the fresh run ran 16+ sim-minutes with 3 open incidents: GET /agent-sessions returned 0
+  sessions, zero agent.* events, and the SCRIBE report states "No agent investigation
+  artifacts were recorded for this run." Restart does not re-arm the agent runtime
+  (autonomy poller / lane arming likely keyed to run creation, which restartExisting
+  bypasses, or dedup state survives the rebuild under the same run id).
+- **P1 — Realtime transport wedges after restart remount and lies about it.** Post-remount:
+  LINK OFFLINE at SEQ 0, no self-heal; manual Retry → SEQ 127 then frozen while showing
+  LINK CONNECTED / SIM RUNNING; Resync → SEQ 465, frozen again; a server-side Stop took
+  effect while the cockpit still showed RUNNING; only a hard reload told the truth.
+  Regression shape vs 7739edc's transport self-heal, specific to the same-run-id rebuild
+  (sequence space resets under an id the gateway/client already have state for).
+- **P2 — Autonomy task queue does not drain under slow cloud turns.** 1 of 3 incidents
+  triaged; one task failed BUDGET_EXCEEDED ("Latency budget exceeded") at 00:05:00 and two
+  more sat queued until the horizon cancelled them ("Run stopped before the task started").
+  Check per-run/lane serialization, the latency budget's fit to cloud-model turn times, and
+  whether queued triage should be pruned/merged when newer alerts supersede them.
+- P3 note: chain handoff correctly declines when TRACE is cancelled at the horizon, so
+  BASTION proposals stayed 0 in this run — honest, but means short runs rarely reach
+  proposals; operator trigger buttons (job-j report §5) would close that gap.
