@@ -30,6 +30,17 @@ def _configured_default_provider_id() -> str:
         return "mock"
 
 
+async def _run_pinned_provider_id(uow: PostgresUnitOfWork, run_id: str) -> str | None:
+    """The provider the run's loadout fixed for every generation it causes, if any.
+
+    ``None`` for every run launched before the loadout could name one, and for the local
+    default — both of which fall through to the deployment default unchanged.
+    """
+    run = await uow.runs.get_by_id(run_id)
+    loadout = getattr(run, "loadout", None) if run is not None else None
+    return getattr(loadout, "provider_id", None) if loadout is not None else None
+
+
 class AgentTaskService:
     def __init__(self, registry: AgentDefinitionRegistry | None = None) -> None:
         self._registry = registry or DEFAULT_AGENT_REGISTRY
@@ -51,7 +62,17 @@ class AgentTaskService:
         without this an autonomy triage turn could never write to an incident. Defaults
         to the session's own incident, which is every other caller's behaviour.
         """
-        provider_id = request.provider_id or _configured_default_provider_id()
+        # Provider precedence: the run's loadout, then the request, then the deployment
+        # default. The loadout outranks the request deliberately. Run creation is where a
+        # cloud provider is checked against the owner's stored credential, so letting a
+        # per-task ``providerId`` override the run's would make that check bypassable by
+        # anyone who can task an agent. Resolving it here rather than in each caller means
+        # every enqueue path — operator chat, autonomy lanes, harnesses — inherits it.
+        provider_id = (
+            await _run_pinned_provider_id(uow, session.run_id)
+            or request.provider_id
+            or _configured_default_provider_id()
+        )
         now = datetime.now(UTC)
         existing = await uow.agent_tasks.get_by_idempotency(
             session_id=session.id,

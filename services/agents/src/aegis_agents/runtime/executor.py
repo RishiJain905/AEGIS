@@ -91,8 +91,33 @@ from aegis_contracts.versioning import (
     MODEL_CONFIG_SCHEMA_VERSION,
     STRUCTURED_OUTPUT_SPEC_SCHEMA_VERSION,
 )
+from aegis_model_provider.config import CLOUD_PROVIDER_KINDS
+from aegis_model_provider.errors import ProviderRuntimeError
+from aegis_persistence.credentials import CredentialCryptoError
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+#: Provider ids that spend a per-user subscription and therefore need the run owner's
+#: stored key before they can generate. Everything else (the local endpoint, the fixture
+#: providers) reads its configuration from the environment as it always has.
+_CREDENTIALED_PROVIDER_IDS: frozenset[str] = frozenset(kind.value for kind in CLOUD_PROVIDER_KINDS)
+
+
+def _deployment_encryption_key() -> str | None:
+    """The key that reads stored provider credentials, or ``None`` if unusable here.
+
+    A lazy read rather than a constructor dependency for the same reason the default
+    provider id is one: the executor must stay constructible in harnesses and offline
+    tests, where a full settings object may not load at all. An unloadable settings
+    object and an unset key are the same operator-facing situation — this deployment
+    cannot spend stored credentials — so both resolve to ``None``.
+    """
+    try:
+        from aegis_contracts import load_settings
+
+        return load_settings().AEGIS_CREDENTIAL_ENCRYPTION_KEY or None
+    except Exception:  # noqa: BLE001 - absent/invalid settings is "not configured"
+        return None
 
 AGENT_STEP_OUTPUT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -320,6 +345,11 @@ class _PreparedTask:
     #: shown them. The grounding repair replays these as the "valid ids" list, so
     #: what the repair promises and what the request delivered cannot drift.
     evidence_catalogue: dict[str, Any]
+    #: The adapter this task must generate through, already carrying the run owner's
+    #: decrypted key — or ``None`` for a run on the deployment default, which resolves
+    #: through the registry exactly as it always has. This object is the ONLY place the
+    #: key exists; it is never serialized, persisted, or logged.
+    provider: Any = None
 
 
 class TaskExecutor:
@@ -545,7 +575,7 @@ class TaskExecutor:
         deadline = time.monotonic() + self._timeout_seconds
         request = _with_provider_budget(prepared.request, wait_for_seconds=self._timeout_seconds)
         response = await asyncio.wait_for(
-            self._generation.generate(request),
+            self._generate(request, provider=prepared.provider),
             timeout=self._timeout_seconds,
         )
         outcome = _LoopOutcome(
@@ -636,7 +666,7 @@ class TaskExecutor:
             try:
                 check_budget(budget, trace_id=prepared.task.trace_id)
                 next_response = await asyncio.wait_for(
-                    self._generation.generate(follow_up),
+                    self._generate(follow_up, provider=prepared.provider),
                     timeout=max(1.0, remaining),
                 )
                 if next_response.error is not None:
@@ -731,7 +761,7 @@ class TaskExecutor:
         )
         try:
             repaired = await asyncio.wait_for(
-                self._generation.generate(repair_request), timeout=window
+                self._generate(repair_request, provider=prepared.provider), timeout=window
             )
         except Exception:  # noqa: BLE001 - timeout or provider fault: keep the original
             return outcome
@@ -760,6 +790,100 @@ class TaskExecutor:
         outcome.request = repair_request
         outcome.response = repaired
         return outcome
+
+    async def _generate(
+        self,
+        request: GenerationRequestV1,
+        *,
+        provider: Any,
+    ) -> Any:
+        """One model call, through the run's bound adapter when it has one.
+
+        The unpinned call is made without the keyword at all rather than with
+        ``provider=None``, so a run on the deployment default reaches the generation
+        facade through the identical signature it always did.
+        """
+        if provider is None:
+            return await self._generation.generate(request)
+        return await self._generation.generate(request, provider=provider)
+
+    async def _bind_run_provider(
+        self,
+        uow: PostgresUnitOfWork,
+        *,
+        task: Any,
+        run: Any,
+        model_id: str | None,
+    ) -> Any:
+        """The adapter a credentialed run must generate through, or ``None``.
+
+        Runs during the claim transaction — a pair of local reads, no model call — and
+        the caller commits before generation begins, so the key is in hand well before
+        the per-run advisory lock is released and no transaction is ever open while a
+        model is thinking.
+
+        Every way this can fail is a failure of *this deployment or this operator's
+        setup*, not of the model: no key connected, a key the deployment can no longer
+        decrypt, no encryption key configured at all, a provider that is no longer
+        offered. Each raises a classified ``PROVIDER_FAILURE`` so the caller persists a
+        FAILED task the operator can read, rather than letting an exception escape into
+        a 500. In particular the crypto guard catches ``CredentialCryptoError`` — the
+        parent — because a malformed ``AEGIS_CREDENTIAL_ENCRYPTION_KEY`` raises
+        ``CredentialKeyError`` while a rotated one raises ``CredentialDecryptError``, and
+        catching only the latter leaves a misconfigured deployment crashing the executor.
+
+        No message here ever contains key material, and the plaintext key leaves this
+        method only inside the adapter it constructs.
+        """
+        provider_id = task.provider_id
+        if provider_id not in _CREDENTIALED_PROVIDER_IDS:
+            return None
+
+        def fail(message: str) -> AgentRuntimeError:
+            return AgentRuntimeError(
+                code=AgentRuntimeErrorCode.PROVIDER_FAILURE,
+                message=message,
+                details={"providerId": provider_id},
+                trace_id=task.trace_id,
+            )
+
+        owner_user_id = getattr(run, "owner_user_id", None) if run is not None else None
+        if not owner_user_id:
+            raise fail(
+                f"Provider '{provider_id}' runs on an operator's own API key, but this "
+                "run has no owner to take it from."
+            )
+        encryption_key = _deployment_encryption_key()
+        if encryption_key is None:
+            raise fail(
+                f"Provider '{provider_id}' needs a stored API key, but this deployment "
+                "has no usable AEGIS_CREDENTIAL_ENCRYPTION_KEY to read one with."
+            )
+        try:
+            api_key = await uow.provider_credentials.get_decrypted_api_key(
+                owner_user_id,
+                provider_id,
+                encryption_key=encryption_key,
+            )
+        except CredentialCryptoError as exc:
+            raise fail(
+                f"The stored API key for '{provider_id}' could not be read. Reconnect "
+                "the provider in Configure Loadout."
+            ) from exc
+        if api_key is None:
+            raise fail(
+                f"No API key is connected for '{provider_id}'. Connect one in Configure "
+                "Loadout, then retry."
+            )
+        try:
+            return self._generation.bind_provider(
+                provider_id, api_key=api_key, model_id=model_id
+            )
+        except ProviderRuntimeError as exc:
+            raise fail(
+                f"Provider '{provider_id}' is not available in this deployment: "
+                f"{exc.error.message}"
+            ) from exc
 
     async def _heartbeat(
         self,
@@ -979,7 +1103,21 @@ class TaskExecutor:
                     trace_id=task.trace_id,
                 )
         incident_title = incident.title if incident is not None else None
-        definition = build_definition(session.role, provider_id=task.provider_id)
+        # The model the run's loadout pinned, but only while it still describes the
+        # provider this task is actually running on: a task created under a different
+        # provider (a legacy row, a harness) must not be handed a model id from a
+        # catalogue it cannot serve. Absent, the definition keeps its synthetic id and
+        # the adapter falls back to its configured model — the pre-loadout behaviour.
+        run = await uow.runs.get_by_id(run_id)
+        loadout = getattr(run, "loadout", None) if run is not None else None
+        model_id = (
+            loadout.model_id
+            if loadout is not None and loadout.provider_id == task.provider_id
+            else None
+        )
+        definition = build_definition(
+            session.role, provider_id=task.provider_id, model_id=model_id
+        )
         budget = await uow.agent_sessions.get_budget(session.id)
         if budget is None:
             budget = definition.default_budget
@@ -1033,6 +1171,11 @@ class TaskExecutor:
                     role=session.role.value,
                     sim_time=await _run_sim_time(uow, run_id),
                 )
+            )
+            # Before the request, so a credential problem fails the task on the cheap
+            # step rather than after assembling a prompt nothing can send.
+            provider = await self._bind_run_provider(
+                uow, task=running, run=run, model_id=model_id
             )
             (
                 request,
@@ -1092,6 +1235,7 @@ class TaskExecutor:
             role_handler=role_handler,
             request=request,
             evidence_catalogue=evidence_catalogue,
+            provider=provider,
         )
 
     async def _build_request(

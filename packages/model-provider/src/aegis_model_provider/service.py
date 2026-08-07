@@ -49,19 +49,44 @@ class GenerationService:
         self._artifact_repository = artifact_repository
         self._resilience = ResilienceContext(settings)
 
+    def bind_provider(
+        self,
+        provider_id: str,
+        *,
+        api_key: str | None = None,
+        model_id: str | None = None,
+    ) -> ModelProvider:
+        """An adapter bound to one caller's credential, for passing back to :meth:`generate`.
+
+        Exposed on the service so a caller that owns a credential (the agent runtime,
+        holding a run owner's stored key) never has to reach past it for the registry.
+        """
+        return self._registry.resolve_with_credentials(
+            provider_id, api_key=api_key, model_id=model_id
+        )
+
     async def generate(
         self,
         request: GenerationRequestV1,
         *,
         dry_run: bool = False,
+        provider: ModelProvider | None = None,
     ) -> ProviderGenerateResponseV1:
+        """Run one generation, optionally through a caller-supplied ``provider``.
+
+        The override exists for per-user credentials: the registry's own adapters read
+        the environment, which is right for the default and admin paths but wrong for a
+        run spending its owner's subscription. Passing the bound adapter here keeps the
+        key inside that one object — it reaches no request, artifact, or shared state —
+        and leaves every other caller on the registry exactly as before.
+        """
         started = time.perf_counter()
         try:
             self._validate_request(request)
-            provider = self._registry.resolve(request)
+            resolved = self._resolve_provider(request, provider)
 
             async def operation() -> GenerationResponseV1:
-                return await self._generate_with_optional_repair(provider, request)
+                return await self._generate_with_optional_repair(resolved, request)
 
             response: GenerationResponseV1 = await run_with_resilience(
                 self._resilience,
@@ -146,6 +171,18 @@ class GenerationService:
                 schema_version=PROVIDER_GENERATE_RESPONSE_SCHEMA_VERSION,
                 error=exc.error,
             )
+
+    def _resolve_provider(
+        self,
+        request: GenerationRequestV1,
+        override: ModelProvider | None,
+    ) -> ModelProvider:
+        if override is None:
+            return self._registry.resolve(request)
+        # An override skips resolution, not validation: a bound adapter that cannot do
+        # structured output must fail here rather than at the endpoint.
+        self._registry.assert_capabilities(override.capabilities(), request)
+        return override
 
     def _validate_request(self, request: GenerationRequestV1) -> None:
         if request.max_output_tokens > self._settings.AEGIS_PROVIDER_MAX_OUTPUT_TOKENS:

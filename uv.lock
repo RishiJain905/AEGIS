@@ -411,6 +411,7 @@ version = "1.0.0"
 source = { editable = "services/simulation" }
 dependencies = [
     { name = "aegis-contracts" },
+    { name = "aegis-model-provider" },
     { name = "aegis-persistence" },
     { name = "aegis-scenario-sdk" },
     { name = "aegis-simulation-domain" },
@@ -419,6 +420,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aegis-contracts", editable = "packages/contracts-python" },
+    { name = "aegis-model-provider", editable = "packages/model-provider" },
     { name = "aegis-persistence", editable = "packages/persistence" },
     { name = "aegis-scenario-sdk", editable = "packages/scenario-sdk" },
     { name = "aegis-simulation-domain", editable = "packages/simulation-domain" },

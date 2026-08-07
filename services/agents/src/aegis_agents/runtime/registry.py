@@ -89,7 +89,20 @@ _ROLE_TOOLS: dict[AgentRole, list[str]] = {
 }
 
 
-def build_definition(role: AgentRole, *, provider_id: str = "mock") -> AgentDefinitionV1:
+def build_definition(
+    role: AgentRole,
+    *,
+    provider_id: str = "mock",
+    model_id: str | None = None,
+) -> AgentDefinitionV1:
+    """The definition one task executes under.
+
+    ``model_id`` is the model the run's loadout pinned. Without one the definition keeps
+    the synthetic ``f"{provider_id}-v1"`` placeholder, which names no real model — the
+    adapters recognise it and fall back to their configured default. Passing the real id
+    is therefore not just cosmetic: it is what makes the recorded model on the response
+    and the persisted artifact the model that actually answered.
+    """
     handler = get_role_handler(role)
     prompt_version = handler.prompt_version if handler is not None else "phase19-v1"
     return AgentDefinitionV1(
@@ -98,7 +111,7 @@ def build_definition(role: AgentRole, *, provider_id: str = "mock") -> AgentDefi
         definition_id=f"runtime-{role.value.lower()}-v1",
         prompt_version=prompt_version,
         provider_id=provider_id,
-        model_id=f"{provider_id}-v1",
+        model_id=model_id or f"{provider_id}-v1",
         allowed_tools=_ROLE_TOOLS[role],
         default_budget=_DEFAULT_BUDGET,
     )

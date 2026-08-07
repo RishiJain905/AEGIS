@@ -22,11 +22,13 @@ from aegis_contracts import (
     SimulationCommandType,
     SnapshotBootstrapPayloadV1,
 )
+from aegis_contracts.entities import RunLoadoutV1
 from aegis_contracts.simulation import SimulationRunStatus
 from aegis_contracts.versioning import (
     RUN_COMMAND_RESPONSE_SCHEMA_VERSION,
     SNAPSHOT_BOOTSTRAP_SCHEMA_VERSION,
 )
+from aegis_model_provider.config import CLOUD_PROVIDER_KINDS, ProviderKind
 from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.repositories.streaming import PostgresEventQueryRepository
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
@@ -129,6 +131,55 @@ def _normalize_commander_intent(intent: str | None) -> str | None:
         return None
     trimmed = intent.strip()[:_MAX_COMMANDER_INTENT_CHARS]
     return trimmed or None
+
+
+async def _validate_loadout_provider(
+    uow: PostgresUnitOfWork,
+    loadout: RunLoadoutV1 | None,
+    *,
+    owner_user_id: str | None,
+) -> None:
+    """Refuse a launch whose pinned model provider could never produce a generation.
+
+    The alternative to failing here is a run that starts, looks healthy, and then fails
+    every agent turn with a provider error the operator has to decode — so a mistake the
+    launch dialog can describe is caught at the launch, in the service layer where every
+    caller of ``create_run`` (HTTP, CLI, tests) passes through it.
+
+    Only two things are checked, because only two are knowable now. The provider id must
+    name a provider this build has an adapter for; whether a *deployment* offers it
+    depends on the egress allowlist, which the API resolves when it lists options and
+    the executor resolves again at generation time. And a provider that spends a personal
+    subscription must have a key already connected for the run's owner — existence only,
+    read through the repository's own owner-scoped path. Nothing is decrypted here: run
+    creation has no use for the plaintext, so it does not touch it.
+    """
+    provider_id = loadout.provider_id if loadout is not None else None
+    if provider_id is None:
+        return
+    if provider_id not in {kind.value for kind in ProviderKind}:
+        raise SimulationError(
+            code=SimulationErrorCode.VALIDATION_FAILED,
+            message=f"Unknown model provider: {provider_id}",
+        )
+    if provider_id not in {kind.value for kind in CLOUD_PROVIDER_KINDS}:
+        return
+    if owner_user_id is None:
+        raise SimulationError(
+            code=SimulationErrorCode.VALIDATION_FAILED,
+            message=(
+                f"Provider '{provider_id}' runs on an operator's own API key, so the run "
+                "must be launched by an authenticated user."
+            ),
+        )
+    if await uow.provider_credentials.get(owner_user_id, provider_id) is None:
+        raise SimulationError(
+            code=SimulationErrorCode.VALIDATION_FAILED,
+            message=(
+                f"No API key is connected for '{provider_id}'. Connect one in Configure "
+                "Loadout before launching a run on it."
+            ),
+        )
 
 
 def may_access_run(
@@ -437,6 +488,11 @@ class RunCommandService:
                         replayed=True,
                     ),
                 )
+
+        # After the idempotency replay (a repeat of an already-created run is answered
+        # from the record, not re-validated) and before any work: a launch on a provider
+        # that cannot generate should cost nothing.
+        await _validate_loadout_provider(uow, request.loadout, owner_user_id=owner_user_id)
 
         package_dir = (self.workspace_root / request.scenario_package_path).resolve()
         if not package_dir.exists():

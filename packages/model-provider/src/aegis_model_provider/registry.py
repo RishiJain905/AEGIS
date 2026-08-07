@@ -69,7 +69,7 @@ class ProviderRegistry:
                     trace_id=request.trace_id,
                 )
             )
-        self._assert_capabilities(provider.capabilities(), request)
+        self.assert_capabilities(provider.capabilities(), request)
         return provider
 
     def resolve_with_credentials(
@@ -106,11 +106,16 @@ class ProviderRegistry:
             model_id_override=model_id,
         )
 
-    def _assert_capabilities(
+    def assert_capabilities(
         self,
         capabilities: ProviderCapabilitiesV1,
         request: GenerationRequestV1,
     ) -> None:
+        """Refuse a request the provider cannot honour.
+
+        Public because a per-call credential-bound adapter never passes through
+        :meth:`resolve`, and skipping resolution must not mean skipping this gate.
+        """
         available = set(capabilities.capabilities)
         missing = [cap for cap in request.capabilities_required if cap not in available]
         if missing:
