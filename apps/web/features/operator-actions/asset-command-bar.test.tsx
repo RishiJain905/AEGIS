@@ -209,6 +209,26 @@ describe('AssetCommandBar', () => {
       },
     );
 
+    it('says the run is over in the bar itself, not just on hover', () => {
+      // The gating has to be visible: a row of enabled-looking buttons with only a
+      // tooltip to explain them reads as broken (P1, owner-reported 2026-08-07).
+      selected = CUSTOMER_DATABASE;
+      liveRunStatus = 'stopped';
+      renderBar();
+
+      expect(screen.getByTestId('command-bar-run-ended')).toHaveTextContent(
+        'Run ended · read-only',
+      );
+    });
+
+    it('keeps the ended-run badge off the bar while the run is live', () => {
+      selected = CUSTOMER_DATABASE;
+      liveRunStatus = 'running';
+      renderBar();
+
+      expect(screen.queryByTestId('command-bar-run-ended')).not.toBeInTheDocument();
+    });
+
     it('leaves the read-only deep dive reachable', () => {
       // Examining what happened is most of what an ended run is for.
       selected = VPN_GATEWAY;

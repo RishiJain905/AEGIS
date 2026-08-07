@@ -34,6 +34,14 @@ vi.mock('@aegis/ui', async (importOriginal) => {
   };
 });
 
+// The menu reads the run's lifecycle to decide whether its items may execute. `null` stands
+// for "no live run context", which is what every case except the terminal-run one renders
+// under.
+let liveRunStatus: string | null = null;
+vi.mock('@/features/live-run', () => ({
+  useLiveRun: () => (liveRunStatus === null ? null : { state: { runStatus: liveRunStatus } }),
+}));
+
 import { AssetContextMenu, type AssetContextTarget } from './asset-context-menu';
 
 beforeAll(() => {
@@ -46,6 +54,7 @@ beforeAll(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  liveRunStatus = null;
 });
 
 function renderMenu(target: Partial<AssetContextTarget>) {
@@ -88,5 +97,22 @@ describe('AssetContextMenu', () => {
 
     expect(screen.getByTestId('action-item-rollback_deployment')).toBeInTheDocument();
     expect(screen.getByTestId('action-item-isolate')).toHaveTextContent('Isolate service');
+  });
+
+  it('offers no executable commands once the run is over', () => {
+    // The menu has no room for a hint, so the items themselves go disabled — a dead item
+    // reads as a dead item, not as a broken click (P1, owner-reported 2026-08-07).
+    liveRunStatus = 'stopped';
+    renderMenu({ nodeId: 'asset:svc-logistics-api', label: 'Logistics Routing API', assetType: 'service' });
+
+    expect(screen.getByTestId('action-item-isolate')).toBeDisabled();
+    expect(screen.getByTestId('action-item-rollback_deployment')).toBeDisabled();
+  });
+
+  it('keeps the items live while the run is running', () => {
+    liveRunStatus = 'running';
+    renderMenu({ nodeId: 'asset:svc-logistics-api', label: 'Logistics Routing API', assetType: 'service' });
+
+    expect(screen.getByTestId('action-item-isolate')).toBeEnabled();
   });
 });
