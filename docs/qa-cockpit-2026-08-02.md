@@ -699,3 +699,31 @@ Full report: .superpowers/sdd/qa-fix-wave-2026-08-07/final-qa-report.md
   output budget.
 - P3 cosmetic: provider chip renders borderless next to outlined pills; local-model runs show no
   chip (correct per spec, noted for the record).
+
+## Owner-reported defects, batch 2 — 2026-08-07 (screenshots on file)
+
+- **P2 — Report claims render raw task ids as operator-facing text.** The SITREP/report Claims
+  panel shows AGENT INFERENCE entries like "WATCHTOWER task atk_R2KHB7R7EQMMZ7M5WACMZ3QT4Y was
+  cancelled: Run stopped while the task was in flight." — a machine id strung into prose, twice
+  per claim (list + Selected claim provenance). The id belongs in provenance metadata, not the
+  claim sentence; the claim should read as a human statement ("A WATCHTOWER triage was cancelled
+  when the run stopped") with the task id relegated to the provenance detail. Also worth a
+  product look: whether cancelled-task housekeeping belongs among top-level claims at all, or
+  only in provenance. (Likely fed by the new task-cancellation events from 4c0dce4 — the
+  lifecycle fix made cancellations visible and the claims projector renders them verbatim.)
+- **P1 — Incident detail pages are effectively blank.** Incident "Unseen source activity
+  detected": header + description render, but the body is an empty shell — timeline holds only
+  "Alert raised" and "Incident opened" (same timestamp), Response proposals shows "No proposals",
+  Evidence (0) shows "No evidence yet"; only the single linked alert row is real. The owner calls
+  this a major issue: the incident workflow (investigation phases, proposal generation, evidence
+  attachment) is not populating incidents. Overlaps known defects (BASTION proposal path never
+  reached; Reports omit AI artifacts; copilot/Evidence catalogue split) — the incident projection
+  is likely another consumer of the same missing pipeline links. Needs a root-cause pass on what
+  is SUPPOSED to attach proposals/evidence to an incident, and either wiring it or honestly
+  removing the dead sections.
+- **P2 — Asset risk score is inert.** Inspector shows RISK SCORE 0.20 next to CRITICALITY 0.60;
+  the owner has observed the score move only within ~0.06–0.20 across entire runs, never higher —
+  even on compromised/contained assets. At that range the score differentiates nothing and drives
+  nothing. Needs a look at the graph-risk scoring pipeline (inputs, normalization, event
+  sensitivity) and a decision on what the score is FOR (triage ordering? gating? display only?)
+  — right now it has no use case and reads as noise.
