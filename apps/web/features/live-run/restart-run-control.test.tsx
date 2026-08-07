@@ -246,7 +246,9 @@ describe('RestartRunControl confirm flow', () => {
 
   it('keeps the dialog open and says why when the relaunch fails', async () => {
     const user = userEvent.setup();
-    mutateAsync.mockRejectedValue(new Error('RUN_OWNED_BY_ANOTHER_USER: run belongs to another operator'));
+    mutateAsync.mockRejectedValue(
+      new Error('RUN_OWNED_BY_ANOTHER_USER: run belongs to another operator'),
+    );
     renderControl();
 
     await user.click(screen.getByTestId('live-restart'));

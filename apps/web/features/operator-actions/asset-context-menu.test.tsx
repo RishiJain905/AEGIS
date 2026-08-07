@@ -103,7 +103,11 @@ describe('AssetContextMenu', () => {
     // The menu has no room for a hint, so the items themselves go disabled — a dead item
     // reads as a dead item, not as a broken click (P1, owner-reported 2026-08-07).
     liveRunStatus = 'stopped';
-    renderMenu({ nodeId: 'asset:svc-logistics-api', label: 'Logistics Routing API', assetType: 'service' });
+    renderMenu({
+      nodeId: 'asset:svc-logistics-api',
+      label: 'Logistics Routing API',
+      assetType: 'service',
+    });
 
     expect(screen.getByTestId('action-item-isolate')).toBeDisabled();
     expect(screen.getByTestId('action-item-rollback_deployment')).toBeDisabled();
@@ -111,7 +115,11 @@ describe('AssetContextMenu', () => {
 
   it('keeps the items live while the run is running', () => {
     liveRunStatus = 'running';
-    renderMenu({ nodeId: 'asset:svc-logistics-api', label: 'Logistics Routing API', assetType: 'service' });
+    renderMenu({
+      nodeId: 'asset:svc-logistics-api',
+      label: 'Logistics Routing API',
+      assetType: 'service',
+    });
 
     expect(screen.getByTestId('action-item-isolate')).toBeEnabled();
   });

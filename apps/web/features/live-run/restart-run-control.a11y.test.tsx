@@ -17,7 +17,10 @@ vi.mock('@/features/shell/hooks/use-shell-queries', () => ({
 }));
 
 vi.mock('./use-run-commands', () => ({
-  useCreateRun: () => ({ mutateAsync: vi.fn().mockResolvedValue({ run: { id: 'run_x' } }), isPending: false }),
+  useCreateRun: () => ({
+    mutateAsync: vi.fn().mockResolvedValue({ run: { id: 'run_x' } }),
+    isPending: false,
+  }),
 }));
 
 vi.mock('./live-run-provider', () => ({

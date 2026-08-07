@@ -86,9 +86,7 @@ export function RestartRunControl({ runId }: { runId: string }) {
       })
       .catch((error: unknown) => {
         // Keep the dialog open so the operator sees why and can retry.
-        setErrorMessage(
-          error instanceof Error ? error.message : 'The run could not be restarted.',
-        );
+        setErrorMessage(error instanceof Error ? error.message : 'The run could not be restarted.');
       });
   };
 

@@ -73,10 +73,7 @@ export function scenarioSeedFor(scenarioId: string): number | undefined {
  * the catalogue can show the real number the run page will display. A null actor falls back
  * to the legacy shared seed — unreachable inside the auth gate, but harmless to guard.
  */
-export function launchSeedFor(
-  scenarioId: string,
-  actorUserId: string | null,
-): number | undefined {
+export function launchSeedFor(scenarioId: string, actorUserId: string | null): number | undefined {
   const config = SCENARIO_LAUNCH_CONFIG[scenarioId];
   if (config?.perOperatorSeed) {
     return deriveTrainingSeed(actorUserId);

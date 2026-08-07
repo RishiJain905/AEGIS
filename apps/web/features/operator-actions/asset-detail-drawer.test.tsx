@@ -67,13 +67,7 @@ afterEach(() => {
 
 function renderDrawer() {
   return render(
-    <AssetDetailDrawer
-      runId="run_x"
-      node={NODE}
-      disclosed
-      open
-      onOpenChange={vi.fn()}
-    />,
+    <AssetDetailDrawer runId="run_x" node={NODE} disclosed open onOpenChange={vi.fn()} />,
   );
 }
 
