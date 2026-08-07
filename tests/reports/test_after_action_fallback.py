@@ -357,13 +357,18 @@ def _run_scoped_session(session_id: str, role: str) -> Any:
     )
 
 
-def _terminal_task(task_id: str, session_id: str, status: str) -> Any:
+def _terminal_task(
+    task_id: str,
+    session_id: str,
+    status: str,
+    error_message: str | None = None,
+) -> Any:
     return SimpleNamespace(
         id=task_id,
         session_id=session_id,
         run_id=RUN_ID,
         status=status,
-        error_message="provider timeout" if status == "failed" else None,
+        error_message=error_message or ("provider timeout" if status == "failed" else None),
     )
 
 
@@ -396,7 +401,10 @@ async def test_run_scoped_copilot_tasks_are_recorded_in_the_report() -> None:
         if any(citation.kind.value == "agent_task" for citation in claim.citations)
     ]
     assert len(task_claims) == 1
-    assert "WATCHTOWER completed task" in task_claims[0].text
+    # Prose an operator can read, with the machine id kept out of the sentence.
+    assert task_claims[0].text == "A WATCHTOWER triage task completed."
+    assert task_id not in task_claims[0].text
+    # The id lives in provenance, where ids belong.
     assert task_claims[0].citations[0].reference_id == task_id
     # The summary counts the interaction and no longer claims the agents never ran.
     assert "Agent tasks: 1 (1 completed, 0 failed)." in report.executive_summary
@@ -426,9 +434,95 @@ async def test_failed_run_scoped_task_is_recorded_with_its_reason() -> None:
         if any(citation.kind.value == "agent_task" for citation in claim.citations)
     ]
     assert len(task_claims) == 1
-    assert "TRACE task" in task_claims[0].text
-    assert "provider timeout" in task_claims[0].text
+    assert task_claims[0].text == "A TRACE investigation task failed — provider timeout."
+    assert task_id not in task_claims[0].text
     assert "Agent tasks: 1 (0 completed, 1 failed)." in report.executive_summary
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("runtime_message", "expected_text"),
+    [
+        (
+            "Run stopped while the task was in flight",
+            "A WATCHTOWER triage task was cancelled when the run stopped — "
+            "it was in flight when the run ended.",
+        ),
+        (
+            "Run stopped before the task started",
+            "A WATCHTOWER triage task was cancelled when the run stopped — "
+            "it had not started yet.",
+        ),
+        (
+            None,
+            "A WATCHTOWER triage task was cancelled before it finished.",
+        ),
+    ],
+)
+async def test_cancelled_task_claim_reads_as_prose_not_a_machine_id(
+    runtime_message: str | None,
+    expected_text: str,
+) -> None:
+    """Owner-reported P2: cancellation claims printed the raw task id in the sentence.
+
+    The housekeeping stays in the record — a cancelled task is part of the honest run
+    history — but it reads as a human statement, and the `atk_*` id is reachable only
+    through the claim's structured citations.
+    """
+    session_id = "agent-session:ags_chat_003"
+    task_id = "atk_R2KHB7R7EQMMZ7M5WACMZ3QT4Y"
+    reports = _FakeReports()
+    uow = _uow(
+        reports=reports,
+        sessions=[_run_scoped_session(session_id, "WATCHTOWER")],
+        tasks=[_terminal_task(task_id, session_id, "cancelled", runtime_message)],
+    )
+
+    await ScribeCoordinator().ensure_report_for_run(uow, _request())  # type: ignore[arg-type]
+
+    report = reports.reports[0]
+    task_claims = [
+        claim
+        for claim in report.claims
+        if any(citation.kind.value == "agent_task" for citation in claim.citations)
+    ]
+    assert len(task_claims) == 1
+    claim = task_claims[0]
+    assert claim.text == expected_text
+    assert task_id not in claim.text
+    assert session_id not in claim.text
+    # Structured provenance, not string concatenation: the ids are citations.
+    citations = {citation.kind.value: citation for citation in claim.citations}
+    assert citations["agent_task"].reference_id == task_id
+    assert citations["agent_session"].reference_id == session_id
+    # Citation labels are operator language too — a label is a caption, not an id.
+    assert citations["agent_task"].label == "WATCHTOWER triage task"
+    assert task_id not in citations["agent_task"].label
+    # The summary owns up to the cancellation instead of counting it as nothing.
+    assert "Agent tasks: 1 (0 completed, 0 failed, 1 cancelled)." in report.executive_summary
+
+
+@pytest.mark.asyncio
+async def test_task_claim_prose_is_grammatical_for_a_vowel_role() -> None:
+    """The sentence agrees with the role name and ends exactly once."""
+    session_id = "agent-session:ags_chat_004"
+    task_id = "atk_01ARZ3NDEKTSV4RRFFQ69G5FBG"
+    reports = _FakeReports()
+    uow = _uow(
+        reports=reports,
+        sessions=[_run_scoped_session(session_id, "ORACLE")],
+        tasks=[_terminal_task(task_id, session_id, "failed", "provider budget exhausted.")],
+    )
+
+    await ScribeCoordinator().ensure_report_for_run(uow, _request())  # type: ignore[arg-type]
+
+    claim = next(
+        claim
+        for claim in reports.reports[0].claims
+        if any(citation.kind.value == "agent_task" for citation in claim.citations)
+    )
+    # "An" before ORACLE, and the runtime's trailing period is not doubled.
+    assert claim.text == "An ORACLE hypothesis task failed — provider budget exhausted."
 
 
 @pytest.mark.asyncio

@@ -27,6 +27,66 @@ from aegis_contracts.versioning import (
 #: Terminal statuses whose task is a real AI-teammate interaction worth recording.
 _TERMINAL_TASK_STATUSES = frozenset({"completed", "failed", "cancelled"})
 
+#: What each role's work is called in operator language, so a claim can name a task
+#: without printing its id. A role missing here degrades to "A <ROLE> task".
+_ROLE_WORK_NOUN: dict[str, str] = {
+    "WATCHTOWER": "triage",
+    "TRACE": "investigation",
+    "ORACLE": "hypothesis",
+    "BASTION": "containment",
+    "WARDEN": "policy review",
+    "SCRIBE": "after-action",
+}
+
+#: The runtime's own cancellation reasons (``finalize_tasks_for_stopped_run``), said the
+#: way an operator would say them. Any other reason is quoted as the runtime wrote it.
+_CANCELLATION_CLAUSES: dict[str, str] = {
+    "Run stopped while the task was in flight": (
+        "was cancelled when the run stopped — it was in flight when the run ended"
+    ),
+    "Run stopped before the task started": (
+        "was cancelled when the run stopped — it had not started yet"
+    ),
+}
+
+
+def _task_noun_phrase(role: str | None) -> str:
+    """``WATCHTOWER triage task`` — how a claim names a task instead of citing its id."""
+    if role is None:
+        return "agent task"
+    work = _ROLE_WORK_NOUN.get(role.upper())
+    return f"{role} {work} task" if work else f"{role} task"
+
+
+def _task_claim_text(task: AgentTaskFact) -> str:
+    """Operator prose for one terminal task.
+
+    Owner-reported P2: these claims used to read "WATCHTOWER task atk_R2KHB… was
+    cancelled: Run stopped while the task was in flight." — a machine id spliced into
+    a sentence, then repeated in the provenance panel. The record itself is honest and
+    stays; only its voice changes. Every id the operator might need to correlate is
+    still on the claim, carried by its citations as structured references.
+    """
+    noun_phrase = _task_noun_phrase(task.role)
+    article = "An" if noun_phrase[:1].upper() in "AEIOU" else "A"
+    subject = f"{article} {noun_phrase}"
+    # The runtime writes reasons as bare clauses; strip any terminator so the sentence
+    # this builds ends exactly once.
+    reason = (task.error_message or "").strip().rstrip(".")
+
+    if task.status == "completed":
+        return f"{subject} completed."
+    if task.status == "cancelled":
+        clause = _CANCELLATION_CLAUSES.get(reason)
+        if clause is not None:
+            return f"{subject} {clause}."
+        if reason:
+            return f"{subject} was cancelled — {reason}."
+        return f"{subject} was cancelled before it finished."
+    if reason:
+        return f"{subject} failed — {reason}."
+    return f"{subject} failed; no failure reason was recorded."
+
 
 @dataclass(frozen=True)
 class AgentTaskFact:
@@ -221,35 +281,30 @@ def build_template_report(
         if task.status not in _TERMINAL_TASK_STATUSES:
             continue
         claim_index += 1
-        role = task.role or "agent"
-        if task.status == "completed":
-            text = f"{role} completed task {task.task_id} in session {task.session_id}."
-        elif task.status == "cancelled":
-            text = (
-                f"{role} task {task.task_id} was cancelled: "
-                f"{task.error_message or 'the run ended before it finished'}."
-            )
-        else:
-            text = (
-                f"{role} task {task.task_id} failed: "
-                f"{task.error_message or 'no failure reason was recorded'}."
-            )
+        noun_phrase = _task_noun_phrase(task.role)
         claims.append(
             ReportClaimV1(
                 schema_version=REPORT_CLAIM_SCHEMA_VERSION,
                 claim_id=f"claim_{claim_index:03d}",
                 category=ReportClaimCategoryV1.AGENT_INFERENCE,
-                text=text,
+                text=_task_claim_text(task),
+                # Labels are captions an operator reads; the ids stay in reference_id,
+                # which is the structured field every reporting surface renders as the
+                # copy-correlatable chip.
                 citations=[
                     _citation(
                         kind=ReportCitationKindV1.AGENT_TASK,
                         reference_id=task.task_id,
-                        label=task.task_id,
+                        label=noun_phrase,
                     ),
                     _citation(
                         kind=ReportCitationKindV1.AGENT_SESSION,
                         reference_id=task.session_id,
-                        label=task.session_id,
+                        label=(
+                            f"{task.role} copilot session"
+                            if task.role
+                            else "Run-scoped agent session"
+                        ),
                     ),
                 ],
             )
@@ -297,8 +352,14 @@ def build_template_report(
     if terminal_tasks:
         completed = sum(1 for task in terminal_tasks if task.status == "completed")
         failed = sum(1 for task in terminal_tasks if task.status == "failed")
+        # Cancellations became common once stopping a run finalized its in-flight tasks;
+        # counted only when they happened, so the breakdown adds up to the total instead
+        # of reading "2 tasks (0 completed, 0 failed)".
+        cancelled = sum(1 for task in terminal_tasks if task.status == "cancelled")
+        cancelled_part = f", {cancelled} cancelled" if cancelled else ""
         summary_parts.append(
-            f"Agent tasks: {len(terminal_tasks)} ({completed} completed, {failed} failed)."
+            f"Agent tasks: {len(terminal_tasks)} "
+            f"({completed} completed, {failed} failed{cancelled_part})."
         )
     if generation_mode is ReportGenerationModeV1.DETERMINISTIC and not has_agent_artifacts:
         # The degraded case the operator most needs flagged: the run stopped without any
