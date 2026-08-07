@@ -47,6 +47,22 @@ describe('LoadoutChips', () => {
     expect(screen.getByTestId('loadout-intent-chip')).toBeInTheDocument();
   });
 
+  it('names the pinned provider and model when the run was launched on a cloud provider', () => {
+    render(
+      <LoadoutChips
+        loadout={{ ...loadout, providerId: 'openrouter', modelId: 'anthropic/claude-sonnet-4' }}
+      />,
+    );
+    const chip = screen.getByTestId('loadout-model-chip');
+    expect(chip).toHaveTextContent('OpenRouter');
+    expect(chip).toHaveTextContent('anthropic/claude-sonnet-4');
+  });
+
+  it('omits the model chip for a run on the deployment default', () => {
+    render(<LoadoutChips loadout={loadout} />);
+    expect(screen.queryByTestId('loadout-model-chip')).toBeNull();
+  });
+
   it('has no axe violations', async () => {
     const { container } = render(
       <LoadoutChips loadout={loadout} commanderIntent="protect student records" />,

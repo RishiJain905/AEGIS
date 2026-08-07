@@ -59,7 +59,53 @@ export const DEFAULT_LOADOUT: RunLoadout = {
   biasGuard: true,
   threatTempo: true,
   roe: 'investigate',
+  // Null on both is "whatever this deployment runs by default" — which is what every run
+  // launched before an operator could pin a provider already carries.
+  providerId: null,
+  modelId: null,
 };
+
+/**
+ * The local endpoint's provider id: the one loadout option that needs no API key, and the
+ * default every run falls back to. The server is the authority on which providers a
+ * deployment offers (`GET /api/v1/providers/loadout-options`); this constant only names the
+ * one the console assumes before that answer arrives.
+ */
+export const LOCAL_PROVIDER_ID = 'openai-compatible';
+
+/**
+ * One-line doctrine for each provider the launch dialog can offer, in the same voice as the
+ * RoE dial. Labels come from the server (a deployment may rename one); these are the
+ * fallback and the copy the server does not carry.
+ */
+export const PROVIDER_DOCTRINE: Record<string, { label: string; doctrine: string }> = {
+  [LOCAL_PROVIDER_ID]: {
+    label: 'Local model',
+    doctrine: 'The model server this deployment already runs. Nothing leaves the machine.',
+  },
+  openai: {
+    label: 'OpenAI',
+    doctrine: 'Your own OpenAI account. Every agent in the run generates on the model you pick.',
+  },
+  openrouter: {
+    label: 'OpenRouter',
+    doctrine: 'One key, every vendor OpenRouter fronts. Hundreds of models — filter to yours.',
+  },
+  'ollama-cloud': {
+    label: 'Ollama Cloud',
+    doctrine: 'Your Ollama Cloud account, running the open-weight models it hosts.',
+  },
+};
+
+/** Doctrine copy for a provider id, degrading to the raw id for one the console has no copy for. */
+export function providerDoctrine(providerId: string): { label: string; doctrine: string } {
+  return (
+    PROVIDER_DOCTRINE[providerId] ?? {
+      label: providerId,
+      doctrine: 'Runs every agent in this run on your own subscription.',
+    }
+  );
+}
 
 /** One-line doctrine descriptions for the RoE dial, ordered from least to most proactive. */
 export const ROE_DOCTRINE: Record<RulesOfEngagement, { label: string; doctrine: string }> = {

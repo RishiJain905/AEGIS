@@ -2,7 +2,11 @@
 
 import { VisuallyHidden } from '@aegis/ui';
 
-import { ROE_DOCTRINE, type RunLoadout } from '@/features/command-surface/contracts';
+import {
+  ROE_DOCTRINE,
+  providerDoctrine,
+  type RunLoadout,
+} from '@/features/command-surface/contracts';
 
 function Chip({ label, active }: { label: string; active: boolean }) {
   return (
@@ -48,6 +52,32 @@ function IntentChip({ intent }: { intent: string }) {
 }
 
 /**
+ * Which model the run is pinned to, when it is not the deployment's own. Carries the
+ * provider and the model id and nothing else — a stored key has no representation here or
+ * anywhere else in the console.
+ */
+function ModelChip({ providerId, modelId }: { providerId: string; modelId: string | null }) {
+  const label = providerDoctrine(providerId).label;
+  const full = modelId ? `${label} · ${modelId}` : label;
+  return (
+    <span
+      tabIndex={0}
+      title={full}
+      data-testid="loadout-model-chip"
+      className="inline-flex max-w-[14rem] items-center gap-1 rounded-full border border-[var(--aegis-border-subtle)] bg-[color-mix(in_srgb,var(--aegis-surface-elevated)_70%,transparent)] px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-[var(--aegis-text-secondary)] focus:outline-none focus:ring-1 focus:ring-[var(--aegis-accent-line)]"
+    >
+      <VisuallyHidden>Model provider: {full}</VisuallyHidden>
+      <span aria-hidden="true">{label}</span>
+      {modelId ? (
+        <span aria-hidden="true" className="truncate normal-case tracking-normal">
+          {modelId}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/**
  * Compact loadout summary for the run header: which capabilities were armed at launch, the
  * current rules of engagement, and (when set) a commander's-intent chip that reveals the full
  * intent on hover/focus. Reflects the run's persisted loadout/intent; renders nothing when the
@@ -73,6 +103,9 @@ export function LoadoutChips({
           RoE · {ROE_DOCTRINE[loadout.roe].label}
         </span>
       )}
+      {loadout?.providerId ? (
+        <ModelChip providerId={loadout.providerId} modelId={loadout.modelId ?? null} />
+      ) : null}
       {intent.length > 0 && <IntentChip intent={intent} />}
     </div>
   );

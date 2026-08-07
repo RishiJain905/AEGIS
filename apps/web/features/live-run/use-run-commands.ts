@@ -105,6 +105,13 @@ export interface CreateRunLoadout {
   biasGuard: boolean;
   threatTempo: boolean;
   roe: string;
+  /**
+   * Which model every agent generation in the run runs on. Omitted entirely (not null) when
+   * the run takes the deployment default, same convention as the fields above. Never a
+   * credential — the server resolves the run owner's stored key from the provider id.
+   */
+  providerId?: string | null;
+  modelId?: string | null;
 }
 
 export function useCreateRun() {

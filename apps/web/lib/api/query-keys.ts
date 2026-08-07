@@ -21,6 +21,14 @@ export const queryKeys = {
     decisionPoints: (runId: string) => ['runs', runId, 'ghost', 'decision-points'] as const,
     reportVersions: (runId: string) => ['runs', runId, 'report-versions'] as const,
   },
+  // Model providers. Nothing here is ever keyed by credential material — the API key an
+  // operator connects never reaches the query cache, only the four-character hint the
+  // status endpoint returns.
+  providers: {
+    loadoutOptions: ['providers', 'loadout-options'] as const,
+    credentials: ['providers', 'credentials'] as const,
+    models: (providerId: string) => ['providers', providerId, 'models'] as const,
+  },
   incidents: {
     detail: (incidentId: string) => ['incidents', incidentId] as const,
     investigation: (incidentId: string) => ['incidents', incidentId, 'investigation'] as const,

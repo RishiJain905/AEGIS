@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -34,7 +35,34 @@ vi.mock('@/features/auth', () => ({
   useAuth: () => ({ actor: { userId: 'user:operator-alpha' } }),
 }));
 
+// The loadout step asks the server which model providers this deployment offers. These tests
+// are about the catalogue, so answer with a deployment that offers only the local model —
+// the default, which blocks nothing.
+vi.mock('@/lib/api/auth-fetch', () => ({
+  apiFetch: (path: string) =>
+    Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve(
+          path === '/api/v1/providers/loadout-options'
+            ? [{ id: 'openai-compatible', label: 'Local model', requiresCredential: false }]
+            : [],
+        ),
+    } as unknown as Response),
+}));
+
 import ScenariosPage from '@/app/(shell)/scenarios/page';
+
+/** The catalogue page lives under the app's query client; the loadout step needs one too. */
+function renderPage() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <ScenariosPage />
+    </QueryClientProvider>,
+  );
+}
 
 const SILENT_RELAY = {
   id: 'scenario:operation-silent-relay',
@@ -95,7 +123,7 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
     useRuns.mockReturnValue(runsResult([]));
     mutateAsync.mockResolvedValue({ run: { id: 'run_newly_created' } });
 
-    render(<ScenariosPage />);
+    renderPage();
 
     // No hardcoded fallback: with no owned runs there is no resume affordance.
     expect(
@@ -135,7 +163,7 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
       ]),
     );
 
-    render(<ScenariosPage />);
+    renderPage();
 
     const resume = screen.getByTestId('resume-run-scenario:operation-silent-relay');
     expect(resume).toBeInTheDocument();
@@ -158,7 +186,7 @@ describe('ScenariosPage run entry UX (AEGIS-BUG-010)', () => {
       ]),
     );
 
-    render(<ScenariosPage />);
+    renderPage();
 
     fireEvent.click(screen.getByTestId('resume-run-scenario:operation-silent-relay'));
 
@@ -191,7 +219,7 @@ describe('ScenariosPage tutorial relaunch', () => {
   it('offers a plain start with no existing training run', () => {
     useRuns.mockReturnValue(runsResult([]));
 
-    render(<ScenariosPage />);
+    renderPage();
 
     expect(screen.getByTestId('start-run-scenario:synthetic-training')).toHaveTextContent(
       'Start new run',
@@ -204,7 +232,7 @@ describe('ScenariosPage tutorial relaunch', () => {
   it('reframes the launch as a restart once a training run exists', () => {
     useRuns.mockReturnValue(runsResult([trainingRun()]));
 
-    render(<ScenariosPage />);
+    renderPage();
 
     expect(screen.getByTestId('start-run-scenario:synthetic-training')).toHaveTextContent(
       'Restart training run',
@@ -218,7 +246,7 @@ describe('ScenariosPage tutorial relaunch', () => {
     useRuns.mockReturnValue(runsResult([trainingRun()]));
     mutateAsync.mockResolvedValue({ run: { id: 'run_training_1' } });
 
-    render(<ScenariosPage />);
+    renderPage();
 
     // The tutorial skips the loadout step and launches straight into the walkthrough.
     fireEvent.click(screen.getByTestId('start-run-scenario:synthetic-training'));
@@ -242,7 +270,7 @@ describe('ScenariosPage tutorial relaunch', () => {
   it('shows the operator’s own derived seed on the tutorial card', () => {
     useRuns.mockReturnValue(runsResult([]));
 
-    render(<ScenariosPage />);
+    renderPage();
 
     const chip = screen.getByText(/1684221474/);
     expect(chip).toBeInTheDocument();

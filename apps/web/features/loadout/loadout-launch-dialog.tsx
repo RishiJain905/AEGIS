@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import {
   Button,
@@ -20,6 +20,14 @@ import {
   type RulesOfEngagement,
   type RunLoadout,
 } from '@/features/command-surface/contracts';
+
+import { ProviderLoadoutSection } from './provider-loadout-section';
+import {
+  DEFAULT_PROVIDER_SELECTION,
+  providerLoadoutFields,
+  useProviderLaunchBlock,
+  type ProviderSelection,
+} from './use-provider-credentials';
 
 function Toggle({
   id,
@@ -68,9 +76,10 @@ export interface LoadoutLaunchDialogProps {
 
 /**
  * Pre-launch loadout step: the second variety axis alongside the RNG seed. The operator
- * chooses their AI capabilities and rules of engagement before the run starts; the choice is
- * persisted on the run (POST /runs `loadout`). Defaults match the contract (bias guard on,
- * threat tempo on, RoE = investigate).
+ * chooses their AI capabilities, rules of engagement, and the model provider the run
+ * generates on before it starts; the choice is persisted on the run (POST /runs `loadout`).
+ * Defaults match the contract (bias guard on, threat tempo on, RoE = investigate, and the
+ * deployment's own model — for which the provider fields are omitted entirely).
  */
 export function LoadoutLaunchDialog({
   open,
@@ -83,6 +92,13 @@ export function LoadoutLaunchDialog({
   const [threatTempo, setThreatTempo] = useState(DEFAULT_LOADOUT.threatTempo);
   const [roe, setRoe] = useState<RulesOfEngagement>(DEFAULT_LOADOUT.roe);
   const [intent, setIntent] = useState('');
+  const [providerSelection, setProviderSelection] = useState<ProviderSelection>(
+    DEFAULT_PROVIDER_SELECTION,
+  );
+  // A cloud provider is only launchable once its key is stored and a model is pinned. The
+  // block doubles as the reason shown beside the disabled button.
+  const launchBlock = useProviderLaunchBlock(providerSelection, open);
+  const launchHintId = useId();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -95,7 +111,9 @@ export function LoadoutLaunchDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
+        {/* The provider section makes this the tallest dialog in the console; scroll the
+            body rather than the viewport so the footer stays reachable. */}
+        <div className="-mr-2 flex max-h-[min(60vh,30rem)] flex-col gap-4 overflow-y-auto pr-2">
           <div className="flex flex-col gap-2">
             <p className="font-mono text-[10px] uppercase tracking-wide text-[var(--aegis-text-muted)]">
               Capabilities
@@ -186,7 +204,24 @@ export function LoadoutLaunchDialog({
               })}
             </div>
           </fieldset>
+
+          <ProviderLoadoutSection
+            selection={providerSelection}
+            onSelectionChange={setProviderSelection}
+            active={open}
+            disabled={launching}
+          />
         </div>
+
+        {launchBlock ? (
+          <p
+            id={launchHintId}
+            data-testid="loadout-launch-hint"
+            className="text-right text-[11px] leading-4 text-[var(--aegis-accent-strong)]"
+          >
+            {launchBlock}
+          </p>
+        ) : null}
 
         <DialogFooter>
           <Button
@@ -201,11 +236,18 @@ export function LoadoutLaunchDialog({
           <Button
             onClick={() => {
               onLaunch(
-                { schemaVersion: 1, biasGuard, threatTempo, roe },
+                {
+                  schemaVersion: 1,
+                  biasGuard,
+                  threatTempo,
+                  roe,
+                  ...providerLoadoutFields(providerSelection),
+                },
                 intent.trim() || undefined,
               );
             }}
-            disabled={launching}
+            disabled={launching || launchBlock !== null}
+            aria-describedby={launchBlock ? launchHintId : undefined}
             data-testid="loadout-launch-confirm"
           >
             {launching ? 'Launching…' : 'Launch run'}
