@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react';
 
-import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@aegis/ui';
+import { cn, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@aegis/ui';
 
 import type { ActionClass, CommandMeta } from '@/features/command-surface';
 
@@ -36,6 +36,20 @@ export function CommandMenuItems({ commands, onSelect, disabled = false }: Comma
 
   return (
     <>
+      {/* A menu can't show a tooltip, so on a terminal run it says so in its own line
+          instead — same vocabulary as the command bar's "Run ended · read-only" badge,
+          just compact enough for a dense list (P2, Chrome QA on the rebuilt stack). */}
+      {disabled ? (
+        <>
+          <div
+            data-testid="command-menu-run-ended-note"
+            className="px-3 py-1.5 text-[0.6875rem] font-medium italic text-[var(--aegis-text-muted)]"
+          >
+            Run ended — read-only
+          </div>
+          <DropdownMenuSeparator />
+        </>
+      ) : null}
       {tiers.map((tier, index) => (
         <Fragment key={tier.label}>
           {index > 0 ? <DropdownMenuSeparator /> : null}
@@ -44,6 +58,11 @@ export function CommandMenuItems({ commands, onSelect, disabled = false }: Comma
             <DropdownMenuItem
               key={command.command}
               disabled={disabled}
+              // Belt-and-suspenders over the primitive's own `data-[disabled]` styling: a
+              // disabled item must look dead even if that attribute selector doesn't win,
+              // and the attribute doubles as a stable, pixel-free test hook.
+              data-command-state={disabled ? 'dead' : 'live'}
+              className={disabled ? 'opacity-60' : undefined}
               onSelect={() => {
                 onSelect(command);
               }}
@@ -51,13 +70,21 @@ export function CommandMenuItems({ commands, onSelect, disabled = false }: Comma
             >
               <div className="flex flex-col">
                 <span
-                  className={
-                    command.actionClass === 'class_3' ? 'text-[var(--aegis-risk-high)]' : undefined
-                  }
+                  className={cn(
+                    !disabled &&
+                      command.actionClass === 'class_3' &&
+                      'text-[var(--aegis-risk-high)]',
+                    disabled && 'text-[var(--aegis-text-muted)]',
+                  )}
                 >
                   {command.label}
                 </span>
-                <span className="text-[10px] text-[var(--aegis-text-muted)]">
+                <span
+                  className={cn(
+                    'text-[10px] text-[var(--aegis-text-muted)]',
+                    disabled && 'opacity-70',
+                  )}
+                >
                   {command.summary}
                 </span>
               </div>

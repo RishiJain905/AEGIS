@@ -58,7 +58,9 @@ afterEach(() => {
 });
 
 function renderMenu(target: Partial<AssetContextTarget>) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
     <QueryClientProvider client={client}>
       <AssetContextMenu
@@ -122,5 +124,38 @@ describe('AssetContextMenu', () => {
     });
 
     expect(screen.getByTestId('action-item-isolate')).toBeEnabled();
+  });
+
+  it('looks as dead as it behaves once the run is over', () => {
+    // A disabled item that still renders full-opacity live styling reads as broken, not
+    // gated — every item (including the danger-styled one) needs a visible dead marker and
+    // the menu needs to say why in its own words (P2, Chrome QA on the rebuilt stack).
+    liveRunStatus = 'stopped';
+    renderMenu({
+      nodeId: 'asset:svc-logistics-api',
+      label: 'Logistics Routing API',
+      assetType: 'service',
+    });
+
+    expect(screen.getByTestId('action-item-isolate')).toHaveAttribute('data-command-state', 'dead');
+    expect(screen.getByTestId('action-item-restart_service')).toHaveAttribute(
+      'data-command-state',
+      'dead',
+    );
+    expect(screen.getByTestId('command-menu-run-ended-note')).toHaveTextContent(
+      'Run ended — read-only',
+    );
+  });
+
+  it('keeps live styling and drops the note while the run is running', () => {
+    liveRunStatus = 'running';
+    renderMenu({
+      nodeId: 'asset:svc-logistics-api',
+      label: 'Logistics Routing API',
+      assetType: 'service',
+    });
+
+    expect(screen.getByTestId('action-item-isolate')).toHaveAttribute('data-command-state', 'live');
+    expect(screen.queryByTestId('command-menu-run-ended-note')).not.toBeInTheDocument();
   });
 });
