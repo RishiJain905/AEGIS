@@ -12,6 +12,7 @@ from aegis_contracts import (
     ActorType,
     IncidentState,
     IncidentV1,
+    RunLoadoutV1,
     RunV1,
     ScenarioV1,
     ScenarioVersionV1,
@@ -65,6 +66,7 @@ async def seed_investigation_run(
     uow: PostgresUnitOfWork,
     *,
     seed: int | None = None,
+    loadout: RunLoadoutV1 | None = None,
 ) -> tuple[str, str, list[str], str]:
     scenario_version_id = await _seed_scenario_version(uow)
     now = datetime(2026, 6, 30, 2, 0, 0, tzinfo=UTC)
@@ -80,6 +82,9 @@ async def seed_investigation_run(
         started_at=now,
         sim_time=now,
         revision=1,
+        # Left null by default, which is what a pre-loadout run carries and what every
+        # existing caller expects; pass one to exercise a specific rules-of-engagement tier.
+        loadout=loadout,
     )
     await uow.runs.add(run)
 
