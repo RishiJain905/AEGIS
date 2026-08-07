@@ -45,6 +45,7 @@ from aegis_model_provider.registry import ProviderRegistry, build_provider_regis
 from aegis_persistence.credentials import (
     CredentialCryptoError,
     CredentialDecryptError,
+    assert_encryption_key_usable,
     derive_key_hint,
     encrypt_api_key,
 )
@@ -121,6 +122,13 @@ def provider_registry(
 
 
 def _encryption_key(request: Request) -> str:
+    """The deployment's encryption key, proven usable, or a 503 for every route alike.
+
+    Usability is checked here rather than at each use because presence and usability are
+    different questions and only the first is obvious. A key that is set but is not a
+    Fernet key must fail the same way an unset one does — before a route decrypts
+    anything, and before it sends an operator's API key upstream to be verified.
+    """
     settings: AegisSettings = request.app.state.settings
     key = settings.AEGIS_CREDENTIAL_ENCRYPTION_KEY
     if not key:
@@ -131,6 +139,16 @@ def _encryption_key(request: Request) -> str:
                 "AEGIS_CREDENTIAL_ENCRYPTION_KEY is unset."
             ),
         )
+    try:
+        assert_encryption_key_usable(key)
+    except CredentialCryptoError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "This deployment is not configured for cloud model providers: "
+                "AEGIS_CREDENTIAL_ENCRYPTION_KEY is not a usable encryption key."
+            ),
+        ) from exc
     return key
 
 
@@ -261,13 +279,8 @@ async def connect_provider_credential(
     await _fetch_model_ids(registry, provider, api_key=api_key)
 
     now = datetime.now(UTC)
-    try:
-        ciphertext = encrypt_api_key(api_key, key=encryption_key)
-    except CredentialCryptoError as exc:
-        raise HTTPException(
-            status_code=503,
-            detail="This deployment's credential encryption key is not usable",
-        ) from exc
+    # The key was proven usable before verification, so this cannot fail on key material.
+    ciphertext = encrypt_api_key(api_key, key=encryption_key)
     row = await uow.provider_credentials.upsert(
         user_id=actor.user_id,
         provider=provider,

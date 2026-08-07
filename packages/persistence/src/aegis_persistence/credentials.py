@@ -26,6 +26,7 @@ __all__ = [
     "CredentialCryptoError",
     "CredentialDecryptError",
     "CredentialKeyError",
+    "assert_encryption_key_usable",
     "decrypt_api_key",
     "derive_key_hint",
     "encrypt_api_key",
@@ -64,6 +65,17 @@ def _cipher(key: str) -> Fernet:
         # Deliberately says nothing about the key's content: this message reaches logs.
         msg = "AEGIS_CREDENTIAL_ENCRYPTION_KEY is not a valid Fernet key"
         raise CredentialKeyError(msg) from exc
+
+
+def assert_encryption_key_usable(key: str) -> None:
+    """Raise ``CredentialKeyError`` unless this deployment key can actually be used.
+
+    Presence is not usability: ``AEGIS_CREDENTIAL_ENCRYPTION_KEY`` can be set to
+    something that is not a Fernet key at all. Callers should establish that up front,
+    before they hold an operator's API key — a deployment that cannot store the result
+    has no business sending the key to a provider to be verified.
+    """
+    _cipher(key)
 
 
 def encrypt_api_key(plaintext: str, *, key: str) -> bytes:

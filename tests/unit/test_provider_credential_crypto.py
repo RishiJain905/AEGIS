@@ -13,6 +13,7 @@ from aegis_persistence.credentials import (
     CREDENTIAL_ENCRYPTION_ALGORITHM,
     CredentialDecryptError,
     CredentialKeyError,
+    assert_encryption_key_usable,
     decrypt_api_key,
     derive_key_hint,
     encrypt_api_key,
@@ -63,6 +64,18 @@ def test_malformed_encryption_key_fails_loudly_on_both_paths() -> None:
 
     with pytest.raises(CredentialKeyError):
         decrypt_api_key(b"whatever", key="not-a-fernet-key")
+
+
+def test_a_deployment_key_can_be_checked_before_anything_is_entrusted_to_it() -> None:
+    # Callers hold an operator's API key at the moment they need this answer, so the
+    # check has to be available without encrypting anything first.
+    assert_encryption_key_usable(generate_encryption_key())
+
+    with pytest.raises(CredentialKeyError):
+        assert_encryption_key_usable("not-a-fernet-key")
+
+    with pytest.raises(CredentialKeyError):
+        assert_encryption_key_usable("")
 
 
 def test_blank_api_keys_are_refused() -> None:

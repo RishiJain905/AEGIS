@@ -388,6 +388,48 @@ def test_without_an_encryption_key_the_server_refuses_to_take_the_key(
     assert registry.api_keys_seen == []
 
 
+def test_a_present_but_unusable_encryption_key_refuses_the_key_just_as_firmly(
+    repository: _FakeCredentialRepository,
+) -> None:
+    # Presence is not usability. A deployment that sets the variable to something that
+    # is not a Fernet key can no more store a credential than one that left it unset,
+    # and must discover that before the operator's key is sent anywhere.
+    registry = _FakeRegistry(provider=_FakeListingProvider("openai", models=["gpt-4o-mini"]))
+    client = _client(
+        repository=repository,
+        registry=registry,
+        encryption_key="not-a-fernet-key",
+    )
+
+    response = client.put("/api/v1/provider-credentials/openai", json={"apiKey": _API_KEY})
+
+    assert response.status_code == 503
+    _assert_no_key_material(response.text)
+    assert repository.rows == {}
+    assert registry.api_keys_seen == []
+
+
+def test_an_unusable_encryption_key_is_a_configuration_error_when_listing_models(
+    repository: _FakeCredentialRepository,
+) -> None:
+    # The read path used to let this through as an unhandled 500: it caught only the
+    # "ciphertext will not decrypt" error, and an unusable deployment key is a sibling
+    # of that, not a subclass. Both paths answer the same way now.
+    repository.store(user_id=_OWNER, provider="openai", api_key=_API_KEY)
+    registry = _FakeRegistry(provider=_FakeListingProvider("openai", models=["gpt-4o-mini"]))
+    client = _client(
+        repository=repository,
+        registry=registry,
+        encryption_key="not-a-fernet-key",
+    )
+
+    response = client.get("/api/v1/providers/openai/models")
+
+    assert response.status_code == 503
+    _assert_no_key_material(response.text)
+    assert registry.api_keys_seen == []
+
+
 def test_the_local_provider_takes_no_credential(
     repository: _FakeCredentialRepository,
     encryption_key: str,
