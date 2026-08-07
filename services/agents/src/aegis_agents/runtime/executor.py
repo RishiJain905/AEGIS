@@ -1831,6 +1831,7 @@ class TaskExecutor:
                         trace_id=task.trace_id,
                         idempotency_key=task.idempotency_key,
                         visible_evidence_ids=visible_ids,
+                        initiator=task.initiator,
                     ),
                     structured=structured,
                 )

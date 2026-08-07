@@ -15,6 +15,7 @@ from aegis_contracts.versioning import EVIDENCE_ATTACHMENT_SCHEMA_VERSION
 from aegis_persistence.repositories.postgres import PostgresGraphSnapshotRepository
 from aegis_persistence.sim_clock import run_sim_time
 
+from aegis_agents.roles.chaining import InvestigationChain
 from aegis_agents.roles.common.schemas import TRACE_STEP_OUTPUT_SCHEMA
 from aegis_agents.roles.registry import PostProcessContext
 from aegis_agents.roles.trace.candidates import rank_affected_assets
@@ -31,6 +32,9 @@ from aegis_agents.runtime.investigation_events import (
 class TraceRoleHandler:
     role = AgentRole.TRACE
     prompt_version = "phase20-trace-v1"
+
+    def __init__(self, chain: InvestigationChain | None = None) -> None:
+        self._chain = chain or InvestigationChain()
 
     def output_schema(self) -> dict[str, Any]:
         return TRACE_STEP_OUTPUT_SCHEMA
@@ -168,3 +172,12 @@ class TraceRoleHandler:
         )
         for candidate in candidates:
             await ctx.uow.investigation.add_candidate_asset(candidate)
+
+        await self._chain.advance(
+            ctx.uow,
+            from_role=AgentRole.TRACE,
+            incident_id=ctx.incident_id,
+            run_id=ctx.run_id,
+            trace_id=ctx.trace_id,
+            initiator=ctx.initiator,
+        )

@@ -13,6 +13,7 @@ from aegis_contracts.hypothesis import (
 from aegis_contracts.versioning import VERIFICATION_REQUEST_SCHEMA_VERSION
 from aegis_persistence.sim_clock import run_sim_time
 
+from aegis_agents.roles.chaining import InvestigationChain
 from aegis_agents.roles.oracle.comparison import build_hypothesis_comparison
 from aegis_agents.roles.oracle.grounding import build_grounding_context, ground_hypothesis_claims
 from aegis_agents.roles.oracle.revision import build_initial_hypothesis, build_revision
@@ -30,6 +31,9 @@ from aegis_agents.runtime.investigation_events import (
 class OracleRoleHandler:
     role = AgentRole.ORACLE
     prompt_version = "phase21-oracle-v1"
+
+    def __init__(self, chain: InvestigationChain | None = None) -> None:
+        self._chain = chain or InvestigationChain()
 
     def output_schema(self) -> dict[str, Any]:
         return ORACLE_HYPOTHESIS_OUTPUT_SCHEMA
@@ -216,3 +220,12 @@ class OracleRoleHandler:
                     sim_time=sim_time,
                 )
             )
+
+        await self._chain.advance(
+            ctx.uow,
+            from_role=AgentRole.ORACLE,
+            incident_id=ctx.incident_id,
+            run_id=ctx.run_id,
+            trace_id=ctx.trace_id,
+            initiator=ctx.initiator,
+        )

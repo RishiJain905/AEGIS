@@ -6,7 +6,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from aegis_contracts.entities import AgentRole
+from aegis_contracts.entities import AgentRole, AutonomyInitiatorV1
 from aegis_persistence.unit_of_work import PostgresUnitOfWork
 
 from aegis_agents.roles.bastion.schemas import (
@@ -33,6 +33,10 @@ class PostProcessContext:
     trace_id: str
     idempotency_key: str
     visible_evidence_ids: set[str] = field(default_factory=set)
+    #: Who asked for this turn. Post-processing that enqueues follow-up work reads it so
+    #: only background initiative chains — an operator-triggered turn goes through the
+    #: coordinators, which do their own enqueueing.
+    initiator: AutonomyInitiatorV1 = AutonomyInitiatorV1.OPERATOR
 
 
 class RoleHandlerProtocol(Protocol):

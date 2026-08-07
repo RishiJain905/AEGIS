@@ -34,6 +34,7 @@ from aegis_agents.roles.watchtower.correlation import (
     correlate_alerts,
     derive_grouped_and_separated_alert_ids,
 )
+from aegis_agents.roles.watchtower.incident_state import apply_triage_to_incident
 from aegis_agents.runtime.errors import AgentRuntimeError, AgentRuntimeErrorCode
 from aegis_agents.runtime.ids import new_runtime_id
 from aegis_agents.runtime.session_service import AgentSessionService
@@ -113,7 +114,15 @@ class WatchtowerCoordinator:
             idempotency_key=request.idempotency_key,
             triage_output=triage_output,
         )
-        incident = await self._update_incident(uow, incident, alerts, triage)
+        incident = await apply_triage_to_incident(
+            uow,
+            incident=incident,
+            triage=triage,
+            session_id=watchtower_session.id,
+            trace_id=request.trace_id,
+            sim_time=await run_sim_time(uow, incident.run_id),
+            alert_ids=[alert.id for alert in alerts],
+        )
         trace_session_id = await self._enqueue_trace_session(
             uow,
             incident_id=incident.id,
@@ -266,31 +275,6 @@ class WatchtowerCoordinator:
             created_at=now,
         )
         return await uow.investigation.add_triage(triage)
-
-    async def _update_incident(
-        self,
-        uow: PostgresUnitOfWork,
-        incident: IncidentV1,
-        alerts: list[AlertV1],
-        triage: WatchtowerTriageResultV1,
-    ) -> IncidentV1:
-        now = datetime.now(UTC)
-        alert_ids = sorted({*incident.alert_ids, *(alert.id for alert in alerts)})
-        next_state = IncidentState.TRIAGED
-        if triage.escalation == TriageEscalationLevel.URGENT:
-            next_state = IncidentState.INVESTIGATING
-        updated = incident.model_copy(
-            update={
-                "alert_ids": alert_ids,
-                "state": next_state,
-                "revision": incident.revision + 1,
-                "updated_at": now,
-            }
-        )
-        return await uow.incidents.update_with_revision(
-            updated,
-            expected_revision=incident.revision,
-        )
 
     async def _enqueue_trace_session(
         self,
