@@ -813,9 +813,21 @@ class TaskExecutor:
         *,
         task: Any,
         run: Any,
+        loadout_pinned: bool,
         model_id: str | None,
     ) -> Any:
         """The adapter a credentialed run must generate through, or ``None``.
+
+        The gate is ``loadout_pinned`` and not merely "is this a cloud provider id",
+        because a cloud provider reaches a task by two very different routes. A run whose
+        operator *chose* it in the loadout spends that operator's own subscription, and
+        run creation has already checked they connected a key. A run that never named one
+        is running on whatever the deployment configured — ``AEGIS_PROVIDER_DEFAULT``, or
+        a provider a caller passed on the task request — which the registry has always
+        served from the environment key. Gating on the id alone would make every task in
+        a deployment defaulted to ``openai`` demand a per-user credential and fail, which
+        is both a regression and a rule the launch-time validator does not share: it, too,
+        only ever inspects the loadout.
 
         Runs during the claim transaction — a pair of local reads, no model call — and
         the caller commits before generation begins, so the key is in hand well before
@@ -836,7 +848,7 @@ class TaskExecutor:
         method only inside the adapter it constructs.
         """
         provider_id = task.provider_id
-        if provider_id not in _CREDENTIALED_PROVIDER_IDS:
+        if not loadout_pinned or provider_id not in _CREDENTIALED_PROVIDER_IDS:
             return None
 
         def fail(message: str) -> AgentRuntimeError:
@@ -1103,18 +1115,16 @@ class TaskExecutor:
                     trace_id=task.trace_id,
                 )
         incident_title = incident.title if incident is not None else None
-        # The model the run's loadout pinned, but only while it still describes the
-        # provider this task is actually running on: a task created under a different
-        # provider (a legacy row, a harness) must not be handed a model id from a
-        # catalogue it cannot serve. Absent, the definition keeps its synthetic id and
-        # the adapter falls back to its configured model — the pre-loadout behaviour.
+        # Whether the run's loadout speaks for this task at all: only when it pinned the
+        # very provider the task is running on. A task created under a different provider
+        # (a legacy row, a harness, the deployment default) must not be handed a model id
+        # from a catalogue it cannot serve — nor be made to spend a per-user credential
+        # for a provider its operator never chose. One predicate, used for both, so the
+        # model-id rule and the credential rule cannot drift apart.
         run = await uow.runs.get_by_id(run_id)
         loadout = getattr(run, "loadout", None) if run is not None else None
-        model_id = (
-            loadout.model_id
-            if loadout is not None and loadout.provider_id == task.provider_id
-            else None
-        )
+        loadout_pinned = loadout is not None and loadout.provider_id == task.provider_id
+        model_id = loadout.model_id if loadout is not None and loadout_pinned else None
         definition = build_definition(
             session.role, provider_id=task.provider_id, model_id=model_id
         )
@@ -1175,7 +1185,11 @@ class TaskExecutor:
             # Before the request, so a credential problem fails the task on the cheap
             # step rather than after assembling a prompt nothing can send.
             provider = await self._bind_run_provider(
-                uow, task=running, run=run, model_id=model_id
+                uow,
+                task=running,
+                run=run,
+                loadout_pinned=loadout_pinned,
+                model_id=model_id,
             )
             (
                 request,

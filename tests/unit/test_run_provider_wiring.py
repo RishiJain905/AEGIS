@@ -495,19 +495,26 @@ def _queued_task(provider_id: str) -> AgentTaskV1:
 
 async def _prepare(
     *,
-    provider_id: str,
+    provider_id: str | None,
     model_id: str | None,
     credentials: _FakeCredentialRepo,
     monkeypatch: pytest.MonkeyPatch,
+    task_provider_id: str | None = None,
     encryption_key: str | None = "deployment-key",
     owner_user_id: str | None = _OWNER,
 ) -> tuple[Any, _RecordingGeneration, _ExecutorUow]:
+    """Prepare one task. ``provider_id``/``model_id`` are the RUN's loadout pin.
+
+    ``task_provider_id`` defaults to the pinned provider, which is what task creation
+    produces. Passing it separately is how a test reproduces a task whose provider came
+    from somewhere other than the loadout — the deployment default, or a caller.
+    """
     monkeypatch.setattr(
         "aegis_agents.runtime.executor._deployment_encryption_key", lambda: encryption_key
     )
     generation = _RecordingGeneration()
     executor = TaskExecutor(generation=generation)  # type: ignore[arg-type]
-    task = _queued_task(provider_id)
+    task = _queued_task(task_provider_id or provider_id or "mock")
     run = _run(provider_id=provider_id, model_id=model_id, owner_user_id=owner_user_id)
     uow = _ExecutorUow(task, run, credentials)
     generation.uow = uow
@@ -587,6 +594,78 @@ async def test_an_unpinned_run_calls_generation_exactly_as_before(
     executor = TaskExecutor(generation=generation)  # type: ignore[arg-type]
     await executor._run_tool_loop(uow, prepared)  # type: ignore[arg-type]
     assert [provider for _request, provider in generation.calls] == [None]
+
+
+@pytest.mark.parametrize(
+    ("origin", "deployment_default", "requested_provider_id"),
+    [
+        # A deployment that points AEGIS_PROVIDER_DEFAULT at a cloud endpoint and pays
+        # for it with AEGIS_PROVIDER_OPENAI_API_KEY. Every task on every run is "openai".
+        pytest.param("deployment-default", "openai", None, id="deployment-default"),
+        # A caller naming a provider on the task request — the harness scripts' shape.
+        pytest.param("caller-supplied", "mock", "openai", id="caller-supplied"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_a_cloud_provider_the_run_did_not_pin_is_served_from_the_environment(
+    origin: str,
+    deployment_default: str,
+    requested_provider_id: str | None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A cloud provider id is not by itself a claim on someone's subscription.
+
+    Only a loadout the operator filled in is. A run that pinned nothing is running on
+    whatever the deployment configured, and the registry has always served that from the
+    environment key — so demanding a per-user credential here would fail every task in
+    such a deployment. The task is built through the real task service so the two ways a
+    cloud provider reaches an unpinned run are exercised end to end, not assumed.
+    """
+    monkeypatch.setattr(
+        "aegis_agents.runtime.task_service._configured_default_provider_id",
+        lambda: deployment_default,
+    )
+    created = await AgentTaskService().create_task(
+        _TaskServiceUow(_run()),  # type: ignore[arg-type]
+        session=_SessionStub(),  # type: ignore[arg-type]
+        request=_create_task_request(requested_provider_id),
+    )
+    assert created.provider_id == "openai"
+
+    credentials = _FakeCredentialRepo()
+    prepared, generation, uow = await _prepare(
+        provider_id=None,
+        model_id=None,
+        task_provider_id=created.provider_id,
+        credentials=credentials,
+        monkeypatch=monkeypatch,
+    )
+    assert credentials.decrypt_calls == []
+    assert generation.bindings == []
+    assert prepared.provider is None
+    # Synthetic model id, so the adapter falls back to its configured model as before.
+    assert prepared.definition.model_id == "openai-v1"
+
+    executor = TaskExecutor(generation=generation)  # type: ignore[arg-type]
+    await executor._run_tool_loop(uow, prepared)  # type: ignore[arg-type]
+    assert [provider for _request, provider in generation.calls] == [None]
+
+
+@pytest.mark.asyncio
+async def test_a_credential_is_still_demanded_when_the_run_did_pin_the_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The counterpart: the same provider id, pinned, still spends the owner's key."""
+    credentials = _FakeCredentialRepo({(_OWNER, "openai"): _SECRET_KEY})
+    prepared, generation, _uow = await _prepare(
+        provider_id="openai",
+        model_id="gpt-4o",
+        credentials=credentials,
+        monkeypatch=monkeypatch,
+    )
+    assert credentials.decrypt_calls == [(_OWNER, "openai")]
+    assert generation.bindings == [("openai", _SECRET_KEY, "gpt-4o")]
+    assert prepared.provider is not None
 
 
 @pytest.mark.asyncio
