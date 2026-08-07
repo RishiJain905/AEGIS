@@ -105,6 +105,11 @@ services:
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
       AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1,https://openrouter.ai/api/v1,https://ollama.com/v1
+      # Encrypts the provider API keys operators connect in Configure Loadout. The API
+      # needs it to store/read them AND to run manual copilot tasks, which execute inline
+      # in this process. Empty default: an operator who has not run bootstrap.sh gets the
+      # honest "not configured for cloud model providers" 503 rather than a broken key.
+      AEGIS_CREDENTIAL_ENCRYPTION_KEY: ${AEGIS_CREDENTIAL_ENCRYPTION_KEY:-}
       # A local reasoning model can take tens of seconds per turn; give agent tasks
       # generous headroom (they still fail soft past this, shown in the chat).
       # Timeout budget chain — each layer must resolve before the one above it:
@@ -253,6 +258,9 @@ services:
       AEGIS_PROVIDER_LOCAL_BASE_URL: http://host.docker.internal:8086/v1
       AEGIS_PROVIDER_LOCAL_MODEL: ${AEGIS_PROVIDER_LOCAL_MODEL:-Qwimi-3.6-27B-Q3_K_S.gguf}
       AEGIS_PROVIDER_EGRESS_ALLOWLIST: https://api.openai.com/v1,http://host.docker.internal:8086/v1,https://openrouter.ai/api/v1,https://ollama.com/v1
+      # Decrypts the run owner's stored provider key before an async agent task generates.
+      # Must match the api's value or a run pinned to a cloud provider fails every turn.
+      AEGIS_CREDENTIAL_ENCRYPTION_KEY: ${AEGIS_CREDENTIAL_ENCRYPTION_KEY:-}
       # Timeout budget chain — each layer must resolve before the one above it:
       # provider attempt ceiling (300s) < provider total budget (task timeout - 2s,
       # set per request) < agent task timeout (540s) < copilot client deadline (600s).

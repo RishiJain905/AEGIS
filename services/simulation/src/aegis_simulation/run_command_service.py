@@ -146,17 +146,20 @@ async def _validate_loadout_provider(
     launch dialog can describe is caught at the launch, in the service layer where every
     caller of ``create_run`` (HTTP, CLI, tests) passes through it.
 
-    Only two things are checked, because only two are knowable now. The provider id must
-    name a provider this build has an adapter for; whether a *deployment* offers it
+    Only three things are checked, because only three are knowable now. The provider id
+    must name a provider this build has an adapter for; whether a *deployment* offers it
     depends on the egress allowlist, which the API resolves when it lists options and
-    the executor resolves again at generation time. And a provider that spends a personal
-    subscription must have a key already connected for the run's owner — existence only,
-    read through the repository's own owner-scoped path. Nothing is decrypted here: run
-    creation has no use for the plaintext, so it does not touch it.
+    the executor resolves again at generation time. A provider that spends a personal
+    subscription must be pinned to a model the operator actually chose — without one the
+    OpenAI adapter quietly falls back to the deployment's default model and bills the
+    operator's own subscription for it. And it must have a key already connected for the
+    run's owner — existence only, read through the repository's own owner-scoped path.
+    Nothing is decrypted here: run creation has no use for the plaintext, so it does not
+    touch it.
     """
-    provider_id = loadout.provider_id if loadout is not None else None
-    if provider_id is None:
+    if loadout is None or loadout.provider_id is None:
         return
+    provider_id = loadout.provider_id
     if provider_id not in {kind.value for kind in ProviderKind}:
         raise SimulationError(
             code=SimulationErrorCode.VALIDATION_FAILED,
@@ -164,6 +167,11 @@ async def _validate_loadout_provider(
         )
     if provider_id not in {kind.value for kind in CLOUD_PROVIDER_KINDS}:
         return
+    if not (loadout.model_id or "").strip():
+        raise SimulationError(
+            code=SimulationErrorCode.VALIDATION_FAILED,
+            message=f"Provider '{provider_id}' needs a model chosen for this run.",
+        )
     if owner_user_id is None:
         raise SimulationError(
             code=SimulationErrorCode.VALIDATION_FAILED,

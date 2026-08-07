@@ -292,7 +292,9 @@ async def test_an_unknown_provider_id_is_refused_at_launch() -> None:
 async def test_a_cloud_provider_without_a_connected_key_is_refused_at_launch() -> None:
     credentials = _FakeCredentialRepo()
     with pytest.raises(SimulationError) as exc:
-        await _create_run(RunLoadoutV1(provider_id="openai"), credentials=credentials)
+        await _create_run(
+            RunLoadoutV1(provider_id="openai", model_id="gpt-4o"), credentials=credentials
+        )
     assert exc.value.code == SimulationErrorCode.VALIDATION_FAILED
     # Actionable: it must say what to do, not merely that something is missing.
     assert "Connect" in exc.value.message
@@ -300,11 +302,35 @@ async def test_a_cloud_provider_without_a_connected_key_is_refused_at_launch() -
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("model_id", [None, "   "])
+async def test_a_cloud_provider_pinned_without_a_model_is_refused_at_launch(
+    model_id: str | None,
+) -> None:
+    """A key with no model spends the operator's own subscription on a model nobody chose.
+
+    OpenAI is the silent case: with no model pinned the adapter falls back to the
+    deployment's ``AEGIS_PROVIDER_OPENAI_MODEL``, so the run looks healthy while billing
+    the operator for something they never picked. Refuse at the launch, before the
+    credential lookup — this needs no I/O to decide.
+    """
+    credentials = _FakeCredentialRepo({(_OWNER, "openai"): _SECRET_KEY})
+    with pytest.raises(SimulationError) as exc:
+        await _create_run(
+            RunLoadoutV1(provider_id="openai", model_id=model_id), credentials=credentials
+        )
+    assert exc.value.code == SimulationErrorCode.VALIDATION_FAILED
+    assert "model" in exc.value.message.lower()
+    assert credentials.get_calls == []
+
+
+@pytest.mark.asyncio
 async def test_a_cloud_provider_with_a_connected_key_passes_validation() -> None:
     """Validation clears, so the launch proceeds and fails on the next step instead."""
     credentials = _FakeCredentialRepo({(_OWNER, "openai"): _SECRET_KEY})
     with pytest.raises(SimulationError) as exc:
-        await _create_run(RunLoadoutV1(provider_id="openai"), credentials=credentials)
+        await _create_run(
+            RunLoadoutV1(provider_id="openai", model_id="gpt-4o"), credentials=credentials
+        )
     assert "Scenario package not found" in exc.value.message
 
 
